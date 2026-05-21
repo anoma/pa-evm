@@ -88,7 +88,7 @@ contract ProtocolAdapter is
         RiscZeroVerifierRouter riscZeroVerifierRouter,
         bytes4 riscZeroVerifierSelector,
         address emergencyStopCaller
-    ) Version("1.2.0-rc.1") Ownable(emergencyStopCaller) {
+    ) Version("1.2.0-rc.0") Ownable(emergencyStopCaller) {
         require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
