@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test, console} from "forge-std-1.15.0/src/Test.sol";
+import {Test, console} from "forge-std-1.16.1/src/Test.sol";
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 
 contract MerkleTreeGasBenchmark is Test {

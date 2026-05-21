@@ -6,11 +6,18 @@ checksum = "a3b6bc661be858c7c27f60a1708cbebe8c71034b4cc1e9fe270d0a05b069352f"
 integrity = "bce03af7ada1eee21a7fff393f238bcd7cd75a022a4db55ffb6b0dbb32433d35"
 
 [[dependencies]]
-name = "anoma-risc0-deployments"
+name = "anoma-forwarder-bases"
 version = "1.0.0-rc.1"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_0_0-rc_1_15-04-2026_17:08:03_risc0-deployments.zip"
-checksum = "98bea30bf0af4f8fa69174370cc496b4e0d8cdd988ff8e577debc0506ae627d1"
-integrity = "9387aefdc94e281581dd4610453816900a66b9c98fcd8d28bf0fda5fcf4b783b"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/1_0_0-rc_1_21-05-2026_08:22:00_contracts.zip"
+checksum = "de4436a067adbe69323dae931b417c492ef832af5c5310080cad7f270c2541dd"
+integrity = "d0296e91198f7244a0fb2d8c772da67e1391cd1d4313fb3251d15a4a53397dbc"
+
+[[dependencies]]
+name = "anoma-risc0-deployments"
+version = "1.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_0_0_21-05-2026_08:53:52_anoma-risc0-deployments.zip"
+checksum = "2ebea192ec6cf23442e5457e32f9894a8ab0df8e5c0cb9d5b41b09b053442f48"
+integrity = "036f660b46c08457b91c7c0d11d91446723ebff7f22662ef5b49735275252cbe"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -20,17 +27,17 @@ rev = "347547890840fd501809dfe0b855206407136ec0"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.15.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_15_0_27-02-2026_08:26:17_forge-std-1.15.zip"
-checksum = "40d9b3b3d786eec4cd05fb9d818616015cbe7b8866643a9f0854495c938588c4"
-integrity = "92accf4f7850eb9f5832f0ea77d633d36ebe993efc6d6c9f32369d31befc8a75"
+version = "1.16.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_16_1_08-05-2026_08:51:16_forge-std-1.16.zip"
+checksum = "839b61832925c7152c7b6dffbfa4998d9e606211179bd8f604733124e8a7cb57"
+integrity = "60e55d10150354ca4a1e2985c5456c834b92b82ef85ab0e1d92a7786cddbd219"
 
 [[dependencies]]
 name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "b62a94da343cf58169a53e4bc41b9baeec2a4dd11c97ee6e95eae5f0341eae45"
+integrity = "1ac9ba6b515a15237620ef09ba2d29ee4ea6df5344b5199b532934b6df7e6271"
 
 [[dependencies]]
 name = "solady"

@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ForwarderExample} from "anoma-forwarder-bases-1.0.0-rc.1/test/examples/Forwarder.e.sol";
 import {
-    DeployRiscZeroContractsMock
-} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
-import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
+    ForwarderTargetExample,
+    _encodedDefaultInput,
+    EXPECTED_OUTPUT
+} from "anoma-forwarder-bases-1.0.0-rc.1/test/examples/ForwarderTarget.e.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
+import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
 import {
     RiscZeroVerifierEmergencyStop
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
@@ -20,13 +24,9 @@ import {SHA256} from "../src/libs/SHA256.sol";
 import {TagUtils} from "../src/libs/TagUtils.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-
 import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {Transaction, Action} from "../src/Types.sol";
-
-import {ForwarderExample} from "./examples/Forwarder.e.sol";
-import {INPUT, EXPECTED_OUTPUT} from "./examples/ForwarderTarget.e.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 
@@ -44,7 +44,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     ProtocolAdapter internal _mockPa;
     address internal _fwd;
+    address internal _fwdTarget;
     address[] internal _fwdList;
+
+    bytes internal _input;
 
     bytes32 internal _carrierLabelRef;
 
@@ -53,9 +56,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
 
-        _fwd = address(
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
+        _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+        _fwdTarget = address(new ForwarderTargetExample());
+        _input = _encodedDefaultInput(_fwdTarget);
 
         _fwdList = new address[](1);
         _fwdList[0] = _fwd;
@@ -122,7 +125,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
-            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+            untrustedForwarder: address(_fwd), input: _input, output: EXPECTED_OUTPUT
         });
         _mockPa.execute(txn);
     }
@@ -139,16 +142,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
-            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+            untrustedForwarder: address(_fwd), input: _input, output: EXPECTED_OUTPUT
         });
 
         _mockPa.execute(txn);
     }
 
     function testFuzz_execute_emits_all_ForwarderCallExecuted_events(bool aggregated) public {
-        address fwd2 = address(
-            new ForwarderExample({protocolAdapter: address(_mockPa), calldataCarrierLogicRef: _CARRIER_LOGIC_REF})
-        );
+        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
         assertNotEq(_fwd, fwd2, "forwarder addresses should differ");
 
         address[] memory fwdList = new address[](2);
@@ -164,12 +165,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
-            untrustedForwarder: address(_fwd), input: INPUT, output: EXPECTED_OUTPUT
+            untrustedForwarder: address(_fwd), input: _input, output: EXPECTED_OUTPUT
         });
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
-            untrustedForwarder: address(fwd2), input: INPUT, output: EXPECTED_OUTPUT
+            untrustedForwarder: address(fwd2), input: _input, output: EXPECTED_OUTPUT
         });
 
         _mockPa.execute(txn);
@@ -531,7 +532,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
-        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, INPUT, fakeOutput);
+        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, _input, fakeOutput);
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -706,7 +707,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         for (uint256 i = 0; i < nCalls; ++i) {
             externalBlobs[i] = Logic.ExpirableBlob({
                 deletionCriterion: Logic.DeletionCriterion.Never,
-                blob: abi.encode(address(fwdList[i]), INPUT, EXPECTED_OUTPUT)
+                blob: abi.encode(address(fwdList[i]), _input, EXPECTED_OUTPUT)
             });
         }
         data[0].appData.externalPayload = externalBlobs;

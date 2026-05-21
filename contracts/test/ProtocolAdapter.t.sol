@@ -4,13 +4,13 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0-rc.1/script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.0.0/script/DeployRiscZeroContracts.s.sol";
 import {
     DeployRiscZeroContractsMock,
     MOCK_VERIFIER_SELECTOR
-} from "anoma-risc0-deployments-1.0.0-rc.1/test/script/DeployRiscZeroContractsMock.s.sol";
+} from "anoma-risc0-deployments-1.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
 
-import {Test, Vm} from "forge-std-1.15.0/src/Test.sol";
+import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 import {
@@ -231,18 +231,12 @@ contract ProtocolAdapterTest is Test {
         assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
     }
 
-    function test_getVersion_returns_a_semantic_version() public view {
-        bytes32 version = _pa.getVersion();
+    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
+        int256 lt = -1;
+        //int256 eq = 0;
+        int256 gt = 1;
 
-        assertEq(
-            version.cmp("0.0.0"),
-            1, /* GT */
-            "version should be greater than 0.0.0"
-        );
-        assertEq(
-            version.cmp("999.999.999"),
-            -1, /* LT */
-            "version should be less than 999.999.999"
-        );
+        assertEq(SemVerLib.cmp(_pa.getVersion(), "1.0.0"), gt, "version should be greater than 1.0.0");
+        assertEq(SemVerLib.cmp(_pa.getVersion(), "2.0.0"), lt, "version should be less than 2.0.0");
     }
 }
