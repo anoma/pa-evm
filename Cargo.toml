@@ -11,7 +11,7 @@ homepage = "https://anoma.net/"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "1.8.3", features = ["full", "eip712", "node-bindings"] }
+alloy = { version = "2.0.5", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.33"
 anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
 anoma-rm-risc0-test-app = { version = "1.1.1", features = ["bonsai"] }
@@ -19,6 +19,6 @@ dotenvy = { version = "0.15.7", features = ["cli"] }
 serde = { version = "1.0.228", default-features = false }
 serde_json = "1.0"
 thiserror = "2.0.18"
-tokio = { version = "1.51", features = ["rt-multi-thread"] }
+tokio = { version = "1.52", features = ["rt-multi-thread"] }
 
 anoma-pa-evm-bindings = { path = "bindings" }
