@@ -1,6 +1,6 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-solc = "0.8.34"
+solc = "0.8.35"
 auto_detect_solc = false
 evm_version = "osaka"
 gas_reports = [
@@ -27,24 +27,26 @@ libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
     "@openzeppelin-contracts-5.6.1/=dependencies/@openzeppelin-contracts-5.6.1/",
-    "anoma-forwarder-bases-1.0.0-rc.0/=dependencies/anoma-forwarder-bases-1.0.0-rc.0/",
-    "anoma-risc0-deployments-1.0.0-rc.1/=dependencies/anoma-risc0-deployments-1.0.0-rc.1/",
+    "anoma-forwarder-bases-1.0.0-rc.1/=dependencies/anoma-forwarder-bases-1.0.0-rc.1/",
+    "anoma-risc0-deployments-1.0.0/=dependencies/anoma-risc0-deployments-1.0.0/",
+    "anoma-risc0-deployments-1.0.0/=dependencies/anoma-risc0-deployments-1.0.0/",
     "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
-    "forge-std-1.15.0/=dependencies/forge-std-1.15.0/",
+    "forge-std-1.16.1/=dependencies/forge-std-1.16.1/",
     "openzeppelin/contracts/=dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
     "risc0-risc0-ethereum-3.0.1/=dependencies/risc0-risc0-ethereum-3.0.1/",
     "solady-0.1.26/=dependencies/solady-0.1.26/",
 ]
 ignored_warnings_from = [
+    "dependencies/@openzeppelin-contracts-5.6.1/utils",      # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
 [dependencies]
 "@openzeppelin-contracts" = "5.6.1"
-"anoma-forwarder-bases" = "1.0.0-rc.0"
-"anoma-risc0-deployments" = "1.0.0-rc.1"
-"forge-std" = "1.15.0"
+"anoma-forwarder-bases" = "1.0.0-rc.1"
+"anoma-risc0-deployments" = "1.0.0"
+"forge-std" = "1.16.1"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
 "risc0-risc0-ethereum" = "3.0.1"
 "solady" = "0.1.26"
