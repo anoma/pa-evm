@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ForwarderExample} from "anoma-forwarder-bases-1.0.0-rc.1/test/examples/Forwarder.e.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-1.0.0-rc.2/test/examples/Forwarder.e.sol";
 import {
     ForwarderTargetExample,
     _encodedDefaultInput,
     EXPECTED_OUTPUT
-} from "anoma-forwarder-bases-1.0.0-rc.1/test/examples/ForwarderTarget.e.sol";
+} from "anoma-forwarder-bases-1.0.0-rc.2/test/examples/ForwarderTarget.e.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
 import {

@@ -61,12 +61,16 @@ contracts-gen-bindings:
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
 contracts-deploy deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}

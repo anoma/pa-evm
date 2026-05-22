@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
-import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.1/src/interfaces/IForwarder.sol";
-import {Version} from "anoma-forwarder-bases-1.0.0-rc.1/src/Version.sol";
+import {IForwarder} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IForwarder.sol";
+import {IVersion} from "anoma-forwarder-bases-1.0.0-rc.2/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -26,7 +26,7 @@ import {Action, Transaction} from "./Types.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
-    Version,
+    IVersion,
     ReentrancyGuardTransient,
     Ownable,
     Pausable,
@@ -88,7 +88,7 @@ contract ProtocolAdapter is
         RiscZeroVerifierRouter riscZeroVerifierRouter,
         bytes4 riscZeroVerifierSelector,
         address emergencyStopCaller
-    ) Version("1.2.0-rc.0") Ownable(emergencyStopCaller) {
+    ) Ownable(emergencyStopCaller) {
         require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
@@ -115,6 +115,11 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
+    }
+
+    /// @inheritdoc IVersion
+    function getVersion() external pure override returns (bytes32 version) {
+        version = "1.2.0-rc.0";
     }
 
     /// @inheritdoc IProtocolAdapter
