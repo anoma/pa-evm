@@ -14,7 +14,8 @@ via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
-cbor_metadata = false
+# We intentionally omit `cbor_metadata = false` since the metadata helps verification. 
+# Instead we ensure that only the files required for the deploy script are built within the justfile.
 bytecode_hash = "none"
 
 
