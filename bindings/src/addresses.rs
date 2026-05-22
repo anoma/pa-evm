@@ -12,9 +12,8 @@ struct DeploymentEntry {
 }
 
 static DEPLOYMENTS: LazyLock<HashMap<NamedChain, Address>> = LazyLock::new(|| {
-    let entries: Vec<DeploymentEntry> =
-        serde_json::from_str(include_str!("../../deployments.json"))
-            .expect("deployments.json: invalid JSON");
+    let entries: Vec<DeploymentEntry> = serde_json::from_str(include_str!("../deployments.json"))
+        .expect("deployments.json: invalid JSON");
 
     entries
         .into_iter()
