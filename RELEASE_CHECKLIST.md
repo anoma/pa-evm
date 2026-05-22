@@ -70,13 +70,11 @@ We distinguish between three release cases:
 
 ### 2. Bump the Version
 
-- [ ] Bump the `_PROTOCOL_ADAPTER_VERSION` constant in [`./contracts/src/libs/Versioning.sol`](./contracts/src/libs/Versioning.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
+- [ ] Bump the version number in the `getVersion()` function in [`./contracts/src/ProtocolAdapter.sol`](./contracts/src/ProtocolAdapter.sol) to the new version number following [SemVer](https://semver.org/spec/v2.0.0.html).
 
 - [ ] Remove all entries from [`./deployments.json`](./deployments.json) (replace the array contents with `[]`).
 
-### 3. Build the Contracts
-
-- [ ] Run `just contracts-build`
+### 3. Test the Contracts
 
 - [ ] Run the test suite with `just contracts-test`
 
