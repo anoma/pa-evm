@@ -50,6 +50,9 @@ pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
         //
         BinanceSmartChain => Ok("bnb-mainnet"),
         BinanceSmartChainTestnet => Ok("bnb-testnet"),
+        //
+        Monad => Ok("monad-mainnet"),
+        MonadTestnet => Ok("monad-testnet"),
 
         _ => Err(AlchemyError::SubdomainNotFound),
     }
