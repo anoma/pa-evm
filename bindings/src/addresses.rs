@@ -33,6 +33,10 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::BinanceSmartChain,
             address!("0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68"),
         ),
+        (
+            NamedChain::Monad,
+            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"),
+        ),
     ])
 }
 
