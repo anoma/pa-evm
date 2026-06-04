@@ -53,7 +53,7 @@ contracts-gen-bindings:
     cd contracts && forge clean && forge bind \
         --skip test --skip script \
         --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
-        --bindings-path ../bindings/src/generated/ \
+        --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
 
@@ -110,28 +110,28 @@ contracts-publish version *args:
 
 # Clean bindings
 bindings-clean:
-    cd bindings && cargo clean
+    cd crates/bindings && cargo clean
 
 # Build bindings
 bindings-build *args:
-    cd bindings && cargo build {{ args }}
+    cd crates/bindings && cargo build {{ args }}
 
 # Test bindings
 bindings-test *args:
-    cd bindings && cargo test {{ args }}
+    cd crates/bindings && cargo test {{ args }}
 
 # Check bindings are up-to-date
 bindings-check: contracts-gen-bindings
-    git diff --exit-code bindings/src/generated/
+    git diff --exit-code crates/bindings/src/generated/
 
 # Publish bindings
 bindings-publish *args:
-    cd bindings && cargo publish {{ args }}
+    cd crates/bindings && cargo publish {{ args }}
 
 # Lint bindings (clippy)
 bindings-lint:
-    cd bindings && cargo clippy --no-deps -- -Dwarnings
-    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
+    cd crates/bindings && cargo clippy --no-deps -- -Dwarnings
+    cd crates/bindings && cargo clippy --no-deps --tests -- -Dwarnings
 
 # Format bindings
 bindings-fmt:
@@ -141,42 +141,68 @@ bindings-fmt:
 bindings-fmt-check:
     cargo fmt -- --check
 
+# --- Crates (workspace-wide Rust) ---
+
+# Clean all crates
+crates-clean:
+    cargo clean
+
+# Build all crates
+crates-build *args:
+    cargo build {{ args }}
+
+# Test all crates
+crates-test *args:
+    cargo test {{ args }}
+
+# Lint all crates (clippy)
+crates-lint:
+    cargo clippy --all-targets --no-deps -- -Dwarnings
+
+# Format all crates
+crates-fmt *args:
+    cargo fmt --all {{ args }}
+
+# Check all crates formatting
+crates-fmt-check:
+    cargo fmt --all -- --check
+
 # --- All ---
 
-# Lint all (contracts + bindings)
+# Lint all (contracts + crates)
 all-lint:
     @echo "==> Linting contracts..."
     @just contracts-lint
-    @echo "==> Linting bindings..."
-    @just bindings-lint
+    @echo "==> Linting crates..."
+    @just crates-lint
 
-# Format all (contracts + bindings)
+# Format all (contracts + crates)
 all-fmt:
     @echo "==> Formatting contracts..."
     @just contracts-fmt
-    @echo "==> Formatting bindings..."
-    @just bindings-fmt
+    @echo "==> Formatting crates..."
+    @just crates-fmt
 
-# Check formatting for all (contracts + bindings)
+# Check formatting for all (contracts + crates)
 all-fmt-check:
     @echo "==> Checking contract formatting..."
     @just contracts-fmt-check
-    @echo "==> Checking bindings formatting..."
-    @just bindings-fmt-check
+    @echo "==> Checking crates formatting..."
+    @just crates-fmt-check
 
-# Build all (contracts + bindings)
+# Build all (contracts + crates)
 all-build:
     @echo "==> Building contracts..."
     @just contracts-build
-    @echo "==> Building bindings..."
-    @just bindings-build
+    @echo "==> Building crates..."
+    @just crates-build
 
-# Test all (contracts + bindings)
+# Test all (contracts + crates)
 all-test:
     @echo "==> Testing contracts..."
     @just contracts-test
-    @echo "==> Testing bindings..."
-    @just bindings-test
+    @echo "==> Testing crates..."
+    @just crates-test
 
 # Prerequisites check (mirrors CI)
 all-check:
