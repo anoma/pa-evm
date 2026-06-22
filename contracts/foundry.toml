@@ -14,8 +14,8 @@ via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
-cbor_metadata = false
-bytecode_hash = "none"
+#cbor_metadata = false
+#bytecode_hash = "none"
 
 
 src = "src"
