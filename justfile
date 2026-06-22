@@ -61,12 +61,14 @@ contracts-gen-bindings:
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
 contracts-deploy deployer chain *args:
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
@@ -88,6 +90,12 @@ contracts-verify-etherscan address chain *args:
     cd contracts && forge verify-contract {{address}} \
         src/ProtocolAdapter.sol:ProtocolAdapter \
         --chain {{chain}} --verifier etherscan --watch {{ args }}
+
+# Verify on a custom explorer
+contracts-verify-custom address chain verifier-url *args:
+    cd contracts && forge verify-contract {{address}} \
+        src/ProtocolAdapter.sol:ProtocolAdapter \
+        --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
 
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
