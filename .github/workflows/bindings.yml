@@ -12,6 +12,7 @@ jobs:
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      NOWNODES_API_KEY: ${{ secrets.NOWNODES_API_KEY }}
 
     steps:
       - name: Checkout repository
