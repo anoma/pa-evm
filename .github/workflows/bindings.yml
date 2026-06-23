@@ -12,6 +12,7 @@ jobs:
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      NOWNODES_API_KEY: ${{ secrets.NOWNODES_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -30,8 +31,6 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: v1.7.0
 
       - name: Show Foundry version
         run: forge --version

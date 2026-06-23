@@ -61,12 +61,14 @@ contracts-gen-bindings:
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
 contracts-deploy deployer chain *args:
+    @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
@@ -89,40 +91,18 @@ contracts-verify-etherscan address chain *args:
         src/ProtocolAdapter.sol:ProtocolAdapter \
         --chain {{chain}} --verifier etherscan --watch {{ args }}
 
+# Verify on a custom explorer
+contracts-verify-custom address chain verifier-url *args:
+    cd contracts && forge verify-contract {{address}} \
+        src/ProtocolAdapter.sol:ProtocolAdapter \
+        --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
+
 # Verify on both sourcify and etherscan
 contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
 
 # Publish contracts
 contracts-publish version *args:
     cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
-
-# --- RISC Zero Verifier ---
-
-# Simulate RISC Zero verifier deployment (dry-run)
-risczero-simulate admin guardian chain *args:
-    cd contracts && FOUNDRY_EVM_VERSION=cancun forge script \
-        test/script/DeployRiscZeroContracts.s.sol:DeployRiscZeroContracts \
-        --sig "run(address,address)" {{admin}} {{guardian}} \
-        --rpc-url {{chain}} {{ args }}
-
-# Deploy RISC Zero verifier (router + groth16 + emergency stop)
-risczero-deploy deployer admin guardian chain *args:
-    cd contracts && FOUNDRY_EVM_VERSION=cancun forge script \
-        test/script/DeployRiscZeroContracts.s.sol:DeployRiscZeroContracts \
-        --sig "run(address,address)" {{admin}} {{guardian}} \
-        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
-
-# Verify RISC Zero verifier contracts on Sourcify
-risczero-verify groth16 estop router chain *args:
-    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{groth16}} \
-        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol:RiscZeroGroth16Verifier \
-        --chain {{chain}} --verifier sourcify {{ args }}
-    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{estop}} \
-        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol:RiscZeroVerifierEmergencyStop \
-        --chain {{chain}} --verifier sourcify {{ args }}
-    cd contracts && FOUNDRY_EVM_VERSION=cancun forge verify-contract {{router}} \
-        dependencies/risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol:RiscZeroVerifierRouter \
-        --chain {{chain}} --verifier sourcify {{ args }}
 
 # --- Bindings ---
 

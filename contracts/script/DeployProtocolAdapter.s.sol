@@ -64,8 +64,21 @@ contract DeployProtocolAdapter is Script {
             name: "bsc-testnet", chainId: 97, riscZeroVerifierRouter: 0x7C1B7b8fEB636eA9Ecd32152Bce2744a0EEf39C7
         });
         _supportNetwork({name: "bsc", chainId: 56, riscZeroVerifierRouter: 0x7C1B7b8fEB636eA9Ecd32152Bce2744a0EEf39C7});
+
         _supportNetwork({
             name: "monad", chainId: 143, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
+        });
+
+        _supportNetwork({
+            name: "stable-mainnet", chainId: 988, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
+        });
+
+        _supportNetwork({
+            name: "megaeth", chainId: 4326, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
+        });
+
+        _supportNetwork({
+            name: "aurora", chainId: 1313161554, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
         });
     }
 

@@ -35,7 +35,19 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
         ),
         (
             NamedChain::Monad,
-            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"),
+            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
+        ),
+        (
+            NamedChain::StableMainnet,
+            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
+        ),
+        (
+            NamedChain::MegaEth,
+            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
+        ),
+        (
+            NamedChain::Aurora,
+            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
         ),
     ])
 }
