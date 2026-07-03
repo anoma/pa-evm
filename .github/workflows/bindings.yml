@@ -35,13 +35,8 @@ jobs:
       - name: Show Foundry version
         run: forge --version
 
-      - name: Restore dependencies cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            target
-          key: rust-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: rust-
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run rustfmt
         run: just bindings-fmt-check
