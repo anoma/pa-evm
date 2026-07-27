@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol";
+import {Initializable} from "@openzeppelin-contracts-5.6.1/proxy/utils/Initializable.sol";
 import {Test} from "forge-std-1.16.1/src/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
@@ -42,6 +43,18 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         vm.expectEmit();
         emit ICommitmentTree.CommitmentTreeRootAdded({root: SHA256.EMPTY_HASH});
         new ERC1967Proxy(implementation, abi.encodeCall(CommitmentTree.initialize, ()));
+    }
+
+    function test_initialize_reverts_when_called_twice() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector, address(_cmAcc));
+        _cmAcc.initialize();
+    }
+
+    function test_initialize_reverts_on_implementation_contract() public {
+        CommitmentTreeMock directMock = new CommitmentTreeMock();
+
+        vm.expectRevert(Initializable.InvalidInitialization.selector, address(directMock));
+        directMock.initialize();
     }
 
     function test_addCommitment_returns_correct_roots() public {
