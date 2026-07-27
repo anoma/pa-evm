@@ -11,9 +11,6 @@ jobs:
     name: Crates Tests
     runs-on: macos-latest
     env:
-      ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-      QUEUE_BASE_URL: ${{ secrets.QUEUE_BASE_URL }}
-      QUEUE_AUTH_TOKEN: ${{ secrets.QUEUE_AUTH_TOKEN }}
       RISC0_SKIP_BUILD_KERNELS: true
 
     steps:
@@ -44,10 +41,12 @@ jobs:
         run: just crates-fmt-check
 
       - name: Build
-        run: just crates-build --features e2e
+        run: just crates-build
 
       - name: Lint
         run: just crates-lint
 
       - name: Run Tests
-        run: just crates-test --features e2e
+        run: just crates-test
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
