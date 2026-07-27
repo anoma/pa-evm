@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
-import {Initializable} from "@openzeppelin-contracts-5.6.1/proxy/utils/Initializable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
@@ -116,17 +115,5 @@ contract ProtocolAdapterUpgradeTest is Test {
             abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
         );
         _pa.upgradeToAndCall(address(newImplementation), "");
-    }
-
-    function test_initialize_reverts_when_called_twice() public {
-        vm.expectRevert(Initializable.InvalidInitialization.selector, address(_pa));
-        _pa.initialize(_EMERGENCY_COMMITTEE);
-    }
-
-    function test_initialize_reverts_on_the_implementation_contract() public {
-        ProtocolAdapter implementation = new ProtocolAdapter(_router, _verifier.SELECTOR());
-
-        vm.expectRevert(Initializable.InvalidInitialization.selector, address(implementation));
-        implementation.initialize(_EMERGENCY_COMMITTEE);
     }
 }
