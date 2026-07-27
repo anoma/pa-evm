@@ -1,6 +1,14 @@
 [workspace]
 resolver = "3"
-members = ["bindings", "example-tx-generation"]
+members = [
+  "crates/bindings",
+  "crates/example-tx-generation",
+  "crates/integration-test",
+]
+# example-tx-generation links the risc0 prover (real aggregated proofs); keep it
+# out of default builds (CI `crates-*` recipes) — build it explicitly with
+# `cargo build -p example-tx-generation` when generating test vectors.
+default-members = ["crates/bindings", "crates/integration-test"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
@@ -15,10 +23,23 @@ alloy = { version = "2.0.5", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.33"
 anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
 anoma-rm-risc0-test-app = { version = "1.1.1", features = ["bonsai"] }
+anyhow = "1.0"
+bincode = "1.3.3"
 dotenvy = { version = "0.15.7", features = ["cli"] }
+hex = "0.4"
+regex = "1.12.3"
+risc0-zkvm = "3.0.3"
+rstest = "0.26.1"
 serde = { version = "1.0.228", default-features = false }
 serde_json = "1.0"
 thiserror = "2.0.18"
 tokio = { version = "1.52", features = ["rt-multi-thread"] }
 
-anoma-pa-evm-bindings = { path = "bindings" }
+anoma-pa-evm-bindings = { path = "crates/bindings" }
+anoma-pa-evm-integration-test = { path = "crates/integration-test" }
+
+# Backend-agnostic risc0 testkit, pinned by git rev (see anoma-pa-testkit
+# ADR-0002). For cross-repo development, override locally with a `[patch]` to a
+# path checkout.
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "74cf6ad7cd488021128c34662e68171c7ae28e6d" }
+anoma-risc0-verifier-bindings = "1.0.0-rc.0"

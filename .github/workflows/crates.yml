@@ -1,4 +1,4 @@
-name: Bindings
+name: Crates
 
 on:
   push:
@@ -8,10 +8,13 @@ on:
 
 jobs:
   tests:
-    name: Bindings Tests
+    name: Crates Tests
     runs-on: macos-latest
     env:
       ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+      QUEUE_BASE_URL: ${{ secrets.QUEUE_BASE_URL }}
+      QUEUE_AUTH_TOKEN: ${{ secrets.QUEUE_AUTH_TOKEN }}
+      RISC0_SKIP_BUILD_KERNELS: true
 
     steps:
       - name: Checkout repository
@@ -38,13 +41,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run rustfmt
-        run: just bindings-fmt-check
+        run: just crates-fmt-check
 
-      - name: Build Bindings
-        run: just bindings-build
+      - name: Build
+        run: just crates-build --features e2e
 
-      - name: Lint Bindings
-        run: just bindings-lint
+      - name: Lint
+        run: just crates-lint
 
       - name: Run Tests
-        run: just bindings-test
+        run: just crates-test --features e2e

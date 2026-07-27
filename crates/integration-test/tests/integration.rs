@@ -1,0 +1,108 @@
+#[cfg(feature = "e2e")]
+use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
+use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
+use anoma_pa_testkit::assert::{Needle, expect_integration_panic};
+use anoma_pa_testkit::environment::Environment;
+use anoma_pa_testkit::fixtures::trivial;
+use anoma_pa_testkit::transaction::Transaction;
+use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
+use anyhow::Context;
+use rstest::*;
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[cfg_attr(feature = "e2e", case::e2e_test(EvmE2eEnv::setup_bare()))]
+#[tokio::test]
+async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    let before = commitment_root(&env)?;
+
+    let action = trivial::build(1, trivial::Overrides::default())
+        .context("failed to build trivial action")?
+        .witnesses;
+    let tx = prove_actions(&env, &[action]).await?;
+
+    execute_tx(&mut env, tx).await?;
+
+    let after = commitment_root(&env)?;
+
+    anyhow::ensure!(before != after, "commitment tree root must change");
+    Ok(())
+}
+
+#[rstest]
+#[case::local(
+    EvmLocalEnv::setup_bare(),
+    expect_integration_panic(Needle::Regexp(
+        regex::Regex::new(
+            r#"proving failed: [^\n]*\n\s*left: 1[^\n]*\n\s*right: 0"#,
+        )
+        .unwrap(),
+    )),
+)]
+#[tokio::test]
+async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+    #[case] assert_err: impl FnOnce(anyhow::Result<Env::Transaction>) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let env = env.expect("env setup failed");
+
+    let bad = trivial::build(7, trivial::Overrides::invalid_nonzero_quantity())
+        .expect("failed to build invalid trivial action");
+
+    assert_err(prove_actions(&env, &[bad.witnesses]).await)
+}
+
+#[rstest]
+#[case::local(
+    EvmLocalEnv::setup_bare(),
+    expect_integration_panic(Needle::Static("assertion failed: self.resource.is_ephemeral"))
+)]
+#[tokio::test]
+async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+    #[case] assert_err: impl FnOnce(anyhow::Result<Env::Transaction>) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let env = env.expect("env setup failed");
+
+    let bad = trivial::build(8, trivial::Overrides::invalid_consumed_non_ephemeral())
+        .expect("failed to build invalid trivial action");
+
+    assert_err(prove_actions(&env, &[bad.witnesses]).await)
+}
+
+#[rstest]
+#[case::local(
+    EvmLocalEnv::setup_bare(),
+    Transaction::tamper_first_logic_seal,
+    // RiscZeroMockVerifier rejects the tampered seal with `VerificationFailed()` (0x439cc0cd).
+    expect_integration_panic(Needle::Static("execution reverted: custom error 0x439cc0cd"))
+)]
+#[tokio::test]
+async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+    #[case] tamper: impl FnOnce(&mut Env::Transaction) -> anyhow::Result<()>,
+    #[case] assert_err: impl FnOnce(anyhow::Result<()>) -> anyhow::Result<()>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    let actions = trivial::build_many(1, 11).context("failed to build trivial actions")?;
+    let mut tx = prove_actions(&env, &actions)
+        .await
+        .context("valid witnesses should prove before tampering")?;
+
+    tamper(&mut tx).context("failed to tamper transaction proof")?;
+
+    assert_err(execute_tx(&mut env, tx).await)
+}
