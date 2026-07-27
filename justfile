@@ -62,7 +62,7 @@ contracts-fmt-check:
 
 # Run contract tests
 contracts-test *args:
-    cd contracts && forge test {{ args }}
+    cd contracts && forge test --force {{ args }}
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
