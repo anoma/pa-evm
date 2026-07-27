@@ -2,7 +2,7 @@ name: Bindings
 
 on:
   push:
-    branches: [main, next-contracts, next-bindings]
+    branches: [main, next]
   pull_request:
   workflow_dispatch:
 
