@@ -88,8 +88,9 @@ async fn pa_instance(
 ) -> protocol_adapter::ProtocolAdapter::ProtocolAdapterInstance<DynProvider> {
     let rpc_url = alchemy_url(chain).expect("Couldn't get RPC URL for chain");
 
+    // Raise anvil's 10s fork-startup default; slow RPCs Timeout as chains grow.
     let provider = ProviderBuilder::new()
-        .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
+        .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url).timeout(120_000))
         .expect("Couldn't create anvil provider");
     protocol_adapter(&provider.erased())
         .await
