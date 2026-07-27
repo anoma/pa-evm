@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
-import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
+import {Initializable} from "@openzeppelin-contracts-5.6.1/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin-contracts-5.6.1/proxy/utils/UUPSUpgradeable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.6.1/utils/ReentrancyGuardTransient.sol";
+import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.6.1/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.6.1/utils/PausableUpgradeable.sol";
 import {IForwarder} from "anoma-forwarder-bases-1.0.0/src/interfaces/IForwarder.sol";
 import {IVersion} from "anoma-forwarder-bases-1.0.0/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
@@ -27,9 +29,11 @@ import {Action, Transaction} from "./Types.sol";
 contract ProtocolAdapter is
     IProtocolAdapter,
     IVersion,
+    Initializable,
+    UUPSUpgradeable,
     ReentrancyGuardTransient,
-    Ownable,
-    Pausable,
+    OwnableUpgradeable,
+    PausableUpgradeable,
     CommitmentTree,
     NullifierSet
 {
@@ -70,7 +74,10 @@ contract ProtocolAdapter is
         Logic.Instance[] logicInstances;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
+
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
     error ZeroNotAllowed();
@@ -80,19 +87,33 @@ contract ProtocolAdapter is
     error RiscZeroVerifierStopped();
     error Simulated(uint256 gasUsed);
 
-    /// @notice Constructs the protocol adapter contract.
+    /// @notice The constructor disabling the initializers on the implementation contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
-    /// @param emergencyStopCaller The account that can stop the protocol adapter in case of a vulnerability.
-    constructor(
-        RiscZeroVerifierRouter riscZeroVerifierRouter,
-        bytes4 riscZeroVerifierSelector,
-        address emergencyStopCaller
-    ) Ownable(emergencyStopCaller) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
         require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
+        require(riscZeroVerifierSelector != bytes4(0), ZeroNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
+
+        _disableInitializers();
+    }
+
+    /// @notice Initializes the protocol adapter contract.
+    /// @param emergencyStopCaller The account that can stop the protocol adapter in case of a vulnerability.
+    function initialize( /* solhint-disable-line comprehensive-interface*/
+        address emergencyStopCaller
+    )
+        external
+        initializer
+    {
+        __Ownable_init(emergencyStopCaller);
+        __Pausable_init();
+
+        __CommitmentTree_init();
+        __NullifierSet_init();
 
         // Sanity check that the verifier has not been stopped already.
         require(!isEmergencyStopped(), RiscZeroVerifierStopped());
@@ -119,13 +140,14 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
-        version = "1.2.0-rc.1";
+        version = "2.0.0-rc.0";
     }
 
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
-        bool risc0Paused =
-            Pausable(address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))).paused();
+        bool risc0Paused = PausableUpgradeable(
+                address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+            ).paused();
 
         isStopped = risc0Paused || paused();
     }
@@ -139,6 +161,9 @@ contract ProtocolAdapter is
     function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
+
+    // NOTE: The state writes after the forwarder calls are protected by the `nonReentrant` modifier.
+    // slither-disable-start reentrancy-no-eth
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
@@ -216,6 +241,11 @@ contract ProtocolAdapter is
         // Emit the event containing the transaction and new root.
         emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
     }
+
+    // slither-disable-end reentrancy-no-eth
+
+    // NOTE: The state writes in `_addCommitment` and `_addNullifier` are protected by the `nonReentrant` modifier.
+    // slither-disable-start reentrancy-benign
 
     /// @notice Processes a resource logic proof by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
@@ -297,6 +327,8 @@ contract ProtocolAdapter is
         _emitAppDataBlobs(input);
     }
 
+    // slither-disable-end reentrancy-benign
+
     /// @notice Processes forwarder calls by verifying and executing them.
     /// @param verifierInput The logic verifier input of a resource making the call.
     function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
@@ -377,6 +409,10 @@ contract ProtocolAdapter is
             }
         }
     }
+
+    /// @inheritdoc UUPSUpgradeable
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /// @notice Processes a resource machine compliance proof by
     /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,

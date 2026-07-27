@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 
 import {ForwarderExample} from "anoma-forwarder-bases-1.0.0/test/examples/ForwarderExample.sol";
@@ -11,6 +12,8 @@ import {
 } from "anoma-forwarder-bases-1.0.0/test/examples/ForwarderTargetExample.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.1/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -57,7 +60,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
 
-        _mockPa = new ProtocolAdapter(_router, _mockVerifier.SELECTOR(), _EMERGENCY_COMMITTEE);
+        Options memory opts;
+        opts.constructorData = abi.encode(_router, _mockVerifier.SELECTOR());
+
+        _mockPa = ProtocolAdapter(
+            Upgrades.deployUUPSProxy(
+                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
+            )
+        );
 
         _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
         _fwdTarget = address(new ForwarderTargetExample());
@@ -609,7 +619,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         _mockPa.execute(txn);
 
-        CommitmentTreeMock newCmTree = new CommitmentTreeMock();
+        CommitmentTreeMock newCmTree = CommitmentTreeMock(
+            address(new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTree.initialize, ())))
+        );
 
         bytes32[] memory cms = TxGen.collectCommitments(txn);
         bytes32 newRoot = newCmTree.initialRoot();

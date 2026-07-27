@@ -19,6 +19,8 @@ contract CommitmentTreeMock is CommitmentTree {
     }
 
     function initialRoot() external view returns (bytes32 hash) {
-        hash = _roots.at(0);
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        hash = $._roots.at(0);
     }
 }

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.6.1/access/Ownable.sol";
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
 
 import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.2.0/script/DeployRiscZeroContracts.s.sol";
@@ -11,6 +12,8 @@ import {
 } from "anoma-risc0-deployments-1.2.0/test/script/DeployRiscZeroContractsMock.s.sol";
 
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.1/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -52,20 +55,29 @@ contract ProtocolAdapterTest is Test {
 
         _verifierSelector = _verifier.SELECTOR();
 
-        _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
+        Options memory opts;
+        opts.constructorData = abi.encode(_router, _verifierSelector);
+
+        _pa = ProtocolAdapter(
+            Upgrades.deployUUPSProxy(
+                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
+            )
+        );
     }
 
     function test_constructor_reverts_on_address_zero_router() public {
         vm.expectRevert(ProtocolAdapter.ZeroNotAllowed.selector);
-        new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), _verifierSelector, _EMERGENCY_COMMITTEE);
+        new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), _verifierSelector);
     }
 
-    function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
+    function test_initialize_reverts_on_vulnerable_risc_zero_verifier() public {
+        ProtocolAdapter implementation = new ProtocolAdapter(_router, _verifierSelector);
+
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
+        new ERC1967Proxy(address(implementation), abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)));
     }
 
     function test_execute_reverts_if_the_pa_has_been_stopped() public {

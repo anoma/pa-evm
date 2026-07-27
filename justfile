@@ -63,7 +63,7 @@ contracts-simulate chain *args:
     @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --rpc-url {{chain}} {{ args }}
 
@@ -71,7 +71,7 @@ contracts-simulate chain *args:
 contracts-deploy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
