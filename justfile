@@ -30,6 +30,22 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
 
+# Checks that the storage layout of contracts in `src` is empty.
+# `skip` is a space-separated list of contract names to ignore (contract-free files).
+contracts-storage-check *skip='Types':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd contracts
+    for sol in $(find src -name '*.sol' | sort); do
+        name="$(basename "$sol" .sol)"
+        case " {{ skip }} " in *" $name "*) continue ;; esac
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '.storage == []')" != true ]; then
+            printf '{{RED}}%s has a non-empty storage layout; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+            exit 1
+        fi
+    done
+    printf '{{GREEN}}All contracts in `src` use namespaced storage (empty storage layout).{{NORMAL}}\n'
+
 # Run slither on contracts
 contracts-static-analysis:
     cd contracts && slither .
@@ -201,6 +217,8 @@ all-test:
 # Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Checking storage layouts..."
+    @just contracts-storage-check
     @echo "==> Static analysis with slither..."
     @just contracts-static-analysis
     @echo "==> Checking formatting..."
