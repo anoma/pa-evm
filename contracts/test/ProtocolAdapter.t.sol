@@ -65,9 +65,14 @@ contract ProtocolAdapterTest is Test {
         );
     }
 
-    function test_constructor_reverts_on_address_zero_router() public {
-        vm.expectRevert(ProtocolAdapter.ZeroNotAllowed.selector);
+    function test_constructor_reverts_on_zero_risc_zero_verifier_router() public {
+        vm.expectRevert(ProtocolAdapter.ZeroRiscZeroVerifierRouterNotAllowed.selector);
         new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), _verifierSelector);
+    }
+
+    function test_constructor_reverts_on_zero_risc_zero_verifier_selector() public {
+        vm.expectRevert(ProtocolAdapter.ZeroRiscZeroVerifierSelectorNotAllowed.selector);
+        new ProtocolAdapter(_router, bytes4(0));
     }
 
     function test_initialize_reverts_on_vulnerable_risc_zero_verifier() public {

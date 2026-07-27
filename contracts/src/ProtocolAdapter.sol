@@ -80,7 +80,8 @@ contract ProtocolAdapter is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
-    error ZeroNotAllowed();
+    error ZeroRiscZeroVerifierRouterNotAllowed();
+    error ZeroRiscZeroVerifierSelectorNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
@@ -92,8 +93,8 @@ contract ProtocolAdapter is
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
-        require(address(riscZeroVerifierRouter) != address(0), ZeroNotAllowed());
-        require(riscZeroVerifierSelector != bytes4(0), ZeroNotAllowed());
+        require(address(riscZeroVerifierRouter) != address(0), ZeroRiscZeroVerifierRouterNotAllowed());
+        require(riscZeroVerifierSelector != bytes4(0), ZeroRiscZeroVerifierSelectorNotAllowed());
 
         _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
         _RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
