@@ -3,6 +3,8 @@
 //! with `VerificationFailed` instead of `Simulated`. Local-only: the seals
 //! are the mock verifier's, including the aggregation seal minted here.
 
+mod common;
+
 use alloy::primitives::{Bytes, keccak256};
 use alloy::sol_types::SolError;
 use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
@@ -12,13 +14,13 @@ use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
 use anoma_pa_evm_integration_test::state::pa::pa_address;
 use anoma_pa_testkit::environment::Environment;
-use anoma_pa_testkit::fixtures::trivial;
-use anoma_pa_testkit::prove_actions;
 use anoma_pa_testkit::transaction::Transaction;
 use anyhow::Context;
 use risc0_zkvm::sha::Digestible;
 use risc0_zkvm::{Journal, MaybePruned, ReceiptClaim};
 use rstest::*;
+
+use common::prove_trivial_tx;
 
 /// Tampered seal byte: past the 4-byte selector, inside the claim digest.
 const TAMPER_INDEX: usize = 5;
@@ -131,18 +133,6 @@ where
         "the transaction with the tampered aggregation proof",
     )
     .await
-}
-
-/// Proves a transaction with a single trivial action, without executing it.
-async fn prove_trivial_tx<Env>(env: &Env) -> anyhow::Result<Transaction>
-where
-    Env: Environment<Transaction = Transaction>,
-{
-    let action = trivial::build(1, trivial::Overrides::default())
-        .context("failed to build trivial action")?
-        .witnesses;
-
-    prove_actions(env, &[action]).await
 }
 
 /// Proves a trivial transaction and converts it into protocol adapter calldata.
