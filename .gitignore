@@ -16,6 +16,7 @@ contracts/broadcast/*
 contracts/broadcast/*/31337/
 
 # Files
+TODO.md
 *.env
 .DS_Store
 .history
