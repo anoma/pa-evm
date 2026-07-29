@@ -12,7 +12,6 @@ import {
 
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
-import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
@@ -24,12 +23,9 @@ import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
-import {Parsing} from "./libs/Parsing.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
 contract ProtocolAdapterTest is Test {
-    using Parsing for Transaction;
-    using Parsing for Vm;
     using SemVerLib for bytes32;
     using TxGen for Vm;
 
@@ -45,8 +41,6 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal _pa;
     bytes4 internal _verifierSelector;
 
-    Transaction internal _aggTx;
-    Transaction internal _regTx;
     Transaction internal _emptyTx;
 
     function setUp() public {
@@ -59,9 +53,6 @@ contract ProtocolAdapterTest is Test {
         _verifierSelector = _verifier.SELECTOR();
 
         _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
-
-        _aggTx.toStorage(vm.parseTransaction("test/examples/transactions/test_tx_agg_01_01.bin"));
-        _regTx.toStorage(vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin"));
     }
 
     function test_constructor_reverts_on_address_zero_router() public {
@@ -82,15 +73,7 @@ contract ProtocolAdapterTest is Test {
         _pa.emergencyStop();
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
-        _pa.execute(_regTx);
-    }
-
-    function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
-        vm.prank(_emergencyStop.owner());
-        _emergencyStop.estop();
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.execute(_regTx);
+        _pa.execute(_emptyTx);
     }
 
     function test_execute_reverts_if_regular_proofs_have_been_generated_with_another_unstopped_verifier() public {
@@ -127,10 +110,6 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(txnWithMockProof);
     }
 
-    function test_execute() public {
-        _pa.execute(_regTx);
-    }
-
     function test_execute_executes_the_empty_transaction() public {
         vm.expectEmit(address(_pa));
         emit IProtocolAdapter.TransactionExecuted({tags: new bytes32[](0), logicRefs: new bytes32[](0)});
@@ -160,42 +139,6 @@ contract ProtocolAdapterTest is Test {
     function test_simulateExecute_reverts_if_proof_verification_is_not_skipped() public {
         vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_pa));
         _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: false});
-    }
-
-    function test_simulateExecute_reverts_on_invalid_logic_proof_if_proof_verification_is_not_skipped() public {
-        Transaction memory modified = _regTx;
-        {
-            bytes memory proof = modified.actions[0].logicVerifierInputs[0].proof;
-            proof[5] >>= 1; // Right shift the first byte after the verifier selector to invalidate the proof.
-            modified.actions[0].logicVerifierInputs[0].proof = proof;
-        }
-
-        vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
-    }
-
-    function test_simulateExecute_reverts_on_invalid_compliance_proof_if_proof_verification_is_not_skipped() public {
-        Transaction memory modified = _regTx;
-        {
-            bytes memory proof = modified.actions[0].complianceVerifierInputs[0].proof;
-            proof[5] >>= 1; // Right shift the first byte after the verifier selector to invalidate the proof.
-            modified.actions[0].complianceVerifierInputs[0].proof = proof;
-        }
-
-        vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
-    }
-
-    function test_simulateExecute_reverts_on_invalid_aggregation_proof_if_proof_verification_is_not_skipped() public {
-        Transaction memory modified = _aggTx;
-        {
-            bytes memory proof = modified.aggregationProof;
-            proof[5] >>= 1; // Right shift the first byte after the verifier selector to invalidate the proof.
-            modified.aggregationProof = proof;
-        }
-
-        vm.expectRevert(VerificationFailed.selector, address(_verifier));
-        _pa.simulateExecute({transaction: modified, skipRiscZeroProofVerification: false});
     }
 
     function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {

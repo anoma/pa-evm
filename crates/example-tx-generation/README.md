@@ -2,7 +2,7 @@
 
 # Example Transaction Generation
 
-This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be executed with the Anoma EVM Protocol Adapter or be used for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
+This package provides a [Rust](https://www.rust-lang.org/) executable to generate example transactions with aggregated and non-aggregated proofs that can be executed with the Anoma EVM Protocol Adapter.
 
 ## Prerequisites
 

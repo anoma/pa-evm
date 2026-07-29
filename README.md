@@ -30,7 +30,7 @@ The [contracts](./contracts/) folder contains the contracts written in [Solidity
 The [crates](./crates/) folder contains the Rust workspace:
 
 - [bindings](./crates/bindings/) provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
-- [example-tx-generation](./crates/example-tx-generation/) contains a binary to generate example transactions with aggregated and non-aggregated proofs as `.bin` files for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
+- [example-tx-generation](./crates/example-tx-generation/) contains a binary to generate example transactions with aggregated and non-aggregated proofs as `.bin` files.
 - [integration-test](./crates/integration-test/) contains the Rust integration and e2e test harness that deploys the protocol adapter to a local or forked chain and exercises it with risc0-proven transactions.
 
 ## Audits

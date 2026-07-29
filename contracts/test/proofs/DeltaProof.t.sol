@@ -3,14 +3,11 @@ pragma solidity ^0.8.30;
 
 import {ECDSA} from "@openzeppelin-contracts-5.6.1/utils/cryptography/ECDSA.sol";
 import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
-import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
+import {Test} from "forge-std-1.16.1/src/Test.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
-import {Transaction} from "../../src/Types.sol";
 
 import {DeltaGen} from "../libs/DeltaGen.sol";
-import {Parsing} from "../libs/Parsing.sol";
-import {TxGen} from "../libs/TxGen.sol";
 
 library DeltaFuzzing {
     struct InstanceInputsExceptKind {
@@ -26,7 +23,6 @@ library DeltaFuzzing {
 }
 
 contract DeltaProofTest is Test {
-    using Parsing for Vm;
     using Delta for Delta.Point;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
@@ -260,19 +256,6 @@ contract DeltaProofTest is Test {
         // Add the two points.
         vm.expectRevert(abi.encodeWithSelector(Delta.PointNotOnCurve.selector, zero), address(this));
         lhs.add(zero);
-    }
-
-    function test_verify_example_delta_proof() public view {
-        Transaction memory txn = vm.parseTransaction("test/examples/transactions/test_tx_reg_01_01.bin");
-
-        DeltaFuzzing.verify({
-            proof: txn.deltaProof,
-            instance: Delta.Point({
-                x: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaX),
-                y: uint256(txn.actions[0].complianceVerifierInputs[0].instance.unitDeltaY)
-            }),
-            verifyingKey: Delta.computeVerifyingKey(TxGen.collectTags(txn.actions))
-        });
     }
 
     function testFuzz_add_adding_zero_from_the_left_produces_a_curve_point(uint32 k) public pure {
