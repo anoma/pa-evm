@@ -1,3 +1,4 @@
+use alloy::sol_types::SolError;
 #[cfg(feature = "e2e")]
 use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
@@ -6,6 +7,7 @@ use anoma_pa_testkit::environment::Environment;
 use anoma_pa_testkit::fixtures::trivial;
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
+use anoma_risc0_verifier_bindings::generated::risc_zero_mock_verifier::RiscZeroMockVerifier;
 use anyhow::Context;
 use rstest::*;
 
@@ -84,8 +86,14 @@ async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
 #[case::local(
     EvmLocalEnv::setup_bare(),
     Transaction::tamper_first_logic_seal,
-    // RiscZeroMockVerifier rejects the tampered seal with `VerificationFailed()` (0x439cc0cd).
-    expect_integration_panic(Needle::Static("execution reverted: custom error 0x439cc0cd"))
+    // The RiscZeroMockVerifier rejects the tampered seal with `VerificationFailed()`.
+    expect_integration_panic(Needle::Regexp(
+        regex::Regex::new(&regex::escape(&format!(
+            "execution reverted: custom error 0x{}",
+            hex::encode(RiscZeroMockVerifier::VerificationFailed::SELECTOR)
+        )))
+        .unwrap(),
+    ))
 )]
 #[tokio::test]
 async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
