@@ -16,6 +16,4 @@ pub enum BindingsError {
     UnsupportedChain(NamedChain),
     #[error("Failed to decode the transaction.")]
     TransactionDecodingError(alloy::sol_types::Error),
-    #[error("Failed to decode the transaction.")]
-    FilesystemWriteError(std::io::Error),
 }

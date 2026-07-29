@@ -1101,32 +1101,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-rm-risc0-test-app"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dc16e3ffbd9c8482000065e4cdbc0a3e0ec989b5cfcb2db3d3dd640d24b21a9"
-dependencies = [
- "anoma-rm-risc0",
- "anoma-rm-risc0-test-witness",
- "hex",
- "k256",
- "lazy_static",
- "serde",
-]
-
-[[package]]
-name = "anoma-rm-risc0-test-witness"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dae422aa9247f8dbba78d1ef1eeded504d8252cd5ed796f0aed157172513c9a7"
-dependencies = [
- "anoma-rm-risc0",
- "anoma-rm-risc0-gadgets",
- "k256",
- "serde",
-]
-
-[[package]]
 name = "anstyle"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3126,16 +3100,6 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "example-tx-generation"
-version = "0.0.0"
-dependencies = [
- "anoma-pa-evm-bindings",
- "anoma-rm-risc0",
- "anoma-rm-risc0-test-app",
- "dotenvy",
 ]
 
 [[package]]

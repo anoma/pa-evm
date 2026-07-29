@@ -2,13 +2,8 @@
 resolver = "3"
 members = [
   "crates/bindings",
-  "crates/example-tx-generation",
   "crates/integration-test",
 ]
-# example-tx-generation links the risc0 prover (real aggregated proofs); keep it
-# out of default builds (CI `crates-*` recipes) — build it explicitly with
-# `cargo build -p example-tx-generation` when generating test vectors.
-default-members = ["crates/bindings", "crates/integration-test"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
@@ -22,7 +17,6 @@ edition = "2024"
 alloy = { version = "2.0.5", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.33"
 anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
-anoma-rm-risc0-test-app = { version = "1.1.1", features = ["bonsai"] }
 anyhow = "1.0"
 bincode = "1.3.3"
 dotenvy = { version = "0.15.7", features = ["cli"] }

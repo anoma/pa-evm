@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Pausable} from "@openzeppelin-contracts-5.6.1/utils/Pausable.sol";
+
 import {ForwarderExample} from "anoma-forwarder-bases-1.0.0/test/examples/ForwarderExample.sol";
 import {
     ForwarderTargetExample,
@@ -9,6 +11,7 @@ import {
 } from "anoma-forwarder-bases-1.0.0/test/examples/ForwarderTargetExample.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
+import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
@@ -663,6 +666,69 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: false
+        });
+
+        vm.prank(_emergencyStop.owner());
+        _emergencyStop.estop();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
+        _mockPa.execute(txn);
+    }
+
+    function test_simulateExecute_reverts_on_invalid_logic_proof_if_proof_verification_is_not_skipped() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: false
+        });
+
+        bytes memory proof = txn.actions[0].logicVerifierInputs[0].proof;
+        proof[5] = _flipBits(proof[5]);
+        txn.actions[0].logicVerifierInputs[0].proof = proof;
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
+    }
+
+    function test_simulateExecute_reverts_on_invalid_compliance_proof_if_proof_verification_is_not_skipped() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: false
+        });
+
+        bytes memory proof = txn.actions[0].complianceVerifierInputs[0].proof;
+        proof[5] = _flipBits(proof[5]);
+        txn.actions[0].complianceVerifierInputs[0].proof = proof;
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
+    }
+
+    function test_simulateExecute_reverts_on_invalid_aggregation_proof_if_proof_verification_is_not_skipped() public {
+        (Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
+            isProofAggregated: true
+        });
+
+        bytes memory proof = txn.aggregationProof;
+        proof[5] = _flipBits(proof[5]);
+        txn.aggregationProof = proof;
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
@@ -727,5 +793,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         boundComplianceUnitCount = uint8(bound(complianceUnitCount, 1, 5));
         boundActionIndex = uint8(bound(actionIndex, 0, boundActionCount - 1));
         boundComplianceIndex = uint8(bound(complianceIndex, 0, boundComplianceUnitCount - 1));
+    }
+
+    /// @dev Flips all bits of a seal byte to invalidate the proof it belongs to.
+    function _flipBits(bytes1 sealByte) private pure returns (bytes1 flipped) {
+        flipped = sealByte ^ bytes1(0xff);
     }
 }
