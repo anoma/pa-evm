@@ -1,5 +1,4 @@
 use alloy::primitives::{B256, Bytes};
-use alloy::sol_types::SolValue;
 use anoma_rm_risc0::action::Action;
 use anoma_rm_risc0::compliance::ComplianceInstance;
 use anoma_rm_risc0::compliance_unit::ComplianceUnit;
@@ -9,7 +8,6 @@ use anoma_rm_risc0::proving_system::encode_seal;
 use anoma_rm_risc0::transaction::{Delta as ArmDelta, Transaction};
 use anoma_rm_risc0::utils::words_to_bytes;
 
-use crate::error::{BindingsError, BindingsResult};
 use crate::generated::protocol_adapter::{Compliance, Logic, ProtocolAdapter};
 
 impl From<ExpirableBlob> for Logic::ExpirableBlob {
@@ -132,10 +130,4 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
             },
         }
     }
-}
-
-pub fn to_evm_bin_file(tx: ProtocolAdapter::Transaction, path: &str) -> BindingsResult<()> {
-    std::fs::write(path, tx.abi_encode()).map_err(BindingsError::FilesystemWriteError)?;
-
-    Ok(())
 }
