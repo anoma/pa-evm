@@ -30,7 +30,6 @@ risc0-zkvm = { workspace = true }
 
 [dev-dependencies]
 anoma-pa-testkit = { workspace = true, features = ["fixtures", "mocks"] }
-bincode = { workspace = true }
 regex = { workspace = true }
 rstest = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
