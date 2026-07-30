@@ -142,7 +142,7 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
-        version = "2.0.0-rc.0";
+        version = "2.0.0-alpha.0";
     }
 
     /// @inheritdoc IProtocolAdapter
