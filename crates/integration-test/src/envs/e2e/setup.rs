@@ -34,9 +34,10 @@ impl Environment {
         let config = E2eConfig::from_env().context("failed to parse e2e test config")?;
         let chain = config.chain;
 
-        // Fork the real chain. The protocol adapter is already deployed there, so
-        // we read its address from the bindings rather than deploying a fresh one;
-        // forking keeps real on-chain state from being mutated.
+        // Fork the real chain. The protocol adapter is already deployed and
+        // initialized there, so we read its address from the bindings rather than
+        // deploying a fresh one; forking keeps real on-chain state from being
+        // mutated.
         let fork_url = alchemy_url(&chain)
             .with_context(|| format!("failed to resolve fork RPC url for chain {chain:?}"))?;
 
