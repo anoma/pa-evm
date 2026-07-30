@@ -37,11 +37,6 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         _disableInitializers();
     }
 
-    /// @notice Initializes the Commitment tree contract.
-    function initialize() external initializer /* solhint-disable-line comprehensive-interface */  {
-        __CommitmentTree_init();
-    }
-
     /// @inheritdoc ICommitmentTree
     function commitmentCount() external view override returns (uint256 count) {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();

@@ -620,7 +620,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
 
         CommitmentTreeMock newCmTree = CommitmentTreeMock(
-            address(new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTree.initialize, ())))
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
         );
 
         bytes32[] memory cms = TxGen.collectCommitments(txn);

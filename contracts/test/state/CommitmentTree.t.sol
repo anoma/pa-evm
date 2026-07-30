@@ -94,10 +94,13 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitment(cm);
     }
 
-    /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.
+    /// @dev Deploys the mock behind an ERC-1967 proxy, initialized through the proxy constructor because the
+    /// implementation contract disables the initializers.
     function _deployCommitmentTreeMock() internal returns (CommitmentTreeMock mock) {
         mock = CommitmentTreeMock(
-            address(new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTree.initialize, ())))
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
         );
     }
 }

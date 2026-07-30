@@ -10,6 +10,10 @@ contract CommitmentTreeMock is CommitmentTree {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
+    function initialize() external initializer {
+        __CommitmentTree_init();
+    }
+
     function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
         newRoot = _addCommitment(commitment);
     }
