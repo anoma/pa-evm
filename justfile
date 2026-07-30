@@ -30,6 +30,22 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
 
+# Checks that the storage layout of contracts in `src` is empty.
+# `skip` is a space-separated list of contract names to ignore (contract-free files).
+contracts-storage-check *skip='Types':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd contracts
+    for sol in $(find src -name '*.sol' | sort); do
+        name="$(basename "$sol" .sol)"
+        case " {{ skip }} " in *" $name "*) continue ;; esac
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '.storage == []')" != true ]; then
+            printf '{{RED}}%s has a non-empty storage layout; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+            exit 1
+        fi
+    done
+    printf '{{GREEN}}All contracts in `src` use namespaced storage (empty storage layout).{{NORMAL}}\n'
+
 # Run slither on contracts
 contracts-static-analysis:
     cd contracts && slither .
@@ -46,13 +62,16 @@ contracts-fmt-check:
 
 # Run contract tests
 contracts-test *args:
-    cd contracts && forge test {{ args }}
+    cd contracts && forge test --force {{ args }}
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
+    # The script directory is built (not skipped) because `ERC1967Proxy` only
+    # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
+    # `--select` keeps the script contracts themselves out of the bindings.
     cd contracts && forge clean && forge bind \
-        --skip test --skip script \
-        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
+        --skip test \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -60,19 +79,19 @@ contracts-gen-bindings:
 # Simulate deployment (dry-run)
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+    @echo "INITIAL_OWNER: $INITIAL_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
 contracts-deploy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify
@@ -201,6 +220,8 @@ all-test:
 # Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Checking storage layouts..."
+    @just contracts-storage-check
     @echo "==> Static analysis with slither..."
     @just contracts-static-analysis
     @echo "==> Checking formatting..."

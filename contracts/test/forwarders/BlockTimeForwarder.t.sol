@@ -4,6 +4,8 @@ pragma solidity ^0.8.30;
 import {Time} from "@openzeppelin-contracts-5.6.1/utils/types/Time.sol";
 import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.2.0/script/DeployRiscZeroContracts.s.sol";
 import {Test} from "forge-std-1.16.1/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.1/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
@@ -11,7 +13,7 @@ import {BlockTimeForwarder} from "../../src/examples/BlockTimeForwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
 contract BlockTimeForwarderTest is Test {
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
 
     ProtocolAdapter internal _pa;
     BlockTimeForwarder internal _fwd;
@@ -22,7 +24,12 @@ contract BlockTimeForwarderTest is Test {
             new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
 
         // Deploy the protocol adapter
-        _pa = new ProtocolAdapter(router, verifier.SELECTOR(), _EMERGENCY_COMMITTEE);
+        Options memory opts;
+        opts.constructorData = abi.encode(router, verifier.SELECTOR());
+
+        _pa = ProtocolAdapter(
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
+        );
 
         // Setup the block time forwarder
         _fwd = new BlockTimeForwarder();

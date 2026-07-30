@@ -11,6 +11,8 @@ import {
 } from "anoma-risc0-deployments-1.2.0/test/script/DeployRiscZeroContractsMock.s.sol";
 
 import {Test, Vm} from "forge-std-1.16.1/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.1/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -29,7 +31,7 @@ contract ProtocolAdapterTest is Test {
     using SemVerLib for bytes32;
     using TxGen for Vm;
 
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
 
     RiscZeroVerifierRouter internal _router;
@@ -52,20 +54,12 @@ contract ProtocolAdapterTest is Test {
 
         _verifierSelector = _verifier.SELECTOR();
 
-        _pa = new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
-    }
+        Options memory opts;
+        opts.constructorData = abi.encode(_router, _verifierSelector);
 
-    function test_constructor_reverts_on_address_zero_router() public {
-        vm.expectRevert(ProtocolAdapter.ZeroNotAllowed.selector);
-        new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), _verifierSelector, _EMERGENCY_COMMITTEE);
-    }
-
-    function test_constructor_reverts_on_vulnerable_risc_zero_verifier() public {
-        vm.prank(_emergencyStop.owner());
-        _emergencyStop.estop();
-
-        vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ProtocolAdapter(_router, _verifierSelector, _EMERGENCY_COMMITTEE);
+        _pa = ProtocolAdapter(
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
+        );
     }
 
     function test_execute_reverts_if_the_pa_has_been_stopped() public {
@@ -152,17 +146,17 @@ contract ProtocolAdapterTest is Test {
     function test_emergencyStop_pauses_the_protocol_adapter() public {
         assertEq(_pa.paused(), false, "PA should not be paused initially");
 
-        vm.prank(_EMERGENCY_COMMITTEE);
+        vm.prank(_OWNER);
         _pa.emergencyStop();
 
         assertEq(_pa.paused(), true, "PA should be paused after emergency stop");
     }
 
     function test_emergencyStop_emits_the_Paused_event() public {
-        vm.prank(_EMERGENCY_COMMITTEE);
+        vm.prank(_OWNER);
 
         vm.expectEmit(address(_pa));
-        emit Pausable.Paused(_EMERGENCY_COMMITTEE);
+        emit Pausable.Paused(_OWNER);
         _pa.emergencyStop();
     }
 

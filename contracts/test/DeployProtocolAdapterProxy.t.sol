@@ -3,29 +3,29 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.16.1/src/Test.sol";
 
-import {DeployProtocolAdapter} from "../script/DeployProtocolAdapter.s.sol";
+import {DeployProtocolAdapterProxy} from "../script/DeployProtocolAdapterProxy.s.sol";
 
-contract DeployProtocolAdapterTest is Test {
+contract DeployProtocolAdapterProxyTest is Test {
     struct TestCase {
         string name;
     }
 
     // forge-lint: disable-next-line(mixed-case-function)
-    function tableNetworksTest_DeployProtocolAdapter_test_deployment_succeeds_on_all_supported_networks(TestCase memory network)
+    function tableNetworksTest_DeployProtocolAdapterProxy_test_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapter().run({isTestDeployment: true, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: msg.sender});
     }
 
     // forge-lint: disable-next-line(mixed-case-function)
-    function tableNetworksTest_DeployProtocolAdapter_prod_deployment_succeeds_on_all_supported_networks(TestCase memory network)
+    function tableNetworksTest_DeployProtocolAdapterProxy_prod_deployment_succeeds_on_all_supported_networks(TestCase memory network)
         public
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapter().run({isTestDeployment: false, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapterProxy().run({isTestDeployment: false, initialOwner: msg.sender});
     }
 
     function fixtureNetwork() public pure returns (TestCase[] memory network) {

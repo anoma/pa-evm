@@ -109,8 +109,8 @@ forge doc
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <EMERGENCY_STOP_CALLER> \
+forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <INITIAL_OWNER> \
   --rpc-url sepolia
 ```
 

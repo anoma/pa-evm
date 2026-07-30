@@ -1,16 +1,19 @@
 use alloy::node_bindings::Anvil;
 use alloy::primitives::utils::parse_ether;
+use alloy::primitives::{Address, FixedBytes};
+use alloy::providers::DynProvider;
 use alloy::providers::Provider;
 use alloy::providers::ProviderBuilder;
 use alloy::providers::ext::AnvilApi;
 use alloy_chains::NamedChain;
+use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
 use anoma_pa_testkit::environment::StateBuilder;
 use anoma_pa_testkit::fixtures::identities;
 
 use crate::keychain::EvmSigner;
 use anyhow::Context;
 
-use crate::deploy::pa::protocol_adapter;
+use crate::deploy::pa;
 use crate::state::actors::insert_default_signer;
 use crate::state::chains::insert_chain;
 use crate::state::pa::insert_pa_address;
@@ -44,8 +47,8 @@ impl Environment {
             )
             .await?;
 
-        let pa_address = deploy_protocol_adapter(&provider, deployer).await?;
-        let pa = protocol_adapter(pa_address, provider.clone());
+        let pa = deploy_protocol_adapter(&provider, deployer).await?;
+        let pa_address = *pa.address();
 
         let chain_id = provider.get_chain_id().await?;
         let named_chain = NamedChain::try_from(chain_id)
@@ -76,28 +79,26 @@ impl Environment {
     }
 }
 
-/// Deploys a protocol adapter backed by a freshly deployed mock Risc0 verifier
-/// stack, returning its address.
+/// Deploys a mock Risc0 verifier stack and a protocol adapter backed by it: an
+/// implementation bound to the verifier stack, behind an initialized ERC-1967
+/// proxy.
+///
+/// `guardian` becomes both the verifier stack's guardian and the protocol
+/// adapter's initial owner, so the default signer can pause either side.
 async fn deploy_protocol_adapter(
-    default_signer: &alloy::providers::DynProvider,
-    fee_recipient: alloy::primitives::Address,
-) -> anyhow::Result<alloy::primitives::Address> {
-    use alloy::primitives::FixedBytes;
-    use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter;
-
-    let mock_risc0 = deploy_mock_risc0_stack(default_signer, fee_recipient)
+    default_signer: &DynProvider,
+    guardian: Address,
+) -> anyhow::Result<PaContract::ProtocolAdapterInstance<DynProvider>> {
+    let mock_risc0 = deploy_mock_risc0_stack(default_signer, guardian)
         .await
         .context("failed to deploy mock Risc0 verifier stack")?;
-    let selector = FixedBytes::<4>::from(MOCK_VERIFIER_SELECTOR);
 
-    let deployed = ProtocolAdapter::deploy(
-        default_signer.clone(),
+    let implementation_address = pa::deploy_implementation(
+        default_signer,
         *mock_risc0.router.address(),
-        selector,
-        fee_recipient,
+        FixedBytes::<4>::from(MOCK_VERIFIER_SELECTOR),
     )
-    .await
-    .context("failed to deploy protocol adapter")?;
+    .await?;
 
-    Ok(*deployed.address())
+    pa::deploy_proxy(default_signer, implementation_address, guardian).await
 }
