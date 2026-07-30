@@ -103,8 +103,8 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter contract.
-    /// @param initialOwner The initial owner, which can stop the protocol adapter in case of a vulnerability and
-    /// authorize upgrades.
+    /// @param initialOwner The account receiving ownership, and with it the authority to stop the protocol adapter in
+    /// case of a vulnerability and to authorize upgrades.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )

@@ -24,7 +24,8 @@ contract DeployProtocolAdapterProxy is SupportedNetworks, Script {
     /// deployments. The implementation is validated for upgrade safety in both cases.
     /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the
     /// implementation and proxy are deployed deterministically.
-    /// @param initialOwner The initial owner that can stop the protocol adapter in an emergency and authorize upgrades.
+    /// @param initialOwner The account receiving ownership of the deployed proxy, and with it the authority to stop the
+    /// protocol adapter in an emergency and to authorize upgrades.
     /// @return protocolAdapterProxy The proxy contract to interact with.
     function run(bool isTestDeployment, address initialOwner) public returns (address protocolAdapterProxy) {
         // Lookup the RISC Zero router address from the supported networks.

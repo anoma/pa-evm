@@ -1,9 +1,6 @@
 //! Protocol adapter deployment. The contract is UUPS-upgradeable, so deploying
 //! it takes two steps: an implementation, whose constructor disables the
 //! initializers, and an ERC-1967 proxy that delegates to it and holds the state.
-//! Only these two functions need to tell the pair apart — everywhere else the
-//! protocol adapter is reached through the proxy and there is nothing to confuse
-//! it with.
 
 use alloy::primitives::Address;
 use alloy::primitives::FixedBytes;
@@ -45,13 +42,9 @@ pub async fn deploy_implementation(
 
 /// Deploys an ERC-1967 proxy delegating to `implementation_address` and
 /// initializes it in the same transaction, mirroring
-/// `DeployProtocolAdapterProxy.s.sol`.
-///
-/// Initializing through the constructor is what seeds the commitment tree with
-/// its initial root and sets the owner, so the protocol adapter is usable — and
-/// unclaimable by anyone else — the moment it exists. OpenZeppelin's
-/// `ERC1967Proxy` rejects empty constructor data outright
-/// (`ERC1967ProxyUninitialized`), so there is no way to skip this.
+/// `DeployProtocolAdapterProxy.s.sol`. Initializing through the constructor
+/// seeds the commitment tree with its initial root and sets the owner, so the
+/// protocol adapter is usable the moment it exists.
 pub async fn deploy_proxy(
     provider: &DynProvider,
     implementation_address: Address,

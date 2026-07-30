@@ -69,11 +69,6 @@ contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    # `--skip script` was added in ad1e04e8 against via_ir bytecode churn, but
-    # the directory filters provably do not affect a full build: the protocol
-    # adapter bytecode is byte-identical with and without it on solc 0.8.33 and
-    # 0.8.36, including after mutating the deploy script. Re-check on a solc
-    # bump — `bindings-check` catches a regression.
     cd contracts && forge clean && forge bind \
         --skip test \
         --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \

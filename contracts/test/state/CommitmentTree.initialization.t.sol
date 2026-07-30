@@ -9,9 +9,8 @@ import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentTreeMock} from "../mocks/CommitmentTree.m.sol";
 
-/// @dev `CommitmentTree` is abstract and exposes only the internal `__CommitmentTree_init`, which inheritors call from
-/// their own initializer. The external `initialize` under test here therefore belongs to the mock, standing in for that
-/// inheritor.
+/// @dev The `initialize` under test belongs to the mock: `CommitmentTree` is abstract and exposes only the internal
+/// `__CommitmentTree_init`, which inheritors call from their own initializer.
 contract CommitmentTreeInitializationTest is Test {
     CommitmentTreeMock internal _cmAcc;
 
