@@ -15,7 +15,9 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     for chain in protocol_adapter_deployments_map().keys() {
         let existing_pa = pa_instance(chain).await;
 
-        let current_pa = protocol_adapter::ProtocolAdapter::deploy(
+        // `getVersion` is `pure`, so the freshly deployed implementation answers
+        // it without being put behind a proxy and initialized.
+        let current_pa_implementation = protocol_adapter::ProtocolAdapter::deploy(
             existing_pa.provider(),
             existing_pa
                 .getRiscZeroVerifierRouter()
@@ -27,16 +29,11 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
                 .call()
                 .await
                 .expect("Couldn't get risc zero verifier selector"),
-            existing_pa
-                .owner()
-                .call()
-                .await
-                .expect("Couldn't get owner address"),
         )
         .await
-        .expect("Couldn't deploy protocol adapter");
+        .expect("Couldn't deploy protocol adapter implementation");
 
-        let expected_version = current_pa
+        let expected_version = current_pa_implementation
             .getVersion()
             .call()
             .await

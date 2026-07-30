@@ -94,7 +94,6 @@ async fn deploy_protocol_adapter(
         default_signer.clone(),
         *mock_risc0.router.address(),
         selector,
-        fee_recipient,
     )
     .await
     .context("failed to deploy protocol adapter")?;
