@@ -13,7 +13,7 @@ import {BlockTimeForwarder} from "../../src/examples/BlockTimeForwarder.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
 contract BlockTimeForwarderTest is Test {
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
 
     ProtocolAdapter internal _pa;
     BlockTimeForwarder internal _fwd;
@@ -28,9 +28,7 @@ contract BlockTimeForwarderTest is Test {
         opts.constructorData = abi.encode(router, verifier.SELECTOR());
 
         _pa = ProtocolAdapter(
-            Upgrades.deployUUPSProxy(
-                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
-            )
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
 
         // Setup the block time forwarder

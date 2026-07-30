@@ -31,7 +31,7 @@ contract ProtocolAdapterTest is Test {
     using SemVerLib for bytes32;
     using TxGen for Vm;
 
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
 
     RiscZeroVerifierRouter internal _router;
@@ -58,9 +58,7 @@ contract ProtocolAdapterTest is Test {
         opts.constructorData = abi.encode(_router, _verifierSelector);
 
         _pa = ProtocolAdapter(
-            Upgrades.deployUUPSProxy(
-                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
-            )
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
     }
 
@@ -148,17 +146,17 @@ contract ProtocolAdapterTest is Test {
     function test_emergencyStop_pauses_the_protocol_adapter() public {
         assertEq(_pa.paused(), false, "PA should not be paused initially");
 
-        vm.prank(_EMERGENCY_COMMITTEE);
+        vm.prank(_OWNER);
         _pa.emergencyStop();
 
         assertEq(_pa.paused(), true, "PA should be paused after emergency stop");
     }
 
     function test_emergencyStop_emits_the_Paused_event() public {
-        vm.prank(_EMERGENCY_COMMITTEE);
+        vm.prank(_OWNER);
 
         vm.expectEmit(address(_pa));
-        emit Pausable.Paused(_EMERGENCY_COMMITTEE);
+        emit Pausable.Paused(_OWNER);
         _pa.emergencyStop();
     }
 

@@ -21,7 +21,7 @@ import {TxGen} from "./libs/TxGen.sol";
 contract ProtocolAdapterUpgradeTest is Test {
     using TxGen for Vm;
 
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
     bytes4 internal constant _NEW_VERIFIER_SELECTOR = bytes4(0xdeadbeef);
 
@@ -37,9 +37,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
 
         _pa = ProtocolAdapter(
-            Upgrades.deployUUPSProxy(
-                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
-            )
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
     }
 
@@ -78,7 +76,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         // is unchanged (it is already validated during the proxy deployment in `setUp`).
         address newImplementation = address(new ProtocolAdapter(_router, _NEW_VERIFIER_SELECTOR));
 
-        UnsafeUpgrades.upgradeProxy(address(_pa), newImplementation, "", _EMERGENCY_COMMITTEE);
+        UnsafeUpgrades.upgradeProxy(address(_pa), newImplementation, "", _OWNER);
 
         // The new selector is in place and the protocol adapter is operational again.
         assertEq(_pa.getRiscZeroVerifierSelector(), _NEW_VERIFIER_SELECTOR, "the new selector should be in place");

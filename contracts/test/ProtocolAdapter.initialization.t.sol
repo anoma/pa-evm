@@ -16,7 +16,7 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 contract ProtocolAdapterInitializationTest is Test {
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
@@ -30,9 +30,7 @@ contract ProtocolAdapterInitializationTest is Test {
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
 
         _pa = ProtocolAdapter(
-            Upgrades.deployUUPSProxy(
-                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
-            )
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
     }
 
@@ -55,18 +53,18 @@ contract ProtocolAdapterInitializationTest is Test {
         _emergencyStop.estop();
 
         vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
-        new ERC1967Proxy(address(implementation), abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)));
+        new ERC1967Proxy(address(implementation), abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)));
     }
 
     function test_initialize_reverts_when_called_twice() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector, address(_pa));
-        _pa.initialize(_EMERGENCY_COMMITTEE);
+        _pa.initialize(_OWNER);
     }
 
     function test_initialize_reverts_on_implementation_contract() public {
         ProtocolAdapter implementation = new ProtocolAdapter(_router, _verifier.SELECTOR());
 
         vm.expectRevert(Initializable.InvalidInitialization.selector, address(implementation));
-        implementation.initialize(_EMERGENCY_COMMITTEE);
+        implementation.initialize(_OWNER);
     }
 }

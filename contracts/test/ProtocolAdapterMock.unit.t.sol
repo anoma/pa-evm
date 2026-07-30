@@ -42,7 +42,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Action;
     using TxGen for Vm;
 
-    address internal constant _EMERGENCY_COMMITTEE = address(uint160(1));
+    address internal constant _OWNER = address(uint160(1));
     bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
 
     RiscZeroVerifierRouter internal _router;
@@ -64,9 +64,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         opts.constructorData = abi.encode(_router, _mockVerifier.SELECTOR());
 
         _mockPa = ProtocolAdapter(
-            Upgrades.deployUUPSProxy(
-                "ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_EMERGENCY_COMMITTEE)), opts
-            )
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
 
         _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
