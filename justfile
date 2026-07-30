@@ -84,11 +84,11 @@ contracts-gen-bindings:
 # Simulate deployment (dry-run)
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+    @echo "INITIAL_OWNER: $INITIAL_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
@@ -96,7 +96,7 @@ contracts-deploy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify on sourcify

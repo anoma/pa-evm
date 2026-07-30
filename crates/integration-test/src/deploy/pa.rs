@@ -55,10 +55,10 @@ pub async fn deploy_implementation(
 pub async fn deploy_proxy(
     provider: &DynProvider,
     implementation_address: Address,
-    emergency_stop_caller: Address,
+    initial_owner: Address,
 ) -> anyhow::Result<ProtocolAdapter::ProtocolAdapterInstance<DynProvider>> {
     let initializer_data = ProtocolAdapter::initializeCall {
-        emergencyStopCaller: emergency_stop_caller,
+        initialOwner: initial_owner,
     }
     .abi_encode();
 

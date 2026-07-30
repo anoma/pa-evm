@@ -103,14 +103,15 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter contract.
-    /// @param emergencyStopCaller The account that can stop the protocol adapter in case of a vulnerability.
+    /// @param initialOwner The initial owner, which can stop the protocol adapter in case of a vulnerability and
+    /// authorize upgrades.
     function initialize( /* solhint-disable-line comprehensive-interface*/
-        address emergencyStopCaller
+        address initialOwner
     )
         external
         initializer
     {
-        __Ownable_init(emergencyStopCaller);
+        __Ownable_init(initialOwner);
         __Pausable_init();
 
         __CommitmentTree_init();

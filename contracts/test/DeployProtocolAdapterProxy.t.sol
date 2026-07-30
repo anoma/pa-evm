@@ -16,7 +16,7 @@ contract DeployProtocolAdapterProxyTest is Test {
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapterProxy().run({isTestDeployment: true, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: msg.sender});
     }
 
     // forge-lint: disable-next-line(mixed-case-function)
@@ -25,7 +25,7 @@ contract DeployProtocolAdapterProxyTest is Test {
     {
         vm.selectFork(vm.createFork(network.name));
 
-        new DeployProtocolAdapterProxy().run({isTestDeployment: false, emergencyStopCaller: msg.sender});
+        new DeployProtocolAdapterProxy().run({isTestDeployment: false, initialOwner: msg.sender});
     }
 
     function fixtureNetwork() public pure returns (TestCase[] memory network) {

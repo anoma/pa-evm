@@ -84,7 +84,7 @@ impl Environment {
 /// proxy.
 ///
 /// `guardian` becomes both the verifier stack's guardian and the protocol
-/// adapter's emergency stop caller, so the default signer can pause either side.
+/// adapter's initial owner, so the default signer can pause either side.
 async fn deploy_protocol_adapter(
     default_signer: &DynProvider,
     guardian: Address,

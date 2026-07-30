@@ -110,7 +110,7 @@ To simulate deployment on sepolia, run
 
 ```sh
 forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <EMERGENCY_STOP_CALLER> \
+  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <INITIAL_OWNER> \
   --rpc-url sepolia
 ```
 

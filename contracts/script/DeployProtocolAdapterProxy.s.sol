@@ -24,16 +24,16 @@ contract DeployProtocolAdapterProxy is SupportedNetworks, Script {
     /// deployments. The implementation is validated for upgrade safety in both cases.
     /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the
     /// implementation and proxy are deployed deterministically.
-    /// @param emergencyStopCaller The emergency stop caller that can stop the protocol adapter in an emergency.
+    /// @param initialOwner The initial owner that can stop the protocol adapter in an emergency and authorize upgrades.
     /// @return protocolAdapterProxy The proxy contract to interact with.
-    function run(bool isTestDeployment, address emergencyStopCaller) public returns (address protocolAdapterProxy) {
+    function run(bool isTestDeployment, address initialOwner) public returns (address protocolAdapterProxy) {
         // Lookup the RISC Zero router address from the supported networks.
         SupportedNetworks.Data memory data = getRouterData();
 
         Options memory opts;
         opts.constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
 
-        bytes memory initializerData = abi.encodeCall(ProtocolAdapter.initialize, (emergencyStopCaller));
+        bytes memory initializerData = abi.encodeCall(ProtocolAdapter.initialize, (initialOwner));
 
         if (isTestDeployment) {
             // Validate the implementation and deploy it and the proxy regularly.

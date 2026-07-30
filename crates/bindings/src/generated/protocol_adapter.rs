@@ -2683,7 +2683,7 @@ interface ProtocolAdapter {
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
     function getVersion() external pure returns (bytes32 version);
-    function initialize(address emergencyStopCaller) external;
+    function initialize(address initialOwner) external;
     function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
     function isEmergencyStopped() external view returns (bool isStopped);
     function isNullifierContained(bytes32 nullifier) external view returns (bool isContained);
@@ -3051,7 +3051,7 @@ interface ProtocolAdapter {
     "name": "initialize",
     "inputs": [
       {
-        "name": "emergencyStopCaller",
+        "name": "initialOwner",
         "type": "address",
         "internalType": "address"
       }
@@ -10183,13 +10183,13 @@ function getVersion() external pure returns (bytes32 version);
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `initialize(address)` and selector `0xc4d66de8`.
 ```solidity
-function initialize(address emergencyStopCaller) external;
+function initialize(address initialOwner) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct initializeCall {
         #[allow(missing_docs)]
-        pub emergencyStopCaller: alloy::sol_types::private::Address,
+        pub initialOwner: alloy::sol_types::private::Address,
     }
     ///Container type for the return parameters of the [`initialize(address)`](initializeCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
@@ -10224,16 +10224,14 @@ function initialize(address emergencyStopCaller) external;
             #[doc(hidden)]
             impl ::core::convert::From<initializeCall> for UnderlyingRustTuple<'_> {
                 fn from(value: initializeCall) -> Self {
-                    (value.emergencyStopCaller,)
+                    (value.initialOwner,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>> for initializeCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {
-                        emergencyStopCaller: tuple.0,
-                    }
+                    Self { initialOwner: tuple.0 }
                 }
             }
         }
@@ -10299,7 +10297,7 @@ function initialize(address emergencyStopCaller) external;
             fn tokenize(&self) -> Self::Token<'_> {
                 (
                     <alloy::sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
-                        &self.emergencyStopCaller,
+                        &self.initialOwner,
                     ),
                 )
             }
@@ -15346,13 +15344,9 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`initialize`] function.
         pub fn initialize(
             &self,
-            emergencyStopCaller: alloy::sol_types::private::Address,
+            initialOwner: alloy::sol_types::private::Address,
         ) -> alloy_contract::SolCallBuilder<&P, initializeCall, N> {
-            self.call_builder(
-                &initializeCall {
-                    emergencyStopCaller,
-                },
-            )
+            self.call_builder(&initializeCall { initialOwner })
         }
         ///Creates a new call builder for the [`isCommitmentTreeRootContained`] function.
         pub fn isCommitmentTreeRootContained(
