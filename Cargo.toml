@@ -16,7 +16,14 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "2.2.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.36"
-anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
+# Pinned by git rev until arm-risc0 publishes v2 to crates.io (v2.0.0-rc.3;
+# crates.io carries only up to 2.0.0-pre.1, which predates the compact
+# aggregation instance and the action-tree-root delta message). Blocks
+# `bindings-publish` until unwound.
+anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", rev = "784fb37c27a4fec51b99d7d3f004ee3e4b5b5695", features = [
+  "bonsai",
+  "aggregation",
+] }
 anyhow = "1.0"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 hex = "0.4"
@@ -34,5 +41,5 @@ anoma-pa-evm-integration-test = { path = "crates/integration-test" }
 # Backend-agnostic risc0 testkit, pinned by git rev (see anoma-pa-testkit
 # ADR-0002). For cross-repo development, override locally with a `[patch]` to a
 # path checkout.
-anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "3084189fe1941d3788d553d33bcf5e596e66efa8" }
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "1c57ea98de3d18134721a0b5fb6500404054d493" }
 anoma-risc0-verifier-bindings = "1.2.0"

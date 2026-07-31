@@ -1,7 +1,8 @@
-//! Pins the protocol adapter's Solidity aggregation-instance encoding to
-//! arm-risc0's `construct_aggregation_instance`: the mock seal the local
-//! prover mints over the Rust-built instance must pass `simulateExecute`.
-//! A selector other than `Simulated` means the encodings diverge.
+//! Pins the protocol adapter's Solidity aggregation-journal encoding to the
+//! risc0 serde encoding of arm-risc0's `AggregationInstance`: the mock seal
+//! the local prover mints over the Rust-built instance must pass
+//! `simulateExecute`. A selector other than `Simulated` means the encodings
+//! diverge — including the injected compliance key and kind table commitment.
 
 mod common;
 

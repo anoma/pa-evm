@@ -35,20 +35,19 @@ where
     let router = router(&env).await?;
 
     let arm = tx.as_arm();
-    let proof = arm
-        .aggregation_proof
+    let aggregation = arm
+        .aggregation
         .as_ref()
-        .context("transaction carries no aggregation proof")?;
-    let seal = encode_seal(proof).context("failed to encode the aggregation seal")?;
-    let instance = arm
-        .construct_aggregation_instance()
-        .context("failed to construct the aggregation instance")?;
+        .context("transaction carries no aggregation")?;
+    let seal = encode_seal(&aggregation.proof).context("failed to encode the aggregation seal")?;
+    let journal_words = risc0_zkvm::serde::to_vec(&aggregation.instance)
+        .context("failed to serialize the aggregation instance")?;
 
     router
         .verify(
             Bytes::from(seal),
             B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_VK.as_bytes()),
-            journal_digest(&instance),
+            journal_digest(anoma_rm_risc0::utils::words_to_bytes(&journal_words)),
         )
         .call()
         .await
