@@ -21,8 +21,8 @@ import {
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
-import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
+import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {Delta} from "../src/libs/proving/Delta.sol";
 import {Logic} from "../src/libs/proving/Logic.sol";
 import {SHA256} from "../src/libs/SHA256.sol";

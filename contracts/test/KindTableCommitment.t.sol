@@ -48,10 +48,6 @@ contract KindTableCommitmentTest is Test {
         );
     }
 
-    function test_initialize_sets_the_empty_kind_table_commitment() public view {
-        assertEq(_mockPa.getKindTableCommitment(), sha256(""), "the default should be the empty-table commitment");
-    }
-
     function testFuzz_setKindTableCommitment_reverts_for_non_owners(address caller) public {
         vm.assume(caller != _OWNER);
 
@@ -108,5 +104,9 @@ contract KindTableCommitmentTest is Test {
         txn = TxGen.transactionAggregation({mockVerifier: _mockVerifier, txn: txn, kindTableCommitment: newCommitment});
 
         _mockPa.execute(txn);
+    }
+
+    function test_initialize_sets_the_empty_kind_table_commitment() public view {
+        assertEq(_mockPa.getKindTableCommitment(), sha256(""), "the default should be the empty-table commitment");
     }
 }
