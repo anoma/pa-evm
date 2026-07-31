@@ -16,6 +16,12 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is SupportedNetworks, Script {
+    /// @notice The CREATE2 salt for the deterministic implementation deployment.
+    bytes32 public constant IMPLEMENTATION_SALT = keccak256("ProtocolAdapter");
+
+    /// @notice The CREATE2 salt for the deterministic proxy deployment.
+    bytes32 public constant PROXY_SALT = keccak256("ProtocolAdapterProxy");
+
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
@@ -48,17 +54,14 @@ contract DeployProtocolAdapterProxy is SupportedNetworks, Script {
             // Deploy the implementation and proxy deterministically.
             vm.startBroadcast();
             address implementation = address(
-                new ProtocolAdapter{salt: keccak256("ProtocolAdapter")}({
+                new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
                     riscZeroVerifierRouter: data.router,
                     riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
                 })
             );
 
-            protocolAdapterProxy = address(
-                new ERC1967Proxy{salt: keccak256("ProtocolAdapterProxy")}({
-                    implementation: implementation, _data: initializerData
-                })
-            );
+            protocolAdapterProxy =
+                address(new ERC1967Proxy{salt: PROXY_SALT}({implementation: implementation, _data: initializerData}));
             vm.stopBroadcast();
         }
     }
