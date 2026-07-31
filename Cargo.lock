@@ -1050,7 +1050,7 @@ dependencies = [
 [[package]]
 name = "anoma-pa-testkit"
 version = "0.3.0"
-source = "git+https://github.com/anoma/pa-testkit?rev=3084189fe1941d3788d553d33bcf5e596e66efa8#3084189fe1941d3788d553d33bcf5e596e66efa8"
+source = "git+https://github.com/anoma/pa-testkit?rev=1c57ea98de3d18134721a0b5fb6500404054d493#1c57ea98de3d18134721a0b5fb6500404054d493"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
@@ -1080,9 +1080,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3d19fa05e0ecdb7bf6205e6cb31aff30b531b113f455da6eac8db3550f171b1"
+version = "2.0.0-rc.3"
+source = "git+https://github.com/anoma/arm-risc0?rev=784fb37c27a4fec51b99d7d3f004ee3e4b5b5695#784fb37c27a4fec51b99d7d3f004ee3e4b5b5695"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1092,6 +1091,7 @@ dependencies = [
  "rand 0.8.7",
  "risc0-zkvm",
  "serde",
+ "serde_json",
  "serde_with",
  "sha3 0.10.9",
  "thiserror 2.0.19",
@@ -1099,9 +1099,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0-gadgets"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35107a0e6485de895631e7807bd3709ead5e8c05f17ce0759105cfb5bd8796f5"
+version = "2.0.0-rc.3"
+source = "git+https://github.com/anoma/arm-risc0?rev=784fb37c27a4fec51b99d7d3f004ee3e4b5b5695#784fb37c27a4fec51b99d7d3f004ee3e4b5b5695"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",

@@ -7,7 +7,7 @@ use anoma_pa_testkit::environment::Environment as CoreEnvironment;
 use anoma_pa_testkit::environment::ProtocolAdapter as CoreProtocolAdapter;
 use anoma_pa_testkit::environment::State;
 use anoma_pa_testkit::environment::Transaction as CoreTransaction;
-use anoma_rm_risc0::action_tree::MerkleTree as ArmTree;
+use anoma_rm_risc0::action_tree::ActionTree as ArmTree;
 use anoma_rm_risc0::merkle_path::MerklePath;
 use anoma_rm_risc0::transaction::Transaction as ArmTxn;
 use anyhow::Context;
@@ -102,14 +102,14 @@ impl ProtocolAdapter {
             "commitment tree root mismatch before execution: local={local_root_b256:?}, pa={pa_root:?}"
         );
 
-        for (action_idx, action) in tx.actions.iter().enumerate() {
-            for (unit_idx, unit) in action.compliance_units.iter().enumerate() {
-                let instance = unit.get_instance().with_context(|| {
-                    format!("failed to decode compliance instance for action {action_idx} unit {unit_idx}")
-                })?;
+        let aggregation = tx
+            .aggregation
+            .as_ref()
+            .context("the transaction must be aggregated")?;
 
-                let consumed_root =
-                    B256::from_slice(instance.consumed_commitment_tree_root.as_bytes());
+        for (action_idx, action) in aggregation.instance.actions.iter().enumerate() {
+            for (resource_idx, consumed) in action.consumed_publics.iter().enumerate() {
+                let consumed_root = B256::from_slice(consumed.commitment_tree_root.as_bytes());
                 let contained = self
                     .pa
                     .isCommitmentTreeRootContained(consumed_root)
@@ -117,15 +117,16 @@ impl ProtocolAdapter {
                     .await
                     .with_context(|| {
                         format!(
-                            "failed to query root containment for action {action_idx} unit {unit_idx}"
+                            "failed to query root containment for action {action_idx} consumed \
+                             resource {resource_idx}"
                         )
                     })?;
 
                 anyhow::ensure!(
                     contained,
-                    "consumed commitment tree root not found in PA for action {action_idx} unit \
-                     {unit_idx}: root={consumed_root:?}, pa_latest={pa_root:?}, \
-                     local_latest={local_root_b256:?}"
+                    "consumed commitment tree root not found in PA for action {action_idx} \
+                     consumed resource {resource_idx}: root={consumed_root:?}, \
+                     pa_latest={pa_root:?}, local_latest={local_root_b256:?}"
                 );
             }
         }

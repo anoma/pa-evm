@@ -2,11 +2,8 @@
 /**
 
 ```solidity
-library Compliance {
-    struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; }
-    struct CreatedRefs { bytes32 commitment; bytes32 logicRef; }
-    struct Instance { ConsumedRefs consumed; CreatedRefs created; bytes32 unitDeltaX; bytes32 unitDeltaY; }
-    struct VerifierInput { Instance instance; }
+library Delta {
+    struct Point { uint256 x; uint256 y; }
 }
 ```*/
 #[allow(
@@ -16,23 +13,21 @@ library Compliance {
     clippy::style,
     clippy::empty_structs_with_brackets
 )]
-pub mod Compliance {
+pub mod Delta {
     use super::*;
     use alloy::sol_types as alloy_sol_types;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**```solidity
-struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; }
+struct Point { uint256 x; uint256 y; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct ConsumedRefs {
+    pub struct Point {
         #[allow(missing_docs)]
-        pub nullifier: alloy::sol_types::private::FixedBytes<32>,
+        pub x: alloy::sol_types::private::primitives::aliases::U256,
         #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub commitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+        pub y: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[allow(
         non_camel_case_types,
@@ -45,15 +40,13 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
         #[doc(hidden)]
         #[allow(dead_code)]
         type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::Uint<256>,
+            alloy::sol_types::sol_data::Uint<256>,
         );
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -68,40 +61,33 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<ConsumedRefs> for UnderlyingRustTuple<'_> {
-            fn from(value: ConsumedRefs) -> Self {
-                (value.nullifier, value.logicRef, value.commitmentTreeRoot)
+        impl ::core::convert::From<Point> for UnderlyingRustTuple<'_> {
+            fn from(value: Point) -> Self {
+                (value.x, value.y)
             }
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for ConsumedRefs {
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Point {
             fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    nullifier: tuple.0,
-                    logicRef: tuple.1,
-                    commitmentTreeRoot: tuple.2,
-                }
+                Self { x: tuple.0, y: tuple.1 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolValue for ConsumedRefs {
+        impl alloy_sol_types::SolValue for Point {
             type SolType = Self;
         }
         #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for ConsumedRefs {
+        impl alloy_sol_types::private::SolTypeValue<Self> for Point {
             #[inline]
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.nullifier),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.commitmentTreeRoot),
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.x),
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.y),
                 )
             }
             #[inline]
@@ -146,7 +132,7 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolType for ConsumedRefs {
+        impl alloy_sol_types::SolType for Point {
             type RustType = Self;
             type Token<'a> = <UnderlyingSolTuple<
                 'a,
@@ -171,13 +157,11 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolStruct for ConsumedRefs {
-            const NAME: &'static str = "ConsumedRefs";
+        impl alloy_sol_types::SolStruct for Point {
+            const NAME: &'static str = "Point";
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "ConsumedRefs(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot)",
-                )
+                alloy_sol_types::private::Cow::Borrowed("Point(uint256 x,uint256 y)")
             }
             #[inline]
             fn eip712_components() -> alloy_sol_types::private::Vec<
@@ -192,44 +176,29 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
             #[inline]
             fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
                 [
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.nullifier)
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.x)
                         .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.commitmentTreeRoot,
-                        )
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.y)
                         .0,
                 ]
                     .concat()
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::EventTopic for ConsumedRefs {
+        impl alloy_sol_types::EventTopic for Point {
             #[inline]
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.nullifier,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.logicRef,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.commitmentTreeRoot,
-                    )
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.x)
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.y)
             }
             #[inline]
             fn encode_topic_preimage(
@@ -239,722 +208,12 @@ struct ConsumedRefs { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTre
                 out.reserve(
                     <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
                 );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.nullifier,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.logicRef,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.commitmentTreeRoot,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct CreatedRefs { bytes32 commitment; bytes32 logicRef; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct CreatedRefs {
-        #[allow(missing_docs)]
-        pub commitment: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<CreatedRefs> for UnderlyingRustTuple<'_> {
-            fn from(value: CreatedRefs) -> Self {
-                (value.commitment, value.logicRef)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for CreatedRefs {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    commitment: tuple.0,
-                    logicRef: tuple.1,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for CreatedRefs {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for CreatedRefs {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.commitment),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for CreatedRefs {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for CreatedRefs {
-            const NAME: &'static str = "CreatedRefs";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "CreatedRefs(bytes32 commitment,bytes32 logicRef)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                alloy_sol_types::private::Vec::new()
-            }
-            #[inline]
-            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
-                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.commitment)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for CreatedRefs {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.commitment,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.logicRef,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.commitment,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.logicRef,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct Instance { ConsumedRefs consumed; CreatedRefs created; bytes32 unitDeltaX; bytes32 unitDeltaY; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Instance {
-        #[allow(missing_docs)]
-        pub consumed: <ConsumedRefs as alloy::sol_types::SolType>::RustType,
-        #[allow(missing_docs)]
-        pub created: <CreatedRefs as alloy::sol_types::SolType>::RustType,
-        #[allow(missing_docs)]
-        pub unitDeltaX: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub unitDeltaY: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            ConsumedRefs,
-            CreatedRefs,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            <ConsumedRefs as alloy::sol_types::SolType>::RustType,
-            <CreatedRefs as alloy::sol_types::SolType>::RustType,
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Instance> for UnderlyingRustTuple<'_> {
-            fn from(value: Instance) -> Self {
-                (value.consumed, value.created, value.unitDeltaX, value.unitDeltaY)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Instance {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    consumed: tuple.0,
-                    created: tuple.1,
-                    unitDeltaX: tuple.2,
-                    unitDeltaY: tuple.3,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Instance {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Instance {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <ConsumedRefs as alloy_sol_types::SolType>::tokenize(&self.consumed),
-                    <CreatedRefs as alloy_sol_types::SolType>::tokenize(&self.created),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.unitDeltaX),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.unitDeltaY),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Instance {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Instance {
-            const NAME: &'static str = "Instance";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Instance(ConsumedRefs consumed,CreatedRefs created,bytes32 unitDeltaX,bytes32 unitDeltaY)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(2);
-                components
-                    .push(
-                        <ConsumedRefs as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <ConsumedRefs as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-                    .push(
-                        <CreatedRefs as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <CreatedRefs as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <ConsumedRefs as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.consumed,
-                        )
-                        .0,
-                    <CreatedRefs as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.created,
-                        )
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.unitDeltaX)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.unitDeltaY)
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Instance {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <ConsumedRefs as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.consumed,
-                    )
-                    + <CreatedRefs as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.created,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.unitDeltaX,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.unitDeltaY,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <ConsumedRefs as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.consumed,
-                    out,
-                );
-                <CreatedRefs as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.created,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.unitDeltaX,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.unitDeltaY,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct VerifierInput { Instance instance; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct VerifierInput {
-        #[allow(missing_docs)]
-        pub instance: <Instance as alloy::sol_types::SolType>::RustType,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (Instance,);
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            <Instance as alloy::sol_types::SolType>::RustType,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<VerifierInput> for UnderlyingRustTuple<'_> {
-            fn from(value: VerifierInput) -> Self {
-                (value.instance,)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for VerifierInput {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self { instance: tuple.0 }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for VerifierInput {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for VerifierInput {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (<Instance as alloy_sol_types::SolType>::tokenize(&self.instance),)
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for VerifierInput {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for VerifierInput {
-            const NAME: &'static str = "VerifierInput";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "VerifierInput(Instance instance)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(<Instance as alloy_sol_types::SolStruct>::eip712_root_type());
-                components
-                    .extend(
-                        <Instance as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                <Instance as alloy_sol_types::SolType>::eip712_data_word(&self.instance)
-                    .0
-                    .to_vec()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for VerifierInput {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <Instance as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.instance,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <Instance as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.instance,
-                    out,
-                );
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.x, out);
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.y, out);
             }
             #[inline]
             fn encode_topic(
@@ -972,23 +231,20 @@ struct VerifierInput { Instance instance; }
         }
     };
     use alloy::contract as alloy_contract;
-    /**Creates a new wrapper around an on-chain [`Compliance`](self) contract instance.
+    /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
 
-See the [wrapper's documentation](`ComplianceInstance`) for more details.*/
+See the [wrapper's documentation](`DeltaInstance`) for more details.*/
     #[inline]
     pub const fn new<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    >(
-        address: alloy_sol_types::private::Address,
-        __provider: P,
-    ) -> ComplianceInstance<P, N> {
-        ComplianceInstance::<P, N>::new(address, __provider)
+    >(address: alloy_sol_types::private::Address, __provider: P) -> DeltaInstance<P, N> {
+        DeltaInstance::<P, N>::new(address, __provider)
     }
-    /**A [`Compliance`](self) instance.
+    /**A [`Delta`](self) instance.
 
 Contains type-safe methods for interacting with an on-chain instance of the
-[`Compliance`](self) contract located at a given `address`, using a given
+[`Delta`](self) contract located at a given `address`, using a given
 provider `P`.
 
 If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
@@ -997,26 +253,26 @@ be used to deploy a new instance of the contract.
 
 See the [module-level documentation](self) for all the available methods.*/
     #[derive(Clone)]
-    pub struct ComplianceInstance<P, N = alloy_contract::private::Ethereum> {
+    pub struct DeltaInstance<P, N = alloy_contract::private::Ethereum> {
         address: alloy_sol_types::private::Address,
         provider: P,
         _network: ::core::marker::PhantomData<N>,
     }
     #[automatically_derived]
-    impl<P, N> ::core::fmt::Debug for ComplianceInstance<P, N> {
+    impl<P, N> ::core::fmt::Debug for DeltaInstance<P, N> {
         #[inline]
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("ComplianceInstance").field(&self.address).finish()
+            f.debug_tuple("DeltaInstance").field(&self.address).finish()
         }
     }
     /// Instantiation and getters/setters.
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ComplianceInstance<P, N> {
-        /**Creates a new wrapper around an on-chain [`Compliance`](self) contract instance.
+    > DeltaInstance<P, N> {
+        /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
 
-See the [wrapper's documentation](`ComplianceInstance`) for more details.*/
+See the [wrapper's documentation](`DeltaInstance`) for more details.*/
         #[inline]
         pub const fn new(
             address: alloy_sol_types::private::Address,
@@ -1049,11 +305,11 @@ See the [wrapper's documentation](`ComplianceInstance`) for more details.*/
             &self.provider
         }
     }
-    impl<P: ::core::clone::Clone, N> ComplianceInstance<&P, N> {
+    impl<P: ::core::clone::Clone, N> DeltaInstance<&P, N> {
         /// Clones the provider and returns a new instance with the cloned provider.
         #[inline]
-        pub fn with_cloned_provider(self) -> ComplianceInstance<P, N> {
-            ComplianceInstance {
+        pub fn with_cloned_provider(self) -> DeltaInstance<P, N> {
+            DeltaInstance {
                 address: self.address,
                 provider: ::core::clone::Clone::clone(&self.provider),
                 _network: ::core::marker::PhantomData,
@@ -1064,7 +320,7 @@ See the [wrapper's documentation](`ComplianceInstance`) for more details.*/
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ComplianceInstance<P, N> {
+    > DeltaInstance<P, N> {
         /// Creates a new call builder using this contract instance's provider and address.
         ///
         /// Note that the call can be any function call, not just those defined in this
@@ -1080,7 +336,7 @@ See the [wrapper's documentation](`ComplianceInstance`) for more details.*/
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ComplianceInstance<P, N> {
+    > DeltaInstance<P, N> {
         /// Creates a new event filter using this contract instance's provider and address.
         ///
         /// Note that the type can be any event, not just those defined in this contract.
@@ -1100,7 +356,6 @@ library Logic {
     type DeletionCriterion is uint8;
     struct AppData { ExpirableBlob[] resourcePayload; ExpirableBlob[] discoveryPayload; ExpirableBlob[] externalPayload; ExpirableBlob[] applicationPayload; }
     struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
-    struct VerifierInput { bytes32 tag; bytes32 verifyingKey; AppData appData; }
 }
 ```*/
 #[allow(
@@ -1804,250 +1059,6 @@ struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
             }
         }
     };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct VerifierInput { bytes32 tag; bytes32 verifyingKey; AppData appData; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct VerifierInput {
-        #[allow(missing_docs)]
-        pub tag: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub verifyingKey: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub appData: <AppData as alloy::sol_types::SolType>::RustType,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            AppData,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-            <AppData as alloy::sol_types::SolType>::RustType,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<VerifierInput> for UnderlyingRustTuple<'_> {
-            fn from(value: VerifierInput) -> Self {
-                (value.tag, value.verifyingKey, value.appData)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for VerifierInput {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    tag: tuple.0,
-                    verifyingKey: tuple.1,
-                    appData: tuple.2,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for VerifierInput {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for VerifierInput {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.tag),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.verifyingKey),
-                    <AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for VerifierInput {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for VerifierInput {
-            const NAME: &'static str = "VerifierInput";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "VerifierInput(bytes32 tag,bytes32 verifyingKey,AppData appData)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(<AppData as alloy_sol_types::SolStruct>::eip712_root_type());
-                components
-                    .extend(
-                        <AppData as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.tag)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.verifyingKey)
-                        .0,
-                    <AppData as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.appData,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for VerifierInput {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.tag)
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.verifyingKey,
-                    )
-                    + <AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.appData,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.tag, out);
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.verifyingKey,
-                    out,
-                );
-                <AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.appData,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
     use alloy::contract as alloy_contract;
     /**Creates a new wrapper around an on-chain [`Logic`](self) contract instance.
 
@@ -2170,24 +1181,10 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
 
 Generated by the following Solidity interface...
 ```solidity
-library Compliance {
-    struct ConsumedRefs {
-        bytes32 nullifier;
-        bytes32 logicRef;
-        bytes32 commitmentTreeRoot;
-    }
-    struct CreatedRefs {
-        bytes32 commitment;
-        bytes32 logicRef;
-    }
-    struct Instance {
-        ConsumedRefs consumed;
-        CreatedRefs created;
-        bytes32 unitDeltaX;
-        bytes32 unitDeltaY;
-    }
-    struct VerifierInput {
-        Instance instance;
+library Delta {
+    struct Point {
+        uint256 x;
+        uint256 y;
     }
 }
 
@@ -2203,17 +1200,25 @@ library Logic {
         DeletionCriterion deletionCriterion;
         bytes blob;
     }
-    struct VerifierInput {
-        bytes32 tag;
-        bytes32 verifyingKey;
-        AppData appData;
-    }
 }
 
 interface IProtocolAdapter {
     struct Action {
-        Logic.VerifierInput[] logicVerifierInputs;
-        Compliance.VerifierInput[] complianceVerifierInputs;
+        ConsumedResourcePublicData[] consumed;
+        CreatedResourcePublicData[] created;
+        Delta.Point delta;
+        bytes32 actionTreeRoot;
+    }
+    struct ConsumedResourcePublicData {
+        bytes32 nullifier;
+        bytes32 logicRef;
+        bytes32 commitmentTreeRoot;
+        Logic.AppData appData;
+    }
+    struct CreatedResourcePublicData {
+        bytes32 commitment;
+        bytes32 logicRef;
+        Logic.AppData appData;
     }
     struct Transaction {
         Action[] actions;
@@ -2221,19 +1226,22 @@ interface IProtocolAdapter {
         bytes aggregationProof;
     }
 
-    event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
+    event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
     event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
+    event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
     event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
-    event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
+    event TransactionExecuted(bytes32 indexed transactionId);
 
     function emergencyStop() external;
     function execute(Transaction memory transaction) external;
+    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
     function isEmergencyStopped() external view returns (bool isStopped);
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
     function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 }
 ```
@@ -2263,17 +1271,22 @@ interface IProtocolAdapter {
             "internalType": "struct Action[]",
             "components": [
               {
-                "name": "logicVerifierInputs",
+                "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct Logic.VerifierInput[]",
+                "internalType": "struct ConsumedResourcePublicData[]",
                 "components": [
                   {
-                    "name": "tag",
+                    "name": "nullifier",
                     "type": "bytes32",
                     "internalType": "bytes32"
                   },
                   {
-                    "name": "verifyingKey",
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "commitmentTreeRoot",
                     "type": "bytes32",
                     "internalType": "bytes32"
                   },
@@ -2355,67 +1368,118 @@ interface IProtocolAdapter {
                 ]
               },
               {
-                "name": "complianceVerifierInputs",
+                "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct Compliance.VerifierInput[]",
+                "internalType": "struct CreatedResourcePublicData[]",
                 "components": [
                   {
-                    "name": "instance",
+                    "name": "commitment",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Compliance.Instance",
+                    "internalType": "struct Logic.AppData",
                     "components": [
                       {
-                        "name": "consumed",
-                        "type": "tuple",
-                        "internalType": "struct Compliance.ConsumedRefs",
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
                         "components": [
                           {
-                            "name": "nullifier",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
                           },
                           {
-                            "name": "logicRef",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
-                          },
-                          {
-                            "name": "commitmentTreeRoot",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
                           }
                         ]
                       },
                       {
-                        "name": "created",
-                        "type": "tuple",
-                        "internalType": "struct Compliance.CreatedRefs",
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
                         "components": [
                           {
-                            "name": "commitment",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
                           },
                           {
-                            "name": "logicRef",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
                           }
                         ]
                       },
                       {
-                        "name": "unitDeltaX",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
                       },
                       {
-                        "name": "unitDeltaY",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
                       }
                     ]
                   }
                 ]
+              },
+              {
+                "name": "delta",
+                "type": "tuple",
+                "internalType": "struct Delta.Point",
+                "components": [
+                  {
+                    "name": "x",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "y",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "actionTreeRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
               }
             ]
           },
@@ -2434,6 +1498,19 @@ interface IProtocolAdapter {
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getKindTableCommitment",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "kindTableCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -2476,6 +1553,19 @@ interface IProtocolAdapter {
   },
   {
     "type": "function",
+    "name": "setKindTableCommitment",
+    "inputs": [
+      {
+        "name": "newKindTableCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "simulateExecute",
     "inputs": [
       {
@@ -2489,17 +1579,22 @@ interface IProtocolAdapter {
             "internalType": "struct Action[]",
             "components": [
               {
-                "name": "logicVerifierInputs",
+                "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct Logic.VerifierInput[]",
+                "internalType": "struct ConsumedResourcePublicData[]",
                 "components": [
                   {
-                    "name": "tag",
+                    "name": "nullifier",
                     "type": "bytes32",
                     "internalType": "bytes32"
                   },
                   {
-                    "name": "verifyingKey",
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "commitmentTreeRoot",
                     "type": "bytes32",
                     "internalType": "bytes32"
                   },
@@ -2581,67 +1676,118 @@ interface IProtocolAdapter {
                 ]
               },
               {
-                "name": "complianceVerifierInputs",
+                "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct Compliance.VerifierInput[]",
+                "internalType": "struct CreatedResourcePublicData[]",
                 "components": [
                   {
-                    "name": "instance",
+                    "name": "commitment",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Compliance.Instance",
+                    "internalType": "struct Logic.AppData",
                     "components": [
                       {
-                        "name": "consumed",
-                        "type": "tuple",
-                        "internalType": "struct Compliance.ConsumedRefs",
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
                         "components": [
                           {
-                            "name": "nullifier",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
                           },
                           {
-                            "name": "logicRef",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
-                          },
-                          {
-                            "name": "commitmentTreeRoot",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
                           }
                         ]
                       },
                       {
-                        "name": "created",
-                        "type": "tuple",
-                        "internalType": "struct Compliance.CreatedRefs",
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
                         "components": [
                           {
-                            "name": "commitment",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
                           },
                           {
-                            "name": "logicRef",
-                            "type": "bytes32",
-                            "internalType": "bytes32"
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
                           }
                         ]
                       },
                       {
-                        "name": "unitDeltaX",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
                       },
                       {
-                        "name": "unitDeltaY",
-                        "type": "bytes32",
-                        "internalType": "bytes32"
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
                       }
                     ]
                   }
                 ]
+              },
+              {
+                "name": "delta",
+                "type": "tuple",
+                "internalType": "struct Delta.Point",
+                "components": [
+                  {
+                    "name": "x",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "y",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "actionTreeRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
               }
             ]
           },
@@ -2677,10 +1823,28 @@ interface IProtocolAdapter {
         "internalType": "bytes32"
       },
       {
-        "name": "actionTagCount",
-        "type": "uint256",
+        "name": "nullifiers",
+        "type": "bytes32[]",
         "indexed": false,
-        "internalType": "uint256"
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "consumedLogicRefs",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "commitments",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "createdLogicRefs",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
       }
     ],
     "anonymous": false
@@ -2787,6 +1951,19 @@ interface IProtocolAdapter {
   },
   {
     "type": "event",
+    "name": "KindTableCommitmentUpdated",
+    "inputs": [
+      {
+        "name": "kindTableCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ResourcePayload",
     "inputs": [
       {
@@ -2815,16 +1992,10 @@ interface IProtocolAdapter {
     "name": "TransactionExecuted",
     "inputs": [
       {
-        "name": "tags",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
-      },
-      {
-        "name": "logicRefs",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -2864,19 +2035,23 @@ pub mod IProtocolAdapter {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
-struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierInput[] complianceVerifierInputs; }
+struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData[] created; Delta.Point delta; bytes32 actionTreeRoot; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct Action {
         #[allow(missing_docs)]
-        pub logicVerifierInputs: alloy::sol_types::private::Vec<
-            <Logic::VerifierInput as alloy::sol_types::SolType>::RustType,
+        pub consumed: alloy::sol_types::private::Vec<
+            <ConsumedResourcePublicData as alloy::sol_types::SolType>::RustType,
         >,
         #[allow(missing_docs)]
-        pub complianceVerifierInputs: alloy::sol_types::private::Vec<
-            <Compliance::VerifierInput as alloy::sol_types::SolType>::RustType,
+        pub created: alloy::sol_types::private::Vec<
+            <CreatedResourcePublicData as alloy::sol_types::SolType>::RustType,
         >,
+        #[allow(missing_docs)]
+        pub delta: <Delta::Point as alloy::sol_types::SolType>::RustType,
+        #[allow(missing_docs)]
+        pub actionTreeRoot: alloy::sol_types::private::FixedBytes<32>,
     }
     #[allow(
         non_camel_case_types,
@@ -2889,17 +2064,21 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
         #[doc(hidden)]
         #[allow(dead_code)]
         type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Array<Logic::VerifierInput>,
-            alloy::sol_types::sol_data::Array<Compliance::VerifierInput>,
+            alloy::sol_types::sol_data::Array<ConsumedResourcePublicData>,
+            alloy::sol_types::sol_data::Array<CreatedResourcePublicData>,
+            Delta::Point,
+            alloy::sol_types::sol_data::FixedBytes<32>,
         );
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Vec<
-                <Logic::VerifierInput as alloy::sol_types::SolType>::RustType,
+                <ConsumedResourcePublicData as alloy::sol_types::SolType>::RustType,
             >,
             alloy::sol_types::private::Vec<
-                <Compliance::VerifierInput as alloy::sol_types::SolType>::RustType,
+                <CreatedResourcePublicData as alloy::sol_types::SolType>::RustType,
             >,
+            <Delta::Point as alloy::sol_types::SolType>::RustType,
+            alloy::sol_types::private::FixedBytes<32>,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -2916,7 +2095,7 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
         #[doc(hidden)]
         impl ::core::convert::From<Action> for UnderlyingRustTuple<'_> {
             fn from(value: Action) -> Self {
-                (value.logicVerifierInputs, value.complianceVerifierInputs)
+                (value.consumed, value.created, value.delta, value.actionTreeRoot)
             }
         }
         #[automatically_derived]
@@ -2924,8 +2103,10 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
         impl ::core::convert::From<UnderlyingRustTuple<'_>> for Action {
             fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                 Self {
-                    logicVerifierInputs: tuple.0,
-                    complianceVerifierInputs: tuple.1,
+                    consumed: tuple.0,
+                    created: tuple.1,
+                    delta: tuple.2,
+                    actionTreeRoot: tuple.3,
                 }
             }
         }
@@ -2939,13 +2120,15 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
                     <alloy::sol_types::sol_data::Array<
-                        Logic::VerifierInput,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicVerifierInputs),
+                        ConsumedResourcePublicData,
+                    > as alloy_sol_types::SolType>::tokenize(&self.consumed),
                     <alloy::sol_types::sol_data::Array<
-                        Compliance::VerifierInput,
-                    > as alloy_sol_types::SolType>::tokenize(
-                        &self.complianceVerifierInputs,
-                    ),
+                        CreatedResourcePublicData,
+                    > as alloy_sol_types::SolType>::tokenize(&self.created),
+                    <Delta::Point as alloy_sol_types::SolType>::tokenize(&self.delta),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.actionTreeRoot),
                 )
             }
             #[inline]
@@ -3020,29 +2203,37 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Action(Logic.VerifierInput[] logicVerifierInputs,Compliance.VerifierInput[] complianceVerifierInputs)",
+                    "Action(ConsumedResourcePublicData[] consumed,CreatedResourcePublicData[] created,Point delta,bytes32 actionTreeRoot)",
                 )
             }
             #[inline]
             fn eip712_components() -> alloy_sol_types::private::Vec<
                 alloy_sol_types::private::Cow<'static, str>,
             > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(2);
+                let mut components = alloy_sol_types::private::Vec::with_capacity(3);
                 components
                     .push(
-                        <Logic::VerifierInput as alloy_sol_types::SolStruct>::eip712_root_type(),
+                        <ConsumedResourcePublicData as alloy_sol_types::SolStruct>::eip712_root_type(),
                     );
                 components
                     .extend(
-                        <Logic::VerifierInput as alloy_sol_types::SolStruct>::eip712_components(),
+                        <ConsumedResourcePublicData as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
                     .push(
-                        <Compliance::VerifierInput as alloy_sol_types::SolStruct>::eip712_root_type(),
+                        <CreatedResourcePublicData as alloy_sol_types::SolStruct>::eip712_root_type(),
                     );
                 components
                     .extend(
-                        <Compliance::VerifierInput as alloy_sol_types::SolStruct>::eip712_components(),
+                        <CreatedResourcePublicData as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+                    .push(
+                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_root_type(),
+                    );
+                components
+                    .extend(
+                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
             }
@@ -3050,15 +2241,21 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
             fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
                 [
                     <alloy::sol_types::sol_data::Array<
-                        Logic::VerifierInput,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.logicVerifierInputs,
-                        )
+                        ConsumedResourcePublicData,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.consumed)
                         .0,
                     <alloy::sol_types::sol_data::Array<
-                        Compliance::VerifierInput,
+                        CreatedResourcePublicData,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.created)
+                        .0,
+                    <Delta::Point as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.delta,
+                        )
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
                     > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.complianceVerifierInputs,
+                            &self.actionTreeRoot,
                         )
                         .0,
                 ]
@@ -3071,14 +2268,22 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize
                     + <alloy::sol_types::sol_data::Array<
-                        Logic::VerifierInput,
+                        ConsumedResourcePublicData,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.logicVerifierInputs,
+                        &rust.consumed,
                     )
                     + <alloy::sol_types::sol_data::Array<
-                        Compliance::VerifierInput,
+                        CreatedResourcePublicData,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.complianceVerifierInputs,
+                        &rust.created,
+                    )
+                    + <Delta::Point as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.delta,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.actionTreeRoot,
                     )
             }
             #[inline]
@@ -3090,15 +2295,562 @@ struct Action { Logic.VerifierInput[] logicVerifierInputs; Compliance.VerifierIn
                     <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
                 );
                 <alloy::sol_types::sol_data::Array<
-                    Logic::VerifierInput,
+                    ConsumedResourcePublicData,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.logicVerifierInputs,
+                    &rust.consumed,
                     out,
                 );
                 <alloy::sol_types::sol_data::Array<
-                    Compliance::VerifierInput,
+                    CreatedResourcePublicData,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.complianceVerifierInputs,
+                    &rust.created,
+                    out,
+                );
+                <Delta::Point as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.delta,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.actionTreeRoot,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive()]
+    /**```solidity
+struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; Logic.AppData appData; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct ConsumedResourcePublicData {
+        #[allow(missing_docs)]
+        pub nullifier: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub commitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub appData: <Logic::AppData as alloy::sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            Logic::AppData,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            <Logic::AppData as alloy::sol_types::SolType>::RustType,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<ConsumedResourcePublicData>
+        for UnderlyingRustTuple<'_> {
+            fn from(value: ConsumedResourcePublicData) -> Self {
+                (
+                    value.nullifier,
+                    value.logicRef,
+                    value.commitmentTreeRoot,
+                    value.appData,
+                )
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>>
+        for ConsumedResourcePublicData {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    nullifier: tuple.0,
+                    logicRef: tuple.1,
+                    commitmentTreeRoot: tuple.2,
+                    appData: tuple.3,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for ConsumedResourcePublicData {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self>
+        for ConsumedResourcePublicData {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.nullifier),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.commitmentTreeRoot),
+                    <Logic::AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for ConsumedResourcePublicData {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for ConsumedResourcePublicData {
+            const NAME: &'static str = "ConsumedResourcePublicData";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "ConsumedResourcePublicData(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot,AppData appData)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
+                components
+                    .push(
+                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_root_type(),
+                    );
+                components
+                    .extend(
+                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.nullifier)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.commitmentTreeRoot,
+                        )
+                        .0,
+                    <Logic::AppData as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.appData,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for ConsumedResourcePublicData {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.nullifier,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.logicRef,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.commitmentTreeRoot,
+                    )
+                    + <Logic::AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.appData,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.nullifier,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.logicRef,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.commitmentTreeRoot,
+                    out,
+                );
+                <Logic::AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.appData,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive()]
+    /**```solidity
+struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct CreatedResourcePublicData {
+        #[allow(missing_docs)]
+        pub commitment: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub appData: <Logic::AppData as alloy::sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            Logic::AppData,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            <Logic::AppData as alloy::sol_types::SolType>::RustType,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<CreatedResourcePublicData>
+        for UnderlyingRustTuple<'_> {
+            fn from(value: CreatedResourcePublicData) -> Self {
+                (value.commitment, value.logicRef, value.appData)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>>
+        for CreatedResourcePublicData {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    commitment: tuple.0,
+                    logicRef: tuple.1,
+                    appData: tuple.2,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for CreatedResourcePublicData {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for CreatedResourcePublicData {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.commitment),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <Logic::AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for CreatedResourcePublicData {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for CreatedResourcePublicData {
+            const NAME: &'static str = "CreatedResourcePublicData";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "CreatedResourcePublicData(bytes32 commitment,bytes32 logicRef,AppData appData)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
+                components
+                    .push(
+                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_root_type(),
+                    );
+                components
+                    .extend(
+                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.commitment)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
+                        .0,
+                    <Logic::AppData as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.appData,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for CreatedResourcePublicData {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.commitment,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.logicRef,
+                    )
+                    + <Logic::AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.appData,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.commitment,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.logicRef,
+                    out,
+                );
+                <Logic::AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.appData,
                     out,
                 );
             }
@@ -3368,9 +3120,9 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Event with signature `ActionExecuted(bytes32,uint256)` and selector `0x1cc9a0755dd734c1ebfe98b68ece200037e363eb366d0dee04e420e2f23cc010`.
+    /**Event with signature `ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])` and selector `0x4ce7c1102060be4f28b229199140fdd5112d4214fe9541bc9b23541e4592cc32`.
 ```solidity
-event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
+event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
 ```*/
     #[allow(
         non_camel_case_types,
@@ -3383,7 +3135,21 @@ event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
         #[allow(missing_docs)]
         pub actionTreeRoot: alloy::sol_types::private::FixedBytes<32>,
         #[allow(missing_docs)]
-        pub actionTagCount: alloy::sol_types::private::primitives::aliases::U256,
+        pub nullifiers: alloy::sol_types::private::Vec<
+            alloy::sol_types::private::FixedBytes<32>,
+        >,
+        #[allow(missing_docs)]
+        pub consumedLogicRefs: alloy::sol_types::private::Vec<
+            alloy::sol_types::private::FixedBytes<32>,
+        >,
+        #[allow(missing_docs)]
+        pub commitments: alloy::sol_types::private::Vec<
+            alloy::sol_types::private::FixedBytes<32>,
+        >,
+        #[allow(missing_docs)]
+        pub createdLogicRefs: alloy::sol_types::private::Vec<
+            alloy::sol_types::private::FixedBytes<32>,
+        >,
     }
     #[allow(
         non_camel_case_types,
@@ -3397,17 +3163,28 @@ event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
         impl alloy_sol_types::SolEvent for ActionExecuted {
             type DataTuple<'a> = (
                 alloy::sol_types::sol_data::FixedBytes<32>,
-                alloy::sol_types::sol_data::Uint<256>,
+                alloy::sol_types::sol_data::Array<
+                    alloy::sol_types::sol_data::FixedBytes<32>,
+                >,
+                alloy::sol_types::sol_data::Array<
+                    alloy::sol_types::sol_data::FixedBytes<32>,
+                >,
+                alloy::sol_types::sol_data::Array<
+                    alloy::sol_types::sol_data::FixedBytes<32>,
+                >,
+                alloy::sol_types::sol_data::Array<
+                    alloy::sol_types::sol_data::FixedBytes<32>,
+                >,
             );
             type DataToken<'a> = <Self::DataTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
             type TopicList = (alloy_sol_types::sol_data::FixedBytes<32>,);
-            const SIGNATURE: &'static str = "ActionExecuted(bytes32,uint256)";
+            const SIGNATURE: &'static str = "ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])";
             const SIGNATURE_HASH: alloy_sol_types::private::B256 = alloy_sol_types::private::B256::new([
-                28u8, 201u8, 160u8, 117u8, 93u8, 215u8, 52u8, 193u8, 235u8, 254u8, 152u8,
-                182u8, 142u8, 206u8, 32u8, 0u8, 55u8, 227u8, 99u8, 235u8, 54u8, 109u8,
-                13u8, 238u8, 4u8, 228u8, 32u8, 226u8, 242u8, 60u8, 192u8, 16u8,
+                76u8, 231u8, 193u8, 16u8, 32u8, 96u8, 190u8, 79u8, 40u8, 178u8, 41u8,
+                25u8, 145u8, 64u8, 253u8, 213u8, 17u8, 45u8, 66u8, 20u8, 254u8, 149u8,
+                65u8, 188u8, 155u8, 35u8, 84u8, 30u8, 69u8, 146u8, 204u8, 50u8,
             ]);
             const ANONYMOUS: bool = false;
             #[allow(unused_variables)]
@@ -3418,7 +3195,10 @@ event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
             ) -> Self {
                 Self {
                     actionTreeRoot: data.0,
-                    actionTagCount: data.1,
+                    nullifiers: data.1,
+                    consumedLogicRefs: data.2,
+                    commitments: data.3,
+                    createdLogicRefs: data.4,
                 }
             }
             #[inline]
@@ -3442,9 +3222,18 @@ event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
                     <alloy::sol_types::sol_data::FixedBytes<
                         32,
                     > as alloy_sol_types::SolType>::tokenize(&self.actionTreeRoot),
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.actionTagCount),
+                    <alloy::sol_types::sol_data::Array<
+                        alloy::sol_types::sol_data::FixedBytes<32>,
+                    > as alloy_sol_types::SolType>::tokenize(&self.nullifiers),
+                    <alloy::sol_types::sol_data::Array<
+                        alloy::sol_types::sol_data::FixedBytes<32>,
+                    > as alloy_sol_types::SolType>::tokenize(&self.consumedLogicRefs),
+                    <alloy::sol_types::sol_data::Array<
+                        alloy::sol_types::sol_data::FixedBytes<32>,
+                    > as alloy_sol_types::SolType>::tokenize(&self.commitments),
+                    <alloy::sol_types::sol_data::Array<
+                        alloy::sol_types::sol_data::FixedBytes<32>,
+                    > as alloy_sol_types::SolType>::tokenize(&self.createdLogicRefs),
                 )
             }
             #[inline]
@@ -3984,6 +3773,119 @@ event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, byt
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Event with signature `KindTableCommitmentUpdated(bytes32)` and selector `0x902d68080c9f4bf7ed1c926758236afc2b4044487f6f8684352d38087244aee6`.
+```solidity
+event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
+```*/
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    #[derive(Clone)]
+    pub struct KindTableCommitmentUpdated {
+        #[allow(missing_docs)]
+        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[automatically_derived]
+        impl alloy_sol_types::SolEvent for KindTableCommitmentUpdated {
+            type DataTuple<'a> = ();
+            type DataToken<'a> = <Self::DataTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type TopicList = (
+                alloy_sol_types::sol_data::FixedBytes<32>,
+                alloy::sol_types::sol_data::FixedBytes<32>,
+            );
+            const SIGNATURE: &'static str = "KindTableCommitmentUpdated(bytes32)";
+            const SIGNATURE_HASH: alloy_sol_types::private::B256 = alloy_sol_types::private::B256::new([
+                144u8, 45u8, 104u8, 8u8, 12u8, 159u8, 75u8, 247u8, 237u8, 28u8, 146u8,
+                103u8, 88u8, 35u8, 106u8, 252u8, 43u8, 64u8, 68u8, 72u8, 127u8, 111u8,
+                134u8, 132u8, 53u8, 45u8, 56u8, 8u8, 114u8, 68u8, 174u8, 230u8,
+            ]);
+            const ANONYMOUS: bool = false;
+            #[allow(unused_variables)]
+            #[inline]
+            fn new(
+                topics: <Self::TopicList as alloy_sol_types::SolType>::RustType,
+                data: <Self::DataTuple<'_> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                Self {
+                    kindTableCommitment: topics.1,
+                }
+            }
+            #[inline]
+            fn check_signature(
+                topics: &<Self::TopicList as alloy_sol_types::SolType>::RustType,
+            ) -> alloy_sol_types::Result<()> {
+                if topics.0 != Self::SIGNATURE_HASH {
+                    return Err(
+                        alloy_sol_types::Error::invalid_event_signature_hash(
+                            Self::SIGNATURE,
+                            topics.0,
+                            Self::SIGNATURE_HASH,
+                        ),
+                    );
+                }
+                Ok(())
+            }
+            #[inline]
+            fn tokenize_body(&self) -> Self::DataToken<'_> {
+                ()
+            }
+            #[inline]
+            fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
+                (Self::SIGNATURE_HASH.into(), self.kindTableCommitment.clone())
+            }
+            #[inline]
+            fn encode_topics_raw(
+                &self,
+                out: &mut [alloy_sol_types::abi::token::WordToken],
+            ) -> alloy_sol_types::Result<()> {
+                if out.len() < <Self::TopicList as alloy_sol_types::TopicList>::COUNT {
+                    return Err(alloy_sol_types::Error::Overrun);
+                }
+                out[0usize] = alloy_sol_types::abi::token::WordToken(
+                    Self::SIGNATURE_HASH,
+                );
+                out[1usize] = <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic(
+                    &self.kindTableCommitment,
+                );
+                Ok(())
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::IntoLogData for KindTableCommitmentUpdated {
+            fn to_log_data(&self) -> alloy_sol_types::private::LogData {
+                From::from(self)
+            }
+            fn into_log_data(self) -> alloy_sol_types::private::LogData {
+                From::from(&self)
+            }
+        }
+        #[automatically_derived]
+        impl From<&KindTableCommitmentUpdated> for alloy_sol_types::private::LogData {
+            #[inline]
+            fn from(
+                this: &KindTableCommitmentUpdated,
+            ) -> alloy_sol_types::private::LogData {
+                alloy_sol_types::SolEvent::encode_log_data(this)
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Event with signature `ResourcePayload(bytes32,uint256,bytes)` and selector `0x3a134d01c07803003c63301717ddc4612e6c47ae408eeea3222cded532d02ae6`.
 ```solidity
 event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
@@ -4109,9 +4011,9 @@ event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Event with signature `TransactionExecuted(bytes32[],bytes32[])` and selector `0x10dd528db2c49add6545679b976df90d24c035d6a75b17f41b700e8c18ca5364`.
+    /**Event with signature `TransactionExecuted(bytes32)` and selector `0x862d83c6c5af275e697bfd4e27c8323c196b44bdd011dd9aaab6db0ec9943dce`.
 ```solidity
-event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
+event TransactionExecuted(bytes32 indexed transactionId);
 ```*/
     #[allow(
         non_camel_case_types,
@@ -4122,13 +4024,7 @@ event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
     #[derive(Clone)]
     pub struct TransactionExecuted {
         #[allow(missing_docs)]
-        pub tags: alloy::sol_types::private::Vec<
-            alloy::sol_types::private::FixedBytes<32>,
-        >,
-        #[allow(missing_docs)]
-        pub logicRefs: alloy::sol_types::private::Vec<
-            alloy::sol_types::private::FixedBytes<32>,
-        >,
+        pub transactionId: alloy::sol_types::private::FixedBytes<32>,
     }
     #[allow(
         non_camel_case_types,
@@ -4140,23 +4036,19 @@ event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
         use alloy::sol_types as alloy_sol_types;
         #[automatically_derived]
         impl alloy_sol_types::SolEvent for TransactionExecuted {
-            type DataTuple<'a> = (
-                alloy::sol_types::sol_data::Array<
-                    alloy::sol_types::sol_data::FixedBytes<32>,
-                >,
-                alloy::sol_types::sol_data::Array<
-                    alloy::sol_types::sol_data::FixedBytes<32>,
-                >,
-            );
+            type DataTuple<'a> = ();
             type DataToken<'a> = <Self::DataTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            type TopicList = (alloy_sol_types::sol_data::FixedBytes<32>,);
-            const SIGNATURE: &'static str = "TransactionExecuted(bytes32[],bytes32[])";
+            type TopicList = (
+                alloy_sol_types::sol_data::FixedBytes<32>,
+                alloy::sol_types::sol_data::FixedBytes<32>,
+            );
+            const SIGNATURE: &'static str = "TransactionExecuted(bytes32)";
             const SIGNATURE_HASH: alloy_sol_types::private::B256 = alloy_sol_types::private::B256::new([
-                16u8, 221u8, 82u8, 141u8, 178u8, 196u8, 154u8, 221u8, 101u8, 69u8, 103u8,
-                155u8, 151u8, 109u8, 249u8, 13u8, 36u8, 192u8, 53u8, 214u8, 167u8, 91u8,
-                23u8, 244u8, 27u8, 112u8, 14u8, 140u8, 24u8, 202u8, 83u8, 100u8,
+                134u8, 45u8, 131u8, 198u8, 197u8, 175u8, 39u8, 94u8, 105u8, 123u8, 253u8,
+                78u8, 39u8, 200u8, 50u8, 60u8, 25u8, 107u8, 68u8, 189u8, 208u8, 17u8,
+                221u8, 154u8, 170u8, 182u8, 219u8, 14u8, 201u8, 148u8, 61u8, 206u8,
             ]);
             const ANONYMOUS: bool = false;
             #[allow(unused_variables)]
@@ -4165,10 +4057,7 @@ event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
                 topics: <Self::TopicList as alloy_sol_types::SolType>::RustType,
                 data: <Self::DataTuple<'_> as alloy_sol_types::SolType>::RustType,
             ) -> Self {
-                Self {
-                    tags: data.0,
-                    logicRefs: data.1,
-                }
+                Self { transactionId: topics.1 }
             }
             #[inline]
             fn check_signature(
@@ -4187,18 +4076,11 @@ event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
             }
             #[inline]
             fn tokenize_body(&self) -> Self::DataToken<'_> {
-                (
-                    <alloy::sol_types::sol_data::Array<
-                        alloy::sol_types::sol_data::FixedBytes<32>,
-                    > as alloy_sol_types::SolType>::tokenize(&self.tags),
-                    <alloy::sol_types::sol_data::Array<
-                        alloy::sol_types::sol_data::FixedBytes<32>,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRefs),
-                )
+                ()
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (Self::SIGNATURE_HASH.into(),)
+                (Self::SIGNATURE_HASH.into(), self.transactionId.clone())
             }
             #[inline]
             fn encode_topics_raw(
@@ -4211,6 +4093,9 @@ event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
                 out[0usize] = alloy_sol_types::abi::token::WordToken(
                     Self::SIGNATURE_HASH,
                 );
+                out[1usize] = <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic(&self.transactionId);
                 Ok(())
             }
         }
@@ -4370,7 +4255,7 @@ function emergencyStop() external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
-    /**Function with signature `execute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes))` and selector `0x01bf10b6`.
+    /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
 ```solidity
 function execute(Transaction memory transaction) external;
 ```*/
@@ -4380,7 +4265,7 @@ function execute(Transaction memory transaction) external;
         #[allow(missing_docs)]
         pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
     }
-    ///Container type for the return parameters of the [`execute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes))`](executeCall) function.
+    ///Container type for the return parameters of the [`execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))`](executeCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct executeReturn {}
@@ -4476,8 +4361,8 @@ function execute(Transaction memory transaction) external;
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "execute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes))";
-            const SELECTOR: [u8; 4] = [1u8, 191u8, 16u8, 182u8];
+            const SIGNATURE: &'static str = "execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))";
+            const SELECTOR: [u8; 4] = [115u8, 171u8, 153u8, 22u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -4507,6 +4392,157 @@ function execute(Transaction memory transaction) external;
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(Into::into)
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `getKindTableCommitment()` and selector `0xffc33f72`.
+```solidity
+function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getKindTableCommitmentCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`getKindTableCommitment()`](getKindTableCommitmentCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getKindTableCommitmentReturn {
+        #[allow(missing_docs)]
+        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getKindTableCommitmentCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getKindTableCommitmentCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getKindTableCommitmentCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getKindTableCommitmentReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getKindTableCommitmentReturn) -> Self {
+                    (value.kindTableCommitment,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getKindTableCommitmentReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        kindTableCommitment: tuple.0,
+                    }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getKindTableCommitmentCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = alloy::sol_types::private::FixedBytes<32>;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getKindTableCommitment()";
+            const SELECTOR: [u8; 4] = [255u8, 195u8, 63u8, 114u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(ret),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(|r| {
+                        let r: getKindTableCommitmentReturn = r.into();
+                        r.kindTableCommitment
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(|r| {
+                        let r: getKindTableCommitmentReturn = r.into();
+                        r.kindTableCommitment
+                    })
             }
         }
     };
@@ -4958,8 +4994,162 @@ function isEmergencyStopped() external view returns (bool isStopped);
         }
     };
     #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `setKindTableCommitment(bytes32)` and selector `0xc0253023`.
+```solidity
+function setKindTableCommitment(bytes32 newKindTableCommitment) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct setKindTableCommitmentCall {
+        #[allow(missing_docs)]
+        pub newKindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+    }
+    ///Container type for the return parameters of the [`setKindTableCommitment(bytes32)`](setKindTableCommitmentCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct setKindTableCommitmentReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<setKindTableCommitmentCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: setKindTableCommitmentCall) -> Self {
+                    (value.newKindTableCommitment,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for setKindTableCommitmentCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        newKindTableCommitment: tuple.0,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<setKindTableCommitmentReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: setKindTableCommitmentReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for setKindTableCommitmentReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl setKindTableCommitmentReturn {
+            fn _tokenize(
+                &self,
+            ) -> <setKindTableCommitmentCall as alloy_sol_types::SolCall>::ReturnToken<
+                '_,
+            > {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for setKindTableCommitmentCall {
+            type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = setKindTableCommitmentReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "setKindTableCommitment(bytes32)";
+            const SELECTOR: [u8; 4] = [192u8, 37u8, 48u8, 35u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(
+                        &self.newKindTableCommitment,
+                    ),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                setKindTableCommitmentReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
-    /**Function with signature `simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)` and selector `0x21c406a4`.
+    /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)` and selector `0x87093eba`.
 ```solidity
 function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 ```*/
@@ -4971,7 +5161,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         #[allow(missing_docs)]
         pub skipRiscZeroProofVerification: bool,
     }
-    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)`](simulateExecuteCall) function.
+    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)`](simulateExecuteCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct simulateExecuteReturn {}
@@ -5076,8 +5266,8 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(((bytes32,bytes32,bytes32),(bytes32,bytes32),bytes32,bytes32))[])[],bytes,bytes),bool)";
-            const SELECTOR: [u8; 4] = [33u8, 196u8, 6u8, 164u8];
+            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)";
+            const SELECTOR: [u8; 4] = [135u8, 9u8, 62u8, 186u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -5127,11 +5317,15 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
+        getKindTableCommitment(getKindTableCommitmentCall),
+        #[allow(missing_docs)]
         getRiscZeroVerifierRouter(getRiscZeroVerifierRouterCall),
         #[allow(missing_docs)]
         getRiscZeroVerifierSelector(getRiscZeroVerifierSelectorCall),
         #[allow(missing_docs)]
         isEmergencyStopped(isEmergencyStoppedCall),
+        #[allow(missing_docs)]
+        setKindTableCommitment(setKindTableCommitmentCall),
         #[allow(missing_docs)]
         simulateExecute(simulateExecuteCall),
     }
@@ -5143,30 +5337,36 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [1u8, 191u8, 16u8, 182u8],
-            [33u8, 196u8, 6u8, 164u8],
             [91u8, 102u8, 107u8, 30u8],
             [99u8, 165u8, 153u8, 164u8],
+            [115u8, 171u8, 153u8, 22u8],
+            [135u8, 9u8, 62u8, 186u8],
+            [192u8, 37u8, 48u8, 35u8],
             [227u8, 56u8, 69u8, 207u8],
             [253u8, 221u8, 72u8, 55u8],
+            [255u8, 195u8, 63u8, 114u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(execute),
-            ::core::stringify!(simulateExecute),
             ::core::stringify!(getRiscZeroVerifierRouter),
             ::core::stringify!(emergencyStop),
+            ::core::stringify!(execute),
+            ::core::stringify!(simulateExecute),
+            ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(getRiscZeroVerifierSelector),
             ::core::stringify!(isEmergencyStopped),
+            ::core::stringify!(getKindTableCommitment),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getRiscZeroVerifierRouterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <emergencyStopCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getRiscZeroVerifierSelectorCall as alloy_sol_types::SolCall>::SIGNATURE,
             <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
         #[inline]
@@ -5193,7 +5393,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 6usize;
+        const COUNT: usize = 8usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5201,6 +5401,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     <emergencyStopCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
+                Self::getKindTableCommitment(_) => {
+                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
+                }
                 Self::getRiscZeroVerifierRouter(_) => {
                     <getRiscZeroVerifierRouterCall as alloy_sol_types::SolCall>::SELECTOR
                 }
@@ -5209,6 +5412,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 }
                 Self::isEmergencyStopped(_) => {
                     <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::setKindTableCommitment(_) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::simulateExecute(_) => {
                     <simulateExecuteCall as alloy_sol_types::SolCall>::SELECTOR
@@ -5233,26 +5439,6 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 &[u8],
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
                 {
-                    fn execute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
-                            .map(IProtocolAdapterCalls::execute)
-                    }
-                    execute
-                },
-                {
-                    fn simulateExecute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::simulateExecute)
-                    }
-                    simulateExecute
-                },
-                {
                     fn getRiscZeroVerifierRouter(
                         data: &[u8],
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
@@ -5273,6 +5459,37 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                             .map(IProtocolAdapterCalls::emergencyStop)
                     }
                     emergencyStop
+                },
+                {
+                    fn execute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                            .map(IProtocolAdapterCalls::execute)
+                    }
+                    execute
+                },
+                {
+                    fn simulateExecute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::simulateExecute)
+                    }
+                    simulateExecute
+                },
+                {
+                    fn setKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::setKindTableCommitment)
+                    }
+                    setKindTableCommitment
                 },
                 {
                     fn getRiscZeroVerifierSelector(
@@ -5296,6 +5513,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     }
                     isEmergencyStopped
                 },
+                {
+                    fn getKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getKindTableCommitment)
+                    }
+                    getKindTableCommitment
+                },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
                 return Err(
@@ -5316,28 +5544,6 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             static DECODE_VALIDATE_SHIMS: &[fn(
                 &[u8],
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
-                {
-                    fn execute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::execute)
-                    }
-                    execute
-                },
-                {
-                    fn simulateExecute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::simulateExecute)
-                    }
-                    simulateExecute
-                },
                 {
                     fn getRiscZeroVerifierRouter(
                         data: &[u8],
@@ -5361,6 +5567,39 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     emergencyStop
                 },
                 {
+                    fn execute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::execute)
+                    }
+                    execute
+                },
+                {
+                    fn simulateExecute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::simulateExecute)
+                    }
+                    simulateExecute
+                },
+                {
+                    fn setKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::setKindTableCommitment)
+                    }
+                    setKindTableCommitment
+                },
+                {
                     fn getRiscZeroVerifierSelector(
                         data: &[u8],
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
@@ -5381,6 +5620,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                             .map(IProtocolAdapterCalls::isEmergencyStopped)
                     }
                     isEmergencyStopped
+                },
+                {
+                    fn getKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getKindTableCommitment)
+                    }
+                    getKindTableCommitment
                 },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
@@ -5404,6 +5654,11 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
+                Self::getKindTableCommitment(inner) => {
+                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getRiscZeroVerifierRouter(inner) => {
                     <getRiscZeroVerifierRouterCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -5416,6 +5671,11 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 }
                 Self::isEmergencyStopped(inner) => {
                     <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
+                Self::setKindTableCommitment(inner) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -5438,6 +5698,12 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
+                Self::getKindTableCommitment(inner) => {
+                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
                 Self::getRiscZeroVerifierRouter(inner) => {
                     <getRiscZeroVerifierRouterCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
@@ -5452,6 +5718,12 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 }
                 Self::isEmergencyStopped(inner) => {
                     <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::setKindTableCommitment(inner) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -5481,6 +5753,8 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         #[allow(missing_docs)]
         ForwarderCallExecuted(ForwarderCallExecuted),
         #[allow(missing_docs)]
+        KindTableCommitmentUpdated(KindTableCommitmentUpdated),
+        #[allow(missing_docs)]
         ResourcePayload(ResourcePayload),
         #[allow(missing_docs)]
         TransactionExecuted(TransactionExecuted),
@@ -5494,16 +5768,6 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 32usize]] = &[
             [
-                16u8, 221u8, 82u8, 141u8, 178u8, 196u8, 154u8, 221u8, 101u8, 69u8, 103u8,
-                155u8, 151u8, 109u8, 249u8, 13u8, 36u8, 192u8, 53u8, 214u8, 167u8, 91u8,
-                23u8, 244u8, 27u8, 112u8, 14u8, 140u8, 24u8, 202u8, 83u8, 100u8,
-            ],
-            [
-                28u8, 201u8, 160u8, 117u8, 93u8, 215u8, 52u8, 193u8, 235u8, 254u8, 152u8,
-                182u8, 142u8, 206u8, 32u8, 0u8, 55u8, 227u8, 99u8, 235u8, 54u8, 109u8,
-                13u8, 238u8, 4u8, 228u8, 32u8, 226u8, 242u8, 60u8, 192u8, 16u8,
-            ],
-            [
                 58u8, 19u8, 77u8, 1u8, 192u8, 120u8, 3u8, 0u8, 60u8, 99u8, 48u8, 23u8,
                 23u8, 221u8, 196u8, 97u8, 46u8, 108u8, 71u8, 174u8, 64u8, 142u8, 238u8,
                 163u8, 34u8, 44u8, 222u8, 213u8, 50u8, 208u8, 42u8, 230u8,
@@ -5512,6 +5776,21 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 72u8, 36u8, 56u8, 115u8, 180u8, 117u8, 45u8, 220u8, 180u8, 94u8, 13u8,
                 123u8, 17u8, 196u8, 194u8, 102u8, 88u8, 62u8, 94u8, 9u8, 154u8, 11u8,
                 121u8, 143u8, 221u8, 156u8, 26u8, 247u8, 212u8, 147u8, 36u8, 243u8,
+            ],
+            [
+                76u8, 231u8, 193u8, 16u8, 32u8, 96u8, 190u8, 79u8, 40u8, 178u8, 41u8,
+                25u8, 145u8, 64u8, 253u8, 213u8, 17u8, 45u8, 66u8, 20u8, 254u8, 149u8,
+                65u8, 188u8, 155u8, 35u8, 84u8, 30u8, 69u8, 146u8, 204u8, 50u8,
+            ],
+            [
+                134u8, 45u8, 131u8, 198u8, 197u8, 175u8, 39u8, 94u8, 105u8, 123u8, 253u8,
+                78u8, 39u8, 200u8, 50u8, 60u8, 25u8, 107u8, 68u8, 189u8, 208u8, 17u8,
+                221u8, 154u8, 170u8, 182u8, 219u8, 14u8, 201u8, 148u8, 61u8, 206u8,
+            ],
+            [
+                144u8, 45u8, 104u8, 8u8, 12u8, 159u8, 75u8, 247u8, 237u8, 28u8, 146u8,
+                103u8, 88u8, 35u8, 106u8, 252u8, 43u8, 64u8, 68u8, 72u8, 127u8, 111u8,
+                134u8, 132u8, 53u8, 45u8, 56u8, 8u8, 114u8, 68u8, 174u8, 230u8,
             ],
             [
                 156u8, 97u8, 178u8, 144u8, 246u8, 49u8, 9u8, 127u8, 86u8, 39u8, 60u8,
@@ -5531,20 +5810,22 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(TransactionExecuted),
-            ::core::stringify!(ActionExecuted),
             ::core::stringify!(ResourcePayload),
             ::core::stringify!(DiscoveryPayload),
+            ::core::stringify!(ActionExecuted),
+            ::core::stringify!(TransactionExecuted),
+            ::core::stringify!(KindTableCommitmentUpdated),
             ::core::stringify!(ExternalPayload),
             ::core::stringify!(ApplicationPayload),
             ::core::stringify!(ForwarderCallExecuted),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <TransactionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
-            <ActionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
             <ResourcePayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <DiscoveryPayload as alloy_sol_types::SolEvent>::SIGNATURE,
+            <ActionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
+            <TransactionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
+            <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::SIGNATURE,
             <ExternalPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ApplicationPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ForwarderCallExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
@@ -5573,7 +5854,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
     #[automatically_derived]
     impl alloy_sol_types::SolEventInterface for IProtocolAdapterEvents {
         const NAME: &'static str = "IProtocolAdapterEvents";
-        const COUNT: usize = 7usize;
+        const COUNT: usize = 8usize;
         fn decode_raw_log(
             topics: &[alloy_sol_types::Word],
             data: &[u8],
@@ -5617,6 +5898,15 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                             data,
                         )
                         .map(Self::ForwarderCallExecuted)
+                }
+                Some(
+                    <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::SIGNATURE_HASH,
+                ) => {
+                    <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::decode_raw_log(
+                            topics,
+                            data,
+                        )
+                        .map(Self::KindTableCommitmentUpdated)
                 }
                 Some(<ResourcePayload as alloy_sol_types::SolEvent>::SIGNATURE_HASH) => {
                     <ResourcePayload as alloy_sol_types::SolEvent>::decode_raw_log(
@@ -5667,6 +5957,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::ForwarderCallExecuted(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
+                Self::KindTableCommitmentUpdated(inner) => {
+                    alloy_sol_types::private::IntoLogData::to_log_data(inner)
+                }
                 Self::ResourcePayload(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
@@ -5690,6 +5983,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
                 Self::ForwarderCallExecuted(inner) => {
+                    alloy_sol_types::private::IntoLogData::into_log_data(inner)
+                }
+                Self::KindTableCommitmentUpdated(inner) => {
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
                 Self::ResourcePayload(inner) => {
@@ -5871,6 +6167,12 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, executeCall, N> {
             self.call_builder(&executeCall { transaction })
         }
+        ///Creates a new call builder for the [`getKindTableCommitment`] function.
+        pub fn getKindTableCommitment(
+            &self,
+        ) -> alloy_contract::SolCallBuilder<&P, getKindTableCommitmentCall, N> {
+            self.call_builder(&getKindTableCommitmentCall)
+        }
         ///Creates a new call builder for the [`getRiscZeroVerifierRouter`] function.
         pub fn getRiscZeroVerifierRouter(
             &self,
@@ -5888,6 +6190,17 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::SolCallBuilder<&P, isEmergencyStoppedCall, N> {
             self.call_builder(&isEmergencyStoppedCall)
+        }
+        ///Creates a new call builder for the [`setKindTableCommitment`] function.
+        pub fn setKindTableCommitment(
+            &self,
+            newKindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+        ) -> alloy_contract::SolCallBuilder<&P, setKindTableCommitmentCall, N> {
+            self.call_builder(
+                &setKindTableCommitmentCall {
+                    newKindTableCommitment,
+                },
+            )
         }
         ///Creates a new call builder for the [`simulateExecute`] function.
         pub fn simulateExecute(
@@ -5946,6 +6259,12 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::Event<&P, ForwarderCallExecuted, N> {
             self.event_filter::<ForwarderCallExecuted>()
+        }
+        ///Creates a new event filter for the [`KindTableCommitmentUpdated`] event.
+        pub fn KindTableCommitmentUpdated_filter(
+            &self,
+        ) -> alloy_contract::Event<&P, KindTableCommitmentUpdated, N> {
+            self.event_filter::<KindTableCommitmentUpdated>()
         }
         ///Creates a new event filter for the [`ResourcePayload`] event.
         pub fn ResourcePayload_filter(
