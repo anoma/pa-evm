@@ -5,21 +5,27 @@ import {VmSafe} from "forge-std-1.16.1/src/Vm.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {Aggregation} from "../../src/libs/proving/Aggregation.sol";
-import {Compliance} from "../../src/libs/proving/Compliance.sol";
 import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
+import {VerifyingKeys} from "../../src/libs/proving/VerifyingKeys.sol";
 import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
-import {Transaction, Action, Resource} from "./../../src/Types.sol";
+import {
+    Transaction,
+    Action,
+    ConsumedResourcePublicData,
+    CreatedResourcePublicData,
+    Resource
+} from "./../../src/Types.sol";
 import {DeltaGen} from "./DeltaGen.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
-    using RiscZeroUtils for Aggregation.Instance;
+    using RiscZeroUtils for Transaction;
 
     struct ActionConfig {
-        uint256 complianceUnitCount;
+        uint256 consumedCount;
+        uint256 createdCount;
     }
 
     struct ResourceAndAppData {
@@ -32,116 +38,108 @@ library TxGen {
         ResourceAndAppData[] created;
     }
 
-    error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
-    error NonExistingTag(bytes32 tag);
-    error TransactionTagCountMismatch();
-
-    function complianceVerifierInput(
-        VmSafe vm,
-        bytes32 commitmentTreeRoot, // historical root
-        Resource memory consumed,
-        Resource memory created
-    ) internal returns (Compliance.VerifierInput memory unit) {
-        bytes32 nf = nullifier(consumed, 0);
-        bytes32 cm = commitment(created);
-
-        // Construct the delta for consumption based on kind and quantity
-        Delta.Point memory unitDelta = DeltaGen.generateInstance(
-            vm,
-            DeltaGen.InstanceInputs({
-                kind: kind(consumed), quantity: consumed.quantity, consumed: true, valueCommitmentRandomness: 1
-            })
-        );
-        // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(
-            unitDelta,
-            DeltaGen.generateInstance(
-                vm,
-                DeltaGen.InstanceInputs({
-                    kind: kind(created), quantity: created.quantity, consumed: false, valueCommitmentRandomness: 1
-                })
-            )
-        );
-
-        Compliance.Instance memory instance = Compliance.Instance({
-            consumed: Compliance.ConsumedRefs({
-                nullifier: nf, commitmentTreeRoot: commitmentTreeRoot, logicRef: consumed.logicRef
-            }),
-            created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: bytes32(unitDelta.x),
-            unitDeltaY: bytes32(unitDelta.y)
-        });
-
-        unit = Compliance.VerifierInput({instance: instance});
-    }
-
+    /// @dev Builds an action from resource lists. The action delta is the sum of the per-resource deltas, each
+    /// generated with a value commitment randomness of 1 — the caller is responsible for quantity balance across
+    /// the transaction.
     function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
         internal
         returns (Action memory action)
     {
-        require(
-            consumed.length == created.length,
-            ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length})
-        );
-        uint256 complianceUnitCount = consumed.length;
+        uint256 consumedCount = consumed.length;
+        uint256 createdCount = created.length;
 
-        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * complianceUnitCount);
-        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](complianceUnitCount);
+        ConsumedResourcePublicData[] memory consumedData = new ConsumedResourcePublicData[](consumedCount);
+        CreatedResourcePublicData[] memory createdData = new CreatedResourcePublicData[](createdCount);
 
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
+        Delta.Point memory actionDelta;
 
-            logicVerifierInputs[index] =
-                logicVerifierInput({resource: consumed[i].resource, isConsumed: true, appData: consumed[i].appData});
-
-            logicVerifierInputs[index + 1] =
-                logicVerifierInput({resource: created[i].resource, isConsumed: false, appData: created[i].appData});
-
-            complianceVerifierInputs[i] = complianceVerifierInput({
-                vm: vm, commitmentTreeRoot: initialRoot(), consumed: consumed[i].resource, created: created[i].resource
+        for (uint256 i = 0; i < consumedCount; ++i) {
+            consumedData[i] = ConsumedResourcePublicData({
+                nullifier: nullifier(consumed[i].resource, 0),
+                logicRef: consumed[i].resource.logicRef,
+                commitmentTreeRoot: initialRoot(),
+                appData: consumed[i].appData
             });
+
+            Delta.Point memory resourceDelta = DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: kind(consumed[i].resource),
+                    quantity: consumed[i].resource.quantity,
+                    consumed: true,
+                    valueCommitmentRandomness: 1
+                })
+            );
+            actionDelta = (i == 0) ? resourceDelta : Delta.add(actionDelta, resourceDelta);
         }
-        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
+
+        for (uint256 i = 0; i < createdCount; ++i) {
+            createdData[i] = CreatedResourcePublicData({
+                commitment: commitment(created[i].resource),
+                logicRef: created[i].resource.logicRef,
+                appData: created[i].appData
+            });
+
+            Delta.Point memory resourceDelta = DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: kind(created[i].resource),
+                    quantity: created[i].resource.quantity,
+                    consumed: false,
+                    valueCommitmentRandomness: 1
+                })
+            );
+            actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : Delta.add(actionDelta, resourceDelta);
+        }
+
+        action = Action({
+            consumed: consumedData,
+            created: createdData,
+            delta: actionDelta,
+            actionTreeRoot: computeActionTreeRoot(consumedData, createdData)
+        });
     }
 
-    function createDefaultAction(VmSafe vm, bytes32 nonce, uint256 complianceUnitCount)
+    /// @dev Builds an action of `consumedCount` consumed and `createdCount` created mock resources sharing one
+    /// kind. Quantities are chosen so the action balances: each consumed resource has quantity `createdCount`,
+    /// each created resource quantity `consumedCount`.
+    function createDefaultAction(VmSafe vm, bytes32 nonce, uint256 consumedCount, uint256 createdCount)
         internal
         returns (Action memory action, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
 
-        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](complianceUnitCount);
-        ResourceAndAppData[] memory created = new ResourceAndAppData[](complianceUnitCount);
+        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](consumedCount);
+        ResourceAndAppData[] memory created = new ResourceAndAppData[](createdCount);
 
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
+        bytes32 kindRef = nonce;
+
+        for (uint256 i = 0; i < consumedCount; ++i) {
             consumed[i] = ResourceAndAppData({
-                resource: TxGen.mockResource({
+                resource: mockResource({
                     nonce: updatedNonce,
-                    logicRef: bytes32(i),
-                    labelRef: bytes32(i),
-                    quantity: uint128(1 + uint256(nonce))
+                    logicRef: kindRef,
+                    labelRef: kindRef,
+                    // Counts are small test inputs, so the cast cannot truncate.
+                    // forge-lint: disable-next-line(unsafe-typecast)
+                    quantity: uint128(createdCount)
                 }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](0),
-                    externalPayload: new Logic.ExpirableBlob[](0),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
+                appData: emptyAppData()
             });
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
+        }
+
+        for (uint256 i = 0; i < createdCount; ++i) {
             created[i] = ResourceAndAppData({
-                resource: TxGen.mockResource({
+                resource: mockResource({
                     nonce: updatedNonce,
-                    logicRef: bytes32(i),
-                    labelRef: bytes32(i),
-                    quantity: uint128(1 + uint256(nonce))
+                    logicRef: kindRef,
+                    labelRef: kindRef,
+                    // Counts are small test inputs, so the cast cannot truncate.
+                    // forge-lint: disable-next-line(unsafe-typecast)
+                    quantity: uint128(consumedCount)
                 }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](0),
-                    externalPayload: new Logic.ExpirableBlob[](0),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
+                appData: emptyAppData()
             });
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
@@ -155,31 +153,17 @@ library TxGen {
     {
         Action[] memory actions = new Action[](actionResources.length);
 
+        uint256 resourceCount = 0;
         for (uint256 i = 0; i < actionResources.length; ++i) {
-            require(
-                actionResources[i].consumed.length == actionResources[i].created.length,
-                ConsumedCreatedCountMismatch(actionResources[i].consumed.length, actionResources[i].created.length)
-            );
-
             actions[i] =
                 createAction({vm: vm, consumed: actionResources[i].consumed, created: actionResources[i].created});
+            resourceCount += actionResources[i].consumed.length + actionResources[i].created.length;
         }
 
-        // Grab the tags that will be signed over
-        bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where the summed randomness is the expected total
-        bytes memory proof = "";
-        if (tags.length != 0) {
-            proof = DeltaGen.generateProof(
-                vm,
-                DeltaGen.ProofInputs({
-                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
-                })
-            );
-        }
-        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
-
-        txn = transactionAggregation(mockVerifier, txn);
+        txn = transactionFromActions({vm: vm, actions: actions, resourceCount: resourceCount});
+        txn = transactionAggregation({
+            mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
+        });
     }
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
@@ -189,169 +173,156 @@ library TxGen {
         updatedNonce = nonce;
 
         Action[] memory actions = new Action[](configs.length);
+        uint256 resourceCount = 0;
         for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) =
-                createDefaultAction({vm: vm, nonce: updatedNonce, complianceUnitCount: configs[i].complianceUnitCount});
+            (actions[i], updatedNonce) = createDefaultAction({
+                vm: vm,
+                nonce: updatedNonce,
+                consumedCount: configs[i].consumedCount,
+                createdCount: configs[i].createdCount
+            });
+            resourceCount += configs[i].consumedCount + configs[i].createdCount;
         }
 
-        // Grab the tags that will be signed over
-        bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where the summed randomness is the expected total
+        txn = transactionFromActions({vm: vm, actions: actions, resourceCount: resourceCount});
+        txn = transactionAggregation({
+            mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
+        });
+    }
+
+    /// @dev Assembles the transaction and its delta proof. Each resource contributed a value commitment randomness
+    /// of 1, so the summed randomness is the resource count.
+    function transactionFromActions(VmSafe vm, Action[] memory actions, uint256 resourceCount)
+        internal
+        returns (Transaction memory txn)
+    {
         bytes memory proof = "";
-        if (tags.length != 0) {
+        if (resourceCount != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    summedValueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
+                    summedValueCommitmentRandomness: resourceCount,
+                    verifyingKey: Delta.computeVerifyingKey(actionTreeRoots(actions))
                 })
             );
         }
-        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
 
-        txn = transactionAggregation(mockVerifier, txn);
+        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
-    function transactionAggregation(RiscZeroMockVerifier mockVerifier, Transaction memory txn)
-        internal
-        view
-        returns (Transaction memory aggregatedTxn)
-    {
+    /// @dev Mock-proves the aggregation: the seal commits to the journal reconstructed with the same compliance key
+    /// and kind table commitment the protocol adapter injects.
+    function transactionAggregation(
+        RiscZeroMockVerifier mockVerifier,
+        Transaction memory txn,
+        bytes32 kindTableCommitment
+    ) internal view returns (Transaction memory aggregatedTxn) {
         aggregatedTxn = txn;
 
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
-            imageId: Aggregation._VERIFYING_KEY, journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
+            imageId: VerifyingKeys._BATCH_AGGREGATION,
+            journalDigest: sha256(
+                txn.toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: kindTableCommitment})
+            )
         }).seal;
     }
 
-    function logicVerifierInput(Resource memory resource, bool isConsumed, Logic.AppData memory appData)
-        internal
-        pure
-        returns (Logic.VerifierInput memory input)
-    {
-        input = Logic.VerifierInput({
-            tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
-            verifyingKey: resource.logicRef,
-            appData: appData
-        });
-    }
-
-    function generateActionConfigs(uint256 actionCount, uint256 complianceUnitCount)
+    function generateActionConfigs(uint256 actionCount, uint256 consumedCount, uint256 createdCount)
         internal
         pure
         returns (ActionConfig[] memory configs)
     {
         configs = new TxGen.ActionConfig[](actionCount);
         for (uint256 i = 0; i < actionCount; ++i) {
-            configs[i] = TxGen.ActionConfig({complianceUnitCount: complianceUnitCount});
+            configs[i] = TxGen.ActionConfig({consumedCount: consumedCount, createdCount: createdCount});
         }
     }
 
-    function countComplianceUnits(Action[] memory actions) internal pure returns (uint256 complianceUnitCount) {
-        complianceUnitCount = 0;
+    /// @dev The commitment of the empty kind table, matching the protocol adapter's initialization default.
+    function emptyKindTableCommitment() internal pure returns (bytes32 commitmentOfEmptyTable) {
+        commitmentOfEmptyTable = sha256("");
+    }
 
+    function transactionId(Transaction memory txn) internal pure returns (bytes32 id) {
+        id = Delta.computeVerifyingKey(actionTreeRoots(txn.actions));
+    }
+
+    function actionTreeRoots(Action[] memory actions) internal pure returns (bytes32[] memory roots) {
+        roots = new bytes32[](actions.length);
         for (uint256 i = 0; i < actions.length; ++i) {
-            complianceUnitCount += actions[i].complianceVerifierInputs.length;
+            roots[i] = actions[i].actionTreeRoot;
         }
     }
 
-    function collectTags(Action[] memory actions) internal pure returns (bytes32[] memory tags) {
-        tags = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        uint256 n = 0;
+    function countResources(Action[] memory actions) internal pure returns (uint256 resourceCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
-            bytes32[] memory actionTags = collectTags(actions[i]);
-
-            for (uint256 j = 0; j < actionTags.length; ++j) {
-                tags[n++] = actionTags[j];
-            }
-        }
-    }
-
-    /// @dev This function is a duplicated from `TagUtils.sol` with the difference that it uses `memory`.
-    function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-
-        tags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
-            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT)] = instance.consumed.nullifier;
-            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1] = instance.created.commitment;
+            resourceCount += actions[i].consumed.length + actions[i].created.length;
         }
     }
 
     function collectNullifiers(Transaction memory txn) internal pure returns (bytes32[] memory nullifiers) {
-        nullifiers = new bytes32[](countComplianceUnits(txn.actions));
-        bytes32[] memory tagList = collectTags(txn.actions);
+        nullifiers = new bytes32[](countConsumed(txn.actions));
 
-        for (uint256 i = 0; i < nullifiers.length; ++i) {
-            nullifiers[i] = tagList[i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT];
+        uint256 n = 0;
+        for (uint256 i = 0; i < txn.actions.length; ++i) {
+            ConsumedResourcePublicData[] memory consumed = txn.actions[i].consumed;
+            for (uint256 j = 0; j < consumed.length; ++j) {
+                nullifiers[n++] = consumed[j].nullifier;
+            }
         }
     }
 
     function collectCommitments(Transaction memory txn) internal pure returns (bytes32[] memory commitments) {
-        commitments = new bytes32[](countComplianceUnits(txn.actions));
-        bytes32[] memory tagList = collectTags(txn.actions);
-
-        for (uint256 i = 0; i < commitments.length; ++i) {
-            commitments[i] = tagList[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1];
-        }
-    }
-
-    function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
-        logicRefs = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
+        commitments = new bytes32[](countCreated(txn.actions));
 
         uint256 n = 0;
-        for (uint256 i = 0; i < actions.length; ++i) {
-            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
-
-            for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                Compliance.Instance memory inst = actions[i].complianceVerifierInputs[j].instance;
-                logicRefs[n++] = inst.consumed.logicRef;
-                logicRefs[n++] = inst.created.logicRef;
-            }
-        }
-    }
-
-    function aggregatedInstanceGeneration(Transaction memory txn)
-        internal
-        pure
-        returns (Aggregation.Instance memory aggregationInstance)
-    {
-        uint256 n = 0;
-        bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
-
-        require(
-            countComplianceUnits(txn.actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT == logicRefs.length,
-            TransactionTagCountMismatch()
-        );
-
-        Compliance.Instance[] memory complianceInstances = new Compliance.Instance[](logicRefs.length / 2);
-        Logic.Instance[] memory logicInstances = new Logic.Instance[](logicRefs.length);
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            for (uint256 j = 0; j < txn.actions[i].complianceVerifierInputs.length; ++j) {
-                Compliance.VerifierInput memory complianceUnit = txn.actions[i].complianceVerifierInputs[j];
-                complianceInstances[n / 2] = complianceUnit.instance;
-                bytes32 actionTreeRoot = computeActionTreeRoot(txn.actions[i]);
-
-                {
-                    uint256 nullifierIndex = getTagIndex(txn.actions[i], complianceUnit.instance.consumed.nullifier);
-                    logicInstances[n++] =
-                        Logic.toInstance(txn.actions[i].logicVerifierInputs[nullifierIndex], actionTreeRoot, true);
-                }
-
-                {
-                    uint256 commitmentIndex = getTagIndex(txn.actions[i], complianceUnit.instance.created.commitment);
-                    logicInstances[n++] =
-                        Logic.toInstance(txn.actions[i].logicVerifierInputs[commitmentIndex], actionTreeRoot, false);
-                }
+            CreatedResourcePublicData[] memory created = txn.actions[i].created;
+            for (uint256 j = 0; j < created.length; ++j) {
+                commitments[n++] = created[j].commitment;
             }
         }
+    }
 
-        aggregationInstance = Aggregation.Instance({
-            logicRefs: logicRefs, complianceInstances: complianceInstances, logicInstances: logicInstances
-        });
+    function countConsumed(Action[] memory actions) internal pure returns (uint256 consumedCount) {
+        for (uint256 i = 0; i < actions.length; ++i) {
+            consumedCount += actions[i].consumed.length;
+        }
+    }
+
+    function countCreated(Action[] memory actions) internal pure returns (uint256 createdCount) {
+        for (uint256 i = 0; i < actions.length; ++i) {
+            createdCount += actions[i].created.length;
+        }
+    }
+
+    function actionNullifiers(Action memory action) internal pure returns (bytes32[] memory nullifiers) {
+        nullifiers = new bytes32[](action.consumed.length);
+        for (uint256 i = 0; i < action.consumed.length; ++i) {
+            nullifiers[i] = action.consumed[i].nullifier;
+        }
+    }
+
+    function actionConsumedLogicRefs(Action memory action) internal pure returns (bytes32[] memory logicRefs) {
+        logicRefs = new bytes32[](action.consumed.length);
+        for (uint256 i = 0; i < action.consumed.length; ++i) {
+            logicRefs[i] = action.consumed[i].logicRef;
+        }
+    }
+
+    function actionCommitments(Action memory action) internal pure returns (bytes32[] memory commitments) {
+        commitments = new bytes32[](action.created.length);
+        for (uint256 i = 0; i < action.created.length; ++i) {
+            commitments[i] = action.created[i].commitment;
+        }
+    }
+
+    function actionCreatedLogicRefs(Action memory action) internal pure returns (bytes32[] memory logicRefs) {
+        logicRefs = new bytes32[](action.created.length);
+        for (uint256 i = 0; i < action.created.length; ++i) {
+            logicRefs[i] = action.created[i].logicRef;
+        }
     }
 
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
@@ -371,16 +342,13 @@ library TxGen {
         });
     }
 
-    function getTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
-        uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
-
-        for (uint256 i = 0; i < logicVerifierInputCount; ++i) {
-            if (tag == action.logicVerifierInputs[i].tag) {
-                return (index = i);
-            }
-        }
-
-        revert NonExistingTag(tag);
+    function emptyAppData() internal pure returns (Logic.AppData memory appData) {
+        appData = Logic.AppData({
+            resourcePayload: new Logic.ExpirableBlob[](0),
+            discoveryPayload: new Logic.ExpirableBlob[](0),
+            externalPayload: new Logic.ExpirableBlob[](0),
+            applicationPayload: new Logic.ExpirableBlob[](0)
+        });
     }
 
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
@@ -409,19 +377,22 @@ library TxGen {
         root = SHA256.EMPTY_HASH;
     }
 
-    function computeActionTreeRoot(Action memory action) internal pure returns (bytes32 root) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+    /// @dev The action tree leaves are the consumed nullifiers followed by the created commitments — the canonical
+    /// tag order.
+    function computeActionTreeRoot(
+        ConsumedResourcePublicData[] memory consumed,
+        CreatedResourcePublicData[] memory created
+    ) internal pure returns (bytes32 root) {
+        bytes32[] memory tags = new bytes32[](consumed.length + created.length);
 
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput memory complianceUnit = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceUnit.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceUnit.instance.created.commitment;
+        uint256 n = 0;
+        for (uint256 i = 0; i < consumed.length; ++i) {
+            tags[n++] = consumed[i].nullifier;
+        }
+        for (uint256 i = 0; i < created.length; ++i) {
+            tags[n++] = created[i].commitment;
         }
 
-        root = actionTreeTags.computeRoot();
+        root = tags.computeRoot();
     }
 }

@@ -11,16 +11,13 @@ import {IVersion} from "anoma-forwarder-bases-1.0.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
-import {MerkleTree} from "./libs/MerkleTree.sol";
-import {Aggregation} from "./libs/proving/Aggregation.sol";
-import {Compliance} from "./libs/proving/Compliance.sol";
 import {Delta} from "./libs/proving/Delta.sol";
 import {Logic} from "./libs/proving/Logic.sol";
+import {VerifyingKeys} from "./libs/proving/VerifyingKeys.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
-import {TagUtils} from "./libs/TagUtils.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
-import {Action, Transaction} from "./Types.sol";
+import {Action, ConsumedResourcePublicData, CreatedResourcePublicData, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -38,36 +35,11 @@ contract ProtocolAdapter is
     NullifierSet
 {
     using Delta for Delta.Point;
-    using Logic for Logic.VerifierInput[];
-    using Logic for Logic.VerifierInput;
-    using MerkleTree for bytes32[];
-    using RiscZeroUtils for Aggregation.Instance;
-    using TagUtils for Action;
-    using TagUtils for Transaction;
+    using RiscZeroUtils for Transaction;
 
-    /// @notice A data structure containing general and proof aggregation-related internal variables being updated while
-    /// iterating over the actions and compliance units during the `execute` function call.
-    /// @param tags A variable to aggregate tags over the actions.
-    /// @param logicRefs A variable to aggregate logic references over the actions.
-    /// @param latestCommitmentTreeRoot The latest commitment tree root to be stored in the set of historical roots at
-    /// the end of the `execute` function call.
-    /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
-    /// @param tagCounter A counter representing the index of the next resource tag to visit.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
-    /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
-    struct InternalVariables {
-        /* General variables */
-        bytes32[] tags;
-        bytes32[] logicRefs;
-        bytes32 latestCommitmentTreeRoot;
-        Delta.Point transactionDelta;
-        uint256 tagCounter;
-        /* Proof verification-related variables */
-        bool skipRiscZeroProofVerification;
-        /* Proof aggregation-related variables */
-        Compliance.Instance[] complianceInstances;
-        Logic.Instance[] logicInstances;
+    /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
+    struct ProtocolAdapterStorage {
+        bytes32 kindTableCommitment;
     }
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -76,11 +48,20 @@ contract ProtocolAdapter is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
+    /// @notice The commitment of the empty kind table (the SHA-256 hash of zero bytes of table content), under
+    /// which every resource kind is derived via hash-to-curve. Note that this is not `SHA256.EMPTY_HASH`.
+    bytes32 internal constant _EMPTY_KIND_TABLE_COMMITMENT =
+        0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855;
+
+    // keccak256(abi.encode(uint256(keccak256("anoma.storage.ProtocolAdapter")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
+        0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
+
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
+    error ZeroKindTableCommitmentNotAllowed();
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-    error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierStopped();
     error Simulated(uint256 gasUsed);
@@ -101,7 +82,7 @@ contract ProtocolAdapter is
 
     /// @notice Initializes the protocol adapter contract.
     /// @param initialOwner The account receiving ownership, and with it the authority to stop the protocol adapter in
-    /// case of a vulnerability and to authorize upgrades.
+    /// case of a vulnerability, to authorize upgrades, and to set the kind table commitment.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -113,6 +94,10 @@ contract ProtocolAdapter is
 
         __CommitmentTree_init();
         __NullifierSet_init();
+
+        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
+        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
+        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
 
         // Sanity check that the verifier has not been stopped already.
         require(!isEmergencyStopped(), RiscZeroVerifierStopped());
@@ -135,6 +120,19 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external override onlyOwner {
+        require(newKindTableCommitment != bytes32(0), ZeroKindTableCommitmentNotAllowed());
+
+        _getProtocolAdapterStorage().kindTableCommitment = newKindTableCommitment;
+        emit KindTableCommitmentUpdated({kindTableCommitment: newKindTableCommitment});
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function getKindTableCommitment() external view override returns (bytes32 kindTableCommitment) {
+        kindTableCommitment = _getProtocolAdapterStorage().kindTableCommitment;
     }
 
     /// @inheritdoc IVersion
@@ -161,8 +159,8 @@ contract ProtocolAdapter is
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
 
-    // NOTE: The state writes after the forwarder calls are protected by the `nonReentrant` modifier.
-    // slither-disable-start reentrancy-no-eth
+    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
+    // slither-disable-start reentrancy-no-eth,reentrancy-benign
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
@@ -174,153 +172,121 @@ contract ProtocolAdapter is
         nonReentrant
         whenNotPaused
     {
-        InternalVariables memory vars = _initializeVars(transaction, skipRiscZeroProofVerification);
-
         uint256 actionCount = transaction.actions.length;
+
+        // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
+        require(actionCount != 0, EmptyTransactionNotAllowed());
+
+        bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
+        Delta.Point memory transactionDelta = Delta.zero();
+        bytes32 updatedCommitmentTreeRoot = bytes32(0);
+
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            // The action tree root is placed in the resource logic instance, informing a resource of all the
-            // created and consumed resources in the same action.
-            bytes32 actionTreeRoot = action.collectTags().computeRoot();
-
-            uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-            for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                Compliance.VerifierInput calldata complianceVerifierInput = action.complianceVerifierInputs[j];
-
-                // Process the compliance related checks and proofs.
-                vars = _processCompliance({input: complianceVerifierInput, vars: vars});
-
-                // Process the logic proof of the consumed resource.
-                vars = _processLogic({
-                    isConsumed: true,
-                    // The `lookup` function reverts if the nullifier is not part of the logic verifier inputs.
-                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.consumed.nullifier),
-                    logicRefFromComplianceUnit: complianceVerifierInput.instance.consumed.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    vars: vars
-                });
-
-                // Process the logic proof of the created resource.
-                vars = _processLogic({
-                    isConsumed: false,
-                    // The `lookup` function reverts if the commitment is not part of the logic verifier inputs.
-                    input: action.logicVerifierInputs.lookup(complianceVerifierInput.instance.created.commitment),
-                    logicRefFromComplianceUnit: complianceVerifierInput.instance.created.logicRef,
-                    actionTreeRoot: actionTreeRoot,
-                    vars: vars
-                });
-
-                // After all tags in the action are looked up, we are ensured that the logic verifier input tags are
-                // a subset of the tags as presented in the compliance unit.
-
-                // Add the unit delta to the transaction delta.
-                vars.transactionDelta = vars.transactionDelta
-                    .add(
-                        Delta.Point({
-                            x: uint256(complianceVerifierInput.instance.unitDeltaX),
-                            y: uint256(complianceVerifierInput.instance.unitDeltaY)
-                        })
-                    );
+            bytes32 newRoot = _processAction(action);
+            if (newRoot != bytes32(0)) {
+                updatedCommitmentTreeRoot = newRoot;
             }
-            emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
+
+            // Add the action delta to the transaction delta.
+            transactionDelta = transactionDelta.add(action.delta);
+
+            actionTreeRoots[i] = action.actionTreeRoot;
         }
 
-        // Verify the delta and aggregation proofs. The empty transaction is rejected on initialization,
-        // so a state change is guaranteed.
-        _verifyGlobalProofs({
-            deltaProof: transaction.deltaProof, aggregationProof: transaction.aggregationProof, vars: vars
+        // Verify the delta and aggregation proofs. The empty transaction is rejected above,
+        // so both proofs are guaranteed to be checked.
+        bytes32 transactionId = _verifyGlobalProofs({
+            transaction: transaction,
+            actionTreeRoots: actionTreeRoots,
+            transactionDelta: transactionDelta,
+            skipRiscZeroProofVerification: skipRiscZeroProofVerification
         });
 
-        // Store the final commitment tree root.
-        _addCommitmentTreeRoot(vars.latestCommitmentTreeRoot);
+        // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
+        // so there is no new root to store.
+        if (updatedCommitmentTreeRoot != bytes32(0)) {
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
+        }
 
-        // Emit the event containing the transaction and new root.
-        emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier.
+        // slither-disable-next-line reentrancy-events
+        emit TransactionExecuted({transactionId: transactionId});
+    }
+
+    /// @notice Processes an action by
+    /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
+    /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
+    /// * executing external forwarder calls,
+    /// * emitting the app data blobs based on their deletion criterion, and
+    /// * emitting the `ActionExecuted` event.
+    /// @param action The action to process.
+    /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
+    /// action created no resources.
+    function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
+        uint256 consumedCount = action.consumed.length;
+        bytes32[] memory nullifiers = new bytes32[](consumedCount);
+        bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
+
+        for (uint256 i = 0; i < consumedCount; ++i) {
+            ConsumedResourcePublicData calldata consumed = action.consumed[i];
+
+            // Check that the referenced commitment tree root is part of the historical roots.
+            require(
+                _isCommitmentTreeRootContained(consumed.commitmentTreeRoot),
+                NonExistingRoot(consumed.commitmentTreeRoot)
+            );
+
+            // The function reverts if a repeating nullifier is added to the set.
+            _addNullifier(consumed.nullifier);
+
+            _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
+            _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
+
+            nullifiers[i] = consumed.nullifier;
+            consumedLogicRefs[i] = consumed.logicRef;
+        }
+
+        uint256 createdCount = action.created.length;
+        bytes32[] memory commitments = new bytes32[](createdCount);
+        bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
+
+        for (uint256 i = 0; i < createdCount; ++i) {
+            CreatedResourcePublicData calldata created = action.created[i];
+
+            // `_addCommitment` does not error if a repeating leaf is added to the tree.
+            // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
+            updatedCommitmentTreeRoot = _addCommitment(created.commitment);
+
+            _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
+            _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
+
+            commitments[i] = created.commitment;
+            createdLogicRefs[i] = created.logicRef;
+        }
+
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier.
+        // slither-disable-next-line reentrancy-events
+        emit ActionExecuted({
+            actionTreeRoot: action.actionTreeRoot,
+            nullifiers: nullifiers,
+            consumedLogicRefs: consumedLogicRefs,
+            commitments: commitments,
+            createdLogicRefs: createdLogicRefs
+        });
     }
 
     // slither-disable-end reentrancy-no-eth
 
-    // NOTE: The state writes in `_addCommitment` and `_addNullifier` are protected by the `nonReentrant` modifier.
-    // slither-disable-start reentrancy-benign
-
-    /// @notice Processes a resource logic by
-    /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
-    /// * aggregating the logic instance,
-    /// * executing external forwarder calls,
-    /// * adding the consumed or created resource tag to the commitment tree or nullifier set,
-    /// * emitting the blobs contained in the app data payloads, and
-    /// * updating the internal variables
-    ///   * adding the tag to the `tags `array
-    ///   * adding the logic reference to the `logicRefs` array
-    ///   * incrementing the tag counter
-    ///   * updating the current commitment tree root
-    /// @param isConsumed Whether the logic belongs to a consumed or created resource.
-    /// @param input The logic verifier input.
-    /// @param logicRefFromComplianceUnit The logic references as found in the corresponding compliance unit.
-    /// @param actionTreeRoot The action tree root.
-    /// @param vars Internal variables to read from.
-    /// @return updatedVars The updated internal variables.
-    function _processLogic(
-        bool isConsumed,
-        Logic.VerifierInput calldata input,
-        bytes32 logicRefFromComplianceUnit,
-        bytes32 actionTreeRoot,
-        InternalVariables memory vars
-    ) internal returns (InternalVariables memory updatedVars) {
-        updatedVars = vars;
-
-        // In this RM implementation the logicRef is the verifying key.
-        bytes32 logicRef = input.verifyingKey;
-
-        // Check that the logic reference from the logic verifier input matches the expected reference from the
-        // compliance unit.
-        require(
-            logicRef == logicRefFromComplianceUnit,
-            LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef})
-        );
-
-        // Aggregate the logic instance obtained from the verifier input, action tree root, and consumed flag.
-        updatedVars.logicInstances[updatedVars.tagCounter] =
-            input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
-
-        _executeForwarderCalls(input);
-
-        bytes32 tag = input.tag;
-        // Populate the tags array for use as a verification key for the delta proof.
-        // Note that the order of the compliance units dictate the delta verifying key.
-        updatedVars.tags[updatedVars.tagCounter] = tag;
-
-        // Populate an array containing all the logic references.
-        // This is used both for events and aggregation proofs.
-        updatedVars.logicRefs[updatedVars.tagCounter++] = logicRef;
-
-        // Transition the resource machine state.
-        if (isConsumed) {
-            // The function reverts if a repeating tag is added to the set.
-            // If the final nullifier stored in the action gets added to the set successfully,
-            // the compliance units partition the action.
-            _addNullifier(tag);
-        } else {
-            // `_addCommitment` does not error if a repeating leaf is added to the tree.
-            // Uniqueness of commitments is grated by the compliance circuit, assuming that nullifiers are unique.
-            updatedVars.latestCommitmentTreeRoot = _addCommitment(tag);
-        }
-
-        _emitAppDataBlobs(input);
-    }
-
-    // slither-disable-end reentrancy-benign
-
     /// @notice Processes forwarder calls by verifying and executing them.
-    /// @param verifierInput The logic verifier input of a resource making the call.
-    function _executeForwarderCalls(Logic.VerifierInput calldata verifierInput) internal {
-        uint256 nCalls = verifierInput.appData.externalPayload.length;
+    /// @param carrierLogicRef The logic reference of the carrier resource making the calls.
+    /// @param appData The application data of the carrier resource containing the external payload.
+    function _executeForwarderCalls(bytes32 carrierLogicRef, Logic.AppData calldata appData) internal {
+        uint256 nCalls = appData.externalPayload.length;
 
         for (uint256 i = 0; i < nCalls; ++i) {
-            _executeForwarderCall({
-                carrierLogicRef: verifierInput.verifyingKey, callBlob: verifierInput.appData.externalPayload[i].blob
-            });
+            _executeForwarderCall({carrierLogicRef: carrierLogicRef, callBlob: appData.externalPayload[i].blob});
         }
     }
 
@@ -348,11 +314,10 @@ contract ProtocolAdapter is
     }
 
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
-    /// @param input The logic verifier input of a resource making the call.
-    function _emitAppDataBlobs(Logic.VerifierInput calldata input) internal {
-        bytes32 tag = input.tag;
-
-        Logic.ExpirableBlob[] calldata payload = input.appData.resourcePayload;
+    /// @param tag The tag of the resource the app data belongs to.
+    /// @param appData The application data to emit the blobs from.
+    function _emitAppDataBlobs(bytes32 tag, Logic.AppData calldata appData) internal {
+        Logic.ExpirableBlob[] calldata payload = appData.resourcePayload;
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
@@ -362,7 +327,7 @@ contract ProtocolAdapter is
             }
         }
 
-        payload = input.appData.discoveryPayload;
+        payload = appData.discoveryPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
@@ -372,7 +337,7 @@ contract ProtocolAdapter is
             }
         }
 
-        payload = input.appData.externalPayload;
+        payload = appData.externalPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
@@ -382,7 +347,7 @@ contract ProtocolAdapter is
             }
         }
 
-        payload = input.appData.applicationPayload;
+        payload = appData.applicationPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
@@ -397,56 +362,41 @@ contract ProtocolAdapter is
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    /// @notice Processes a resource machine compliance unit by
-    /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
-    /// * aggregating the compliance instance
-    /// @param input The compliance verifier input.
-    /// @param vars Internal variables to read from.
-    /// @return updatedVars The updated internal variables.
-    function _processCompliance(Compliance.VerifierInput calldata input, InternalVariables memory vars)
-        internal
-        view
-        returns (InternalVariables memory updatedVars)
-    {
-        updatedVars = vars;
-
-        bytes32 root = input.instance.consumed.commitmentTreeRoot;
-        require(_isCommitmentTreeRootContained(root), NonExistingRoot(root));
-
-        // Aggregate the compliance instance.
-        updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] = input.instance;
-    }
-
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
     /// * the aggregation proof attesting to all compliance units and resource logics.
-    /// @param deltaProof The delta proof to verify.
-    /// @param aggregationProof The aggregation proof to verify.
-    /// @param vars Internal variables to read from.
+    /// @param transaction The transaction to verify the proofs for.
+    /// @param actionTreeRoots The action tree roots as ordered in the transaction.
+    /// @param transactionDelta The transaction delta obtained from summing the action deltas.
+    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
+    /// @return transactionId The delta verifying key doubling as the transaction ID.
     function _verifyGlobalProofs(
-        bytes calldata deltaProof,
-        bytes calldata aggregationProof,
-        InternalVariables memory vars
-    ) internal view {
-        // Check the delta proof.
-        Delta.verify({
-            proof: deltaProof, instance: vars.transactionDelta, verifyingKey: Delta.computeVerifyingKey(vars.tags)
-        });
+        Transaction calldata transaction,
+        bytes32[] memory actionTreeRoots,
+        Delta.Point memory transactionDelta,
+        bool skipRiscZeroProofVerification
+    ) internal view returns (bytes32 transactionId) {
+        // The delta proof signs the Keccak-256 hash of the concatenated action tree roots.
+        transactionId = Delta.computeVerifyingKey(actionTreeRoots);
 
+        // Check the delta proof.
+        Delta.verify({proof: transaction.deltaProof, instance: transactionDelta, verifyingKey: transactionId});
+
+        // Reconstruct the aggregation journal, injecting the compliance circuit verifying key and the stored kind
+        // table commitment — a transaction proven against any other values is unencodable and fails verification.
         bytes32 journalDigest = sha256(
-            Aggregation.Instance({
-                logicRefs: vars.logicRefs,
-                complianceInstances: vars.complianceInstances,
-                logicInstances: vars.logicInstances
-            }).toJournal()
+            transaction.toJournal({
+                complianceKey: VerifyingKeys._COMPLIANCE,
+                kindTableCommitment: _getProtocolAdapterStorage().kindTableCommitment
+            })
         );
 
         // Process the aggregation proof.
         _processRiscZeroProof({
-            verifyingKey: Aggregation._VERIFYING_KEY,
+            verifyingKey: VerifyingKeys._BATCH_AGGREGATION,
             instance: journalDigest,
-            proof: aggregationProof,
-            skipVerification: vars.skipRiscZeroProofVerification
+            proof: transaction.aggregationProof,
+            skipVerification: skipRiscZeroProofVerification
         });
     }
 
@@ -477,35 +427,20 @@ contract ProtocolAdapter is
         );
     }
 
-    /// @notice Initializes internal variables based on the tag count of the transaction.
-    /// @param transaction The transaction object.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @return vars The initialized internal variables.
-    function _initializeVars(Transaction calldata transaction, bool skipRiscZeroProofVerification)
+    /// @notice Returns the storage from the protocol adapter storage location.
+    /// @return protocolAdapterStorage The data associated with the protocol adapter storage.
+    function _getProtocolAdapterStorage()
         internal
         pure
-        returns (InternalVariables memory vars)
+        returns (ProtocolAdapterStorage storage protocolAdapterStorage)
     {
-        // Compute the tag count.
-        // Note that this function ensures that the tag count is a multiple of two.
-        uint256 tagCount = transaction.countTags();
+        /* solhint-disable no-inline-assembly */
 
-        // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
-        require(tagCount > 0, EmptyTransactionNotAllowed());
+        // slither-disable-next-line assembly
+        assembly {
+            protocolAdapterStorage.slot := _PROTOCOL_ADAPTER_STORAGE_SLOT
+        }
 
-        // Initialize
-        vars = InternalVariables({
-            /* General variables */
-            tags: new bytes32[](tagCount),
-            logicRefs: new bytes32[](tagCount),
-            latestCommitmentTreeRoot: bytes32(0),
-            transactionDelta: Delta.zero(),
-            tagCounter: 0,
-            /* Proof verification-related variables */
-            skipRiscZeroProofVerification: skipRiscZeroProofVerification,
-            /* Proof aggregation-related variables */
-            complianceInstances: new Compliance.Instance[](tagCount / Compliance._RESOURCES_PER_COMPLIANCE_UNIT),
-            logicInstances: new Logic.Instance[](tagCount)
-        });
+        /* solhint-enable no-inline-assembly */
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Compliance} from "./libs/proving/Compliance.sol";
+import {Delta} from "./libs/proving/Delta.sol";
 import {Logic} from "./libs/proving/Logic.sol";
 
 /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
@@ -36,10 +36,37 @@ struct Transaction {
     bytes aggregationProof;
 }
 
-/// @notice The action object providing context separation between non-intersecting sets of resources.
-/// @param logicVerifierInputs The logic inputs of each resource consumed or created in the action.
-/// @param complianceVerifierInputs The compliance units comprising one consumed and one created resource, each.
+/// @notice The action object providing context separation between non-intersecting sets of resources. An action
+/// corresponds to one compliance unit constraining its consumed and created resources.
+/// @param consumed The public data of the consumed resources.
+/// @param created The public data of the created resources.
+/// @param delta The action's delta value obtained from the underlying compliance unit.
+/// @param actionTreeRoot The root of the tree containing the tags of all resources present in the action.
 struct Action {
-    Logic.VerifierInput[] logicVerifierInputs;
-    Compliance.VerifierInput[] complianceVerifierInputs;
+    ConsumedResourcePublicData[] consumed;
+    CreatedResourcePublicData[] created;
+    Delta.Point delta;
+    bytes32 actionTreeRoot;
+}
+
+/// @notice The public data of a consumed resource.
+/// @param nullifier The nullifier of the resource.
+/// @param logicRef The reference to (the verifying key of) the resource logic.
+/// @param commitmentTreeRoot The historical commitment tree root the resource's inclusion is proven against.
+/// @param appData The application data associated with the resource.
+struct ConsumedResourcePublicData {
+    bytes32 nullifier;
+    bytes32 logicRef;
+    bytes32 commitmentTreeRoot;
+    Logic.AppData appData;
+}
+
+/// @notice The public data of a created resource.
+/// @param commitment The commitment of the resource.
+/// @param logicRef The reference to (the verifying key of) the resource logic.
+/// @param appData The application data associated with the resource.
+struct CreatedResourcePublicData {
+    bytes32 commitment;
+    bytes32 logicRef;
+    Logic.AppData appData;
 }
