@@ -34,5 +34,5 @@ anoma-pa-evm-integration-test = { path = "crates/integration-test" }
 # Backend-agnostic risc0 testkit, pinned by git rev (see anoma-pa-testkit
 # ADR-0002). For cross-repo development, override locally with a `[patch]` to a
 # path checkout.
-anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "4026025142217ebc7ed8d2c4209c2d995258cd5f" }
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "3084189fe1941d3788d553d33bcf5e596e66efa8" }
 anoma-risc0-verifier-bindings = "1.2.0"
