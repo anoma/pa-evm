@@ -1,6 +1,14 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) and `INITIAL_OWNER`
+# (deploys) from the environment; forge does not load this file itself. The file
+# is absent in CI, where the values come from secrets instead, so loading it
+# stays optional. `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the
+# release checklist, which exports it once per deployment session.
+set dotenv-path := "contracts/.env"
+set dotenv-required := false
+
 # Default recipe
 default:
     @just --list

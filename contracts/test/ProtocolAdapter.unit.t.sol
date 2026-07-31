@@ -21,8 +21,6 @@ import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/R
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
-import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
-import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
@@ -70,12 +68,11 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(_emptyTx);
     }
 
-    function test_execute_reverts_if_regular_proofs_have_been_generated_with_another_unstopped_verifier() public {
+    function test_execute_reverts_if_the_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
         (Transaction memory txnWithMockProof,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
-            isProofAggregated: false
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
         });
 
         vm.expectRevert(
@@ -87,52 +84,14 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(txnWithMockProof);
     }
 
-    function test_execute_reverts_if_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
-        (Transaction memory txnWithMockProof,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
-            isProofAggregated: true
-        });
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ProtocolAdapter.RiscZeroVerifierSelectorMismatch.selector, _verifierSelector, MOCK_VERIFIER_SELECTOR
-            ),
-            address(_pa)
-        );
-        _pa.execute(txnWithMockProof);
-    }
-
-    function test_execute_executes_the_empty_transaction() public {
-        vm.expectEmit(address(_pa));
-        emit IProtocolAdapter.TransactionExecuted({tags: new bytes32[](0), logicRefs: new bytes32[](0)});
+    function test_execute_reverts_on_the_empty_transaction() public {
+        vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
         _pa.execute(_emptyTx);
     }
 
-    function test_execute_does_not_emit_the_CommitmentTreeRootAdded_event_for_the_empty_transaction() public {
-        vm.recordLogs();
-
-        _pa.execute(_emptyTx);
-
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-
-        for (uint256 i = 0; i < entries.length; i++) {
-            assertTrue(
-                entries[i].topics[0] != ICommitmentTree.CommitmentTreeRootAdded.selector,
-                "empty tx should not emit CommitmentTreeRootAdded"
-            );
-        }
-    }
-
-    function test_simulateExecute_reverts_if_proof_verification_is_skipped() public {
-        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_pa));
+    function test_simulateExecute_reverts_on_the_empty_transaction() public {
+        vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
         _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
-    }
-
-    function test_simulateExecute_reverts_if_proof_verification_is_not_skipped() public {
-        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_pa));
-        _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: false});
     }
 
     function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {

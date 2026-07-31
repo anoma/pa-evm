@@ -12,16 +12,15 @@ library Logic {
         Never
     }
 
-    /// @notice A struct containing information required to verify a logic proof.
+    /// @notice A struct containing information required to verify a resource logic as part of the transaction's
+    /// aggregation proof.
     /// @param tag The nullifier or commitment of the resource depending on if the resource is consumed or not.
     /// @param verifyingKey The logic verifying key (i.e., the hash of the logic function).
     /// @param appData The application data associated with the resource.
-    /// @param proof The logic proof.
     struct VerifierInput {
         bytes32 tag;
         bytes32 verifyingKey;
         AppData appData;
-        bytes proof;
     }
 
     /// @notice The logic instance containing the data required to verify a resource logic proof.

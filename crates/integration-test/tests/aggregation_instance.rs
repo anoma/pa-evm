@@ -1,15 +1,12 @@
 //! Pins the protocol adapter's Solidity aggregation-instance encoding to
-//! arm-risc0's `construct_aggregation_instance`: a mock seal minted over the
-//! Rust-built instance must pass `simulateExecute`. Local-only unique
-//! coverage — the local prover does not aggregate, and tampered-proof
-//! rejection lives in the Solidity mock suite.
+//! arm-risc0's `construct_aggregation_instance`: the mock seal the local
+//! prover mints over the Rust-built instance must pass `simulateExecute`.
+//! A selector other than `Simulated` means the encodings diverge.
 
 mod common;
 
-use alloy::primitives::Bytes;
 use alloy::sol_types::SolError;
 use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
-use anoma_pa_evm_integration_test::deploy::mock_risc0_bindings::MOCK_VERIFIER_SELECTOR;
 use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
@@ -17,8 +14,6 @@ use anoma_pa_evm_integration_test::state::pa::pa_address;
 use anoma_pa_testkit::environment::Environment;
 use anoma_pa_testkit::transaction::Transaction;
 use anyhow::Context;
-use risc0_zkvm::sha::Digestible;
-use risc0_zkvm::{Journal, MaybePruned, ReceiptClaim};
 use rstest::*;
 
 use common::prove_trivial_tx;
@@ -37,9 +32,7 @@ where
     let env = env.context("env setup failed")?;
     let proven = prove_trivial_tx(&env).await?;
 
-    let aggregation_proof = mock_aggregation_seal(&proven)?;
-    let mut tx: PaContract::Transaction = proven.into_arm().into();
-    tx.aggregationProof = aggregation_proof;
+    let tx: PaContract::Transaction = proven.into_arm().into();
 
     let provider = default_signer(&env)?;
     let pa = protocol_adapter(pa_address(&env)?, provider);
@@ -60,25 +53,4 @@ where
     );
 
     Ok(())
-}
-
-/// Mints the mock seal for the aggregation instance like the local prover
-/// mints the individual ones: selector ++ "ok" receipt claim digest.
-fn mock_aggregation_seal(tx: &Transaction) -> anyhow::Result<Bytes> {
-    let instance = tx
-        .as_arm()
-        .construct_aggregation_instance()
-        .context("failed to construct the aggregation instance")?;
-    let journal_digest = Journal::new(instance).digest();
-
-    let claim_digest = ReceiptClaim::ok(
-        *anoma_rm_risc0::constants::BATCH_AGGREGATION_VK,
-        MaybePruned::<Vec<u8>>::Pruned(journal_digest),
-    )
-    .digest();
-
-    let mut seal = MOCK_VERIFIER_SELECTOR.to_vec();
-    seal.extend_from_slice(claim_digest.as_bytes());
-
-    Ok(Bytes::from(seal))
 }

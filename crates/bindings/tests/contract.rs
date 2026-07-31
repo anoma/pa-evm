@@ -54,32 +54,6 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     }
 }
 
-#[tokio::test]
-async fn call_executes_the_empty_tx_on_all_supported_chains() {
-    for chain in protocol_adapter_deployments_map().keys() {
-        let empty_tx = protocol_adapter::ProtocolAdapter::Transaction {
-            actions: vec![],
-            deltaProof: Default::default(),
-            aggregationProof: Default::default(),
-        };
-
-        let receipt = pa_instance(chain)
-            .await
-            .execute(empty_tx)
-            .send()
-            .await
-            .expect("Couldn't send tx")
-            .get_receipt()
-            .await
-            .expect("Couldn't get receipt");
-
-        assert!(
-            receipt.inner.is_success(),
-            "Empty transaction failed on network '{chain}'."
-        );
-    }
-}
-
 async fn pa_instance(
     chain: &NamedChain,
 ) -> protocol_adapter::ProtocolAdapter::ProtocolAdapterInstance<DynProvider> {

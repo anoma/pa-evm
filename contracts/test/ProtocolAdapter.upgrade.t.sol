@@ -43,11 +43,10 @@ contract ProtocolAdapterUpgradeTest is Test {
 
     function test_upgrade_allows_replacing_the_risc_zero_verifier_selector_after_an_emergency_stop() public {
         // Execute a transaction proven against the old verifier.
-        (Transaction memory oldTxn,) = vm.transaction({
+        (Transaction memory oldTxn, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
-            isProofAggregated: false
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
         });
         _pa.execute(oldTxn);
 
@@ -60,8 +59,16 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the verifier emergency stop");
 
+        // A fresh transaction proven against the stopped verifier reverts on proof verification. A fresh
+        // transaction is needed because the state transition — rejecting the replayed nullifiers of `oldTxn` —
+        // precedes proof verification.
+        (Transaction memory secondOldTxn,) = vm.transaction({
+            mockVerifier: _verifier,
+            nonce: nonce,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+        });
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
-        _pa.execute(oldTxn);
+        _pa.execute(secondOldTxn);
 
         // Deploy a new verifier and register it on the router under a new selector.
         RiscZeroMockVerifier newVerifier = new RiscZeroMockVerifier(_NEW_VERIFIER_SELECTOR);
@@ -90,19 +97,19 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory newTxn,) = vm.transaction({
             mockVerifier: newVerifier,
             nonce: bytes32(uint256(1000)),
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1}),
-            isProofAggregated: false
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
         });
         _pa.execute(newTxn);
 
-        // Proofs generated for the old verifier selector are rejected.
+        // Proofs generated for the old verifier selector are rejected. The transaction with unconsumed
+        // nullifiers is used so that the selector check is reached.
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProtocolAdapter.RiscZeroVerifierSelectorMismatch.selector, _NEW_VERIFIER_SELECTOR, _verifier.SELECTOR()
             ),
             address(_pa)
         );
-        _pa.execute(oldTxn);
+        _pa.execute(secondOldTxn);
     }
 
     function test_upgrade_reverts_if_the_caller_is_not_the_owner() public {
