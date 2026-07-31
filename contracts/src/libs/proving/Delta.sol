@@ -71,18 +71,18 @@ library Delta {
         account = address(uint160(uint256(hashedKey)));
     }
 
-    /// @notice Computes the delta verifying key as the Keccak-256 hash of all nullifiers and commitments
-    /// as ordered in the compliance units.
-    /// @param tags The list of nullifiers and commitments to compute the verifying key from.
-    /// @return verifyingKey The verifying key obtained from hashing the nullifiers and commitments.
-    function computeVerifyingKey(bytes32[] memory tags) internal pure returns (bytes32 verifyingKey) {
-        verifyingKey = EfficientHashLib.hash(tags);
+    /// @notice Computes the delta verifying key as the Keccak-256 hash of all action tree roots as ordered in the
+    /// transaction. The verifying key doubles as the transaction ID.
+    /// @param actionTreeRoots The action tree roots to compute the verifying key from.
+    /// @return verifyingKey The verifying key obtained from hashing the action tree roots.
+    function computeVerifyingKey(bytes32[] memory actionTreeRoots) internal pure returns (bytes32 verifyingKey) {
+        verifyingKey = EfficientHashLib.hash(actionTreeRoots);
     }
 
     /// @notice Verifies a delta proof.
     /// @param proof The delta proof.
     /// @param instance The transaction delta.
-    /// @param verifyingKey The Keccak-256 hash of all nullifiers and commitments as ordered in the compliance units.
+    /// @param verifyingKey The Keccak-256 hash of all action tree roots as ordered in the transaction.
     function verify(bytes memory proof, Point memory instance, bytes32 verifyingKey) internal pure {
         // Verify the delta proof using the ECDSA.recover API to obtain the address
         address recovered = ECDSA.recover({hash: verifyingKey, signature: proof});

@@ -72,7 +72,7 @@ contract ProtocolAdapterTest is Test {
         (Transaction memory txnWithMockProof,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
 
         vm.expectRevert(

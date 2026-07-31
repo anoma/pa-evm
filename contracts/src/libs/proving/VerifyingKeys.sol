@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+/// @title VerifyingKeys
+/// @author Anoma Foundation, 2025
+/// @notice A library containing the verifying keys (RISC Zero image IDs) of the circuits the protocol adapter
+/// accepts proofs from, pinned to the `anoma-rm-risc0` circuit binaries.
+/// @custom:security-contact security@anoma.foundation
+library VerifyingKeys {
+    /// @notice The compliance circuit verifying key (`anoma-rm-risc0` `COMPLIANCE_VK`).
+    /// @dev The compliance circuit ensures that the created resources use nonces derived from the consumed
+    /// resources' nullifiers.
+    bytes32 internal constant _COMPLIANCE = 0x88df64fe233c97307dd518c1757bf6cfca1f17f7103b4069dd9e2848db9d8434;
+
+    /// @notice The batch aggregation circuit verifying key (`anoma-rm-risc0` `BATCH_AGGREGATION_VK`).
+    /// @dev The aggregation circuit verifies all compliance and resource logic proofs of a transaction and enforces
+    /// their consistency: tags, action tree roots, logic references, and a kind table commitment shared across all
+    /// actions.
+    bytes32 internal constant _BATCH_AGGREGATION = 0x5dc2615f3d14a517a25aadfe53a882394e602740514574f3201bbe735269058e;
+}

@@ -9,14 +9,28 @@ import {Transaction} from "../Types.sol";
 /// @custom:security-contact security@anoma.foundation
 interface IProtocolAdapter {
     /// @notice Emitted when a transaction is executed.
-    /// @param tags The tags of resources being consumed and created in this transaction in alternating order.
-    /// @param logicRefs The logic references of resources being consumed and created in this transaction.
-    event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
+    /// @param transactionId The Keccak-256 hash of the concatenated action tree roots — the message the delta proof
+    /// signs, unique per transaction and known to the sender before submission.
+    event TransactionExecuted(bytes32 indexed transactionId);
 
     /// @notice Emitted when an action is executed.
     /// @param actionTreeRoot The action tree root.
-    /// @param actionTagCount The number of tags in the action.
-    event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
+    /// @param nullifiers The nullifiers of the consumed resources.
+    /// @param consumedLogicRefs The logic references of the consumed resources.
+    /// @param commitments The commitments of the created resources.
+    /// @param createdLogicRefs The logic references of the created resources.
+    event ActionExecuted(
+        bytes32 actionTreeRoot,
+        bytes32[] nullifiers,
+        bytes32[] consumedLogicRefs,
+        bytes32[] commitments,
+        bytes32[] createdLogicRefs
+    );
+
+    /// @notice Emitted when the kind table commitment is set.
+    /// @param kindTableCommitment The commitment (SHA-256 hash) of the kind table transactions must be proven
+    /// against.
+    event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
@@ -62,11 +76,20 @@ interface IProtocolAdapter {
     /// @notice Stops the protocol adapter permanently in case of an emergency.
     function emergencyStop() external;
 
+    /// @notice Sets the kind table commitment that transactions must be proven against.
+    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
+    /// @dev The commitment changes whenever the set of supported resource kinds changes.
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
+
     /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
     /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
     /// 2. The protocol adapter itself was stopped by the owner.
     /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
+
+    /// @notice Returns the kind table commitment that transactions must be proven against.
+    /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
+    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
 
     /// @notice Returns the RISC Zero verifier router associated with the protocol adapter.
     /// @return verifierRouter The RISC Zero verifier router.

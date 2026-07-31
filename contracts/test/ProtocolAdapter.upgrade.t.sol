@@ -47,7 +47,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory oldTxn, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
         _pa.execute(oldTxn);
 
@@ -66,7 +66,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory secondOldTxn,) = vm.transaction({
             mockVerifier: _verifier,
             nonce: nonce,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
         _pa.execute(secondOldTxn);
@@ -98,7 +98,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory newTxn,) = vm.transaction({
             mockVerifier: newVerifier,
             nonce: bytes32(uint256(1000)),
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
         _pa.execute(newTxn);
 
@@ -120,7 +120,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory txnBeforeStop, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
         _pa.execute(txnBeforeStop);
 
@@ -138,7 +138,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         (Transaction memory txnAfterStop,) = vm.transaction({
             mockVerifier: _verifier,
             nonce: nonce,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
