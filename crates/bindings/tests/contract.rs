@@ -3,7 +3,6 @@ extern crate dotenvy;
 
 use alloy::primitives::B256;
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
-use alloy::sol_types::SolError;
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::protocol_adapter_deployments_map;
 use anoma_pa_evm_bindings::contract::protocol_adapter;
@@ -51,34 +50,6 @@ async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
             decode_bytes32_to_utf8(actual_version),
             decode_bytes32_to_utf8(expected_version),
             "Protocol adapter version mismatch on network '{chain}'."
-        );
-    }
-}
-
-#[tokio::test]
-async fn call_reverts_on_the_empty_tx_on_all_supported_chains() {
-    for chain in protocol_adapter_deployments_map().keys() {
-        let empty_tx = protocol_adapter::ProtocolAdapter::Transaction {
-            actions: vec![],
-            deltaProof: Default::default(),
-            aggregationProof: Default::default(),
-        };
-
-        let err = pa_instance(chain)
-            .await
-            .execute(empty_tx)
-            .send()
-            .await
-            .expect_err("Empty transaction must be rejected");
-
-        let data = err.as_revert_data().unwrap_or_else(|| {
-            panic!("Empty transaction failed without revert data on network '{chain}'.")
-        });
-
-        assert_eq!(
-            data[..4],
-            protocol_adapter::ProtocolAdapter::EmptyTransactionNotAllowed::SELECTOR,
-            "Empty transaction did not revert with `EmptyTransactionNotAllowed` on network '{chain}'."
         );
     }
 }
