@@ -52,10 +52,6 @@ impl From<LogicVerifierInputs> for Logic::VerifierInput {
             tag: B256::from_slice(logic_verifier_inputs.tag.as_bytes()),
             verifyingKey: B256::from_slice(logic_verifier_inputs.verifying_key.as_bytes()),
             appData: logic_verifier_inputs.app_data.into(),
-            proof: match &logic_verifier_inputs.proof {
-                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
-                None => Bytes::from(""),
-            },
         }
     }
 }
@@ -83,10 +79,6 @@ impl From<ComplianceInstance> for Compliance::Instance {
 impl From<ComplianceUnit> for Compliance::VerifierInput {
     fn from(compliance_unit: ComplianceUnit) -> Self {
         Self {
-            proof: match &compliance_unit.clone().proof {
-                Some(proof) => Bytes::from(encode_seal(proof).unwrap()),
-                None => Bytes::from(""),
-            },
             instance: compliance_unit.get_instance().unwrap().into(),
         }
     }
@@ -126,7 +118,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: match tx.aggregation_proof {
                 Some(proof) => Bytes::from(encode_seal(&proof).unwrap()),
-                None => Bytes::from(""),
+                None => panic!("Transactions without an aggregation proof cannot be converted"),
             },
         }
     }

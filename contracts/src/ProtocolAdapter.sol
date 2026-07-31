@@ -42,8 +42,6 @@ contract ProtocolAdapter is
     using Logic for Logic.VerifierInput;
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Aggregation.Instance;
-    using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
     using TagUtils for Action;
     using TagUtils for Transaction;
 
@@ -56,7 +54,6 @@ contract ProtocolAdapter is
     /// @param transactionDelta A variable to aggregate the unit deltas over the actions.
     /// @param tagCounter A counter representing the index of the next resource tag to visit.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @param isProofAggregated Whether the transaction to execute contains an aggregated proof or not.
     /// @param complianceInstances A variable to aggregate RISC Zero compliance proof instances.
     /// @param logicInstances A variable to aggregate RISC Zero logic proof instances.
     struct InternalVariables {
@@ -69,7 +66,6 @@ contract ProtocolAdapter is
         /* Proof verification-related variables */
         bool skipRiscZeroProofVerification;
         /* Proof aggregation-related variables */
-        bool isProofAggregated;
         Compliance.Instance[] complianceInstances;
         Logic.Instance[] logicInstances;
     }
@@ -82,6 +78,7 @@ contract ProtocolAdapter is
 
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
+    error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error LogicRefMismatch(bytes32 expected, bytes32 actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
@@ -229,16 +226,14 @@ contract ProtocolAdapter is
             emit ActionExecuted({actionTreeRoot: actionTreeRoot, actionTagCount: action.logicVerifierInputs.length});
         }
 
-        // Check if the transaction induces a state change.
-        if (vars.tagCounter > 0) {
-            // Verify the delta proof and, optionally, the aggregation proof, if it is present.
-            _verifyGlobalProofs({
-                deltaProof: transaction.deltaProof, aggregationProof: transaction.aggregationProof, vars: vars
-            });
+        // Verify the delta and aggregation proofs. The empty transaction is rejected on initialization,
+        // so a state change is guaranteed.
+        _verifyGlobalProofs({
+            deltaProof: transaction.deltaProof, aggregationProof: transaction.aggregationProof, vars: vars
+        });
 
-            // Store the final commitment tree root.
-            _addCommitmentTreeRoot(vars.latestCommitmentTreeRoot);
-        }
+        // Store the final commitment tree root.
+        _addCommitmentTreeRoot(vars.latestCommitmentTreeRoot);
 
         // Emit the event containing the transaction and new root.
         emit TransactionExecuted({tags: vars.tags, logicRefs: vars.logicRefs});
@@ -249,9 +244,9 @@ contract ProtocolAdapter is
     // NOTE: The state writes in `_addCommitment` and `_addNullifier` are protected by the `nonReentrant` modifier.
     // slither-disable-start reentrancy-benign
 
-    /// @notice Processes a resource logic proof by
+    /// @notice Processes a resource logic by
     /// * checking that the logic reference matches the one with the corresponding tag in the compliance unit,
-    /// * aggregating the logic instance OR verifying the RISC Zero logic proof,
+    /// * aggregating the logic instance,
     /// * executing external forwarder calls,
     /// * adding the consumed or created resource tag to the commitment tree or nullifier set,
     /// * emitting the blobs contained in the app data payloads, and
@@ -285,23 +280,9 @@ contract ProtocolAdapter is
             LogicRefMismatch({expected: logicRefFromComplianceUnit, actual: logicRef})
         );
 
-        {
-            // Obtain the logic instance from the verifier input, action tree root, and consumed flag.
-            Logic.Instance memory instance = input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
-
-            if (updatedVars.isProofAggregated) {
-                // Aggregate the logic instance.
-                updatedVars.logicInstances[updatedVars.tagCounter] = instance;
-            } else {
-                // Processs the logic proof.
-                _processRiscZeroProof({
-                    verifyingKey: logicRef,
-                    instance: sha256(instance.toJournal()),
-                    proof: input.proof,
-                    skipVerification: vars.skipRiscZeroProofVerification
-                });
-            }
-        }
+        // Aggregate the logic instance obtained from the verifier input, action tree root, and consumed flag.
+        updatedVars.logicInstances[updatedVars.tagCounter] =
+            input.toInstance({actionTreeRoot: actionTreeRoot, isConsumed: isConsumed});
 
         _executeForwarderCalls(input);
 
@@ -416,9 +397,9 @@ contract ProtocolAdapter is
     // solhint-disable-next-line no-empty-blocks
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-    /// @notice Processes a resource machine compliance proof by
+    /// @notice Processes a resource machine compliance unit by
     /// * checking that the commitment tree root references by the consumed resource is in the set of historical roots,
-    /// * aggregating the compliance instance OR verifying the RISC Zero compliance proof
+    /// * aggregating the compliance instance
     /// @param input The compliance verifier input.
     /// @param vars Internal variables to read from.
     /// @return updatedVars The updated internal variables.
@@ -432,26 +413,15 @@ contract ProtocolAdapter is
         bytes32 root = input.instance.consumed.commitmentTreeRoot;
         require(_isCommitmentTreeRootContained(root), NonExistingRoot(root));
 
-        if (updatedVars.isProofAggregated) {
-            // Aggregate the compliance instance
-            updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] =
-            input.instance;
-        } else {
-            // Process the compliance proof.
-            _processRiscZeroProof({
-                verifyingKey: Compliance._VERIFYING_KEY,
-                instance: sha256(input.instance.toJournal()),
-                proof: input.proof,
-                skipVerification: vars.skipRiscZeroProofVerification
-            });
-        }
+        // Aggregate the compliance instance.
+        updatedVars.complianceInstances[vars.tagCounter / Compliance._RESOURCES_PER_COMPLIANCE_UNIT] = input.instance;
     }
 
-    /// @notice Verifies global proofs:
-    /// * the mandatory delta proof ensuring that the transaction is balanced,
-    /// * the optional aggregation proof if present.
+    /// @notice Verifies the global proofs:
+    /// * the delta proof ensuring that the transaction is balanced,
+    /// * the aggregation proof attesting to all compliance units and resource logics.
     /// @param deltaProof The delta proof to verify.
-    /// @param aggregationProof The aggregation proof to verify if existent.
+    /// @param aggregationProof The aggregation proof to verify.
     /// @param vars Internal variables to read from.
     function _verifyGlobalProofs(
         bytes calldata deltaProof,
@@ -463,25 +433,21 @@ contract ProtocolAdapter is
             proof: deltaProof, instance: vars.transactionDelta, verifyingKey: Delta.computeVerifyingKey(vars.tags)
         });
 
-        if (vars.isProofAggregated) {
-            bytes32 jounalDigest = sha256(
-                Aggregation.Instance({
-                    logicRefs: vars.logicRefs,
-                    complianceInstances: vars.complianceInstances,
-                    logicInstances: vars.logicInstances
-                }).toJournal()
-            );
+        bytes32 journalDigest = sha256(
+            Aggregation.Instance({
+                logicRefs: vars.logicRefs,
+                complianceInstances: vars.complianceInstances,
+                logicInstances: vars.logicInstances
+            }).toJournal()
+        );
 
-            {
-                // Process aggregation proof.
-                _processRiscZeroProof({
-                    verifyingKey: Aggregation._VERIFYING_KEY,
-                    instance: jounalDigest,
-                    proof: aggregationProof,
-                    skipVerification: vars.skipRiscZeroProofVerification
-                });
-            }
-        }
+        // Process the aggregation proof.
+        _processRiscZeroProof({
+            verifyingKey: Aggregation._VERIFYING_KEY,
+            instance: journalDigest,
+            proof: aggregationProof,
+            skipVerification: vars.skipRiscZeroProofVerification
+        });
     }
 
     /// @notice Processes a RISC Zero proof by checking its selector and verifying it. Optionally, the verification call
@@ -511,8 +477,7 @@ contract ProtocolAdapter is
         );
     }
 
-    /// @notice Initializes internal variables based on the tag count of the transaction and whether it contains an
-    /// aggregation proof or not.
+    /// @notice Initializes internal variables based on the tag count of the transaction.
     /// @param transaction The transaction object.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @return vars The initialized internal variables.
@@ -522,10 +487,11 @@ contract ProtocolAdapter is
         returns (InternalVariables memory vars)
     {
         // Compute the tag count.
-        //Note that this function ensures that the tag count is a multiple of two.
+        // Note that this function ensures that the tag count is a multiple of two.
         uint256 tagCount = transaction.countTags();
 
-        bool isProofAggregated = transaction.aggregationProof.length > 0;
+        // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
+        require(tagCount > 0, EmptyTransactionNotAllowed());
 
         // Initialize
         vars = InternalVariables({
@@ -538,10 +504,8 @@ contract ProtocolAdapter is
             /* Proof verification-related variables */
             skipRiscZeroProofVerification: skipRiscZeroProofVerification,
             /* Proof aggregation-related variables */
-            isProofAggregated: isProofAggregated,
-            complianceInstances: new Compliance
-                .Instance[](isProofAggregated ? tagCount / Compliance._RESOURCES_PER_COMPLIANCE_UNIT : 0),
-            logicInstances: new Logic.Instance[](isProofAggregated ? tagCount : 0)
+            complianceInstances: new Compliance.Instance[](tagCount / Compliance._RESOURCES_PER_COMPLIANCE_UNIT),
+            logicInstances: new Logic.Instance[](tagCount)
         });
     }
 }

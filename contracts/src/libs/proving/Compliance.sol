@@ -38,11 +38,9 @@ library Compliance {
     }
 
     /// @notice A struct containing all information required to verify a compliance unit.
-    /// @param proof The compliance proof.
-    /// @param instance The instance to the compliance proof.
+    /// @param instance The instance of the compliance unit that the transaction's aggregation proof attests to.
     /// @dev Since the verifying key (i.e., the compliance circuit ID) is fixed, it is hardcoded below.
     struct VerifierInput {
-        bytes proof;
         Instance instance;
     }
 

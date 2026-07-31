@@ -13,7 +13,6 @@ use anoma_pa_testkit::fixtures::trivial;
 use anoma_pa_testkit::prove_actions;
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_risc0_verifier_bindings::generated::risc_zero_verifier_router::RiscZeroVerifierRouter;
-use anoma_rm_risc0::action::Action;
 use anyhow::Context;
 use risc0_zkvm::sha::Digestible;
 
@@ -27,14 +26,6 @@ where
         .witnesses;
 
     prove_actions(env, &[action]).await
-}
-
-/// Returns the trivial transaction's single action.
-pub fn single_action(tx: &Transaction) -> anyhow::Result<&Action> {
-    tx.as_arm()
-        .actions
-        .first()
-        .context("transaction has no action")
 }
 
 /// Connects to the verifier router the protocol adapter is configured with.

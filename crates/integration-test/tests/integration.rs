@@ -85,7 +85,7 @@ async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
 #[rstest]
 #[case::local(
     EvmLocalEnv::setup_bare(),
-    Transaction::tamper_first_logic_seal,
+    Transaction::tamper_aggregation_seal,
     // The RiscZeroMockVerifier rejects the tampered seal with `VerificationFailed()`.
     expect_integration_panic(Needle::Regexp(
         regex::Regex::new(&regex::escape(&format!(

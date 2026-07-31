@@ -17,10 +17,6 @@ import {DeltaGen} from "./DeltaGen.sol";
 library TxGen {
     using MerkleTree for bytes32[];
     using RiscZeroUtils for Aggregation.Instance;
-    using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
-    using Logic for Logic.VerifierInput[];
-    using Logic for Logic.VerifierInput;
 
     struct ActionConfig {
         uint256 complianceUnitCount;
@@ -42,7 +38,6 @@ library TxGen {
 
     function complianceVerifierInput(
         VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
         bytes32 commitmentTreeRoot, // historical root
         Resource memory consumed,
         Resource memory created
@@ -77,20 +72,13 @@ library TxGen {
             unitDeltaY: bytes32(unitDelta.y)
         });
 
-        unit = Compliance.VerifierInput({
-            proof: mockVerifier.mockProve({
-                imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())
-            }).seal,
-            instance: instance
-        });
+        unit = Compliance.VerifierInput({instance: instance});
     }
 
-    function createAction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        ResourceAndAppData[] memory consumed,
-        ResourceAndAppData[] memory created
-    ) internal returns (Action memory action) {
+    function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
+        internal
+        returns (Action memory action)
+    {
         require(
             consumed.length == created.length,
             ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length})
@@ -100,52 +88,26 @@ library TxGen {
         Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * complianceUnitCount);
         Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](complianceUnitCount);
 
-        bytes32[] memory actionTreeTags = new bytes32[](2 * complianceUnitCount);
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = (i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-            actionTreeTags[index] = nullifier(consumed[i].resource, 0);
-            actionTreeTags[index + 1] = commitment(created[i].resource);
-        }
-
-        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
-
         for (uint256 i = 0; i < complianceUnitCount; ++i) {
             uint256 index = i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
 
-            logicVerifierInputs[index] = logicVerifierInput({
-                mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
-                resource: consumed[i].resource,
-                isConsumed: true,
-                appData: consumed[i].appData
-            });
+            logicVerifierInputs[index] =
+                logicVerifierInput({resource: consumed[i].resource, isConsumed: true, appData: consumed[i].appData});
 
-            logicVerifierInputs[index + 1] = logicVerifierInput({
-                mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
-                resource: created[i].resource,
-                isConsumed: false,
-                appData: created[i].appData
-            });
+            logicVerifierInputs[index + 1] =
+                logicVerifierInput({resource: created[i].resource, isConsumed: false, appData: created[i].appData});
 
             complianceVerifierInputs[i] = complianceVerifierInput({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                commitmentTreeRoot: initialRoot(),
-                consumed: consumed[i].resource,
-                created: created[i].resource
+                vm: vm, commitmentTreeRoot: initialRoot(), consumed: consumed[i].resource, created: created[i].resource
             });
         }
         action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
     }
 
-    function createDefaultAction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 nonce,
-        uint256 complianceUnitCount
-    ) internal returns (Action memory action, bytes32 updatedNonce) {
+    function createDefaultAction(VmSafe vm, bytes32 nonce, uint256 complianceUnitCount)
+        internal
+        returns (Action memory action, bytes32 updatedNonce)
+    {
         updatedNonce = nonce;
 
         ResourceAndAppData[] memory consumed = new ResourceAndAppData[](complianceUnitCount);
@@ -184,15 +146,13 @@ library TxGen {
             updatedNonce = bytes32(uint256(updatedNonce) + 1);
         }
 
-        action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
+        action = createAction({vm: vm, consumed: consumed, created: created});
     }
 
-    function transaction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        ResourceLists[] memory actionResources,
-        bool isProofAggregated
-    ) internal returns (Transaction memory txn) {
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
+        internal
+        returns (Transaction memory txn)
+    {
         Action[] memory actions = new Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
@@ -201,12 +161,8 @@ library TxGen {
                 ConsumedCreatedCountMismatch(actionResources[i].consumed.length, actionResources[i].created.length)
             );
 
-            actions[i] = createAction({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                consumed: actionResources[i].consumed,
-                created: actionResources[i].created
-            });
+            actions[i] =
+                createAction({vm: vm, consumed: actionResources[i].consumed, created: actionResources[i].created});
         }
 
         // Grab the tags that will be signed over
@@ -223,28 +179,19 @@ library TxGen {
         }
         txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
 
-        if (isProofAggregated) {
-            txn = transactionAggregation(mockVerifier, txn);
-        }
+        txn = transactionAggregation(mockVerifier, txn);
     }
 
-    function transaction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 nonce,
-        ActionConfig[] memory configs,
-        bool isProofAggregated
-    ) internal returns (Transaction memory txn, bytes32 updatedNonce) {
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
+        internal
+        returns (Transaction memory txn, bytes32 updatedNonce)
+    {
         updatedNonce = nonce;
 
         Action[] memory actions = new Action[](configs.length);
         for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) = createDefaultAction({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                nonce: updatedNonce,
-                complianceUnitCount: configs[i].complianceUnitCount
-            });
+            (actions[i], updatedNonce) =
+                createDefaultAction({vm: vm, nonce: updatedNonce, complianceUnitCount: configs[i].complianceUnitCount});
         }
 
         // Grab the tags that will be signed over
@@ -261,9 +208,7 @@ library TxGen {
         }
         txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
 
-        if (isProofAggregated) {
-            txn = transactionAggregation(mockVerifier, txn);
-        }
+        txn = transactionAggregation(mockVerifier, txn);
     }
 
     function transactionAggregation(RiscZeroMockVerifier mockVerifier, Transaction memory txn)
@@ -279,24 +224,16 @@ library TxGen {
         }).seal;
     }
 
-    function logicVerifierInput(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 actionTreeRoot,
-        Resource memory resource,
-        bool isConsumed,
-        Logic.AppData memory appData
-    ) internal view returns (Logic.VerifierInput memory input) {
+    function logicVerifierInput(Resource memory resource, bool isConsumed, Logic.AppData memory appData)
+        internal
+        pure
+        returns (Logic.VerifierInput memory input)
+    {
         input = Logic.VerifierInput({
             tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
             verifyingKey: resource.logicRef,
-            appData: appData,
-            proof: ""
+            appData: appData
         });
-
-        input.proof =
-        mockVerifier.mockProve({
-            imageId: resource.logicRef, journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
-        }).seal;
     }
 
     function generateActionConfigs(uint256 actionCount, uint256 complianceUnitCount)
