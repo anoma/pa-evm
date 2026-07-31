@@ -14,6 +14,13 @@ via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
 
+# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`) and the
+# recorded deployments. Setting `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [
+    { access = "read", path = "out" },
+    { access = "read", path = "../crates/bindings/deployments.json" },
+]
+
 # Settings required by `openzeppelin-foundry-upgrades` for upgrade-safety validation
 # (https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades#before-running).
 ffi = true
