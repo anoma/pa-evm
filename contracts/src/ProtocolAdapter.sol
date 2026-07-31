@@ -42,12 +42,6 @@ contract ProtocolAdapter is
         bytes32 kindTableCommitment;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
-
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
-
     /// @notice The commitment of the empty kind table (the SHA-256 hash of zero bytes of table content), under
     /// which every resource kind is derived via hash-to-curve. Note that this is not `SHA256.EMPTY_HASH`.
     bytes32 internal constant _EMPTY_KIND_TABLE_COMMITMENT =
@@ -56,6 +50,12 @@ contract ProtocolAdapter is
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.ProtocolAdapter")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
         0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
+
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
+
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
 
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
@@ -159,14 +159,13 @@ contract ProtocolAdapter is
         verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
 
-    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
-    // slither-disable-start reentrancy-no-eth,reentrancy-benign
-
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
+    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
+    // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
     function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)
         internal
         nonReentrant
@@ -224,6 +223,9 @@ contract ProtocolAdapter is
     /// @param action The action to process.
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
+    // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
+    // modifier on the calling `_execute`.
+    // slither-disable-next-line reentrancy-no-eth
     function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
         uint256 consumedCount = action.consumed.length;
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
@@ -276,8 +278,6 @@ contract ProtocolAdapter is
             createdLogicRefs: createdLogicRefs
         });
     }
-
-    // slither-disable-end reentrancy-no-eth
 
     /// @notice Processes forwarder calls by verifying and executing them.
     /// @param carrierLogicRef The logic reference of the carrier resource making the calls.
@@ -435,12 +435,10 @@ contract ProtocolAdapter is
         returns (ProtocolAdapterStorage storage protocolAdapterStorage)
     {
         /* solhint-disable no-inline-assembly */
-
         // slither-disable-next-line assembly
         assembly {
             protocolAdapterStorage.slot := _PROTOCOL_ADAPTER_STORAGE_SLOT
         }
-
         /* solhint-enable no-inline-assembly */
     }
 }
