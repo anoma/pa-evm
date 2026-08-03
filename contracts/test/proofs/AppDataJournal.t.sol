@@ -4,11 +4,9 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {Logic} from "../../src/libs/proving/Logic.sol";
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {JournalEncoder} from "../libs/JournalEncoder.sol";
 
 contract AppDataJournalTest is Test {
-    using RiscZeroUtils for Logic.AppData;
-
     /// @dev The four payload slots must be distinguishable in the journal — a blob moved to another slot must
     /// change the digest.
     function testFuzz_different_empty_payloads_produce_different_digest(bytes memory payload) public pure {
@@ -26,22 +24,22 @@ contract AppDataJournalTest is Test {
 
         // Generate digest where only the resource payload is filled.
         appData.resourcePayload = payloadList;
-        bytes32 resourcePayloadDigest = sha256(appData.toJournal());
+        bytes32 resourcePayloadDigest = sha256(JournalEncoder.toJournal(appData));
         appData.resourcePayload = emptyList;
 
         // Generate digest where only the discovery payload is filled.
         appData.discoveryPayload = payloadList;
-        bytes32 discoveryPayloadDigest = sha256(appData.toJournal());
+        bytes32 discoveryPayloadDigest = sha256(JournalEncoder.toJournal(appData));
         appData.discoveryPayload = emptyList;
 
         // Generate digest where only the external payload is filled.
         appData.externalPayload = payloadList;
-        bytes32 externalPayloadDigest = sha256(appData.toJournal());
+        bytes32 externalPayloadDigest = sha256(JournalEncoder.toJournal(appData));
         appData.externalPayload = emptyList;
 
         // Generate digest where only the application payload is filled.
         appData.applicationPayload = payloadList;
-        bytes32 applicationPayloadDigest = sha256(appData.toJournal());
+        bytes32 applicationPayloadDigest = sha256(JournalEncoder.toJournal(appData));
 
         // Assert that all four produce different digests.
         assertTrue(resourcePayloadDigest != discoveryPayloadDigest, "resource and discovery digests should differ");
