@@ -17,6 +17,7 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Transaction} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
+import {ProtocolAdapterResumableMock} from "./mocks/ProtocolAdapterResumable.m.sol";
 
 contract ProtocolAdapterUpgradeTest is Test {
     using TxGen for Vm;
@@ -110,6 +111,71 @@ contract ProtocolAdapterUpgradeTest is Test {
             address(_pa)
         );
         _pa.execute(secondOldTxn);
+    }
+
+    /// @dev `emergencyStop` has no counterpart in the current implementation, so lifting the pause it sets takes an
+    /// upgrade to an implementation carrying a recovery path.
+    function test_upgrade_allows_lifting_the_pause_set_by_an_emergency_stop() public {
+        // Execute a transaction while the protocol adapter is operational.
+        (Transaction memory txnBeforeStop, bytes32 nonce) = vm.transaction({
+            mockVerifier: _verifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+        });
+        _pa.execute(txnBeforeStop);
+
+        bytes32 latestRootBeforeStop = _pa.latestCommitmentTreeRoot();
+        uint256 commitmentCountBeforeStop = _pa.commitmentCount();
+
+        // The owner stops the protocol adapter.
+        vm.prank(_OWNER);
+        _pa.emergencyStop();
+
+        assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the emergency stop");
+
+        // Execution is halted. The `whenNotPaused` modifier rejects the transaction before it touches any state, so
+        // this very transaction can be replayed once the pause is lifted.
+        (Transaction memory txnAfterStop,) = vm.transaction({
+            mockVerifier: _verifier,
+            nonce: nonce,
+            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+        });
+
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
+        _pa.execute(txnAfterStop);
+
+        // There is no way out while the deployed implementation is in place — its ABI carries no recovery function,
+        // so the proxy finds nothing to delegate to and reverts without data.
+        vm.prank(_OWNER);
+        vm.expectRevert();
+        ProtocolAdapterResumableMock(address(_pa)).reinitialize();
+
+        // Upgrade to an implementation carrying a recovery path, lifting the pause in the same transaction. Passing
+        // the reinitializer as the upgrade call data leaves no block in which the new implementation is live but
+        // still paused.
+        Options memory opts;
+        opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
+
+        Upgrades.upgradeProxy({
+            proxy: address(_pa),
+            contractName: "ProtocolAdapterResumable.m.sol:ProtocolAdapterResumableMock",
+            data: abi.encodeCall(ProtocolAdapterResumableMock.reinitialize, ()),
+            opts: opts,
+            tryCaller: _OWNER
+        });
+
+        // The protocol adapter is operational again.
+        assertFalse(_pa.paused(), "PA should be unpaused after the upgrade");
+        assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
+
+        // The protocol adapter state survived the upgrade.
+        assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforeStop, "the latest root should survive the upgrade");
+        assertEq(_pa.commitmentCount(), commitmentCountBeforeStop, "the commitment count should survive the upgrade");
+
+        // The transaction that was rejected while paused now settles.
+        _pa.execute(txnAfterStop);
+
+        assertEq(_pa.commitmentCount(), commitmentCountBeforeStop + 1, "the replayed transaction should settle");
     }
 
     function test_upgrade_reverts_if_the_caller_is_not_the_owner() public {
