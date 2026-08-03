@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {reverseByteOrderUint32} from "risc0-risc0-ethereum-3.0.1/contracts/src/Util.sol";
 
-import {Action, ConsumedResourcePublicData, CreatedResourcePublicData, Transaction} from "../Types.sol";
+import {Action, Consumed, Created, Transaction} from "../Types.sol";
 import {Logic} from "./proving/Logic.sol";
 
 /// @title RiscZeroUtils
@@ -51,7 +51,7 @@ library RiscZeroUtils {
         journal = abi.encodePacked(reverseByteOrderUint32(uint32(consumedCount)));
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            ConsumedResourcePublicData calldata consumed = action.consumed[i];
+            Consumed calldata consumed = action.consumed[i];
             journal = abi.encodePacked(
                 journal,
                 consumed.nullifier,
@@ -66,7 +66,7 @@ library RiscZeroUtils {
         journal = abi.encodePacked(journal, reverseByteOrderUint32(uint32(createdCount)));
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            CreatedResourcePublicData calldata created = action.created[i];
+            Created calldata created = action.created[i];
             journal = abi.encodePacked(journal, created.commitment, created.logicRef, created.appData.toJournal());
         }
 

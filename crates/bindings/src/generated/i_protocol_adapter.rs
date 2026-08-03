@@ -1204,18 +1204,18 @@ library Logic {
 
 interface IProtocolAdapter {
     struct Action {
-        ConsumedResourcePublicData[] consumed;
-        CreatedResourcePublicData[] created;
+        Consumed[] consumed;
+        Created[] created;
         Delta.Point delta;
         bytes32 actionTreeRoot;
     }
-    struct ConsumedResourcePublicData {
+    struct Consumed {
         bytes32 nullifier;
         bytes32 logicRef;
         bytes32 commitmentTreeRoot;
         Logic.AppData appData;
     }
-    struct CreatedResourcePublicData {
+    struct Created {
         bytes32 commitment;
         bytes32 logicRef;
         Logic.AppData appData;
@@ -1273,7 +1273,7 @@ interface IProtocolAdapter {
               {
                 "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct ConsumedResourcePublicData[]",
+                "internalType": "struct Consumed[]",
                 "components": [
                   {
                     "name": "nullifier",
@@ -1370,7 +1370,7 @@ interface IProtocolAdapter {
               {
                 "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct CreatedResourcePublicData[]",
+                "internalType": "struct Created[]",
                 "components": [
                   {
                     "name": "commitment",
@@ -1581,7 +1581,7 @@ interface IProtocolAdapter {
               {
                 "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct ConsumedResourcePublicData[]",
+                "internalType": "struct Consumed[]",
                 "components": [
                   {
                     "name": "nullifier",
@@ -1678,7 +1678,7 @@ interface IProtocolAdapter {
               {
                 "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct CreatedResourcePublicData[]",
+                "internalType": "struct Created[]",
                 "components": [
                   {
                     "name": "commitment",
@@ -2035,18 +2035,18 @@ pub mod IProtocolAdapter {
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
-struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData[] created; Delta.Point delta; bytes32 actionTreeRoot; }
+struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes32 actionTreeRoot; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct Action {
         #[allow(missing_docs)]
         pub consumed: alloy::sol_types::private::Vec<
-            <ConsumedResourcePublicData as alloy::sol_types::SolType>::RustType,
+            <Consumed as alloy::sol_types::SolType>::RustType,
         >,
         #[allow(missing_docs)]
         pub created: alloy::sol_types::private::Vec<
-            <CreatedResourcePublicData as alloy::sol_types::SolType>::RustType,
+            <Created as alloy::sol_types::SolType>::RustType,
         >,
         #[allow(missing_docs)]
         pub delta: <Delta::Point as alloy::sol_types::SolType>::RustType,
@@ -2064,18 +2064,18 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
         #[doc(hidden)]
         #[allow(dead_code)]
         type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Array<ConsumedResourcePublicData>,
-            alloy::sol_types::sol_data::Array<CreatedResourcePublicData>,
+            alloy::sol_types::sol_data::Array<Consumed>,
+            alloy::sol_types::sol_data::Array<Created>,
             Delta::Point,
             alloy::sol_types::sol_data::FixedBytes<32>,
         );
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
             alloy::sol_types::private::Vec<
-                <ConsumedResourcePublicData as alloy::sol_types::SolType>::RustType,
+                <Consumed as alloy::sol_types::SolType>::RustType,
             >,
             alloy::sol_types::private::Vec<
-                <CreatedResourcePublicData as alloy::sol_types::SolType>::RustType,
+                <Created as alloy::sol_types::SolType>::RustType,
             >,
             <Delta::Point as alloy::sol_types::SolType>::RustType,
             alloy::sol_types::private::FixedBytes<32>,
@@ -2120,10 +2120,10 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
                     <alloy::sol_types::sol_data::Array<
-                        ConsumedResourcePublicData,
+                        Consumed,
                     > as alloy_sol_types::SolType>::tokenize(&self.consumed),
                     <alloy::sol_types::sol_data::Array<
-                        CreatedResourcePublicData,
+                        Created,
                     > as alloy_sol_types::SolType>::tokenize(&self.created),
                     <Delta::Point as alloy_sol_types::SolType>::tokenize(&self.delta),
                     <alloy::sol_types::sol_data::FixedBytes<
@@ -2203,7 +2203,7 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Action(ConsumedResourcePublicData[] consumed,CreatedResourcePublicData[] created,Point delta,bytes32 actionTreeRoot)",
+                    "Action(Consumed[] consumed,Created[] created,Point delta,bytes32 actionTreeRoot)",
                 )
             }
             #[inline]
@@ -2212,20 +2212,16 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
             > {
                 let mut components = alloy_sol_types::private::Vec::with_capacity(3);
                 components
-                    .push(
-                        <ConsumedResourcePublicData as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
+                    .push(<Consumed as alloy_sol_types::SolStruct>::eip712_root_type());
                 components
                     .extend(
-                        <ConsumedResourcePublicData as alloy_sol_types::SolStruct>::eip712_components(),
+                        <Consumed as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
-                    .push(
-                        <CreatedResourcePublicData as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
+                    .push(<Created as alloy_sol_types::SolStruct>::eip712_root_type());
                 components
                     .extend(
-                        <CreatedResourcePublicData as alloy_sol_types::SolStruct>::eip712_components(),
+                        <Created as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
                     .push(
@@ -2241,11 +2237,11 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
             fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
                 [
                     <alloy::sol_types::sol_data::Array<
-                        ConsumedResourcePublicData,
+                        Consumed,
                     > as alloy_sol_types::SolType>::eip712_data_word(&self.consumed)
                         .0,
                     <alloy::sol_types::sol_data::Array<
-                        CreatedResourcePublicData,
+                        Created,
                     > as alloy_sol_types::SolType>::eip712_data_word(&self.created)
                         .0,
                     <Delta::Point as alloy_sol_types::SolType>::eip712_data_word(
@@ -2268,12 +2264,12 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize
                     + <alloy::sol_types::sol_data::Array<
-                        ConsumedResourcePublicData,
+                        Consumed,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.consumed,
                     )
                     + <alloy::sol_types::sol_data::Array<
-                        CreatedResourcePublicData,
+                        Created,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.created,
                     )
@@ -2295,13 +2291,13 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
                     <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
                 );
                 <alloy::sol_types::sol_data::Array<
-                    ConsumedResourcePublicData,
+                    Consumed,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.consumed,
                     out,
                 );
                 <alloy::sol_types::sol_data::Array<
-                    CreatedResourcePublicData,
+                    Created,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.created,
                     out,
@@ -2335,11 +2331,11 @@ struct Action { ConsumedResourcePublicData[] consumed; CreatedResourcePublicData
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
-struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; Logic.AppData appData; }
+struct Consumed { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; Logic.AppData appData; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct ConsumedResourcePublicData {
+    pub struct Consumed {
         #[allow(missing_docs)]
         pub nullifier: alloy::sol_types::private::FixedBytes<32>,
         #[allow(missing_docs)]
@@ -2385,9 +2381,8 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<ConsumedResourcePublicData>
-        for UnderlyingRustTuple<'_> {
-            fn from(value: ConsumedResourcePublicData) -> Self {
+        impl ::core::convert::From<Consumed> for UnderlyingRustTuple<'_> {
+            fn from(value: Consumed) -> Self {
                 (
                     value.nullifier,
                     value.logicRef,
@@ -2398,8 +2393,7 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>>
-        for ConsumedResourcePublicData {
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Consumed {
             fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                 Self {
                     nullifier: tuple.0,
@@ -2410,12 +2404,11 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolValue for ConsumedResourcePublicData {
+        impl alloy_sol_types::SolValue for Consumed {
             type SolType = Self;
         }
         #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self>
-        for ConsumedResourcePublicData {
+        impl alloy_sol_types::private::SolTypeValue<Self> for Consumed {
             #[inline]
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
@@ -2473,7 +2466,7 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolType for ConsumedResourcePublicData {
+        impl alloy_sol_types::SolType for Consumed {
             type RustType = Self;
             type Token<'a> = <UnderlyingSolTuple<
                 'a,
@@ -2498,12 +2491,12 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolStruct for ConsumedResourcePublicData {
-            const NAME: &'static str = "ConsumedResourcePublicData";
+        impl alloy_sol_types::SolStruct for Consumed {
+            const NAME: &'static str = "Consumed";
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "ConsumedResourcePublicData(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot,AppData appData)",
+                    "Consumed(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot,AppData appData)",
                 )
             }
             #[inline]
@@ -2547,7 +2540,7 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::EventTopic for ConsumedResourcePublicData {
+        impl alloy_sol_types::EventTopic for Consumed {
             #[inline]
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize
@@ -2619,11 +2612,11 @@ struct ConsumedResourcePublicData { bytes32 nullifier; bytes32 logicRef; bytes32
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
-struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
+struct Created { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct CreatedResourcePublicData {
+    pub struct Created {
         #[allow(missing_docs)]
         pub commitment: alloy::sol_types::private::FixedBytes<32>,
         #[allow(missing_docs)]
@@ -2665,16 +2658,14 @@ struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.A
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<CreatedResourcePublicData>
-        for UnderlyingRustTuple<'_> {
-            fn from(value: CreatedResourcePublicData) -> Self {
+        impl ::core::convert::From<Created> for UnderlyingRustTuple<'_> {
+            fn from(value: Created) -> Self {
                 (value.commitment, value.logicRef, value.appData)
             }
         }
         #[automatically_derived]
         #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>>
-        for CreatedResourcePublicData {
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Created {
             fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                 Self {
                     commitment: tuple.0,
@@ -2684,11 +2675,11 @@ struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.A
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolValue for CreatedResourcePublicData {
+        impl alloy_sol_types::SolValue for Created {
             type SolType = Self;
         }
         #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for CreatedResourcePublicData {
+        impl alloy_sol_types::private::SolTypeValue<Self> for Created {
             #[inline]
             fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
                 (
@@ -2743,7 +2734,7 @@ struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.A
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolType for CreatedResourcePublicData {
+        impl alloy_sol_types::SolType for Created {
             type RustType = Self;
             type Token<'a> = <UnderlyingSolTuple<
                 'a,
@@ -2768,12 +2759,12 @@ struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.A
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolStruct for CreatedResourcePublicData {
-            const NAME: &'static str = "CreatedResourcePublicData";
+        impl alloy_sol_types::SolStruct for Created {
+            const NAME: &'static str = "Created";
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "CreatedResourcePublicData(bytes32 commitment,bytes32 logicRef,AppData appData)",
+                    "Created(bytes32 commitment,bytes32 logicRef,AppData appData)",
                 )
             }
             #[inline]
@@ -2811,7 +2802,7 @@ struct CreatedResourcePublicData { bytes32 commitment; bytes32 logicRef; Logic.A
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::EventTopic for CreatedResourcePublicData {
+        impl alloy_sol_types::EventTopic for Created {
             #[inline]
             fn topic_preimage_length(rust: &Self::RustType) -> usize {
                 0usize

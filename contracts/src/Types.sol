@@ -43,8 +43,8 @@ struct Transaction {
 /// @param delta The action's delta value obtained from the underlying compliance unit.
 /// @param actionTreeRoot The root of the tree containing the tags of all resources present in the action.
 struct Action {
-    ConsumedResourcePublicData[] consumed;
-    CreatedResourcePublicData[] created;
+    Consumed[] consumed;
+    Created[] created;
     Delta.Point delta;
     bytes32 actionTreeRoot;
 }
@@ -54,7 +54,7 @@ struct Action {
 /// @param logicRef The reference to (the verifying key of) the resource logic.
 /// @param commitmentTreeRoot The historical commitment tree root the resource's inclusion is proven against.
 /// @param appData The application data associated with the resource.
-struct ConsumedResourcePublicData {
+struct Consumed {
     bytes32 nullifier;
     bytes32 logicRef;
     bytes32 commitmentTreeRoot;
@@ -65,7 +65,7 @@ struct ConsumedResourcePublicData {
 /// @param commitment The commitment of the resource.
 /// @param logicRef The reference to (the verifying key of) the resource logic.
 /// @param appData The application data associated with the resource.
-struct CreatedResourcePublicData {
+struct Created {
     bytes32 commitment;
     bytes32 logicRef;
     Logic.AppData appData;
