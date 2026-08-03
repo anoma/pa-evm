@@ -23,7 +23,7 @@ library RiscZeroUtils {
     /// @return journal The resulting RISC Zero journal.
     /// @dev Element counts can safely be assumed to not exceed `type(uint32).max` as this would exceed Ethereum's
     /// block gas limit.
-    function toJournal(Transaction memory transaction, bytes32 complianceKey, bytes32 kindTableCommitment)
+    function toJournal(Transaction calldata transaction, bytes32 complianceKey, bytes32 kindTableCommitment)
         internal
         pure
         returns (bytes memory journal)
@@ -45,13 +45,13 @@ library RiscZeroUtils {
     /// @notice Converts an action to its part of the aggregation journal — the arm `ActionAggregated` encoding.
     /// @param action The action to encode.
     /// @return journal The resulting journal part.
-    function toJournal(Action memory action) internal pure returns (bytes memory journal) {
+    function toJournal(Action calldata action) internal pure returns (bytes memory journal) {
         uint256 consumedCount = action.consumed.length;
         // forge-lint: disable-next-line(unsafe-typecast)
         journal = abi.encodePacked(reverseByteOrderUint32(uint32(consumedCount)));
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            ConsumedResourcePublicData memory consumed = action.consumed[i];
+            ConsumedResourcePublicData calldata consumed = action.consumed[i];
             journal = abi.encodePacked(
                 journal,
                 consumed.nullifier,
@@ -66,7 +66,7 @@ library RiscZeroUtils {
         journal = abi.encodePacked(journal, reverseByteOrderUint32(uint32(createdCount)));
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            CreatedResourcePublicData memory created = action.created[i];
+            CreatedResourcePublicData calldata created = action.created[i];
             journal = abi.encodePacked(journal, created.commitment, created.logicRef, created.appData.toJournal());
         }
 
@@ -78,7 +78,7 @@ library RiscZeroUtils {
     /// @return converted The resulting journal part.
     /// @dev Blob counts / payload lengths can safely be assumed to not exceed the `type(uint32).max` as this would
     /// exceed Ethereum's block gas limit.
-    function toJournal(Logic.AppData memory appData) internal pure returns (bytes memory converted) {
+    function toJournal(Logic.AppData calldata appData) internal pure returns (bytes memory converted) {
         converted = abi.encodePacked(
             // Encode the resource payload length as a `uint32` in reverse byte order.
             reverseByteOrderUint32(uint32(appData.resourcePayload.length)),
@@ -104,7 +104,7 @@ library RiscZeroUtils {
     /// @dev The blob length divided by 4 can safely be assumed to not exceed the `type(uint32).max` as this
     /// would exceed Ethereum's block gas limit. Blobs are `Vec<u32>` values in arm, so a blob's byte length divided
     /// by 4 is its element count.
-    function encodePayload(Logic.ExpirableBlob[] memory payload) internal pure returns (bytes memory encoded) {
+    function encodePayload(Logic.ExpirableBlob[] calldata payload) internal pure returns (bytes memory encoded) {
         uint256 blobCount = payload.length;
         for (uint256 i = 0; i < blobCount; ++i) {
             encoded = abi.encodePacked(

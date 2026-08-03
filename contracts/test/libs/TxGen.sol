@@ -8,7 +8,6 @@ import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
 import {VerifyingKeys} from "../../src/libs/proving/VerifyingKeys.sol";
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {
     Transaction,
@@ -18,10 +17,10 @@ import {
     Resource
 } from "./../../src/Types.sol";
 import {DeltaGen} from "./DeltaGen.sol";
+import {JournalEncoder} from "./JournalEncoder.sol";
 
 library TxGen {
     using MerkleTree for bytes32[];
-    using RiscZeroUtils for Transaction;
 
     struct ActionConfig {
         uint256 consumedCount;
@@ -211,7 +210,8 @@ library TxGen {
     }
 
     /// @dev Mock-proves the aggregation: the seal commits to the journal reconstructed with the same compliance key
-    /// and kind table commitment the protocol adapter injects.
+    /// and kind table commitment the protocol adapter injects. The memory-built transaction crosses the
+    /// `JournalEncoder` boundary because the encoders read calldata.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         Transaction memory txn,
@@ -223,7 +223,9 @@ library TxGen {
         mockVerifier.mockProve({
             imageId: VerifyingKeys._BATCH_AGGREGATION,
             journalDigest: sha256(
-                txn.toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: kindTableCommitment})
+                JournalEncoder.toJournal({
+                    transaction: txn, complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: kindTableCommitment
+                })
             )
         }).seal;
     }
