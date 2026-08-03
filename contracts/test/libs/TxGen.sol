@@ -9,13 +9,7 @@ import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
 import {VerifyingKeys} from "../../src/libs/proving/VerifyingKeys.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
-import {
-    Transaction,
-    Action,
-    ConsumedResourcePublicData,
-    CreatedResourcePublicData,
-    Resource
-} from "./../../src/Types.sol";
+import {Transaction, Action, Consumed, Created, Resource} from "./../../src/Types.sol";
 import {DeltaGen} from "./DeltaGen.sol";
 import {JournalEncoder} from "./JournalEncoder.sol";
 
@@ -47,13 +41,13 @@ library TxGen {
         uint256 consumedCount = consumed.length;
         uint256 createdCount = created.length;
 
-        ConsumedResourcePublicData[] memory consumedData = new ConsumedResourcePublicData[](consumedCount);
-        CreatedResourcePublicData[] memory createdData = new CreatedResourcePublicData[](createdCount);
+        Consumed[] memory consumedData = new Consumed[](consumedCount);
+        Created[] memory createdData = new Created[](createdCount);
 
         Delta.Point memory actionDelta;
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            consumedData[i] = ConsumedResourcePublicData({
+            consumedData[i] = Consumed({
                 nullifier: nullifier(consumed[i].resource, 0),
                 logicRef: consumed[i].resource.logicRef,
                 commitmentTreeRoot: initialRoot(),
@@ -73,7 +67,7 @@ library TxGen {
         }
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            createdData[i] = CreatedResourcePublicData({
+            createdData[i] = Created({
                 commitment: commitment(created[i].resource),
                 logicRef: created[i].resource.logicRef,
                 appData: created[i].appData
@@ -268,7 +262,7 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            ConsumedResourcePublicData[] memory consumed = txn.actions[i].consumed;
+            Consumed[] memory consumed = txn.actions[i].consumed;
             for (uint256 j = 0; j < consumed.length; ++j) {
                 nullifiers[n++] = consumed[j].nullifier;
             }
@@ -280,7 +274,7 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            CreatedResourcePublicData[] memory created = txn.actions[i].created;
+            Created[] memory created = txn.actions[i].created;
             for (uint256 j = 0; j < created.length; ++j) {
                 commitments[n++] = created[j].commitment;
             }
@@ -381,10 +375,11 @@ library TxGen {
 
     /// @dev The action tree leaves are the consumed nullifiers followed by the created commitments — the canonical
     /// tag order.
-    function computeActionTreeRoot(
-        ConsumedResourcePublicData[] memory consumed,
-        CreatedResourcePublicData[] memory created
-    ) internal pure returns (bytes32 root) {
+    function computeActionTreeRoot(Consumed[] memory consumed, Created[] memory created)
+        internal
+        pure
+        returns (bytes32 root)
+    {
         bytes32[] memory tags = new bytes32[](consumed.length + created.length);
 
         uint256 n = 0;

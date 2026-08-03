@@ -17,7 +17,7 @@ import {VerifyingKeys} from "./libs/proving/VerifyingKeys.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
-import {Action, ConsumedResourcePublicData, CreatedResourcePublicData, Transaction} from "./Types.sol";
+import {Action, Consumed, Created, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -232,7 +232,7 @@ contract ProtocolAdapter is
         bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            ConsumedResourcePublicData calldata consumed = action.consumed[i];
+            Consumed calldata consumed = action.consumed[i];
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
@@ -255,7 +255,7 @@ contract ProtocolAdapter is
         bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            CreatedResourcePublicData calldata created = action.created[i];
+            Created calldata created = action.created[i];
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.

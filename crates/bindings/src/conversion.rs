@@ -45,7 +45,7 @@ impl From<AppData> for Logic::AppData {
     }
 }
 
-impl From<ConsumedResourceAggregated> for ProtocolAdapter::ConsumedResourcePublicData {
+impl From<ConsumedResourceAggregated> for ProtocolAdapter::Consumed {
     fn from(consumed: ConsumedResourceAggregated) -> Self {
         Self {
             nullifier: B256::from_slice(consumed.resource_nullifier.as_bytes()),
@@ -56,7 +56,7 @@ impl From<ConsumedResourceAggregated> for ProtocolAdapter::ConsumedResourcePubli
     }
 }
 
-impl From<CreatedResourceAggregated> for ProtocolAdapter::CreatedResourcePublicData {
+impl From<CreatedResourceAggregated> for ProtocolAdapter::Created {
     fn from(created: CreatedResourceAggregated) -> Self {
         Self {
             commitment: B256::from_slice(created.resource_commitment.as_bytes()),
@@ -77,12 +77,12 @@ impl From<ActionAggregated> for ProtocolAdapter::Action {
             consumed: action
                 .consumed_publics
                 .into_iter()
-                .map(ProtocolAdapter::ConsumedResourcePublicData::from)
+                .map(ProtocolAdapter::Consumed::from)
                 .collect(),
             created: action
                 .created_publics
                 .into_iter()
-                .map(ProtocolAdapter::CreatedResourcePublicData::from)
+                .map(ProtocolAdapter::Created::from)
                 .collect(),
         }
     }
