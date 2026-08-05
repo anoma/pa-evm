@@ -1,13 +1,92 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Types.sol";
-
 /// @title IProtocolAdapter
 /// @author Anoma Foundation, 2025
 /// @notice The interface of the protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 interface IProtocolAdapter {
+    /// @notice An enum representing the supported blob deletion criteria.
+    enum DeletionCriterion {
+        Immediately,
+        Never
+    }
+
+    /// @notice The transaction object containing all required data to conduct a RM state transition
+    /// in which resources get consumed and created.
+    /// @param actions The list of actions to be executed.
+    /// @param deltaProof The proof for the transaction delta value.
+    /// @param aggregationProof The recursive proof of all compliance and resource logics in the transaction — the only
+    /// RISC Zero proof being verified.
+    struct Transaction {
+        Action[] actions;
+        bytes deltaProof;
+        bytes aggregationProof;
+    }
+
+    /// @notice The action object providing context separation between non-intersecting sets of resources. An action
+    /// corresponds to one compliance unit constraining its consumed and created resources.
+    /// @param consumed The public data of the consumed resources.
+    /// @param created The public data of the created resources.
+    /// @param unitDelta The action's delta value obtained from the underlying compliance unit.
+    /// @param actionTreeRoot The root of the tree containing the tags of all resources present in the action.
+    struct Action {
+        Consumed[] consumed;
+        Created[] created;
+        Delta unitDelta;
+        bytes32 actionTreeRoot;
+    }
+
+    /// @notice The public data of a consumed resource.
+    /// @param nullifier The nullifier of the resource.
+    /// @param logicRef The reference to (the verifying key of) the resource logic.
+    /// @param commitmentTreeRoot The historical commitment tree root the resource's inclusion is proven against.
+    /// @param appData The application data associated with the resource.
+    struct Consumed {
+        bytes32 nullifier;
+        bytes32 logicRef;
+        bytes32 commitmentTreeRoot;
+        AppData appData;
+    }
+
+    /// @notice The public data of a created resource.
+    /// @param commitment The commitment of the resource.
+    /// @param logicRef The reference to (the verifying key of) the resource logic.
+    /// @param appData The application data associated with the resource.
+    struct Created {
+        bytes32 commitment;
+        bytes32 logicRef;
+        AppData appData;
+    }
+
+    /// @notice The elliptic curve point representing the delta value of an action's compliance unit.
+    /// @param x The x component of the point.
+    /// @param y The y component of the point.
+    struct Delta {
+        uint256 x;
+        uint256 y;
+    }
+
+    /// @notice A struct containing payloads of different kinds.
+    /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
+    /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls.
+    /// @param applicationPayload A list of blobs for application-specific purposes.
+    struct AppData {
+        ExpirableBlob[] resourcePayload;
+        ExpirableBlob[] discoveryPayload;
+        ExpirableBlob[] externalPayload;
+        ExpirableBlob[] applicationPayload;
+    }
+
+    /// @notice A blob with a deletion criterion attached.
+    /// @param deletionCriterion The deletion criterion.
+    /// @param blob The bytes-encoded blob data.
+    struct ExpirableBlob {
+        DeletionCriterion deletionCriterion;
+        bytes blob;
+    }
+
     /// @notice Emitted when a transaction is executed.
     /// @param transactionId The Keccak-256 hash of the concatenated action tree roots — the message the delta proof
     /// signs, unique per transaction and known to the sender before submission.

@@ -11,13 +11,11 @@ import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
-import {Delta} from "./libs/proving/Delta.sol";
-import {Logic} from "./libs/proving/Logic.sol";
-import {VerifyingKeys} from "./libs/proving/VerifyingKeys.sol";
+import {DeltaProof} from "./libs/DeltaProof.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
+import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
-import {Action, Consumed, Created, Transaction} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -34,7 +32,8 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
-    using Delta for Delta.Point;
+    using DeltaProof for bytes;
+    using DeltaProof for Delta;
     using RiscZeroUtils for Transaction;
 
     /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
@@ -177,7 +176,7 @@ contract ProtocolAdapter is
         require(actionCount != 0, EmptyTransactionNotAllowed());
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
-        Delta.Point memory transactionDelta = Delta.zero();
+        Delta memory transactionDelta = DeltaProof.zero();
         bytes32 updatedCommitmentTreeRoot = bytes32(0);
 
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -189,7 +188,7 @@ contract ProtocolAdapter is
             }
 
             // Add the action delta to the transaction delta.
-            transactionDelta = transactionDelta.add(action.delta);
+            transactionDelta = transactionDelta.add(action.unitDelta);
 
             actionTreeRoots[i] = action.actionTreeRoot;
         }
@@ -282,7 +281,7 @@ contract ProtocolAdapter is
     /// @notice Processes forwarder calls by verifying and executing them.
     /// @param carrierLogicRef The logic reference of the carrier resource making the calls.
     /// @param appData The application data of the carrier resource containing the external payload.
-    function _executeForwarderCalls(bytes32 carrierLogicRef, Logic.AppData calldata appData) internal {
+    function _executeForwarderCalls(bytes32 carrierLogicRef, AppData calldata appData) internal {
         uint256 nCalls = appData.externalPayload.length;
 
         for (uint256 i = 0; i < nCalls; ++i) {
@@ -316,11 +315,11 @@ contract ProtocolAdapter is
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
     /// @param tag The tag of the resource the app data belongs to.
     /// @param appData The application data to emit the blobs from.
-    function _emitAppDataBlobs(bytes32 tag, Logic.AppData calldata appData) internal {
-        Logic.ExpirableBlob[] calldata payload = appData.resourcePayload;
+    function _emitAppDataBlobs(bytes32 tag, AppData calldata appData) internal {
+        ExpirableBlob[] calldata payload = appData.resourcePayload;
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+            if (payload[i].deletionCriterion == DeletionCriterion.Never) {
                 // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
@@ -330,7 +329,7 @@ contract ProtocolAdapter is
         payload = appData.discoveryPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+            if (payload[i].deletionCriterion == DeletionCriterion.Never) {
                 // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
@@ -340,7 +339,7 @@ contract ProtocolAdapter is
         payload = appData.externalPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+            if (payload[i].deletionCriterion == DeletionCriterion.Never) {
                 // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
@@ -350,7 +349,7 @@ contract ProtocolAdapter is
         payload = appData.applicationPayload;
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
-            if (payload[i].deletionCriterion == Logic.DeletionCriterion.Never) {
+            if (payload[i].deletionCriterion == DeletionCriterion.Never) {
                 // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
                 // slither-disable-next-line reentrancy-events
                 emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
@@ -373,14 +372,14 @@ contract ProtocolAdapter is
     function _verifyGlobalProofs(
         Transaction calldata transaction,
         bytes32[] memory actionTreeRoots,
-        Delta.Point memory transactionDelta,
+        Delta memory transactionDelta,
         bool skipRiscZeroProofVerification
     ) internal view returns (bytes32 transactionId) {
         // The delta proof signs the Keccak-256 hash of the concatenated action tree roots.
-        transactionId = Delta.computeVerifyingKey(actionTreeRoots);
+        transactionId = DeltaProof.computeVerifyingKey(actionTreeRoots);
 
         // Check the delta proof.
-        Delta.verify({proof: transaction.deltaProof, instance: transactionDelta, verifyingKey: transactionId});
+        transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
         // Reconstruct the aggregation journal, injecting the compliance circuit verifying key and the stored kind
         // table commitment — a transaction proven against any other values is unencodable and fails verification.

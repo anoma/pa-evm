@@ -1,7 +1,9 @@
 use alloy::node_bindings::AnvilInstance;
 use alloy::primitives::B256;
 use alloy::providers::DynProvider;
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
+use anoma_pa_evm_bindings::generated::protocol_adapter::{
+    IProtocolAdapter, ProtocolAdapter as PaContract,
+};
 use anoma_pa_testkit::environment::CommitmentTree as CoreCommitmentTree;
 use anoma_pa_testkit::environment::Environment as CoreEnvironment;
 use anoma_pa_testkit::environment::ProtocolAdapter as CoreProtocolAdapter;
@@ -72,7 +74,7 @@ impl CoreProtocolAdapter for ProtocolAdapter {
 
         self.assert_root_consistency(&tx).await?;
 
-        let pa_tx: PaContract::Transaction = tx.into();
+        let pa_tx: IProtocolAdapter::Transaction = tx.into();
 
         crate::envs::common::execute::execute_on_pa(&self.pa, pa_tx).await?;
 

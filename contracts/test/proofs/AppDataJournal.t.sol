@@ -3,20 +3,21 @@ pragma solidity ^0.8.30;
 
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 
-import {Logic} from "../../src/libs/proving/Logic.sol";
+import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
 import {JournalEncoder} from "../libs/JournalEncoder.sol";
 
 contract AppDataJournalTest is Test {
     /// @dev The four payload slots must be distinguishable in the journal — a blob moved to another slot must
     /// change the digest.
     function testFuzz_different_empty_payloads_produce_different_digest(bytes memory payload) public pure {
-        Logic.AppData memory appData;
-        Logic.ExpirableBlob memory blob = Logic.ExpirableBlob(Logic.DeletionCriterion.Never, payload);
+        IProtocolAdapter.AppData memory appData;
+        IProtocolAdapter.ExpirableBlob memory blob =
+            IProtocolAdapter.ExpirableBlob(IProtocolAdapter.DeletionCriterion.Never, payload);
 
-        Logic.ExpirableBlob[] memory payloadList = new Logic.ExpirableBlob[](1);
+        IProtocolAdapter.ExpirableBlob[] memory payloadList = new IProtocolAdapter.ExpirableBlob[](1);
         payloadList[0] = blob;
 
-        Logic.ExpirableBlob[] memory emptyList = new Logic.ExpirableBlob[](0);
+        IProtocolAdapter.ExpirableBlob[] memory emptyList = new IProtocolAdapter.ExpirableBlob[](0);
         appData.resourcePayload = emptyList;
         appData.discoveryPayload = emptyList;
         appData.externalPayload = emptyList;

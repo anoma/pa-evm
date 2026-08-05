@@ -2,360 +2,15 @@
 /**
 
 ```solidity
-library Delta {
-    struct Point { uint256 x; uint256 y; }
-}
-```*/
-#[allow(
-    non_camel_case_types,
-    non_snake_case,
-    clippy::pub_underscore_fields,
-    clippy::style,
-    clippy::empty_structs_with_brackets
-)]
-pub mod Delta {
-    use super::*;
-    use alloy::sol_types as alloy_sol_types;
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct Point { uint256 x; uint256 y; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Point {
-        #[allow(missing_docs)]
-        pub x: alloy::sol_types::private::primitives::aliases::U256,
-        #[allow(missing_docs)]
-        pub y: alloy::sol_types::private::primitives::aliases::U256,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Uint<256>,
-            alloy::sol_types::sol_data::Uint<256>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::primitives::aliases::U256,
-            alloy::sol_types::private::primitives::aliases::U256,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Point> for UnderlyingRustTuple<'_> {
-            fn from(value: Point) -> Self {
-                (value.x, value.y)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Point {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self { x: tuple.0, y: tuple.1 }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Point {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Point {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.x),
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.y),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Point {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Point {
-            const NAME: &'static str = "Point";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed("Point(uint256 x,uint256 y)")
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                alloy_sol_types::private::Vec::new()
-            }
-            #[inline]
-            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
-                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.x)
-                        .0,
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.y)
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Point {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.x)
-                    + <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.y)
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::Uint<
-                    256,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.x, out);
-                <alloy::sol_types::sol_data::Uint<
-                    256,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.y, out);
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    use alloy::contract as alloy_contract;
-    /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
-
-See the [wrapper's documentation](`DeltaInstance`) for more details.*/
-    #[inline]
-    pub const fn new<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    >(address: alloy_sol_types::private::Address, __provider: P) -> DeltaInstance<P, N> {
-        DeltaInstance::<P, N>::new(address, __provider)
-    }
-    /**A [`Delta`](self) instance.
-
-Contains type-safe methods for interacting with an on-chain instance of the
-[`Delta`](self) contract located at a given `address`, using a given
-provider `P`.
-
-If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
-documentation on how to provide it), the `deploy` and `deploy_builder` methods can
-be used to deploy a new instance of the contract.
-
-See the [module-level documentation](self) for all the available methods.*/
-    #[derive(Clone)]
-    pub struct DeltaInstance<P, N = alloy_contract::private::Ethereum> {
-        address: alloy_sol_types::private::Address,
-        provider: P,
-        _network: ::core::marker::PhantomData<N>,
-    }
-    #[automatically_derived]
-    impl<P, N> ::core::fmt::Debug for DeltaInstance<P, N> {
-        #[inline]
-        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("DeltaInstance").field(&self.address).finish()
-        }
-    }
-    /// Instantiation and getters/setters.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
-
-See the [wrapper's documentation](`DeltaInstance`) for more details.*/
-        #[inline]
-        pub const fn new(
-            address: alloy_sol_types::private::Address,
-            __provider: P,
-        ) -> Self {
-            Self {
-                address,
-                provider: __provider,
-                _network: ::core::marker::PhantomData,
-            }
-        }
-        /// Returns a reference to the address.
-        #[inline]
-        pub const fn address(&self) -> &alloy_sol_types::private::Address {
-            &self.address
-        }
-        /// Sets the address.
-        #[inline]
-        pub fn set_address(&mut self, address: alloy_sol_types::private::Address) {
-            self.address = address;
-        }
-        /// Sets the address and returns `self`.
-        pub fn at(mut self, address: alloy_sol_types::private::Address) -> Self {
-            self.set_address(address);
-            self
-        }
-        /// Returns a reference to the provider.
-        #[inline]
-        pub const fn provider(&self) -> &P {
-            &self.provider
-        }
-    }
-    impl<P: ::core::clone::Clone, N> DeltaInstance<&P, N> {
-        /// Clones the provider and returns a new instance with the cloned provider.
-        #[inline]
-        pub fn with_cloned_provider(self) -> DeltaInstance<P, N> {
-            DeltaInstance {
-                address: self.address,
-                provider: ::core::clone::Clone::clone(&self.provider),
-                _network: ::core::marker::PhantomData,
-            }
-        }
-    }
-    /// Function calls.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /// Creates a new call builder using this contract instance's provider and address.
-        ///
-        /// Note that the call can be any function call, not just those defined in this
-        /// contract. Prefer using the other methods for building type-safe contract calls.
-        pub fn call_builder<C: alloy_sol_types::SolCall>(
-            &self,
-            call: &C,
-        ) -> alloy_contract::SolCallBuilder<&P, C, N> {
-            alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
-        }
-    }
-    /// Event filters.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /// Creates a new event filter using this contract instance's provider and address.
-        ///
-        /// Note that the type can be any event, not just those defined in this contract.
-        /// Prefer using the other methods for building type-safe event filters.
-        pub fn event_filter<E: alloy_sol_types::SolEvent>(
-            &self,
-        ) -> alloy_contract::Event<&P, E, N> {
-            alloy_contract::Event::new_sol(&self.provider, &self.address)
-        }
-    }
-}
-///Module containing a contract's types and functions.
-/**
-
-```solidity
-library Logic {
+library IProtocolAdapter {
     type DeletionCriterion is uint8;
+    struct Action { Consumed[] consumed; Created[] created; Delta unitDelta; bytes32 actionTreeRoot; }
     struct AppData { ExpirableBlob[] resourcePayload; ExpirableBlob[] discoveryPayload; ExpirableBlob[] externalPayload; ExpirableBlob[] applicationPayload; }
+    struct Consumed { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; AppData appData; }
+    struct Created { bytes32 commitment; bytes32 logicRef; AppData appData; }
+    struct Delta { uint256 x; uint256 y; }
     struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
+    struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
 }
 ```*/
 #[allow(
@@ -365,7 +20,7 @@ library Logic {
     clippy::style,
     clippy::empty_structs_with_brackets
 )]
-pub mod Logic {
+pub mod IProtocolAdapter {
     use super::*;
     use alloy::sol_types as alloy_sol_types;
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -502,6 +157,298 @@ pub mod Logic {
                 <alloy::sol_types::sol_data::Uint<
                     8,
                 > as alloy_sol_types::EventTopic>::encode_topic(rust)
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct Action { Consumed[] consumed; Created[] created; Delta unitDelta; bytes32 actionTreeRoot; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Action {
+        #[allow(missing_docs)]
+        pub consumed: alloy::sol_types::private::Vec<
+            <Consumed as alloy::sol_types::SolType>::RustType,
+        >,
+        #[allow(missing_docs)]
+        pub created: alloy::sol_types::private::Vec<
+            <Created as alloy::sol_types::SolType>::RustType,
+        >,
+        #[allow(missing_docs)]
+        pub unitDelta: <Delta as alloy::sol_types::SolType>::RustType,
+        #[allow(missing_docs)]
+        pub actionTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::Array<Consumed>,
+            alloy::sol_types::sol_data::Array<Created>,
+            Delta,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::Vec<
+                <Consumed as alloy::sol_types::SolType>::RustType,
+            >,
+            alloy::sol_types::private::Vec<
+                <Created as alloy::sol_types::SolType>::RustType,
+            >,
+            <Delta as alloy::sol_types::SolType>::RustType,
+            alloy::sol_types::private::FixedBytes<32>,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Action> for UnderlyingRustTuple<'_> {
+            fn from(value: Action) -> Self {
+                (value.consumed, value.created, value.unitDelta, value.actionTreeRoot)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Action {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    consumed: tuple.0,
+                    created: tuple.1,
+                    unitDelta: tuple.2,
+                    actionTreeRoot: tuple.3,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Action {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Action {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::Array<
+                        Consumed,
+                    > as alloy_sol_types::SolType>::tokenize(&self.consumed),
+                    <alloy::sol_types::sol_data::Array<
+                        Created,
+                    > as alloy_sol_types::SolType>::tokenize(&self.created),
+                    <Delta as alloy_sol_types::SolType>::tokenize(&self.unitDelta),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.actionTreeRoot),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Action {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Action {
+            const NAME: &'static str = "Action";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "Action(Consumed[] consumed,Created[] created,Delta unitDelta,bytes32 actionTreeRoot)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(3);
+                components
+                    .push(<Consumed as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <Consumed as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+                    .push(<Created as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <Created as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+                    .push(<Delta as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(<Delta as alloy_sol_types::SolStruct>::eip712_components());
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::Array<
+                        Consumed,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.consumed)
+                        .0,
+                    <alloy::sol_types::sol_data::Array<
+                        Created,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.created)
+                        .0,
+                    <Delta as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.unitDelta,
+                        )
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.actionTreeRoot,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Action {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::Array<
+                        Consumed,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.consumed,
+                    )
+                    + <alloy::sol_types::sol_data::Array<
+                        Created,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.created,
+                    )
+                    + <Delta as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.unitDelta,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.actionTreeRoot,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::Array<
+                    Consumed,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.consumed,
+                    out,
+                );
+                <alloy::sol_types::sol_data::Array<
+                    Created,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.created,
+                    out,
+                );
+                <Delta as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.unitDelta,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.actionTreeRoot,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
             }
         }
     };
@@ -841,6 +788,748 @@ struct AppData { ExpirableBlob[] resourcePayload; ExpirableBlob[] discoveryPaylo
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**```solidity
+struct Consumed { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; AppData appData; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Consumed {
+        #[allow(missing_docs)]
+        pub nullifier: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub commitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub appData: <AppData as alloy::sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            AppData,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            <AppData as alloy::sol_types::SolType>::RustType,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Consumed> for UnderlyingRustTuple<'_> {
+            fn from(value: Consumed) -> Self {
+                (
+                    value.nullifier,
+                    value.logicRef,
+                    value.commitmentTreeRoot,
+                    value.appData,
+                )
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Consumed {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    nullifier: tuple.0,
+                    logicRef: tuple.1,
+                    commitmentTreeRoot: tuple.2,
+                    appData: tuple.3,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Consumed {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Consumed {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.nullifier),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.commitmentTreeRoot),
+                    <AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Consumed {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Consumed {
+            const NAME: &'static str = "Consumed";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "Consumed(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot,AppData appData)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
+                components
+                    .push(<AppData as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <AppData as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.nullifier)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.commitmentTreeRoot,
+                        )
+                        .0,
+                    <AppData as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.appData,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Consumed {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.nullifier,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.logicRef,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.commitmentTreeRoot,
+                    )
+                    + <AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.appData,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.nullifier,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.logicRef,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.commitmentTreeRoot,
+                    out,
+                );
+                <AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.appData,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct Created { bytes32 commitment; bytes32 logicRef; AppData appData; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Created {
+        #[allow(missing_docs)]
+        pub commitment: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub appData: <AppData as alloy::sol_types::SolType>::RustType,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            AppData,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::FixedBytes<32>,
+            alloy::sol_types::private::FixedBytes<32>,
+            <AppData as alloy::sol_types::SolType>::RustType,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Created> for UnderlyingRustTuple<'_> {
+            fn from(value: Created) -> Self {
+                (value.commitment, value.logicRef, value.appData)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Created {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    commitment: tuple.0,
+                    logicRef: tuple.1,
+                    appData: tuple.2,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Created {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Created {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.commitment),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Created {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Created {
+            const NAME: &'static str = "Created";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "Created(bytes32 commitment,bytes32 logicRef,AppData appData)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
+                components
+                    .push(<AppData as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(
+                        <AppData as alloy_sol_types::SolStruct>::eip712_components(),
+                    );
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.commitment)
+                        .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
+                        .0,
+                    <AppData as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.appData,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Created {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.commitment,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.logicRef,
+                    )
+                    + <AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.appData,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.commitment,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.logicRef,
+                    out,
+                );
+                <AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.appData,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct Delta { uint256 x; uint256 y; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Delta {
+        #[allow(missing_docs)]
+        pub x: alloy::sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub y: alloy::sol_types::private::primitives::aliases::U256,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::Uint<256>,
+            alloy::sol_types::sol_data::Uint<256>,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Delta> for UnderlyingRustTuple<'_> {
+            fn from(value: Delta) -> Self {
+                (value.x, value.y)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Delta {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self { x: tuple.0, y: tuple.1 }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Delta {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Delta {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.x),
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.y),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Delta {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Delta {
+            const NAME: &'static str = "Delta";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed("Delta(uint256 x,uint256 y)")
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                alloy_sol_types::private::Vec::new()
+            }
+            #[inline]
+            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
+                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.x)
+                        .0,
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.y)
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Delta {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.x)
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.y)
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.x, out);
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.y, out);
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
 struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
@@ -1059,21 +1748,273 @@ struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
             }
         }
     };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Transaction {
+        #[allow(missing_docs)]
+        pub actions: alloy::sol_types::private::Vec<
+            <Action as alloy::sol_types::SolType>::RustType,
+        >,
+        #[allow(missing_docs)]
+        pub deltaProof: alloy::sol_types::private::Bytes,
+        #[allow(missing_docs)]
+        pub aggregationProof: alloy::sol_types::private::Bytes,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::Array<Action>,
+            alloy::sol_types::sol_data::Bytes,
+            alloy::sol_types::sol_data::Bytes,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::Vec<
+                <Action as alloy::sol_types::SolType>::RustType,
+            >,
+            alloy::sol_types::private::Bytes,
+            alloy::sol_types::private::Bytes,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Transaction> for UnderlyingRustTuple<'_> {
+            fn from(value: Transaction) -> Self {
+                (value.actions, value.deltaProof, value.aggregationProof)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Transaction {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    actions: tuple.0,
+                    deltaProof: tuple.1,
+                    aggregationProof: tuple.2,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Transaction {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Transaction {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::Array<
+                        Action,
+                    > as alloy_sol_types::SolType>::tokenize(&self.actions),
+                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::tokenize(
+                        &self.deltaProof,
+                    ),
+                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::tokenize(
+                        &self.aggregationProof,
+                    ),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Transaction {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Transaction {
+            const NAME: &'static str = "Transaction";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
+                components
+                    .push(<Action as alloy_sol_types::SolStruct>::eip712_root_type());
+                components
+                    .extend(<Action as alloy_sol_types::SolStruct>::eip712_components());
+                components
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::Array<
+                        Action,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.actions)
+                        .0,
+                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.deltaProof,
+                        )
+                        .0,
+                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.aggregationProof,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Transaction {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::Array<
+                        Action,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.actions,
+                    )
+                    + <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.deltaProof,
+                    )
+                    + <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.aggregationProof,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::Array<
+                    Action,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.actions,
+                    out,
+                );
+                <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.deltaProof,
+                    out,
+                );
+                <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.aggregationProof,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
     use alloy::contract as alloy_contract;
-    /**Creates a new wrapper around an on-chain [`Logic`](self) contract instance.
+    /**Creates a new wrapper around an on-chain [`IProtocolAdapter`](self) contract instance.
 
-See the [wrapper's documentation](`LogicInstance`) for more details.*/
+See the [wrapper's documentation](`IProtocolAdapterInstance`) for more details.*/
     #[inline]
     pub const fn new<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    >(address: alloy_sol_types::private::Address, __provider: P) -> LogicInstance<P, N> {
-        LogicInstance::<P, N>::new(address, __provider)
+    >(
+        address: alloy_sol_types::private::Address,
+        __provider: P,
+    ) -> IProtocolAdapterInstance<P, N> {
+        IProtocolAdapterInstance::<P, N>::new(address, __provider)
     }
-    /**A [`Logic`](self) instance.
+    /**A [`IProtocolAdapter`](self) instance.
 
 Contains type-safe methods for interacting with an on-chain instance of the
-[`Logic`](self) contract located at a given `address`, using a given
+[`IProtocolAdapter`](self) contract located at a given `address`, using a given
 provider `P`.
 
 If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
@@ -1082,26 +2023,26 @@ be used to deploy a new instance of the contract.
 
 See the [module-level documentation](self) for all the available methods.*/
     #[derive(Clone)]
-    pub struct LogicInstance<P, N = alloy_contract::private::Ethereum> {
+    pub struct IProtocolAdapterInstance<P, N = alloy_contract::private::Ethereum> {
         address: alloy_sol_types::private::Address,
         provider: P,
         _network: ::core::marker::PhantomData<N>,
     }
     #[automatically_derived]
-    impl<P, N> ::core::fmt::Debug for LogicInstance<P, N> {
+    impl<P, N> ::core::fmt::Debug for IProtocolAdapterInstance<P, N> {
         #[inline]
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("LogicInstance").field(&self.address).finish()
+            f.debug_tuple("IProtocolAdapterInstance").field(&self.address).finish()
         }
     }
     /// Instantiation and getters/setters.
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > LogicInstance<P, N> {
-        /**Creates a new wrapper around an on-chain [`Logic`](self) contract instance.
+    > IProtocolAdapterInstance<P, N> {
+        /**Creates a new wrapper around an on-chain [`IProtocolAdapter`](self) contract instance.
 
-See the [wrapper's documentation](`LogicInstance`) for more details.*/
+See the [wrapper's documentation](`IProtocolAdapterInstance`) for more details.*/
         #[inline]
         pub const fn new(
             address: alloy_sol_types::private::Address,
@@ -1134,11 +2075,11 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
             &self.provider
         }
     }
-    impl<P: ::core::clone::Clone, N> LogicInstance<&P, N> {
+    impl<P: ::core::clone::Clone, N> IProtocolAdapterInstance<&P, N> {
         /// Clones the provider and returns a new instance with the cloned provider.
         #[inline]
-        pub fn with_cloned_provider(self) -> LogicInstance<P, N> {
-            LogicInstance {
+        pub fn with_cloned_provider(self) -> IProtocolAdapterInstance<P, N> {
+            IProtocolAdapterInstance {
                 address: self.address,
                 provider: ::core::clone::Clone::clone(&self.provider),
                 _network: ::core::marker::PhantomData,
@@ -1149,7 +2090,7 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > LogicInstance<P, N> {
+    > IProtocolAdapterInstance<P, N> {
         /// Creates a new call builder using this contract instance's provider and address.
         ///
         /// Note that the call can be any function call, not just those defined in this
@@ -1165,7 +2106,7 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > LogicInstance<P, N> {
+    > IProtocolAdapterInstance<P, N> {
         /// Creates a new event filter using this contract instance's provider and address.
         ///
         /// Note that the type can be any event, not just those defined in this contract.
@@ -1181,51 +2122,47 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
 
 Generated by the following Solidity interface...
 ```solidity
-library Delta {
-    struct Point {
-        uint256 x;
-        uint256 y;
-    }
-}
-
-library Logic {
+library IProtocolAdapter {
     type DeletionCriterion is uint8;
+    struct Action {
+        Consumed[] consumed;
+        Created[] created;
+        Delta unitDelta;
+        bytes32 actionTreeRoot;
+    }
     struct AppData {
         ExpirableBlob[] resourcePayload;
         ExpirableBlob[] discoveryPayload;
         ExpirableBlob[] externalPayload;
         ExpirableBlob[] applicationPayload;
     }
-    struct ExpirableBlob {
-        DeletionCriterion deletionCriterion;
-        bytes blob;
-    }
-}
-
-interface ProtocolAdapter {
-    struct Action {
-        Consumed[] consumed;
-        Created[] created;
-        Delta.Point delta;
-        bytes32 actionTreeRoot;
-    }
     struct Consumed {
         bytes32 nullifier;
         bytes32 logicRef;
         bytes32 commitmentTreeRoot;
-        Logic.AppData appData;
+        AppData appData;
     }
     struct Created {
         bytes32 commitment;
         bytes32 logicRef;
-        Logic.AppData appData;
+        AppData appData;
+    }
+    struct Delta {
+        uint256 x;
+        uint256 y;
+    }
+    struct ExpirableBlob {
+        DeletionCriterion deletionCriterion;
+        bytes blob;
     }
     struct Transaction {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
     }
+}
 
+interface ProtocolAdapter {
     error AddressEmptyCode(address target);
     error DeltaMismatch(address expected, address actual);
     error ECDSAInvalidSignature();
@@ -1243,7 +2180,7 @@ interface ProtocolAdapter {
     error NotInitializing();
     error OwnableInvalidOwner(address owner);
     error OwnableUnauthorizedAccount(address account);
-    error PointNotOnCurve(Delta.Point point);
+    error PointNotOnCurve(IProtocolAdapter.Delta point);
     error PreExistingNullifier(bytes32 nullifier);
     error PreExistingRoot(bytes32 root);
     error ReentrancyGuardReentrantCall();
@@ -1280,7 +2217,7 @@ interface ProtocolAdapter {
     function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32 root);
     function commitmentTreeRootCount() external view returns (uint256 count);
     function emergencyStop() external;
-    function execute(Transaction memory transaction) external;
+    function execute(IProtocolAdapter.Transaction memory transaction) external;
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
@@ -1297,7 +2234,7 @@ interface ProtocolAdapter {
     function proxiableUUID() external view returns (bytes32);
     function renounceOwnership() external;
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
-    function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+    function simulateExecute(IProtocolAdapter.Transaction memory transaction, bool skipRiscZeroProofVerification) external;
     function transferOwnership(address newOwner) external;
     function upgradeToAndCall(address newImplementation, bytes memory data) external payable;
 }
@@ -1420,17 +2357,17 @@ interface ProtocolAdapter {
       {
         "name": "transaction",
         "type": "tuple",
-        "internalType": "struct Transaction",
+        "internalType": "struct IProtocolAdapter.Transaction",
         "components": [
           {
             "name": "actions",
             "type": "tuple[]",
-            "internalType": "struct Action[]",
+            "internalType": "struct IProtocolAdapter.Action[]",
             "components": [
               {
                 "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct Consumed[]",
+                "internalType": "struct IProtocolAdapter.Consumed[]",
                 "components": [
                   {
                     "name": "nullifier",
@@ -1450,17 +2387,17 @@ interface ProtocolAdapter {
                   {
                     "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Logic.AppData",
+                    "internalType": "struct IProtocolAdapter.AppData",
                     "components": [
                       {
                         "name": "resourcePayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1472,12 +2409,12 @@ interface ProtocolAdapter {
                       {
                         "name": "discoveryPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1489,12 +2426,12 @@ interface ProtocolAdapter {
                       {
                         "name": "externalPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1506,12 +2443,12 @@ interface ProtocolAdapter {
                       {
                         "name": "applicationPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1527,7 +2464,7 @@ interface ProtocolAdapter {
               {
                 "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct Created[]",
+                "internalType": "struct IProtocolAdapter.Created[]",
                 "components": [
                   {
                     "name": "commitment",
@@ -1542,17 +2479,17 @@ interface ProtocolAdapter {
                   {
                     "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Logic.AppData",
+                    "internalType": "struct IProtocolAdapter.AppData",
                     "components": [
                       {
                         "name": "resourcePayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1564,12 +2501,12 @@ interface ProtocolAdapter {
                       {
                         "name": "discoveryPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1581,12 +2518,12 @@ interface ProtocolAdapter {
                       {
                         "name": "externalPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1598,12 +2535,12 @@ interface ProtocolAdapter {
                       {
                         "name": "applicationPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1617,9 +2554,9 @@ interface ProtocolAdapter {
                 ]
               },
               {
-                "name": "delta",
+                "name": "unitDelta",
                 "type": "tuple",
-                "internalType": "struct Delta.Point",
+                "internalType": "struct IProtocolAdapter.Delta",
                 "components": [
                   {
                     "name": "x",
@@ -1883,17 +2820,17 @@ interface ProtocolAdapter {
       {
         "name": "transaction",
         "type": "tuple",
-        "internalType": "struct Transaction",
+        "internalType": "struct IProtocolAdapter.Transaction",
         "components": [
           {
             "name": "actions",
             "type": "tuple[]",
-            "internalType": "struct Action[]",
+            "internalType": "struct IProtocolAdapter.Action[]",
             "components": [
               {
                 "name": "consumed",
                 "type": "tuple[]",
-                "internalType": "struct Consumed[]",
+                "internalType": "struct IProtocolAdapter.Consumed[]",
                 "components": [
                   {
                     "name": "nullifier",
@@ -1913,17 +2850,17 @@ interface ProtocolAdapter {
                   {
                     "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Logic.AppData",
+                    "internalType": "struct IProtocolAdapter.AppData",
                     "components": [
                       {
                         "name": "resourcePayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1935,12 +2872,12 @@ interface ProtocolAdapter {
                       {
                         "name": "discoveryPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1952,12 +2889,12 @@ interface ProtocolAdapter {
                       {
                         "name": "externalPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1969,12 +2906,12 @@ interface ProtocolAdapter {
                       {
                         "name": "applicationPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -1990,7 +2927,7 @@ interface ProtocolAdapter {
               {
                 "name": "created",
                 "type": "tuple[]",
-                "internalType": "struct Created[]",
+                "internalType": "struct IProtocolAdapter.Created[]",
                 "components": [
                   {
                     "name": "commitment",
@@ -2005,17 +2942,17 @@ interface ProtocolAdapter {
                   {
                     "name": "appData",
                     "type": "tuple",
-                    "internalType": "struct Logic.AppData",
+                    "internalType": "struct IProtocolAdapter.AppData",
                     "components": [
                       {
                         "name": "resourcePayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -2027,12 +2964,12 @@ interface ProtocolAdapter {
                       {
                         "name": "discoveryPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -2044,12 +2981,12 @@ interface ProtocolAdapter {
                       {
                         "name": "externalPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -2061,12 +2998,12 @@ interface ProtocolAdapter {
                       {
                         "name": "applicationPayload",
                         "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
                         "components": [
                           {
                             "name": "deletionCriterion",
                             "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
+                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
                           },
                           {
                             "name": "blob",
@@ -2080,9 +3017,9 @@ interface ProtocolAdapter {
                 ]
               },
               {
-                "name": "delta",
+                "name": "unitDelta",
                 "type": "tuple",
-                "internalType": "struct Delta.Point",
+                "internalType": "struct IProtocolAdapter.Delta",
                 "components": [
                   {
                     "name": "x",
@@ -2583,7 +3520,7 @@ interface ProtocolAdapter {
       {
         "name": "point",
         "type": "tuple",
-        "internalType": "struct Delta.Point",
+        "internalType": "struct IProtocolAdapter.Delta",
         "components": [
           {
             "name": "x",
@@ -2721,1083 +3658,6 @@ pub mod ProtocolAdapter {
     pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
         b"`\xE0\x80`@R`\x046\x10\x15a\0\x12W_\x80\xFD[_`\xC0R_5`\xE0\x1C\x90\x81c\r\x8En,\x14a*\xE9WP\x80c1\xEEbB\x14a*\xCBW\x80c@\xF3MB\x14a*\x8FW\x80cO\x1E\xF2\x86\x14a'\xBFW\x80cR\xD1\x90-\x14a' W\x80cY\xBA\x92X\x14a&\xE4W\x80c[fk\x1E\x14a&\x94W\x80c\\\x97Z\xBB\x14a&SW\x80cc\xA5\x99\xA4\x14a%\x96W\x80cqP\x18\xA6\x14a$\xDAW\x80cs\xAB\x99\x16\x14a\x18gW\x80c\x87\t>\xBA\x14a\n|W\x80c\x8D\xA5\xCB[\x14a\n(W\x80c\x9A\xD9\x1DL\x14a\twW\x80c\xA0`V\xF7\x14a\t6W\x80c\xAD<\xB1\xCC\x14a\x08\xD0W\x80c\xBD\xEBD-\x14a\x08FW\x80c\xC0%0#\x14a\x07\xA7W\x80c\xC1\xB0\xBE\xD7\x14a\x07TW\x80c\xC4IV\xD1\x14a\x07\x16W\x80c\xC4\xD6m\xE8\x14a\x02\xCDW\x80c\xC8y\xDB\xE4\x14a\x02\x84W\x80c\xE38E\xCF\x14a\x02&W\x80c\xF2\xFD\xE3\x8B\x14a\x01\xF7W\x80c\xFD\xDDH7\x14a\x01\xD1W\x80c\xFE\x18\xAB\x91\x14a\x01\x8DWc\xFF\xC3?r\x14a\x01IW_\x80\xFD[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` \x7F=\0\x11]1k\xC7\x0E\xFE\x89\x05P\xF4\x90\xCC\xB6\xFC\xBBWhq\x1F\x93\xA7s\xCE\xD4U=\xE0\xA7\0T`@Q\x90\x81R\xF3[`\xC0Q\x80\xFD[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` `\x01`\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16\x1B`@Q\x90\x81R\xF3[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` a\x01\xEDa-?V[`@Q\x90\x15\x15\x81R\xF3[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87Wa\x02 a\x02\x13a+!V[a\x02\x1Ba/\x0EV[a,RV[`\xC0Q\x80\xF3[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` `@Q\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x81R\xF3[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87W` a\x01\xED`\x045_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R`@_ T\x15\x15\x90V[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87Wa\x02\xE6a+!V[\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0T`\xFF\x81`@\x1C\x16\x15\x91g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x16\x80\x15\x90\x81a\x07\x0EW[`\x01\x14\x90\x81a\x07\x04W[\x15\x90\x81a\x06\xFBW[Pa\x06\xCFW\x81\x83`\x01\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0a\x03\x9F\x95\x16\x17\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0Ua\x06zW[Pa\x03\x97a2\x11V[a\x02\x1Ba2\x11V[a\x03\xA7a2\x11V[a\x03\xAFa2\x11V[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02Th\x01\0\0\0\0\0\0\0\0\x81\x10\x15a\x06IW\x80`\x01a\x042\x92\x01\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02U\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02a2\xBEV[\x81T\x90`\x03\x1B\x90_\x19\x7F\xCC\x1D/\x83\x84E\xDBz\xECC\x1D\xF9\xEE\x8A\x87\x1F@\xE7\xAA^\x06O\xC0Vc>\xF8\xC6\x0F\xAB{\x06\x83\x1B\x92\x1B\x19\x16\x17\x90U`\xC0Q\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0Ua\x04\x92a=[V[P\x7F\n-\xC5H\xED\x95\n\xCC\xB4\r]xT\x1F9T\xC5\xE1\x82\xA8\xEC\xF1\x9EX\x1AO\"c\xF6\x1FY\xD2` `@Q\x7F\xCC\x1D/\x83\x84E\xDBz\xECC\x1D\xF9\xEE\x8A\x87\x1F@\xE7\xAA^\x06O\xC0Vc>\xF8\xC6\x0F\xAB{\x06\x81R\xA1a\x04\xE5a2\x11V[\x7F\xE3\xB0\xC4B\x98\xFC\x1C\x14\x9A\xFB\xF4\xC8\x99o\xB9$'\xAEA\xE4d\x9B\x93L\xA4\x95\x99\x1BxR\xB8U\x7F=\0\x11]1k\xC7\x0E\xFE\x89\x05P\xF4\x90\xCC\xB6\xFC\xBBWhq\x1F\x93\xA7s\xCE\xD4U=\xE0\xA7\0U\x7F\xE3\xB0\xC4B\x98\xFC\x1C\x14\x9A\xFB\xF4\xC8\x99o\xB9$'\xAEA\xE4d\x9B\x93L\xA4\x95\x99\x1BxR\xB8U\x7F\x90-h\x08\x0C\x9FK\xF7\xED\x1C\x92gX#j\xFC+@DH\x7Fo\x86\x845-8\x08rD\xAE\xE6`\xC0Q`\xC0Q\xA2a\x05ya-?V[a\x06\x1DWa\x05\x87W`\xC0Q\x80\xF3[\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0T\x16\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0U\x7F\xC7\xF5\x05\xB2\xF3q\xAE!u\xEEI\x13\xF4I\x9E\x1F&3\xA7\xB5\x93c!\xEE\xD1\xCD\xAE\xB6\x11Q\x81\xD2` `@Q`\x01\x81R\xA1a\x02 V[\x7F\x0B\x1D8\xA3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04`\xC0Q\xFD[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`A`\x04R`$`\xC0Q\xFD[\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\x16h\x01\0\0\0\0\0\0\0\x01\x17\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0U\x83a\x03\x8EV[\x7F\xF9.\xE8\xA9\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04`\xC0Q\xFD[\x90P\x15\x84a\x037V[0;\x15\x91Pa\x03/V[\x84\x91Pa\x03%V[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` \x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0T`@Q\x90\x81R\xF3[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87W`\xC0QP`\x045`\xC0QR\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\x01` R` `@`\xC0Q T\x15\x15`@Q\x90\x81R\xF3[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87W`\x045a\x07\xC3a/\x0EV[\x80\x15a\x08\x1AW\x80\x7F=\0\x11]1k\xC7\x0E\xFE\x89\x05P\xF4\x90\xCC\xB6\xFC\xBBWhq\x1F\x93\xA7s\xCE\xD4U=\xE0\xA7\0U\x7F\x90-h\x08\x0C\x9FK\xF7\xED\x1C\x92gX#j\xFC+@DH\x7Fo\x86\x845-8\x08rD\xAE\xE6`\xC0Q`\xC0Q\xA2`\xC0Q\x80\xF3[\x7FwM]\xE1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04`\xC0Q\xFD[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03T_\x19\x81\x01\x90\x81\x11a\x08\x9FWa\x08\x90` \x91a2hV[\x90T\x90`\x03\x1B\x1C`@Q\x90\x81R\xF3[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x11`\x04R`$`\xC0Q\xFD[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W`@\x80Qa\t2\x91a\x08\xF4\x90\x82a+\x8DV[`\x05\x81R\x7F5.0.0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0` \x82\x01R`@Q\x91\x82\x91` \x83R` \x83\x01\x90a, V[\x03\x90\xF3[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` `\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16`@Q\x90\x81R\xF3[4a\x01\x87W` `\x03\x196\x01\x12a\x01\x87W\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\0T`\x045\x90\x81\x10\x15a\t\xF7W` \x90\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\0`\xC0QR\x81`\xC0Q \x01`\xC0QPT`\xC0Q`\x03\x1B\x1C`@Q\x90\x81R\xF3[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`2`\x04R`$`\xC0Q\xFD[4a\x01\x87W`\xC0Q`\x03\x196\x01\x12a\x01\x87W` s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0T\x16`@Q\x90\x81R\xF3[4a\x01\x87W`@`\x03\x196\x01\x12a\x01\x87Wg\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF`\x045\x11a\x01\x87W```\x03\x19`\x0456\x03\x01\x12a\x01\x87W`$5\x80\x15\x15\x81\x03a\x01\x87WZ`\x80R\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0\\a\x18;W`\x01\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0]a\x0B\x10a/zV[a\x0B\x1E`\x04\x805\x01\x80a/\xCDV[\x80\x92\x91P\x15a\x18\x0FWa\x0B0\x82a09V[a\x0B8a0\xEBV[P`@Qa\x0BE\x81a+DV[`\xC0Q\x81R`\xC0Q` \x82\x01R\x92`\xC0Q`\xA0R`\xC0Q[\x81\x81\x10a\x12\xC9WPP\x80` a\x0B\xA5\x92Q`\x05\x1B\x91\x01 \x92a\x0B\x9Ca\x0B\x96a\x0B\x8F`$`\x045\x01`\x045`\x04\x01a1\xC0V[6\x91a+\xCCV[\x85aA\xC9V[\x90\x93\x91\x93aB\x03V[` \x81Q\x91\x01Q\x90`\xC0QR` Rs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80`@`\xC0Q \x16\x91\x16\x90\x80\x82\x03a\x12\x97WPP\x7F=\0\x11]1k\xC7\x0E\xFE\x89\x05P\xF4\x90\xCC\xB6\xFC\xBBWhq\x1F\x93\xA7s\xCE\xD4U=\xE0\xA7\0Ta\x0C\r`\x04\x805\x01\x80a/\xCDV[\x91\x90P\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0a\x0Ccc\xFF\xFF\xFF\xFF\x84\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[`@Q\x92\x7F\x88\xDFd\xFE#<\x970}\xD5\x18\xC1u{\xF6\xCF\xCA\x1F\x17\xF7\x10;@i\xDD\x9E(H\xDB\x9D\x844` \x85\x01R`@\x84\x01R`\xE0\x1B\x16``\x82\x01R`D\x81Ra\x0C\xAA`d\x82a+\x8DV[`\xC0Q\x91[\x80\x83\x10a\x0F\x99WP` \x80\x92P`@Q\x91\x80Q\x91\x82\x91\x01\x83^\x81\x01\x90`\xC0Q\x82R\x80`\xC0Q\x92\x03\x90`\x02Z\xFA\x15a\x0FZW`\xC0QQa\x0C\xF8`D`\x045\x01`\x045`\x04\x01a1\xC0V[\x90\x92\x81`\x04\x11a\x01\x87W\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x845\x16\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x80\x82\x03a\x0FgWPP\x15a\x0E~W[PPP`\xA0Qa\x0E\x0BW[\x7F\x86-\x83\xC6\xC5\xAF'^i{\xFDN'\xC82<\x19kD\xBD\xD0\x11\xDD\x9A\xAA\xB6\xDB\x0E\xC9\x94=\xCE`\xC0Q`\xC0Q\xA2`\xC0Q\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0]a\r\xDCZ`\x80Qa,EV[\x7Fo\x14\x981\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04R`$`\xC0Q\xFD[a\x0E\x16`\xA0Qa<\xABV[\x15a\x0ELW\x7F\n-\xC5H\xED\x95\n\xCC\xB4\r]xT\x1F9T\xC5\xE1\x82\xA8\xEC\xF1\x9EX\x1AO\"c\xF6\x1FY\xD2` `@Q`\xA0Q\x81R\xA1a\r\x83V[\x7F\xDBx\x8C+\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\xA0Q`\x04R`$`\xC0Q\xFD[s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x80;\x15a\x01\x87Wa\x0E\xF9`@Q\x94\x85\x93\x7F\xABu\x0Eu\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x85R```\x04\x86\x01R`d\x85\x01\x91a7+V[\x92\x7F]\xC2a_=\x14\xA5\x17\xA2Z\xAD\xFES\xA8\x829N`'@QEt\xF3 \x1B\xBEsRi\x05\x8E`$\x84\x01R`D\x83\x01R\x81\x80`\xC0Q\x94\x03\x91Z\xFA\x80\x15a\x0FZWa\x0FAW[\x80\x80a\rxV[`\xC0Qa\x0FM\x91a+\x8DV[`\xC0Qa\x01\x87W\x81a\x0F:V[`@Q=`\xC0Q\x82>=\x90\xFD[\x7Fx\xA2\"\x1C\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04R`$R`D`\xC0Q\xFD[\x90a\x0F\xB2\x83a\x0F\xAC`\x04\x805\x01\x80a/\xCDV[\x90a0jV[a\x0F\xBC\x81\x80a/\xCDV[\x91\x90Pa\x0F\xF1c\xFF\xFF\xFF\xFF\x83\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`@Q\x91`\xE0\x1B\x16` \x82\x01R`\x04\x81Ra\x10.`$\x82a+\x8DV[\x91`\xC0Q\x90[\x80\x82\x10a\x12\x13WPP` \x81\x01\x91` a\x10\xF3`\x04\x82a\x10T\x87\x87a/\xCDV[\x95\x90Pa\x10\x89c\xFF\xFF\xFF\xFF\x87\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`@Q\x96\x83\x88\x94Q\x91\x82\x91\x01\x86\x86\x01^\x83\x01\x91`\xE0\x1B\x16\x83\x82\x01R\x03\x01\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xE4\x81\x01\x84R\x01\x82a+\x8DV[\x92`\xC0Q\x91[\x80\x83\x10a\x11\x91WPPP`\x01\x92` \x80\x93a\x11\x88\x93a\x11R``\x84`@Q\x80\x94`\x80\x83\x80\x84\x01\x98\x80Q\x91\x82\x91\x01\x8A^\x83\x01\x91`@\x81\x015\x85\x84\x01R\x85\x81\x015`@\x84\x01R\x015\x84\x82\x01R\x03\x01`@\x81\x01\x84R\x01\x82a+\x8DV[`@Q\x95\x84\x87\x95Q\x91\x82\x91\x01\x85\x87\x01^\x84\x01\x90\x83\x82\x01\x90`\xC0Q\x82RQ\x92\x83\x91^\x01\x01`\xC0Q\x81R\x03`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x92\x01\x91\x90a\x0C\xAFV[\x90\x91\x93` a\x12\n`@`\x01\x93\x83\x80a\x11\xB4\x8Ba\x11\xAE\x8B\x8Da/\xCDV[\x90a1MV[a\x11\xC8a\x11\xC3\x86\x83\x01\x83a1\x03V[aB\xDBV[\x82\x86Q\x98\x86\x8A\x97Q\x91\x82\x91\x01\x83\x89\x01^\x86\x01\x92\x805\x82\x85\x01R\x015\x86\x83\x01R\x80Q\x92\x83\x91\x01``\x83\x01^\x01\x01`\xC0Q\x83\x82\x01R\x03\x01`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x94\x01\x91\x90a\x10\xF9V[\x90\x92` a\x12\x8F```\x01\x93\x83\x80a\x125\x8Aa\x12/\x8B\x80a/\xCDV[\x90a16V[a\x12Da\x11\xC3\x86\x83\x01\x83a1\x03V[`@\x80Q\x98\x86\x8A\x97Q\x91\x82\x91\x01\x86\x89\x01^\x86\x01\x92\x805\x85\x85\x01R\x84\x81\x015\x82\x85\x01R\x015\x86\x83\x01R\x80Q\x92\x83\x91\x01`\x80\x83\x01^\x01\x01`\xC0Q\x83\x82\x01R\x03\x01`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x93\x01\x90a\x104V[\x7F\xE6\xD4KL\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04R`$R`D`\xC0Q\xFD[a\x12\xDB\x81a\x0F\xAC`\x04\x805\x01\x80a/\xCDV[`\xC0Q\x90\x95\x90\x86a\x12\xEC\x81\x80a/\xCDV[\x90Pa\x12\xF7\x81a09V[a\x13\0\x82a09V[\x91`\xC0Q[\x81\x81\x10a\x17\rWPPa\x13\x1B` \x84\x01\x84a/\xCDV[\x92\x90Pa\x13'\x83a09V[\x91a\x131\x84a09V[\x93`\xC0Q\x90[\x80\x82\x10a\x14\xAFWPP\x92a\x13\xAB\x7FL\xE7\xC1\x10 `\xBEO(\xB2)\x19\x91@\xFD\xD5\x11-B\x14\xFE\x95A\xBC\x9B#T\x1EE\x92\xCC2\x95\x93a\x13\x9Da\x13\xB9\x94a\x13\x8F`\x80\x98`@Q\x99\x8A\x99\x015\x89R`\xA0` \x8A\x01R`\xA0\x89\x01\x90a1\x8DV[\x90\x87\x82\x03`@\x89\x01Ra1\x8DV[\x90\x85\x82\x03``\x87\x01Ra1\x8DV[\x90\x83\x82\x03`\x80\x85\x01Ra1\x8DV[\x03\x90\xA1\x80a\x14\xA6W[P`@\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xC0\x876\x03\x01\x12a\x01\x87W`@Q\x90a\x13\xFC\x82a+DV[`@\x87\x015\x82R` \x82\x01``\x88\x015\x81R`@Q\x92a\x14\x1B\x84a+DV[_\x84R_` \x85\x01Ra\x141\x81Q\x83Q\x90a9\x86V[\x15a\x14nW\x82`\x01\x95\x94\x92a\x14S\x92` `\x80\x96Q\x93\x01Q\x90Q\x91Q\x92a9\xE8V[` \x83\x01R\x81R\x96\x015a\x14g\x82\x86a0\xD7V[R\x01a\x0B]V[`D\x91`@Q\x91\x7F\xB8\xA0\xE8\xA1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x83RQ`\x04\x83\x01RQ`$\x82\x01R\xFD[`\xA0R\x86a\x13\xC2V[\x91\x92\x93\x94\x95\x81\x97P\x90a\x11\xAE\x82` a\x14\xC9\x94\x01\x90a/\xCDV[\x95`\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0T_\x19\x81\x14a\x08\x9FW`\x01\x81\x01\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0U\x90\x885\x91`\xC0Q[\x82\x81\x10a\x16RWPP\x90`\x01\x92\x91\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0T\x84`\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16\x1B\x14a\x15\xF9W[P\x97` \x81\x015\x90a\x15\xD6a\x15\xCF`@\x83\x01a\x15\xC9a\x15\xC3\x82\x86a1\x03V[\x86a5\x18V[\x83a1\x03V[\x825a7bV[5a\x15\xE1\x83\x89a0\xD7V[Ra\x15\xEC\x82\x89a0\xD7V[R\x01\x8C\x95\x94\x93\x92\x91a\x137V[a\x16Ga\x16@a\x16L\x92a\x16\x0C\x85a2\xD3V[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02`\xC0QR` `\xC0Q \x01T\x80\x94aA|V[\x92\x80aA|V[a3lV[\x8Fa\x15\xA4V[\x90\x92`\x01\x90\x81\x85\x16a\x16\xD0Wa\x16\xC5\x90\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01`\xC0QR\x80\x84` `\xC0Q \x01U\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02`\xC0QR\x83` `\xC0Q \x01T\x90aA|V[\x93[\x81\x1C\x91\x01a\x15GV[a\x17\x07\x90\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01`\xC0QR\x83` `\xC0Q \x01TaA|V[\x93a\x16\xC7V[\x90\x91\x92\x93\x81a\x12/\x82a\x17\x1F\x93a/\xCDV[`@\x81\x015a\x17X\x81_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R`@_ T\x15\x15\x90V[\x15a\x17\xE0WPa\x17h\x815a;\xF6V[\x15a\x17\xB0W\x90\x81` `\x01\x93\x015\x90a\x17\x8Ea\x15\xCF``\x83\x01a\x15\xC9a\x15\xC3\x82\x86a1\x03V[5a\x17\x99\x83\x87a0\xD7V[Ra\x17\xA4\x82\x87a0\xD7V[R\x01\x90\x8A\x93\x92\x91a\x13\x05V[\x7F9\xA9@\xC5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR5`\x04R`$`\xC0Q\xFD[\x7F\xF9\x84\x9E\xA3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04R`$`\xC0Q\xFD[\x7F\xCF\x1B\t<\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04`\xC0Q\xFD[\x7F>\xE5\xAE\xB5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04`\xC0Q\xFD[4a\x1C\xC4W` `\x03\x196\x01\x12a\x1C\xC4Wg\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF`\x045\x11a\x1C\xC4W```\x03\x19`\x0456\x03\x01\x12a\x1C\xC4W\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0\\a$\xB2W`\x01\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0]a\x18\xEBa/zV[a\x18\xF9`\x04\x805\x01\x80a/\xCDV[\x80\x91P\x15a$\x8AWa\x19\n\x81a09V[\x90a\x19\x13a0\xEBV[P`@Qa\x19 \x81a+DV[_\x81R_` \x82\x01R\x91_\x91_[\x81\x81\x10a\x1F`WPP\x80` a\x19`\x92Q`\x05\x1B\x91\x01 \x92a\x0B\x9Ca\x0B\x96a\x0B\x8F`$`\x045\x01`\x045`\x04\x01a1\xC0V[` \x81Q\x91\x01Q\x90_R` Rs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80`@_ \x16\x91\x16\x90\x80\x82\x03a\x1F2WPP\x7F=\0\x11]1k\xC7\x0E\xFE\x89\x05P\xF4\x90\xCC\xB6\xFC\xBBWhq\x1F\x93\xA7s\xCE\xD4U=\xE0\xA7\0Ta\x19\xC4`\x04\x805\x01\x80a/\xCDV[\x91\x90P\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0a\x1A\x1Ac\xFF\xFF\xFF\xFF\x84\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[`@Q\x92\x7F\x88\xDFd\xFE#<\x970}\xD5\x18\xC1u{\xF6\xCF\xCA\x1F\x17\xF7\x10;@i\xDD\x9E(H\xDB\x9D\x844` \x85\x01R`@\x84\x01R`\xE0\x1B\x16``\x82\x01R`D\x81Ra\x1Aa`d\x82a+\x8DV[\x90_\x90[\x80\x82\x10a\x1C\xF6WPP_` \x80\x92`@Q\x91\x81\x83\x92Q\x91\x82\x91\x01\x83^\x81\x01\x83\x81R\x03\x90`\x02Z\xFA\x15a\x1C\xB9W_Qa\x1A\xA7`D`\x045\x01`\x045`\x04\x01a1\xC0V[\x80`\x04\x11a\x1C\xC4W\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x825\x16\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x80\x82\x03a\x1C\xC8WPPs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x80;\x15a\x1C\xC4W_\x92a\x1B\xA1\x92`@Q\x95\x86\x94\x85\x93\x84\x93\x7F\xABu\x0Eu\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x85R```\x04\x86\x01R`d\x85\x01\x91a7+V[\x90\x7F]\xC2a_=\x14\xA5\x17\xA2Z\xAD\xFES\xA8\x829N`'@QEt\xF3 \x1B\xBEsRi\x05\x8E`$\x84\x01R`D\x83\x01R\x03\x91Z\xFA\x80\x15a\x1C\xB9Wa\x1C\xA5W[P\x80a\x1C7W[P\x7F\x86-\x83\xC6\xC5\xAF'^i{\xFDN'\xC82<\x19kD\xBD\xD0\x11\xDD\x9A\xAA\xB6\xDB\x0E\xC9\x94=\xCE`\xC0Q`\xC0Q\xA2`\xC0Q\x7F\x9Bw\x9B\x17B-\r\xF9\"#\x01\x8B2\xB4\xD1\xFAF\xE0qr=h\x17\xE2Hm\0;\xEC\xC5_\0]`\xC0Q\x80\xF3[a\x1C@\x81a<\xABV[\x15a\x1CvW` \x7F\n-\xC5H\xED\x95\n\xCC\xB4\r]xT\x1F9T\xC5\xE1\x82\xA8\xEC\xF1\x9EX\x1AO\"c\xF6\x1FY\xD2\x91`@Q\x90\x81R\xA1\x81a\x1B\xE3V[\x7F\xDBx\x8C+\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\xC0QR`\x04R`$`\xC0Q\xFD[_a\x1C\xAF\x91a+\x8DV[_`\xC0R\x82a\x1B\xDCV[`@Q=_\x82>=\x90\xFD[_\x80\xFD[\x7Fx\xA2\"\x1C\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$R`D_\xFD[\x90\x91a\x1D\n\x83a\x0F\xAC`\x04\x805\x01\x80a/\xCDV[a\x1D\x14\x81\x80a/\xCDV[\x91\x90Pa\x1DIc\xFF\xFF\xFF\xFF\x83\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`@Q\x91`\xE0\x1B\x16` \x82\x01R`\x04\x81Ra\x1D\x86`$\x82a+\x8DV[\x91_\x90[\x80\x82\x10a\x1E\xB6WPP` \x81\x01\x91` a\x1D\xAA`\x04\x82a\x10T\x87\x87a/\xCDV[\x92_\x91[\x80\x83\x10a\x1EAWPPP`\x01\x92` \x80\x93a\x1E9\x93a\x1E\x07``\x84`@Q\x80\x94`\x80\x83\x80\x84\x01\x98\x80Q\x91\x82\x91\x01\x8A^\x83\x01\x91`@\x81\x015\x85\x84\x01R\x85\x81\x015`@\x84\x01R\x015\x84\x82\x01R\x03\x01`@\x81\x01\x84R\x01\x82a+\x8DV[`@Q\x95\x84\x87\x95Q\x91\x82\x91\x01\x85\x87\x01^\x84\x01\x90\x83\x82\x01\x90_\x82RQ\x92\x83\x91^\x01\x01_\x81R\x03`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x92\x01\x90a\x1AeV[\x90\x91\x93` a\x1E\xAD`@`\x01\x93\x83\x80a\x1E^\x8Ba\x11\xAE\x8B\x8Da/\xCDV[a\x1Ema\x11\xC3\x86\x83\x01\x83a1\x03V[\x82\x86Q\x98\x86\x8A\x97Q\x91\x82\x91\x01\x83\x89\x01^\x86\x01\x92\x805\x82\x85\x01R\x015\x86\x83\x01R\x80Q\x92\x83\x91\x01``\x83\x01^\x01\x01_\x83\x82\x01R\x03\x01`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x94\x01\x91\x90a\x1D\xAEV[\x90\x92` a\x1F*```\x01\x93\x83\x80a\x1E\xD2\x8Aa\x12/\x8B\x80a/\xCDV[a\x1E\xE1a\x11\xC3\x86\x83\x01\x83a1\x03V[`@\x80Q\x98\x86\x8A\x97Q\x91\x82\x91\x01\x86\x89\x01^\x86\x01\x92\x805\x85\x85\x01R\x84\x81\x015\x82\x85\x01R\x015\x86\x83\x01R\x80Q\x92\x83\x91\x01`\x80\x83\x01^\x01\x01_\x83\x82\x01R\x03\x01`\x1F\x19\x81\x01\x83R\x82a+\x8DV[\x93\x01\x90a\x1D\x8AV[\x7F\xE6\xD4KL\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$R`D_\xFD[a\x1Fr\x81a\x0F\xAC`\x04\x805\x01\x80a/\xCDV[_\x95a\x1F~\x82\x80a/\xCDV[\x97\x90Pa\x1F\x8A\x88a09V[a\x1F\x93\x89a09V[\x98_[\x81\x81\x10a#\x87WPPa\x1F\xAC` \x85\x01\x85a/\xCDV[\x99\x90Pa\x1F\xB8\x8Aa09V[\x99a\x1F\xC2\x81a09V[\x90_\x90[\x80\x82\x10a \xDAWPP\x90a !\x7FL\xE7\xC1\x10 `\xBEO(\xB2)\x19\x91@\xFD\xD5\x11-B\x14\xFE\x95A\xBC\x9B#T\x1EE\x92\xCC2\x93\x92a\x13\xABa\x13\x9D\x9D`\x80\x8A\x015\x9E\x8F\x95a\x13\x8F`@Q\x98\x89\x98\x89R`\xA0` \x8A\x01R`\xA0\x89\x01\x90a1\x8DV[\x03\x90\xA1\x80a \xD2W[P`@\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xC0\x836\x03\x01\x12a\x1C\xC4W`@Q\x91a d\x83a+DV[`@\x81\x015\x83R``` \x84\x01\x91\x015\x81R`@Q\x92a \x83\x84a+DV[_\x84R_` \x85\x01Ra \x99\x81Q\x83Q\x90a9\x86V[\x15a\x14nW\x91a \xB9\x91`\x01\x95\x94\x93` \x83Q\x93\x01Q\x90Q\x91Q\x92a9\xE8V[` \x83\x01R\x81R\x95a \xCB\x82\x86a0\xD7V[R\x01a\x19.V[\x95P\x87a *V[\x90\x94Pa \xEE\x85a\x11\xAE` \x8A\x01\x8Aa/\xCDV[\x94`\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16\x95\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0T\x96_\x19\x88\x14a#ZW\x87\x8F\x98`\x01\x01\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0U\x90\x825\x91_[\x82\x81\x10a\"vWPP\x90`\x01\x93\x92\x91\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\0T\x85`\xFF\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01T\x16\x1B\x14a\"\x0FW[P\x97a!\xFC\x83` \x84\x015\x93a!\xF5a\x15\xCF`@\x83\x01a\x15\xC9a!\xEF\x82\x86a1\x03V[\x89a5\x18V[5\x92a0\xD7V[Ra\"\x07\x82\x86a0\xD7V[R\x01\x90a\x1F\xC6V[a\x16Ga\x16@a\"p\x92a\"\"\x85a2\xD3V[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02_R\x7F\xC1n\xE7>\xEC\x0E\xF4\xD23*$\xCA2h\xED\x9EQ\xB7t\xC2\xC5\xAF_\\Y\xC2]\xBB;t\xD41\x01T\x93\x84\x90aA|V[_a!\xCCV[\x90\x92`\x01\x90\x81\x85\x16a#\x03W\x7F\xC3j\xDB\xE7\xD1\xFEcB\x8E\xFA3\xF5/\xCB\xD6\x11]\x89\x17\x12%\x05{\x1E\x1F\x8E~\x98azG\x9F\x83\x01\x81\x90U\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02_R\x7F\xC1n\xE7>\xEC\x0E\xF4\xD23*$\xCA2h\xED\x9EQ\xB7t\xC2\xC5\xAF_\\Y\xC2]\xBB;t\xD41\x83\x01Ta\"\xF8\x91aA|V[\x93[\x81\x1C\x91\x01a!nV[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01_R\x7F\xC3j\xDB\xE7\xD1\xFEcB\x8E\xFA3\xF5/\xCB\xD6\x11]\x89\x17\x12%\x05{\x1E\x1F\x8E~\x98azG\x9F\x83\x01Ta#T\x91\x90aA|V[\x93a\"\xFAV[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x11`\x04R`$_\xFD[a#\x95\x81a\x12/\x88\x80a/\xCDV[`@\x81\x015a#\xCE\x81_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R`@_ T\x15\x15\x90V[\x15a$_WP\x805a#\xDF\x81a;\xF6V[\x15a$4W\x90a$-\x83\x8E`\x01\x95\x94a$\x1Da$\x17` \x87\x015\x96``\x81\x01\x90a$\x12a$\x0C\x83\x83a1\x03V[\x8Aa5\x18V[a1\x03V[\x82a7bV[a$'\x83\x8Aa0\xD7V[Ra0\xD7V[R\x01a\x1F\x96V[\x7F9\xA9@\xC5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x7F\xF9\x84\x9E\xA3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x7F\xCF\x1B\t<\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[\x7F>\xE5\xAE\xB5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4Wa$\xF2a/\x0EV[_s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0T\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81\x16\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0U\x16\x7F\x8B\xE0\x07\x9CS\x16Y\x14\x13D\xCD\x1F\xD0\xA4\xF2\x84\x19I\x7F\x97\"\xA3\xDA\xAF\xE3\xB4\x18okdW\xE0\x82\x80\xA3\0[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4Wa%\xAEa/\x0EV[a%\xB6a/zV[a%\xBEa/zV[`\x01\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\x7F\xCD^\xD1\\n\x18~w\xE9\xAE\xE8\x81\x84\xC2\x1FO!\x82\xABX'\xCB;~\x07\xFB\xED\xCDc\xF03\0T\x16\x17\x7F\xCD^\xD1\\n\x18~w\xE9\xAE\xE8\x81\x84\xC2\x1FO!\x82\xABX'\xCB;~\x07\xFB\xED\xCDc\xF03\0U\x7Fb\xE7\x8C\xEA\x01\xBE\xE3 \xCDNB\x02p\xB5\xEAt\0\r\x11\xB0\xC9\xF7GT\xEB\xDB\xFCTK\x05\xA2X` `@Q3\x81R\xA1\0[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4W` `\xFF\x7F\xCD^\xD1\\n\x18~w\xE9\xAE\xE8\x81\x84\xC2\x1FO!\x82\xABX'\xCB;~\x07\xFB\xED\xCDc\xF03\0T\x16`@Q\x90\x15\x15\x81R\xF3[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4W` `@Qs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x81R\xF3[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4W` \x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03T`@Q\x90\x81R\xF3[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4Ws\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x160\x03a'\x97W` `@Q\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBC\x81R\xF3[\x7F\xE0|\x8D\xBA\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[`@`\x03\x196\x01\x12a\x1C\xC4Wa'\xD3a+!V[`$5g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11a\x1C\xC4Wa'\xF3\x906\x90`\x04\x01a,\x02V[\x90s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16\x800\x14\x90\x81\x15a*MW[Pa'\x97Wa(Ca/\x0EV[s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x16\x91`@Q\x7FR\xD1\x90-\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R` \x81`\x04\x81\x87Z\xFA_\x91\x81a*\x19W[Pa(\xC3W\x83\x7FL\x9C\x8C\xE3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x80\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBC\x85\x92\x03a)\xEEWP\x82;\x15a)\xC3W\x80\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x16\x17\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCU\x7F\xBC|\xD7Z \xEE'\xFD\x9A\xDE\xBA\xB3 A\xF7U!M\xBCk\xFF\xA9\x0C\xC0\"[9\xDA.\\-;_\x80\xA2\x80Q\x15a)\x92Wa)\x90\x91a4\x11V[\0[PP4a)\x9BW\0[\x7F\xB3\x98\x97\x9F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[\x7FL\x9C\x8C\xE3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x7F\xAA\x1DI\xA4\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x90\x91P` \x81=` \x11a*EW[\x81a*5` \x93\x83a+\x8DV[\x81\x01\x03\x12a\x1C\xC4WQ\x90\x85a(\x92V[=\x91Pa*(V[\x90Ps\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F6\x08\x94\xA1;\xA1\xA3!\x06g\xC8(I-\xB9\x8D\xCA> v\xCC75\xA9 \xA3\xCAP]8+\xBCT\x16\x14\x15\x83a(6V[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4W` \x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\0T`@Q\x90\x81R\xF3[4a\x1C\xC4W` `\x03\x196\x01\x12a\x1C\xC4W` a\x08\x90`\x045a2hV[4a\x1C\xC4W_`\x03\x196\x01\x12a\x1C\xC4W\x80\x7F2.0.0-alpha.2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0` \x92R\xF3[`\x045\x90s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x16\x82\x03a\x1C\xC4WV[`@\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a+`W`@RV[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`A`\x04R`$_\xFD[\x90`\x1F`\x1F\x19\x91\x01\x16\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a+`W`@RV[g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11a+`W`\x1F\x01`\x1F\x19\x16` \x01\x90V[\x92\x91\x92a+\xD8\x82a+\xB0V[\x91a+\xE6`@Q\x93\x84a+\x8DV[\x82\x94\x81\x84R\x81\x83\x01\x11a\x1C\xC4W\x82\x81` \x93\x84_\x96\x017\x01\x01RV[\x90\x80`\x1F\x83\x01\x12\x15a\x1C\xC4W\x81` a,\x1D\x935\x91\x01a+\xCCV[\x90V[\x90`\x1F\x19`\x1F` \x80\x94\x80Q\x91\x82\x91\x82\x87R\x01\x86\x86\x01^_\x85\x82\x86\x01\x01R\x01\x16\x01\x01\x90V[\x91\x90\x82\x03\x91\x82\x11a#ZWV[s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x16\x80\x15a-\x13Ws\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0T\x82\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x82\x16\x17\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0U\x16\x7F\x8B\xE0\x07\x9CS\x16Y\x14\x13D\xCD\x1F\xD0\xA4\xF2\x84\x19I\x7F\x97\"\xA3\xDA\xAF\xE3\xB4\x18okdW\xE0_\x80\xA3V[\x7F\x1EO\xBD\xF7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R_`\x04R`$_\xFD[`@Q\x7F<\xAD\xF4I\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16`\x04\x82\x01R` \x81`$\x81s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16Z\xFA\x90\x81\x15a\x1C\xB9W_\x91a.\xBEW[P` s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x91`\x04`@Q\x80\x94\x81\x93\x7F\\\x97Z\xBB\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x83R\x16Z\xFA\x90\x81\x15a\x1C\xB9W_\x91a.\x83W[P\x80\x15a.ZW\x90V[P`\xFF\x7F\xCD^\xD1\\n\x18~w\xE9\xAE\xE8\x81\x84\xC2\x1FO!\x82\xABX'\xCB;~\x07\xFB\xED\xCDc\xF03\0T\x16\x90V[\x90P` \x81=` \x11a.\xB6W[\x81a.\x9E` \x93\x83a+\x8DV[\x81\x01\x03\x12a\x1C\xC4WQ\x80\x15\x15\x81\x03a\x1C\xC4W_a.PV[=\x91Pa.\x91V[\x90P` \x81=` \x11a/\x06W[\x81a.\xD9` \x93\x83a+\x8DV[\x81\x01\x03\x12a\x1C\xC4WQs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x16\x81\x03a\x1C\xC4W` a-\xFAV[=\x91Pa.\xCCV[s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x7F\x90\x16\xD0\x9Dr\xD4\x0F\xDA\xE2\xFD\x8C\xEA\xC6\xB6#Lw\x06!O\xD3\x9C\x1C\xD1\xE6\t\xA0R\x8C\x19\x93\0T\x163\x03a/NWV[\x7F\x11\x8C\xDA\xA7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R3`\x04R`$_\xFD[`\xFF\x7F\xCD^\xD1\\n\x18~w\xE9\xAE\xE8\x81\x84\xC2\x1FO!\x82\xABX'\xCB;~\x07\xFB\xED\xCDc\xF03\0T\x16a/\xA5WV[\x7F\xD9<\x06e\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[\x905\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xE1\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x805\x90g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x1C\xC4W` \x01\x91\x81`\x05\x1B6\x03\x83\x13a\x1C\xC4WV[g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11a+`W`\x05\x1B` \x01\x90V[\x90a0C\x82a0!V[a0P`@Q\x91\x82a+\x8DV[\x82\x81R`\x1F\x19a0`\x82\x94a0!V[\x01\x90` 6\x91\x017V[\x91\x90\x81\x10\x15a0\xAAW`\x05\x1B\x81\x015\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFFa\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x90V[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`2`\x04R`$_\xFD[\x80Q\x82\x10\x15a0\xAAW` \x91`\x05\x1B\x01\x01\x90V[`@Q\x90a0\xF8\x82a+DV[_` \x83\x82\x81R\x01RV[\x905\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x90V[\x90\x82\x10\x15a0\xAAWa,\x1D\x91`\x05\x1B\x81\x01\x90a1\x03V[\x91\x90\x81\x10\x15a0\xAAW`\x05\x1B\x81\x015\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xA1\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x90V[\x90` \x80\x83Q\x92\x83\x81R\x01\x92\x01\x90_[\x81\x81\x10a1\xAAWPPP\x90V[\x82Q\x84R` \x93\x84\x01\x93\x90\x92\x01\x91`\x01\x01a1\x9DV[\x905\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xE1\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x805\x90g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x1C\xC4W` \x01\x91\x816\x03\x83\x13a\x1C\xC4WV[`\xFF\x7F\xF0\xC5~\x16\x84\r\xF0@\xF1P\x88\xDC/\x81\xFE9\x1C9#\xBE\xC7>#\xA9f.\xFC\x9C\"\x9Cj\0T`@\x1C\x16\x15a2@WV[\x7F\xD7\xE6\xBC\xF8\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03T\x81\x10\x15a0\xAAW\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03_R` _ \x01\x90_\x90V[\x80T\x82\x10\x15a0\xAAW_R` _ \x01\x90_\x90V[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01Th\x01\0\0\0\0\0\0\0\0\x81\x10\x15a+`W\x80`\x01a3V\x92\x01\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01U\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x01a2\xBEV[_\x19\x82\x93\x92T\x91`\x03\x1B\x92\x83\x1B\x92\x1B\x19\x16\x17\x90UV[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02Th\x01\0\0\0\0\0\0\0\0\x81\x10\x15a+`W\x80`\x01a3V\x92\x01\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02U\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x02a2\xBEV[\x80Th\x01\0\0\0\0\0\0\0\0\x81\x10\x15a+`Wa3V\x91`\x01\x82\x01\x81Ua2\xBEV[\x90_\x80\x91` \x81Q\x91\x01\x84Z\xF4\x80\x80a4\xC5W[\x15a4EWPP`@Q=\x81R=_` \x83\x01>` =\x82\x01\x01`@R\x90V[\x15a4\x8CWs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x90\x7F\x99\x96\xB3\x15\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R\x16`\x04R`$_\xFD[=\x15a4\x9DW`@Q=_\x82>=\x90\xFD[\x7F\xD6\xBD\xA2u\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[P=\x15\x15\x80a4%WP\x81;\x15\x15a4%V[\x91\x90\x81\x10\x15a0\xAAW`\x05\x1B\x81\x015\x90\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xC1\x816\x03\x01\x82\x12\x15a\x1C\xC4W\x01\x90V[\x90`@\x81\x01a5'\x81\x83a/\xCDV[\x92\x90P_[\x83\x81\x10a5:WPPPPPV[a5[a5Q\x82a5K\x86\x86a/\xCDV[\x90a4\xD8V[` \x81\x01\x90a1\xC0V[\x81\x01``\x82\x82\x03\x12a\x1C\xC4W\x815\x91s\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x83\x16\x80\x93\x03a\x1C\xC4W` \x81\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11a\x1C\xC4W\x82a5\xA8\x91\x83\x01a,\x02V[\x91`@\x82\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11a\x1C\xC4Wa5\xC7\x92\x01a,\x02V[\x90`@Q\x91\x7F3\xA8\x92\x03\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x83R\x88`\x04\x84\x01R`@`$\x84\x01R_\x83\x80a6\x0C`D\x82\x01\x86a, V[\x03\x81\x83\x88Z\xF1\x92\x83\x15a\x1C\xB9W_\x93a6\xAFW[P\x82Q` \x84\x01 \x81Q` \x83\x01 \x03a6tWP`\x01\x93\x92\x91\x7F\xCD\xDB2z\xDB1\xFET7\xDF*\x8Ch0\x1B\xB1:k\xAA\xE42\xA8\x04\x83\x8C\xAA\xF6\x82Pj\xAD\xF1\x91a6k`@Q\x92\x83\x92\x83a>\xA6V[\x03\x90\xA2\x01a5,V[\x90Pa6\xAB`@Q\x92\x83\x92\x7F\xC5\x04\xFA\xDA\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x84R`\x04\x84\x01a>\xA6V[\x03\x90\xFD[\x90\x92P=\x80_\x83>a6\xC1\x81\x83a+\x8DV[\x81\x01\x90` \x81\x83\x03\x12a\x1C\xC4W\x80Q\x90g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x1C\xC4W\x01\x81`\x1F\x82\x01\x12\x15a\x1C\xC4W\x80Q\x90a6\xF8\x82a+\xB0V[\x92a7\x06`@Q\x94\x85a+\x8DV[\x82\x84R` \x83\x83\x01\x01\x11a\x1C\xC4W\x81_\x92` \x80\x93\x01\x83\x86\x01^\x83\x01\x01R\x91_a6 V[`\x1F\x82` \x94\x93`\x1F\x19\x93\x81\x86R\x86\x86\x017_\x85\x82\x86\x01\x01R\x01\x16\x01\x01\x90V[`@\x90a,\x1D\x94\x92\x81R\x81` \x82\x01R\x01\x91a7+V[\x90a7m\x81\x80a/\xCDV[_[\x81\x81\x10a9\x17WPPPa7\x86` \x82\x01\x82a/\xCDV[_[\x81\x81\x10a8\xA8WPPPa7\x9F`@\x82\x01\x82a/\xCDV[_[\x81\x81\x10a89WPPP\x80``a7\xB9\x92\x01\x90a/\xCDV[\x90\x91_[\x82\x81\x10a7\xCAWPPPPV[a7\xD5\x81\x84\x86a4\xD8V[5\x90`\x02\x82\x10\x15a\x1C\xC4W`\x01\x80\x92\x14a7\xF0W[\x01a7\xBDV[\x82\x7F\xA4\x94\xDA\xC4\xB7\x18HCX?\x97.\x06x>,;\xB4\x7FO\x017\xB8\xDFR\xA8`\xDF\x07!\x9F\x8Ca8 a5Q\x84\x88\x8Aa4\xD8V[\x90a81`@Q\x92\x83\x92\x87\x84a7KV[\x03\x90\xA2a7\xEAV[a8D\x81\x83\x85a4\xD8V[5\x90`\x02\x82\x10\x15a\x1C\xC4W`\x01\x80\x92\x14a8_W[\x01a7\xA1V[\x85\x7F\x9Ca\xB2\x90\xF61\t\x7FV'<\xF4\xDA\xF4\r\xF1\xFF\x9C\xCC3\xF1\x01\xD4d\x83}\xA1\xF5\xAE\x18\xBDYa8\x8Fa5Q\x84\x87\x89a4\xD8V[\x90a8\xA0`@Q\x92\x83\x92\x87\x84a7KV[\x03\x90\xA2a8YV[a8\xB3\x81\x83\x85a4\xD8V[5\x90`\x02\x82\x10\x15a\x1C\xC4W`\x01\x80\x92\x14a8\xCEW[\x01a7\x88V[\x85\x7FH$8s\xB4u-\xDC\xB4^\r{\x11\xC4\xC2fX>^\t\x9A\x0By\x8F\xDD\x9C\x1A\xF7\xD4\x93$\xF3a8\xFEa5Q\x84\x87\x89a4\xD8V[\x90a9\x0F`@Q\x92\x83\x92\x87\x84a7KV[\x03\x90\xA2a8\xC8V[a9\"\x81\x83\x85a4\xD8V[5\x90`\x02\x82\x10\x15a\x1C\xC4W`\x01\x80\x92\x14a9=W[\x01a7oV[\x85\x7F:\x13M\x01\xC0x\x03\0<c0\x17\x17\xDD\xC4a.lG\xAE@\x8E\xEE\xA3\",\xDE\xD52\xD0*\xE6a9ma5Q\x84\x87\x89a4\xD8V[\x90a9~`@Q\x92\x83\x92\x87\x84a7KV[\x03\x90\xA2a97V[\x80\x15\x80\x15a9\xD8W[\x80\x15a9\xD0W[\x80\x15a9\xC0W[a9\xBAWd\x01\0\0\x03\xD0\x19`\x07\x81\x80\x93\x81\x81\x80\t\t\x08\x91\x80\t\x14\x90V[PP_\x90V[Pd\x01\0\0\x03\xD0\x19\x82\x10\x15a9\x9DV[P\x81\x15a9\x96V[Pd\x01\0\0\x03\xD0\x19\x81\x10\x15a9\x8FV[\x92\x93\x92\x90\x91_\x90\x80\x83\x03a;\xD9WPPd\x01\0\0\x03\xD0\x19_\x94\x83\x08a:\x11WPP\x90P_\x90_\x90V[_a:#\x92d\x01\0\0\x03\xD0\x19\x92aA\x05V[\x93\x90\x91\x90[\x84\x15\x15\x85\x81a;\xC8W[P\x80a;\xC0W[\x15a;bW\x80\x94`\x01\x90d\x01\0\0\x03\xD0\x19\x91\x81\x84\x92[a:\xA3WPPPP\x80a:vWP\x90d\x01\0\0\x03\xD0\x19\x80\x92\x81\x80\x87\x80\t\x80\x92\t\x95\t\x90\t\x90V[\x80\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`$\x92R`\x12`\x04R\xFD[a:\xB0\x81\x85\x9A\x94\x95aA\xBFV[\x91\x80\x94a;5Wd\x01\0\0\x03\xD0\x19\x90\x83\td\x01\0\0\x03\xD0\x19\x03d\x01\0\0\x03\xD0\x19\x81\x11a#ZWd\x01\0\0\x03\xD0\x19\x90\x86\x94\x08\x93\x98\x81\x92\x82\x81\x02\x92\x81\x84\x04\x14\x90\x15\x17\x15a;\x08W\x90a:\xFF\x91a,EV[\x90\x92\x90\x80a:OV[`$\x86\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R`\x11`\x04R\xFD[`$\x86\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R`\x12`\x04R\xFD[`d`@Q\x7F\x08\xC3y\xA0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R` `\x04\x82\x01R`\x0E`$\x82\x01R\x7FInvalid number\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`D\x82\x01R\xFD[P`\x01a:9V[d\x01\0\0\x03\xD0\x19\x91P\x14\x15_a:2V[a;\xED\x93d\x01\0\0\x03\xD0\x19\x93\x96\x92\x96a>\xCBV[\x93\x90\x91\x90a:(V[\x80_R\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\x01` R`@_ T\x15_\x14a<\xA6Wa<S\x81\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\0a3\xEFV[\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\0T\x90_R\x7F],\xC4K\xCFA\xD62H\x82\xF1\xC0\xD7\t\xF1\xB9\xAE \xCA\xEE\xBC\xBF#X\x12z=\n\x8C\"\xCC\x01` R`@_ U`\x01\x90V[P_\x90V[\x80_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R`@_ T\x15_\x14a<\xA6Wa=\x08\x81\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03a3\xEFV[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03T\x90_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R`@_ U`\x01\x90V[\x7F\xCC\x1D/\x83\x84E\xDBz\xECC\x1D\xF9\xEE\x8A\x87\x1F@\xE7\xAA^\x06O\xC0Vc>\xF8\xC6\x0F\xAB{\x06_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R\x7F]\xEB\x94n\xBB\xF6\x17\xE3c1\xF9\xB8\xF5\x82\xF1\x16E#(9\xEC5\xAAN\xA6\xE3\x12LBb\xE9nTa>\xA2Wa>\x12\x7F\xCC\x1D/\x83\x84E\xDBz\xECC\x1D\xF9\xEE\x8A\x87\x1F@\xE7\xAA^\x06O\xC0Vc>\xF8\xC6\x0F\xAB{\x06\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03a3\xEFV[\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x03T\x7F\xCC\x1D/\x83\x84E\xDBz\xECC\x1D\xF9\xEE\x8A\x87\x1F@\xE7\xAA^\x06O\xC0Vc>\xF8\xC6\x0F\xAB{\x06_R\x7Fv*F\xA1\x1CF\x0B\x9B\xCB+\xB9\x86Q\xDA\x03\xB1\x92\xA0.*3\xAB&\xDA\x9B\xF9\xEDS\x82k\xC9\x04` R\x7F]\xEB\x94n\xBB\xF6\x17\xE3c1\xF9\xB8\xF5\x82\xF1\x16E#(9\xEC5\xAAN\xA6\xE3\x12LBb\xE9nU`\x01\x90V[_\x90V[\x90\x91a>\xBDa,\x1D\x93`@\x84R`@\x84\x01\x90a, V[\x91` \x81\x84\x03\x91\x01Ra, V[\x94\x92\x90\x93\x91\x85\x15\x80a@\xFDW[a@\xF2W\x80\x15\x80a@\xEAW[a@\xE2W`@Q`\x80\x91a>\xF8\x83\x83a+\x8DV[\x826\x837\x84\x15a@\xB5W\x84`\x01\x80\t\x80\x83R\x93\x85\x85`\x01\t\x98` \x84\x01\x99\x8AR`@\x84\x01\x92\x86\x84R\x87\x84Q`\x01\t\x93``\x86\x01\x94\x85R`@Q\x9A\x87\x8C\x01\x95\x8C\x87\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x88\x11\x17a+`W\x8A\x80\x97\x95\x81\x96\x94\x82\x95`@RQ\x90\t\x8DRQ\x90\t\x94` \x8B\x01\x95\x86RQ\x90\t\x98`@\x89\x01\x99\x8ARQ\x90\t``\x87\x01\x90\x81R\x86Q\x88Q\x14\x80\x15\x90a@\xA9W[\x15a@KW\x84\x92\x83\x80\x80\x93\x81`@Q\x9C\x85a?\xA3\x8F\x97\x88a+\x8DV[6\x877Q\x8CQa?\xB3\x90\x83a,EV[\x90\x08\x84RQ\x85Qa?\xC4\x90\x83a,EV[\x90\x08\x98` \x83\x01\x99\x8AR\x81\x80\x8B\x81\x80\x80\x80\x89Q\x8AQ\x90\t\x93`@\x8A\x01\x94\x85R\x81\x85Q\x8BQ\x90\t``\x90\x9A\x01\x99\x8ARQ\x80\t\x88Qa@\x01\x90\x83a,EV[\x90\x08\x81\x80\x87Q\x85Q\x90\t`\x02\ta@\x18\x90\x83a,EV[\x90\x08\x9CQ\x93Q\x90Q\x90\ta@,\x8C\x83a,EV[\x90\x08\x90\t\x92Q\x90Q\x90\ta@@\x90\x83a,EV[\x90\x08\x94Q\t\x91\x92\x91\x90V[`d`@Q\x7F\x08\xC3y\xA0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81R` `\x04\x82\x01R`\x1E`$\x82\x01R\x7FUse jacDouble function instead\0\0`D\x82\x01R\xFD[P\x81Q\x81Q\x14\x15a?\x87V[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x12`\x04R`$_\xFD[PPP`\x01\x90V[P\x81\x15a>\xE4V[\x94P\x92P`\x01\x91\x90PV[P\x84\x15a>\xD8V[\x93\x91\x92\x90\x92\x81\x15a@\xB5W`\x01\x82\x80aAr\x81\x80\x80\x80\x97\x81\x80aAb\x9E\x81\x8F\x81\x81\x81\x92\t\x9A\x8B\x96\x81\x8F\x81\x80\x82\x81\x93\t\x9A\x88\t`\x04\t\x98\x80\t\x90\t\x92\x80\t`\x03\t\x08\x91\x81aAU\x81\x83\x80\x08\x82a,EV[\x81\x85\x80\t\x08\x9E\x8F\x83a,EV[\x90\x08\x90\t\x93\x80\t`\x08\t\x83a,EV[\x90\x08\x94\t`\x02\t\x90V[_\x90` \x92`@Q\x90\x84\x82\x01\x92\x83R`@\x82\x01R`@\x81RaA\x9F``\x82a+\x8DV[`@Q\x91\x82\x91Q\x80\x91\x83^\x81\x01\x83\x81R\x03\x90`\x02Z\xFA\x15a\x1C\xB9W_Q\x90V[\x81\x15a@\xB5W\x04\x90V[\x81Q\x91\x90`A\x83\x03aA\xF9WaA\xF2\x92P` \x82\x01Q\x90```@\x84\x01Q\x93\x01Q_\x1A\x90aE=V[\x91\x92\x90\x91\x90V[PP_\x91`\x02\x91\x90V[`\x04\x81\x10\x15aB\xAEW\x80aB\x15WPPV[`\x01\x81\x03aBEW\x7F\xF6E\xEE\xDF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04_\xFD[`\x02\x81\x03aByWP\x7F\xFC\xE6\x98\xF7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[`\x03\x14aB\x83WPV[\x7F\xD7\x8B\xCE\x0C\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`\x04R`$_\xFD[\x7FNH{q\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0_R`!`\x04R`$_\xFD[aB\xE5\x81\x80a/\xCDV[c\xFF\xFF\xFF\xFF\x91P\x16aC\x19\x90b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[aC#\x82\x80a/\xCDV[aC,\x91aE\xCCV[\x91` \x81\x01\x90aC<\x82\x82a/\xCDV[c\xFF\xFF\xFF\xFF\x91P\x16aCp\x90b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x91aC{\x90\x82a/\xCDV[aC\x84\x91aE\xCCV[`@\x82\x01aC\x92\x81\x84a/\xCDV[c\xFF\xFF\xFF\xFF\x91P\x16aC\xC6\x90b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x90aC\xD1\x90\x84a/\xCDV[aC\xDA\x91aE\xCCV[\x91``\x84\x01\x93aC\xEA\x85\x82a/\xCDV[c\xFF\xFF\xFF\xFF\x91P\x16aD\x1E\x90b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x94aD(\x91a/\xCDV[aD1\x91aE\xCCV[\x94`@Q\x97\x88\x97`\xE0\x1B\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16` \x89\x01R\x80Q` \x81\x92\x01`$\x8A\x01^\x87\x01\x90`\xE0\x1B\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16`$\x82\x01R\x81Q` \x81\x93\x01`(\x83\x01^\x01`$\x01\x90`\xE0\x1B\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16`\x04\x82\x01R\x81Q` \x81\x93\x01`\x08\x83\x01^\x01`\x04\x01\x90`\xE0\x1B\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x16`\x04\x82\x01R\x81Q` \x81\x93\x01`\x08\x83\x01^\x01`\x04\x01`\x04\x81\x01_\x90R\x03`\x04\x01`\x1F\x19\x81\x01\x82Ra,\x1D\x90\x82a+\x8DV[\x91\x90\x7F\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF]WnsW\xA4P\x1D\xDF\xE9/Fh\x1B \xA0\x84\x11aE\xC1W\x91` \x93`\x80\x92`\xFF_\x95`@Q\x94\x85R\x16\x86\x84\x01R`@\x83\x01R``\x82\x01R\x82\x80R`\x01Z\xFA\x15a\x1C\xB9W_Qs\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x16\x15aE\xB7W\x90_\x90_\x90V[P_\x90`\x01\x90_\x90V[PPP_\x91`\x03\x91\x90V[``\x92\x91_\x91[\x81\x83\x10aE\xDFWPPPV[\x90\x91\x93aF&c\xFF\xFF\xFF\xFFaE\xF8a5Q\x88\x87\x87a4\xD8V[\x90P`\x02\x1C\x16b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[aF4a5Q\x87\x86\x86a4\xD8V[aFB\x88\x87\x87\x95\x94\x95a4\xD8V[5\x90`\x02\x82\x10\x15a\x1C\xC4W`\x01\x94` \x94\x7F\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x86\x84aG\x06\x97`\x04\x97\x96aF\xAB\x89\x98b\xFF\0\xFFc\xFF\0\xFF\0\x82`\x08\x1B\x16\x91`\x08\x1C\x16\x17c\xFF\xFF\xFF\xFF\x80\x82`\x10\x1B\x16\x91`\x10\x1C\x16\x17\x90V[\x95\x85`@Q\x9C\x89\x8E\x9AQ\x91\x82\x91\x01\x88\x8C\x01^\x89\x01\x93`\xE0\x1B\x16\x85\x84\x01R`$\x83\x017\x01\x01\x91`\xE0\x1B\x16\x83\x82\x01R\x03\x01\x7F\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xE4\x81\x01\x84R\x01\x82a+\x8DV[\x94\x01\x91\x90aE\xD3V\xFE\xA1dsolcC\0\x08$\0\n",
     );
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
-    /**```solidity
-struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes32 actionTreeRoot; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Action {
-        #[allow(missing_docs)]
-        pub consumed: alloy::sol_types::private::Vec<
-            <Consumed as alloy::sol_types::SolType>::RustType,
-        >,
-        #[allow(missing_docs)]
-        pub created: alloy::sol_types::private::Vec<
-            <Created as alloy::sol_types::SolType>::RustType,
-        >,
-        #[allow(missing_docs)]
-        pub delta: <Delta::Point as alloy::sol_types::SolType>::RustType,
-        #[allow(missing_docs)]
-        pub actionTreeRoot: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Array<Consumed>,
-            alloy::sol_types::sol_data::Array<Created>,
-            Delta::Point,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::Vec<
-                <Consumed as alloy::sol_types::SolType>::RustType,
-            >,
-            alloy::sol_types::private::Vec<
-                <Created as alloy::sol_types::SolType>::RustType,
-            >,
-            <Delta::Point as alloy::sol_types::SolType>::RustType,
-            alloy::sol_types::private::FixedBytes<32>,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Action> for UnderlyingRustTuple<'_> {
-            fn from(value: Action) -> Self {
-                (value.consumed, value.created, value.delta, value.actionTreeRoot)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Action {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    consumed: tuple.0,
-                    created: tuple.1,
-                    delta: tuple.2,
-                    actionTreeRoot: tuple.3,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Action {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Action {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::Array<
-                        Consumed,
-                    > as alloy_sol_types::SolType>::tokenize(&self.consumed),
-                    <alloy::sol_types::sol_data::Array<
-                        Created,
-                    > as alloy_sol_types::SolType>::tokenize(&self.created),
-                    <Delta::Point as alloy_sol_types::SolType>::tokenize(&self.delta),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.actionTreeRoot),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Action {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Action {
-            const NAME: &'static str = "Action";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Action(Consumed[] consumed,Created[] created,Point delta,bytes32 actionTreeRoot)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(3);
-                components
-                    .push(<Consumed as alloy_sol_types::SolStruct>::eip712_root_type());
-                components
-                    .extend(
-                        <Consumed as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-                    .push(<Created as alloy_sol_types::SolStruct>::eip712_root_type());
-                components
-                    .extend(
-                        <Created as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-                    .push(
-                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::Array<
-                        Consumed,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.consumed)
-                        .0,
-                    <alloy::sol_types::sol_data::Array<
-                        Created,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.created)
-                        .0,
-                    <Delta::Point as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.delta,
-                        )
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.actionTreeRoot,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Action {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::Array<
-                        Consumed,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.consumed,
-                    )
-                    + <alloy::sol_types::sol_data::Array<
-                        Created,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.created,
-                    )
-                    + <Delta::Point as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.delta,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.actionTreeRoot,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::Array<
-                    Consumed,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.consumed,
-                    out,
-                );
-                <alloy::sol_types::sol_data::Array<
-                    Created,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.created,
-                    out,
-                );
-                <Delta::Point as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.delta,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.actionTreeRoot,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
-    /**```solidity
-struct Consumed { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; Logic.AppData appData; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Consumed {
-        #[allow(missing_docs)]
-        pub nullifier: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub commitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub appData: <Logic::AppData as alloy::sol_types::SolType>::RustType,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            Logic::AppData,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-            <Logic::AppData as alloy::sol_types::SolType>::RustType,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Consumed> for UnderlyingRustTuple<'_> {
-            fn from(value: Consumed) -> Self {
-                (
-                    value.nullifier,
-                    value.logicRef,
-                    value.commitmentTreeRoot,
-                    value.appData,
-                )
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Consumed {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    nullifier: tuple.0,
-                    logicRef: tuple.1,
-                    commitmentTreeRoot: tuple.2,
-                    appData: tuple.3,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Consumed {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Consumed {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.nullifier),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.commitmentTreeRoot),
-                    <Logic::AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Consumed {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Consumed {
-            const NAME: &'static str = "Consumed";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Consumed(bytes32 nullifier,bytes32 logicRef,bytes32 commitmentTreeRoot,AppData appData)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(
-                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.nullifier)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.commitmentTreeRoot,
-                        )
-                        .0,
-                    <Logic::AppData as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.appData,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Consumed {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.nullifier,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.logicRef,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.commitmentTreeRoot,
-                    )
-                    + <Logic::AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.appData,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.nullifier,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.logicRef,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.commitmentTreeRoot,
-                    out,
-                );
-                <Logic::AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.appData,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
-    /**```solidity
-struct Created { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Created {
-        #[allow(missing_docs)]
-        pub commitment: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
-        #[allow(missing_docs)]
-        pub appData: <Logic::AppData as alloy::sol_types::SolType>::RustType,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            alloy::sol_types::sol_data::FixedBytes<32>,
-            Logic::AppData,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::FixedBytes<32>,
-            alloy::sol_types::private::FixedBytes<32>,
-            <Logic::AppData as alloy::sol_types::SolType>::RustType,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Created> for UnderlyingRustTuple<'_> {
-            fn from(value: Created) -> Self {
-                (value.commitment, value.logicRef, value.appData)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Created {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    commitment: tuple.0,
-                    logicRef: tuple.1,
-                    appData: tuple.2,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Created {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Created {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.commitment),
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
-                    <Logic::AppData as alloy_sol_types::SolType>::tokenize(&self.appData),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Created {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Created {
-            const NAME: &'static str = "Created";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Created(bytes32 commitment,bytes32 logicRef,AppData appData)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(
-                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
-                components
-                    .extend(
-                        <Logic::AppData as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.commitment)
-                        .0,
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
-                        .0,
-                    <Logic::AppData as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.appData,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Created {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.commitment,
-                    )
-                    + <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.logicRef,
-                    )
-                    + <Logic::AppData as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.appData,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.commitment,
-                    out,
-                );
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.logicRef,
-                    out,
-                );
-                <Logic::AppData as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.appData,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
-    /**```solidity
-struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Transaction {
-        #[allow(missing_docs)]
-        pub actions: alloy::sol_types::private::Vec<
-            <Action as alloy::sol_types::SolType>::RustType,
-        >,
-        #[allow(missing_docs)]
-        pub deltaProof: alloy::sol_types::private::Bytes,
-        #[allow(missing_docs)]
-        pub aggregationProof: alloy::sol_types::private::Bytes,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Array<Action>,
-            alloy::sol_types::sol_data::Bytes,
-            alloy::sol_types::sol_data::Bytes,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::Vec<
-                <Action as alloy::sol_types::SolType>::RustType,
-            >,
-            alloy::sol_types::private::Bytes,
-            alloy::sol_types::private::Bytes,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Transaction> for UnderlyingRustTuple<'_> {
-            fn from(value: Transaction) -> Self {
-                (value.actions, value.deltaProof, value.aggregationProof)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Transaction {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self {
-                    actions: tuple.0,
-                    deltaProof: tuple.1,
-                    aggregationProof: tuple.2,
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Transaction {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Transaction {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::Array<
-                        Action,
-                    > as alloy_sol_types::SolType>::tokenize(&self.actions),
-                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::tokenize(
-                        &self.deltaProof,
-                    ),
-                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::tokenize(
-                        &self.aggregationProof,
-                    ),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Transaction {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Transaction {
-            const NAME: &'static str = "Transaction";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed(
-                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof)",
-                )
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                let mut components = alloy_sol_types::private::Vec::with_capacity(1);
-                components
-                    .push(<Action as alloy_sol_types::SolStruct>::eip712_root_type());
-                components
-                    .extend(<Action as alloy_sol_types::SolStruct>::eip712_components());
-                components
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::Array<
-                        Action,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.actions)
-                        .0,
-                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.deltaProof,
-                        )
-                        .0,
-                    <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.aggregationProof,
-                        )
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Transaction {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::Array<
-                        Action,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.actions,
-                    )
-                    + <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.deltaProof,
-                    )
-                    + <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.aggregationProof,
-                    )
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::Array<
-                    Action,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.actions,
-                    out,
-                );
-                <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.deltaProof,
-                    out,
-                );
-                <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.aggregationProof,
-                    out,
-                );
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Custom error with signature `AddressEmptyCode(address)` and selector `0x9996b315`.
@@ -5163,13 +5023,13 @@ error OwnableUnauthorizedAccount(address account);
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Custom error with signature `PointNotOnCurve((uint256,uint256))` and selector `0xb8a0e8a1`.
 ```solidity
-error PointNotOnCurve(Delta.Point point);
+error PointNotOnCurve(IProtocolAdapter.Delta point);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct PointNotOnCurve {
         #[allow(missing_docs)]
-        pub point: <Delta::Point as alloy::sol_types::SolType>::RustType,
+        pub point: <IProtocolAdapter::Delta as alloy::sol_types::SolType>::RustType,
     }
     #[allow(
         non_camel_case_types,
@@ -5181,10 +5041,10 @@ error PointNotOnCurve(Delta.Point point);
         use alloy::sol_types as alloy_sol_types;
         #[doc(hidden)]
         #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (Delta::Point,);
+        type UnderlyingSolTuple<'a> = (IProtocolAdapter::Delta,);
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
-            <Delta::Point as alloy::sol_types::SolType>::RustType,
+            <IProtocolAdapter::Delta as alloy::sol_types::SolType>::RustType,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -5227,7 +5087,11 @@ error PointNotOnCurve(Delta.Point point);
             }
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
-                (<Delta::Point as alloy_sol_types::SolType>::tokenize(&self.point),)
+                (
+                    <IProtocolAdapter::Delta as alloy_sol_types::SolType>::tokenize(
+                        &self.point,
+                    ),
+                )
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
@@ -8897,13 +8761,13 @@ function emergencyStop() external;
     #[derive()]
     /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
 ```solidity
-function execute(Transaction memory transaction) external;
+function execute(IProtocolAdapter.Transaction memory transaction) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct executeCall {
         #[allow(missing_docs)]
-        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+        pub transaction: <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
     }
     ///Container type for the return parameters of the [`execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))`](executeCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
@@ -8920,10 +8784,10 @@ function execute(Transaction memory transaction) external;
         {
             #[doc(hidden)]
             #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (Transaction,);
+            type UnderlyingSolTuple<'a> = (IProtocolAdapter::Transaction,);
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <Transaction as alloy::sol_types::SolType>::RustType,
+                <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -8992,7 +8856,7 @@ function execute(Transaction memory transaction) external;
         }
         #[automatically_derived]
         impl alloy_sol_types::SolCall for executeCall {
-            type Parameters<'a> = (Transaction,);
+            type Parameters<'a> = (IProtocolAdapter::Transaction,);
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -9011,7 +8875,11 @@ function execute(Transaction memory transaction) external;
             }
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
-                (<Transaction as alloy_sol_types::SolType>::tokenize(&self.transaction),)
+                (
+                    <IProtocolAdapter::Transaction as alloy_sol_types::SolType>::tokenize(
+                        &self.transaction,
+                    ),
+                )
             }
             #[inline]
             fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
@@ -11424,13 +11292,13 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
     #[derive()]
     /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)` and selector `0x87093eba`.
 ```solidity
-function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+function simulateExecute(IProtocolAdapter.Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct simulateExecuteCall {
         #[allow(missing_docs)]
-        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+        pub transaction: <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
         #[allow(missing_docs)]
         pub skipRiscZeroProofVerification: bool,
     }
@@ -11450,12 +11318,12 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             #[doc(hidden)]
             #[allow(dead_code)]
             type UnderlyingSolTuple<'a> = (
-                Transaction,
+                IProtocolAdapter::Transaction,
                 alloy::sol_types::sol_data::Bool,
             );
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <Transaction as alloy::sol_types::SolType>::RustType,
+                <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
                 bool,
             );
             #[cfg(test)]
@@ -11530,7 +11398,10 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         }
         #[automatically_derived]
         impl alloy_sol_types::SolCall for simulateExecuteCall {
-            type Parameters<'a> = (Transaction, alloy::sol_types::sol_data::Bool);
+            type Parameters<'a> = (
+                IProtocolAdapter::Transaction,
+                alloy::sol_types::sol_data::Bool,
+            );
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -11550,7 +11421,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
                 (
-                    <Transaction as alloy_sol_types::SolType>::tokenize(
+                    <IProtocolAdapter::Transaction as alloy_sol_types::SolType>::tokenize(
                         &self.transaction,
                     ),
                     <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
@@ -14996,7 +14867,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
             &self,
-            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+            transaction: <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
         ) -> alloy_contract::SolCallBuilder<&P, executeCall, N> {
             self.call_builder(&executeCall { transaction })
         }
@@ -15112,7 +14983,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`simulateExecute`] function.
         pub fn simulateExecute(
             &self,
-            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+            transaction: <IProtocolAdapter::Transaction as alloy::sol_types::SolType>::RustType,
             skipRiscZeroProofVerification: bool,
         ) -> alloy_contract::SolCallBuilder<&P, simulateExecuteCall, N> {
             self.call_builder(

@@ -7,9 +7,9 @@ use anoma_rm_risc0::proving_system::encode_seal;
 use anoma_rm_risc0::transaction::{Delta as ArmDelta, Transaction};
 use anoma_rm_risc0::utils::words_to_bytes;
 
-use crate::generated::protocol_adapter::{Delta, Logic, ProtocolAdapter};
+use crate::generated::protocol_adapter::IProtocolAdapter;
 
-impl From<ExpirableBlob> for Logic::ExpirableBlob {
+impl From<ExpirableBlob> for IProtocolAdapter::ExpirableBlob {
     fn from(expirable_blob: ExpirableBlob) -> Self {
         Self {
             blob: words_to_bytes(&expirable_blob.blob).to_vec().into(),
@@ -18,34 +18,34 @@ impl From<ExpirableBlob> for Logic::ExpirableBlob {
     }
 }
 
-impl From<AppData> for Logic::AppData {
+impl From<AppData> for IProtocolAdapter::AppData {
     fn from(app_data: AppData) -> Self {
         Self {
             discoveryPayload: app_data
                 .discovery_payload
                 .into_iter()
-                .map(Logic::ExpirableBlob::from)
+                .map(IProtocolAdapter::ExpirableBlob::from)
                 .collect(),
             resourcePayload: app_data
                 .resource_payload
                 .into_iter()
-                .map(Logic::ExpirableBlob::from)
+                .map(IProtocolAdapter::ExpirableBlob::from)
                 .collect(),
             externalPayload: app_data
                 .external_payload
                 .into_iter()
-                .map(Logic::ExpirableBlob::from)
+                .map(IProtocolAdapter::ExpirableBlob::from)
                 .collect(),
             applicationPayload: app_data
                 .application_payload
                 .into_iter()
-                .map(Logic::ExpirableBlob::from)
+                .map(IProtocolAdapter::ExpirableBlob::from)
                 .collect(),
         }
     }
 }
 
-impl From<ConsumedResourceAggregated> for ProtocolAdapter::Consumed {
+impl From<ConsumedResourceAggregated> for IProtocolAdapter::Consumed {
     fn from(consumed: ConsumedResourceAggregated) -> Self {
         Self {
             nullifier: B256::from_slice(consumed.resource_nullifier.as_bytes()),
@@ -56,7 +56,7 @@ impl From<ConsumedResourceAggregated> for ProtocolAdapter::Consumed {
     }
 }
 
-impl From<CreatedResourceAggregated> for ProtocolAdapter::Created {
+impl From<CreatedResourceAggregated> for IProtocolAdapter::Created {
     fn from(created: CreatedResourceAggregated) -> Self {
         Self {
             commitment: B256::from_slice(created.resource_commitment.as_bytes()),
@@ -66,10 +66,10 @@ impl From<CreatedResourceAggregated> for ProtocolAdapter::Created {
     }
 }
 
-impl From<ActionAggregated> for ProtocolAdapter::Action {
+impl From<ActionAggregated> for IProtocolAdapter::Action {
     fn from(action: ActionAggregated) -> Self {
         Self {
-            delta: Delta::Point {
+            unitDelta: IProtocolAdapter::Delta {
                 x: U256::from_be_slice(words_to_bytes(&action.delta_x)),
                 y: U256::from_be_slice(words_to_bytes(&action.delta_y)),
             },
@@ -77,18 +77,18 @@ impl From<ActionAggregated> for ProtocolAdapter::Action {
             consumed: action
                 .consumed_publics
                 .into_iter()
-                .map(ProtocolAdapter::Consumed::from)
+                .map(IProtocolAdapter::Consumed::from)
                 .collect(),
             created: action
                 .created_publics
                 .into_iter()
-                .map(ProtocolAdapter::Created::from)
+                .map(IProtocolAdapter::Created::from)
                 .collect(),
         }
     }
 }
 
-impl From<Transaction> for ProtocolAdapter::Transaction {
+impl From<Transaction> for IProtocolAdapter::Transaction {
     fn from(tx: Transaction) -> Self {
         let delta_proof = match &tx.delta_proof {
             ArmDelta::Witness(_) => panic!("Unbalanced Transactions cannot be converted"),
@@ -104,7 +104,7 @@ impl From<Transaction> for ProtocolAdapter::Transaction {
                 .instance
                 .actions
                 .into_iter()
-                .map(ProtocolAdapter::Action::from)
+                .map(IProtocolAdapter::Action::from)
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: Bytes::from(encode_seal(&aggregation.proof).unwrap()),

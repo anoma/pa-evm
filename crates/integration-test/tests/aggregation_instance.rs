@@ -7,7 +7,9 @@
 mod common;
 
 use alloy::sol_types::SolError;
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
+use anoma_pa_evm_bindings::generated::protocol_adapter::{
+    IProtocolAdapter, ProtocolAdapter as PaContract,
+};
 use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
@@ -33,7 +35,7 @@ where
     let env = env.context("env setup failed")?;
     let proven = prove_trivial_tx(&env).await?;
 
-    let tx: PaContract::Transaction = proven.into_arm().into();
+    let tx: IProtocolAdapter::Transaction = proven.into_arm().into();
 
     let provider = default_signer(&env)?;
     let pa = protocol_adapter(pa_address(&env)?, provider);

@@ -31,6 +31,11 @@ The three proof kinds the PA verifies — compliance for resource bookkeeping, l
 for each resource's application rules, delta for value balance. Aggregation folds
 them into a single proof.
 
+**Unit Delta**:
+The elliptic-curve point carrying the delta value of an action's compliance
+unit — one per action, summed across the transaction and checked against the
+delta proof.
+
 **Commitment Tree / Nullifier Set**:
 The PA's on-chain state — a Merkle tree of resource commitments and the set of
 spent nullifiers.
