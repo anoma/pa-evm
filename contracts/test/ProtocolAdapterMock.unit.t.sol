@@ -23,20 +23,18 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {Delta} from "../src/libs/proving/Delta.sol";
-import {Logic} from "../src/libs/proving/Logic.sol";
+import {DeltaProof} from "../src/libs/DeltaProof.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {Transaction, Action} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
-    using TxGen for Action[];
-    using TxGen for Action;
+    using TxGen for IProtocolAdapter.Action[];
+    using TxGen for IProtocolAdapter.Action;
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -78,7 +76,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         actionCount = uint8(bound(actionCount, 1, 10));
         resourcePairCount = uint8(bound(resourcePairCount, 1, 10));
 
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -100,7 +98,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         consumedCount = uint8(bound(consumedCount, 1, 5));
         createdCount = uint8(bound(createdCount, 1, 5));
 
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -127,7 +125,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -142,7 +140,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -165,7 +163,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -187,9 +185,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         configs[0] = TxGen.ActionConfig({consumedCount: 1, createdCount: 1});
         configs[1] = TxGen.ActionConfig({consumedCount: 0, createdCount: 0});
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
-        vm.expectPartialRevert(Delta.PointNotOnCurve.selector);
+        vm.expectPartialRevert(DeltaProof.PointNotOnCurve.selector);
         _mockPa.execute(txn);
     }
 
@@ -204,7 +203,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
             createdCount: uint8(bound(createdCount, 1, 5))
         });
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _mockPa.execute(txn);
     }
 
@@ -215,7 +215,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             createdCount: uint8(bound(resourcePairCount, 1, 5))
         });
 
-        (Transaction memory txn, bytes32 updatedNonce) =
+        (IProtocolAdapter.Transaction memory txn, bytes32 updatedNonce) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _mockPa.execute(txn);
 
@@ -230,7 +230,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](1);
         configs[0] = TxGen.ActionConfig({consumedCount: 2, createdCount: 0});
 
-        (Transaction memory txn, bytes32 updatedNonce) =
+        (IProtocolAdapter.Transaction memory txn, bytes32 updatedNonce) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         _mockPa.execute(txn);
 
@@ -250,7 +250,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](1);
         configs[0] = TxGen.ActionConfig({consumedCount: 1, createdCount: 0});
 
-        (Transaction memory txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
 
         vm.recordLogs();
         _mockPa.execute(txn);
@@ -266,7 +267,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_reverts_on_the_empty_transaction() public {
-        Transaction memory txn = Transaction({actions: new Action[](0), deltaProof: "", aggregationProof: ""});
+        IProtocolAdapter.Transaction memory txn = IProtocolAdapter.Transaction({
+            actions: new IProtocolAdapter.Action[](0), deltaProof: "", aggregationProof: ""
+        });
 
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_mockPa));
         _mockPa.execute(txn);
@@ -276,7 +279,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ActionConfig[] memory configs =
             TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1});
 
-        (Transaction memory tx1,) = vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        (IProtocolAdapter.Transaction memory tx1,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
         bytes32 preExistingNf = tx1.actions[0].consumed[0].nullifier;
         _mockPa.execute(tx1);
 
@@ -301,7 +305,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, resourcePairCount, actionIndex, resourceIndex) =
             _bindParameters(actionCount, resourcePairCount, actionIndex, resourceIndex);
 
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -325,7 +329,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         (actionCount, resourcePairCount, actionIndex,) = _bindParameters(actionCount, resourcePairCount, actionIndex, 0);
 
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -335,7 +339,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         txn.actions[actionIndex].actionTreeRoot = SHA256.hash(txn.actions[actionIndex].actionTreeRoot, nonce);
 
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        vm.expectPartialRevert(DeltaProof.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
 
@@ -350,7 +354,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         (actionCount, resourcePairCount, actionIndex, resourceIndex) =
             _bindParameters(actionCount, resourcePairCount, actionIndex, resourceIndex);
 
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -377,7 +381,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
 
         // Create a transaction with two resources, the created calling the forwarder.
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
         // Expect output mismatch.
         vm.expectRevert(
@@ -398,15 +402,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
 
-        Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
-        vm.expectPartialRevert(Delta.DeltaMismatch.selector);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+        vm.expectPartialRevert(DeltaProof.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
 
     function testFuzz_execute_updates_root(uint8 actionCount, uint8 resourcePairCount) public {
         (actionCount, resourcePairCount,,) = _bindParameters(actionCount, resourcePairCount, 0, 0);
         bytes32 oldRoot = _mockPa.latestCommitmentTreeRoot();
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -426,7 +430,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 resourcePairCount
     ) public {
         (actionCount, resourcePairCount,,) = _bindParameters(actionCount, resourcePairCount, 0, 0);
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -463,7 +467,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     ) public {
         (actionCount, resourcePairCount,,) = _bindParameters(actionCount, resourcePairCount, 0, 0);
         assertEq(_mockPa.nullifierCount(), 0, "initial nullifier count should be 0");
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({
@@ -483,7 +487,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_calls_the_risc_zero_verifier_router_exactly_once() public {
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -494,7 +498,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_reverts_on_vulnerable_risc_zero_verifier() public {
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -508,7 +512,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_simulateExecute_reverts_on_invalid_aggregation_proof_if_proof_verification_is_not_skipped() public {
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -523,7 +527,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_simulateExecute_reverts_with_Simulated_if_proof_verification_is_not_skipped() public {
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -534,7 +538,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_simulateExecute_skips_the_verification_of_an_invalid_aggregation_proof() public {
-        (Transaction memory txn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -575,18 +579,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
             resource: TxGen.mockResource({
                 nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
             }),
-            appData: Logic.AppData({
-                discoveryPayload: new Logic.ExpirableBlob[](0),
-                resourcePayload: new Logic.ExpirableBlob[](0),
-                externalPayload: new Logic.ExpirableBlob[](nCalls),
-                applicationPayload: new Logic.ExpirableBlob[](0)
+            appData: IProtocolAdapter.AppData({
+                discoveryPayload: new IProtocolAdapter.ExpirableBlob[](0),
+                resourcePayload: new IProtocolAdapter.ExpirableBlob[](0),
+                externalPayload: new IProtocolAdapter.ExpirableBlob[](nCalls),
+                applicationPayload: new IProtocolAdapter.ExpirableBlob[](0)
             })
         });
 
-        Logic.ExpirableBlob[] memory externalBlobs = new Logic.ExpirableBlob[](nCalls);
+        IProtocolAdapter.ExpirableBlob[] memory externalBlobs = new IProtocolAdapter.ExpirableBlob[](nCalls);
         for (uint256 i = 0; i < nCalls; ++i) {
-            externalBlobs[i] = Logic.ExpirableBlob({
-                deletionCriterion: Logic.DeletionCriterion.Never,
+            externalBlobs[i] = IProtocolAdapter.ExpirableBlob({
+                deletionCriterion: IProtocolAdapter.DeletionCriterion.Never,
                 blob: abi.encode(address(fwdList[i]), _input, EXPECTED_OUTPUT)
             });
         }

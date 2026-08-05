@@ -14,8 +14,8 @@ import {
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
+import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {ProtocolAdapterResumableMock} from "./mocks/ProtocolAdapterResumable.m.sol";
 
@@ -44,7 +44,7 @@ contract ProtocolAdapterUpgradeTest is Test {
 
     function test_upgrade_allows_replacing_the_risc_zero_verifier_selector_after_an_emergency_stop() public {
         // Execute a transaction proven against the old verifier.
-        (Transaction memory oldTxn, bytes32 nonce) = vm.transaction({
+        (IProtocolAdapter.Transaction memory oldTxn, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -63,7 +63,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         // A fresh transaction proven against the stopped verifier reverts on proof verification. A fresh
         // transaction is needed because the state transition — rejecting the replayed nullifiers of `oldTxn` —
         // precedes proof verification.
-        (Transaction memory secondOldTxn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory secondOldTxn,) = vm.transaction({
             mockVerifier: _verifier,
             nonce: nonce,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -95,7 +95,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         assertEq(_pa.commitmentCount(), commitmentCountBeforeUpgrade, "the commitment count should survive the upgrade");
 
         // Transactions proven against the new verifier execute.
-        (Transaction memory newTxn,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory newTxn,) = vm.transaction({
             mockVerifier: newVerifier,
             nonce: bytes32(uint256(1000)),
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -117,7 +117,7 @@ contract ProtocolAdapterUpgradeTest is Test {
     /// upgrade to an implementation carrying a recovery path.
     function test_upgrade_allows_lifting_the_pause_set_by_an_emergency_stop() public {
         // Execute a transaction while the protocol adapter is operational.
-        (Transaction memory txnBeforeStop, bytes32 nonce) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txnBeforeStop, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -135,7 +135,7 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // Execution is halted. The `whenNotPaused` modifier rejects the transaction before it touches any state, so
         // this very transaction can be replayed once the pause is lifted.
-        (Transaction memory txnAfterStop,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txnAfterStop,) = vm.transaction({
             mockVerifier: _verifier,
             nonce: nonce,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
