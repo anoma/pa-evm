@@ -5,6 +5,7 @@ import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCur
 import {Test} from "forge-std-1.16.1/src/Test.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
+import {Types} from "../../src/Types.sol";
 
 /**
  * @title EllipticCurvePropertiesTest
@@ -108,7 +109,7 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
 
         assertTrue(
-            _isPointAtInfinity(Delta.Point(resultX, resultY)), "GROUP PROPERTY: P + (-P) must equal point at infinity"
+            _isPointAtInfinity(Types.Delta(resultX, resultY)), "GROUP PROPERTY: P + (-P) must equal point at infinity"
         );
     }
 
@@ -186,7 +187,7 @@ contract EllipticCurvePropertiesTest is Test {
             EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: Delta._AA, _pp: Delta._PP});
 
         // Result must be on curve or at infinity
-        bool atInfinity = _isPointAtInfinity(Delta.Point(resultX, resultY));
+        bool atInfinity = _isPointAtInfinity(Types.Delta(resultX, resultY));
         bool onCurve =
             EllipticCurve.isOnCurve({_x: resultX, _y: resultY, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP});
 
@@ -206,7 +207,7 @@ contract EllipticCurvePropertiesTest is Test {
 
         // P + (-P) should equal point at infinity
         assertTrue(
-            _isPointAtInfinity(Delta.Point(rx, ry)),
+            _isPointAtInfinity(Types.Delta(rx, ry)),
             "With REDUCED coordinates: (3,5) + (3,2) correctly gives point at infinity"
         );
     }
@@ -254,7 +255,7 @@ contract EllipticCurvePropertiesTest is Test {
         (uint256 rx, uint256 ry) =
             EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
 
-        assertTrue(_isPointAtInfinity(Delta.Point(rx, ry)), "G + (-G) should be point at infinity");
+        assertTrue(_isPointAtInfinity(Types.Delta(rx, ry)), "G + (-G) should be point at infinity");
     }
 
     /// @notice Concrete: (G + 2G) + 3G = G + (2G + 3G) = 6G
@@ -293,7 +294,7 @@ contract EllipticCurvePropertiesTest is Test {
     /// @notice Returns whether a point is at infinity or not..
     /// @param p The point to check.
     /// @return isAtInfinity Whether the point is at infinity or not.
-    function _isPointAtInfinity(Delta.Point memory p) internal pure returns (bool isAtInfinity) {
+    function _isPointAtInfinity(Types.Delta memory p) internal pure returns (bool isAtInfinity) {
         isAtInfinity = p.x == 0 && p.y == 0;
     }
 }

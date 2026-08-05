@@ -1,7 +1,7 @@
 use alloy::providers::DynProvider;
 use alloy::providers::Provider;
 use alloy::rpc::types::TransactionTrait;
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
+use anoma_pa_evm_bindings::generated::protocol_adapter::{ProtocolAdapter as PaContract, Types};
 use anyhow::Context;
 
 pub(super) const ERROR_STRING_SELECTOR: [u8; 4] = [0x08, 0xc3, 0x79, 0xa0];
@@ -9,7 +9,7 @@ pub(super) const PANIC_SELECTOR: [u8; 4] = [0x4e, 0x48, 0x7b, 0x71];
 
 pub(in crate::envs) async fn execute_on_pa(
     pa: &PaContract::ProtocolAdapterInstance<DynProvider>,
-    tx: PaContract::Transaction,
+    tx: Types::Transaction,
 ) -> anyhow::Result<alloy::rpc::types::TransactionReceipt> {
     preflight_check(pa, tx.clone()).await?;
 
@@ -42,7 +42,7 @@ pub(in crate::envs) async fn execute_on_pa(
 
 async fn preflight_check(
     pa: &PaContract::ProtocolAdapterInstance<DynProvider>,
-    tx: PaContract::Transaction,
+    tx: Types::Transaction,
 ) -> anyhow::Result<()> {
     match pa.execute(tx).call().await {
         Ok(_) => Ok(()),

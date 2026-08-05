@@ -2,356 +2,6 @@
 /**
 
 ```solidity
-library Delta {
-    struct Point { uint256 x; uint256 y; }
-}
-```*/
-#[allow(
-    non_camel_case_types,
-    non_snake_case,
-    clippy::pub_underscore_fields,
-    clippy::style,
-    clippy::empty_structs_with_brackets
-)]
-pub mod Delta {
-    use super::*;
-    use alloy::sol_types as alloy_sol_types;
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**```solidity
-struct Point { uint256 x; uint256 y; }
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct Point {
-        #[allow(missing_docs)]
-        pub x: alloy::sol_types::private::primitives::aliases::U256,
-        #[allow(missing_docs)]
-        pub y: alloy::sol_types::private::primitives::aliases::U256,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[doc(hidden)]
-        #[allow(dead_code)]
-        type UnderlyingSolTuple<'a> = (
-            alloy::sol_types::sol_data::Uint<256>,
-            alloy::sol_types::sol_data::Uint<256>,
-        );
-        #[doc(hidden)]
-        type UnderlyingRustTuple<'a> = (
-            alloy::sol_types::private::primitives::aliases::U256,
-            alloy::sol_types::private::primitives::aliases::U256,
-        );
-        #[cfg(test)]
-        #[allow(dead_code, unreachable_patterns)]
-        fn _type_assertion(
-            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-        ) {
-            match _t {
-                alloy_sol_types::private::AssertTypeEq::<
-                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                >(_) => {}
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<Point> for UnderlyingRustTuple<'_> {
-            fn from(value: Point) -> Self {
-                (value.x, value.y)
-            }
-        }
-        #[automatically_derived]
-        #[doc(hidden)]
-        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Point {
-            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                Self { x: tuple.0, y: tuple.1 }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolValue for Point {
-            type SolType = Self;
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<Self> for Point {
-            #[inline]
-            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.x),
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.y),
-                )
-            }
-            #[inline]
-            fn stv_abi_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
-            }
-            #[inline]
-            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
-            }
-            #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
-            }
-            #[inline]
-            fn stv_abi_packed_encoded_size(&self) -> usize {
-                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
-                    return size;
-                }
-                let tuple = <UnderlyingRustTuple<
-                    '_,
-                > as ::core::convert::From<Self>>::from(self.clone());
-                <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolType for Point {
-            type RustType = Self;
-            type Token<'a> = <UnderlyingSolTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
-            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::ENCODED_SIZE;
-            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
-                '_,
-            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
-            #[inline]
-            fn valid_token(token: &Self::Token<'_>) -> bool {
-                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
-            }
-            #[inline]
-            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                let tuple = <UnderlyingSolTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::detokenize(token);
-                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolStruct for Point {
-            const NAME: &'static str = "Point";
-            #[inline]
-            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
-                alloy_sol_types::private::Cow::Borrowed("Point(uint256 x,uint256 y)")
-            }
-            #[inline]
-            fn eip712_components() -> alloy_sol_types::private::Vec<
-                alloy_sol_types::private::Cow<'static, str>,
-            > {
-                alloy_sol_types::private::Vec::new()
-            }
-            #[inline]
-            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
-                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
-            }
-            #[inline]
-            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
-                [
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.x)
-                        .0,
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::eip712_data_word(&self.y)
-                        .0,
-                ]
-                    .concat()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::EventTopic for Point {
-            #[inline]
-            fn topic_preimage_length(rust: &Self::RustType) -> usize {
-                0usize
-                    + <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.x)
-                    + <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.y)
-            }
-            #[inline]
-            fn encode_topic_preimage(
-                rust: &Self::RustType,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
-                out.reserve(
-                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
-                );
-                <alloy::sol_types::sol_data::Uint<
-                    256,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.x, out);
-                <alloy::sol_types::sol_data::Uint<
-                    256,
-                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.y, out);
-            }
-            #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
-                let mut out = alloy_sol_types::private::Vec::new();
-                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    rust,
-                    &mut out,
-                );
-                alloy_sol_types::abi::token::WordToken(
-                    alloy_sol_types::private::keccak256(out),
-                )
-            }
-        }
-    };
-    use alloy::contract as alloy_contract;
-    /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
-
-See the [wrapper's documentation](`DeltaInstance`) for more details.*/
-    #[inline]
-    pub const fn new<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    >(address: alloy_sol_types::private::Address, __provider: P) -> DeltaInstance<P, N> {
-        DeltaInstance::<P, N>::new(address, __provider)
-    }
-    /**A [`Delta`](self) instance.
-
-Contains type-safe methods for interacting with an on-chain instance of the
-[`Delta`](self) contract located at a given `address`, using a given
-provider `P`.
-
-If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
-documentation on how to provide it), the `deploy` and `deploy_builder` methods can
-be used to deploy a new instance of the contract.
-
-See the [module-level documentation](self) for all the available methods.*/
-    #[derive(Clone)]
-    pub struct DeltaInstance<P, N = alloy_contract::private::Ethereum> {
-        address: alloy_sol_types::private::Address,
-        provider: P,
-        _network: ::core::marker::PhantomData<N>,
-    }
-    #[automatically_derived]
-    impl<P, N> ::core::fmt::Debug for DeltaInstance<P, N> {
-        #[inline]
-        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("DeltaInstance").field(&self.address).finish()
-        }
-    }
-    /// Instantiation and getters/setters.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /**Creates a new wrapper around an on-chain [`Delta`](self) contract instance.
-
-See the [wrapper's documentation](`DeltaInstance`) for more details.*/
-        #[inline]
-        pub const fn new(
-            address: alloy_sol_types::private::Address,
-            __provider: P,
-        ) -> Self {
-            Self {
-                address,
-                provider: __provider,
-                _network: ::core::marker::PhantomData,
-            }
-        }
-        /// Returns a reference to the address.
-        #[inline]
-        pub const fn address(&self) -> &alloy_sol_types::private::Address {
-            &self.address
-        }
-        /// Sets the address.
-        #[inline]
-        pub fn set_address(&mut self, address: alloy_sol_types::private::Address) {
-            self.address = address;
-        }
-        /// Sets the address and returns `self`.
-        pub fn at(mut self, address: alloy_sol_types::private::Address) -> Self {
-            self.set_address(address);
-            self
-        }
-        /// Returns a reference to the provider.
-        #[inline]
-        pub const fn provider(&self) -> &P {
-            &self.provider
-        }
-    }
-    impl<P: ::core::clone::Clone, N> DeltaInstance<&P, N> {
-        /// Clones the provider and returns a new instance with the cloned provider.
-        #[inline]
-        pub fn with_cloned_provider(self) -> DeltaInstance<P, N> {
-            DeltaInstance {
-                address: self.address,
-                provider: ::core::clone::Clone::clone(&self.provider),
-                _network: ::core::marker::PhantomData,
-            }
-        }
-    }
-    /// Function calls.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /// Creates a new call builder using this contract instance's provider and address.
-        ///
-        /// Note that the call can be any function call, not just those defined in this
-        /// contract. Prefer using the other methods for building type-safe contract calls.
-        pub fn call_builder<C: alloy_sol_types::SolCall>(
-            &self,
-            call: &C,
-        ) -> alloy_contract::SolCallBuilder<&P, C, N> {
-            alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
-        }
-    }
-    /// Event filters.
-    impl<
-        P: alloy_contract::private::Provider<N>,
-        N: alloy_contract::private::Network,
-    > DeltaInstance<P, N> {
-        /// Creates a new event filter using this contract instance's provider and address.
-        ///
-        /// Note that the type can be any event, not just those defined in this contract.
-        /// Prefer using the other methods for building type-safe event filters.
-        pub fn event_filter<E: alloy_sol_types::SolEvent>(
-            &self,
-        ) -> alloy_contract::Event<&P, E, N> {
-            alloy_contract::Event::new_sol(&self.provider, &self.address)
-        }
-    }
-}
-///Module containing a contract's types and functions.
-/**
-
-```solidity
 library Logic {
     type DeletionCriterion is uint8;
     struct AppData { ExpirableBlob[] resourcePayload; ExpirableBlob[] discoveryPayload; ExpirableBlob[] externalPayload; ExpirableBlob[] applicationPayload; }
@@ -1177,830 +827,17 @@ See the [wrapper's documentation](`LogicInstance`) for more details.*/
         }
     }
 }
+///Module containing a contract's types and functions.
 /**
 
-Generated by the following Solidity interface...
 ```solidity
-library Delta {
-    struct Point {
-        uint256 x;
-        uint256 y;
-    }
+library Types {
+    struct Action { Consumed[] consumed; Created[] created; Delta delta; bytes32 actionTreeRoot; }
+    struct Consumed { bytes32 nullifier; bytes32 logicRef; bytes32 commitmentTreeRoot; Logic.AppData appData; }
+    struct Created { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
+    struct Delta { uint256 x; uint256 y; }
+    struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
 }
-
-library Logic {
-    type DeletionCriterion is uint8;
-    struct AppData {
-        ExpirableBlob[] resourcePayload;
-        ExpirableBlob[] discoveryPayload;
-        ExpirableBlob[] externalPayload;
-        ExpirableBlob[] applicationPayload;
-    }
-    struct ExpirableBlob {
-        DeletionCriterion deletionCriterion;
-        bytes blob;
-    }
-}
-
-interface IProtocolAdapter {
-    struct Action {
-        Consumed[] consumed;
-        Created[] created;
-        Delta.Point delta;
-        bytes32 actionTreeRoot;
-    }
-    struct Consumed {
-        bytes32 nullifier;
-        bytes32 logicRef;
-        bytes32 commitmentTreeRoot;
-        Logic.AppData appData;
-    }
-    struct Created {
-        bytes32 commitment;
-        bytes32 logicRef;
-        Logic.AppData appData;
-    }
-    struct Transaction {
-        Action[] actions;
-        bytes deltaProof;
-        bytes aggregationProof;
-    }
-
-    event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
-    event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
-    event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
-    event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
-    event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
-    event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
-    event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
-    event TransactionExecuted(bytes32 indexed transactionId);
-
-    function emergencyStop() external;
-    function execute(Transaction memory transaction) external;
-    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
-    function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
-    function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
-    function isEmergencyStopped() external view returns (bool isStopped);
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
-    function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
-}
-```
-
-...which was generated by the following JSON ABI:
-```json
-[
-  {
-    "type": "function",
-    "name": "emergencyStop",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "execute",
-    "inputs": [
-      {
-        "name": "transaction",
-        "type": "tuple",
-        "internalType": "struct Transaction",
-        "components": [
-          {
-            "name": "actions",
-            "type": "tuple[]",
-            "internalType": "struct Action[]",
-            "components": [
-              {
-                "name": "consumed",
-                "type": "tuple[]",
-                "internalType": "struct Consumed[]",
-                "components": [
-                  {
-                    "name": "nullifier",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "commitmentTreeRoot",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct Logic.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "created",
-                "type": "tuple[]",
-                "internalType": "struct Created[]",
-                "components": [
-                  {
-                    "name": "commitment",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct Logic.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "delta",
-                "type": "tuple",
-                "internalType": "struct Delta.Point",
-                "components": [
-                  {
-                    "name": "x",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "y",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ]
-              },
-              {
-                "name": "actionTreeRoot",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              }
-            ]
-          },
-          {
-            "name": "deltaProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "aggregationProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          }
-        ]
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "getKindTableCommitment",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "kindTableCommitment",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getRiscZeroVerifierRouter",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "verifierRouter",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getRiscZeroVerifierSelector",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "verifierSelector",
-        "type": "bytes4",
-        "internalType": "bytes4"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "isEmergencyStopped",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "isStopped",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "setKindTableCommitment",
-    "inputs": [
-      {
-        "name": "newKindTableCommitment",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "simulateExecute",
-    "inputs": [
-      {
-        "name": "transaction",
-        "type": "tuple",
-        "internalType": "struct Transaction",
-        "components": [
-          {
-            "name": "actions",
-            "type": "tuple[]",
-            "internalType": "struct Action[]",
-            "components": [
-              {
-                "name": "consumed",
-                "type": "tuple[]",
-                "internalType": "struct Consumed[]",
-                "components": [
-                  {
-                    "name": "nullifier",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "commitmentTreeRoot",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct Logic.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "created",
-                "type": "tuple[]",
-                "internalType": "struct Created[]",
-                "components": [
-                  {
-                    "name": "commitment",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct Logic.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct Logic.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum Logic.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "delta",
-                "type": "tuple",
-                "internalType": "struct Delta.Point",
-                "components": [
-                  {
-                    "name": "x",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "y",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ]
-              },
-              {
-                "name": "actionTreeRoot",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              }
-            ]
-          },
-          {
-            "name": "deltaProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "aggregationProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          }
-        ]
-      },
-      {
-        "name": "skipRiscZeroProofVerification",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "event",
-    "name": "ActionExecuted",
-    "inputs": [
-      {
-        "name": "actionTreeRoot",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "nullifiers",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
-      },
-      {
-        "name": "consumedLogicRefs",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
-      },
-      {
-        "name": "commitments",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
-      },
-      {
-        "name": "createdLogicRefs",
-        "type": "bytes32[]",
-        "indexed": false,
-        "internalType": "bytes32[]"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ApplicationPayload",
-    "inputs": [
-      {
-        "name": "tag",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "index",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "blob",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "DiscoveryPayload",
-    "inputs": [
-      {
-        "name": "tag",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "index",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "blob",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ExternalPayload",
-    "inputs": [
-      {
-        "name": "tag",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "index",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "blob",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ForwarderCallExecuted",
-    "inputs": [
-      {
-        "name": "untrustedForwarder",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "input",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      },
-      {
-        "name": "output",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "KindTableCommitmentUpdated",
-    "inputs": [
-      {
-        "name": "kindTableCommitment",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ResourcePayload",
-    "inputs": [
-      {
-        "name": "tag",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "index",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "blob",
-        "type": "bytes",
-        "indexed": false,
-        "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "TransactionExecuted",
-    "inputs": [
-      {
-        "name": "transactionId",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  }
-]
 ```*/
 #[allow(
     non_camel_case_types,
@@ -2009,33 +846,13 @@ interface IProtocolAdapter {
     clippy::style,
     clippy::empty_structs_with_brackets
 )]
-pub mod IProtocolAdapter {
+pub mod Types {
     use super::*;
     use alloy::sol_types as alloy_sol_types;
-    /// The creation / init bytecode of the contract.
-    ///
-    /// ```text
-    ///0x
-    /// ```
-    #[rustfmt::skip]
-    #[allow(clippy::all)]
-    pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"",
-    );
-    /// The runtime bytecode of the contract, as deployed on the network.
-    ///
-    /// ```text
-    ///0x
-    /// ```
-    #[rustfmt::skip]
-    #[allow(clippy::all)]
-    pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
-        b"",
-    );
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
-struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes32 actionTreeRoot; }
+struct Action { Consumed[] consumed; Created[] created; Delta delta; bytes32 actionTreeRoot; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -2049,7 +866,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
             <Created as alloy::sol_types::SolType>::RustType,
         >,
         #[allow(missing_docs)]
-        pub delta: <Delta::Point as alloy::sol_types::SolType>::RustType,
+        pub delta: <Delta as alloy::sol_types::SolType>::RustType,
         #[allow(missing_docs)]
         pub actionTreeRoot: alloy::sol_types::private::FixedBytes<32>,
     }
@@ -2066,7 +883,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
         type UnderlyingSolTuple<'a> = (
             alloy::sol_types::sol_data::Array<Consumed>,
             alloy::sol_types::sol_data::Array<Created>,
-            Delta::Point,
+            Delta,
             alloy::sol_types::sol_data::FixedBytes<32>,
         );
         #[doc(hidden)]
@@ -2077,7 +894,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
             alloy::sol_types::private::Vec<
                 <Created as alloy::sol_types::SolType>::RustType,
             >,
-            <Delta::Point as alloy::sol_types::SolType>::RustType,
+            <Delta as alloy::sol_types::SolType>::RustType,
             alloy::sol_types::private::FixedBytes<32>,
         );
         #[cfg(test)]
@@ -2125,7 +942,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
                     <alloy::sol_types::sol_data::Array<
                         Created,
                     > as alloy_sol_types::SolType>::tokenize(&self.created),
-                    <Delta::Point as alloy_sol_types::SolType>::tokenize(&self.delta),
+                    <Delta as alloy_sol_types::SolType>::tokenize(&self.delta),
                     <alloy::sol_types::sol_data::FixedBytes<
                         32,
                     > as alloy_sol_types::SolType>::tokenize(&self.actionTreeRoot),
@@ -2203,7 +1020,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Action(Consumed[] consumed,Created[] created,Point delta,bytes32 actionTreeRoot)",
+                    "Action(Consumed[] consumed,Created[] created,Delta delta,bytes32 actionTreeRoot)",
                 )
             }
             #[inline]
@@ -2224,13 +1041,9 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
                         <Created as alloy_sol_types::SolStruct>::eip712_components(),
                     );
                 components
-                    .push(
-                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_root_type(),
-                    );
+                    .push(<Delta as alloy_sol_types::SolStruct>::eip712_root_type());
                 components
-                    .extend(
-                        <Delta::Point as alloy_sol_types::SolStruct>::eip712_components(),
-                    );
+                    .extend(<Delta as alloy_sol_types::SolStruct>::eip712_components());
                 components
             }
             #[inline]
@@ -2244,10 +1057,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
                         Created,
                     > as alloy_sol_types::SolType>::eip712_data_word(&self.created)
                         .0,
-                    <Delta::Point as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.delta,
-                        )
-                        .0,
+                    <Delta as alloy_sol_types::SolType>::eip712_data_word(&self.delta).0,
                     <alloy::sol_types::sol_data::FixedBytes<
                         32,
                     > as alloy_sol_types::SolType>::eip712_data_word(
@@ -2273,7 +1083,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.created,
                     )
-                    + <Delta::Point as alloy_sol_types::EventTopic>::topic_preimage_length(
+                    + <Delta as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.delta,
                     )
                     + <alloy::sol_types::sol_data::FixedBytes<
@@ -2302,7 +1112,7 @@ struct Action { Consumed[] consumed; Created[] created; Delta.Point delta; bytes
                     &rust.created,
                     out,
                 );
-                <Delta::Point as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                <Delta as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.delta,
                     out,
                 );
@@ -2861,6 +1671,220 @@ struct Created { bytes32 commitment; bytes32 logicRef; Logic.AppData appData; }
         }
     };
     #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct Delta { uint256 x; uint256 y; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct Delta {
+        #[allow(missing_docs)]
+        pub x: alloy::sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
+        pub y: alloy::sol_types::private::primitives::aliases::U256,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::Uint<256>,
+            alloy::sol_types::sol_data::Uint<256>,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (
+            alloy::sol_types::private::primitives::aliases::U256,
+            alloy::sol_types::private::primitives::aliases::U256,
+        );
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<Delta> for UnderlyingRustTuple<'_> {
+            fn from(value: Delta) -> Self {
+                (value.x, value.y)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for Delta {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self { x: tuple.0, y: tuple.1 }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for Delta {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for Delta {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.x),
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.y),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for Delta {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for Delta {
+            const NAME: &'static str = "Delta";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed("Delta(uint256 x,uint256 y)")
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                alloy_sol_types::private::Vec::new()
+            }
+            #[inline]
+            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
+                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.x)
+                        .0,
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.y)
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for Delta {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.x)
+                    + <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(&rust.y)
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.x, out);
+                <alloy::sol_types::sol_data::Uint<
+                    256,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(&rust.y, out);
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
     #[derive()]
     /**```solidity
 struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
@@ -3109,6 +2133,978 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
             }
         }
     };
+    use alloy::contract as alloy_contract;
+    /**Creates a new wrapper around an on-chain [`Types`](self) contract instance.
+
+See the [wrapper's documentation](`TypesInstance`) for more details.*/
+    #[inline]
+    pub const fn new<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    >(address: alloy_sol_types::private::Address, __provider: P) -> TypesInstance<P, N> {
+        TypesInstance::<P, N>::new(address, __provider)
+    }
+    /**A [`Types`](self) instance.
+
+Contains type-safe methods for interacting with an on-chain instance of the
+[`Types`](self) contract located at a given `address`, using a given
+provider `P`.
+
+If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
+documentation on how to provide it), the `deploy` and `deploy_builder` methods can
+be used to deploy a new instance of the contract.
+
+See the [module-level documentation](self) for all the available methods.*/
+    #[derive(Clone)]
+    pub struct TypesInstance<P, N = alloy_contract::private::Ethereum> {
+        address: alloy_sol_types::private::Address,
+        provider: P,
+        _network: ::core::marker::PhantomData<N>,
+    }
+    #[automatically_derived]
+    impl<P, N> ::core::fmt::Debug for TypesInstance<P, N> {
+        #[inline]
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            f.debug_tuple("TypesInstance").field(&self.address).finish()
+        }
+    }
+    /// Instantiation and getters/setters.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > TypesInstance<P, N> {
+        /**Creates a new wrapper around an on-chain [`Types`](self) contract instance.
+
+See the [wrapper's documentation](`TypesInstance`) for more details.*/
+        #[inline]
+        pub const fn new(
+            address: alloy_sol_types::private::Address,
+            __provider: P,
+        ) -> Self {
+            Self {
+                address,
+                provider: __provider,
+                _network: ::core::marker::PhantomData,
+            }
+        }
+        /// Returns a reference to the address.
+        #[inline]
+        pub const fn address(&self) -> &alloy_sol_types::private::Address {
+            &self.address
+        }
+        /// Sets the address.
+        #[inline]
+        pub fn set_address(&mut self, address: alloy_sol_types::private::Address) {
+            self.address = address;
+        }
+        /// Sets the address and returns `self`.
+        pub fn at(mut self, address: alloy_sol_types::private::Address) -> Self {
+            self.set_address(address);
+            self
+        }
+        /// Returns a reference to the provider.
+        #[inline]
+        pub const fn provider(&self) -> &P {
+            &self.provider
+        }
+    }
+    impl<P: ::core::clone::Clone, N> TypesInstance<&P, N> {
+        /// Clones the provider and returns a new instance with the cloned provider.
+        #[inline]
+        pub fn with_cloned_provider(self) -> TypesInstance<P, N> {
+            TypesInstance {
+                address: self.address,
+                provider: ::core::clone::Clone::clone(&self.provider),
+                _network: ::core::marker::PhantomData,
+            }
+        }
+    }
+    /// Function calls.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > TypesInstance<P, N> {
+        /// Creates a new call builder using this contract instance's provider and address.
+        ///
+        /// Note that the call can be any function call, not just those defined in this
+        /// contract. Prefer using the other methods for building type-safe contract calls.
+        pub fn call_builder<C: alloy_sol_types::SolCall>(
+            &self,
+            call: &C,
+        ) -> alloy_contract::SolCallBuilder<&P, C, N> {
+            alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
+        }
+    }
+    /// Event filters.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > TypesInstance<P, N> {
+        /// Creates a new event filter using this contract instance's provider and address.
+        ///
+        /// Note that the type can be any event, not just those defined in this contract.
+        /// Prefer using the other methods for building type-safe event filters.
+        pub fn event_filter<E: alloy_sol_types::SolEvent>(
+            &self,
+        ) -> alloy_contract::Event<&P, E, N> {
+            alloy_contract::Event::new_sol(&self.provider, &self.address)
+        }
+    }
+}
+/**
+
+Generated by the following Solidity interface...
+```solidity
+library Logic {
+    type DeletionCriterion is uint8;
+    struct AppData {
+        ExpirableBlob[] resourcePayload;
+        ExpirableBlob[] discoveryPayload;
+        ExpirableBlob[] externalPayload;
+        ExpirableBlob[] applicationPayload;
+    }
+    struct ExpirableBlob {
+        DeletionCriterion deletionCriterion;
+        bytes blob;
+    }
+}
+
+library Types {
+    struct Action {
+        Consumed[] consumed;
+        Created[] created;
+        Delta delta;
+        bytes32 actionTreeRoot;
+    }
+    struct Consumed {
+        bytes32 nullifier;
+        bytes32 logicRef;
+        bytes32 commitmentTreeRoot;
+        Logic.AppData appData;
+    }
+    struct Created {
+        bytes32 commitment;
+        bytes32 logicRef;
+        Logic.AppData appData;
+    }
+    struct Delta {
+        uint256 x;
+        uint256 y;
+    }
+    struct Transaction {
+        Action[] actions;
+        bytes deltaProof;
+        bytes aggregationProof;
+    }
+}
+
+interface IProtocolAdapter {
+    event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
+    event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
+    event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
+    event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
+    event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
+    event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
+    event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
+    event TransactionExecuted(bytes32 indexed transactionId);
+
+    function emergencyStop() external;
+    function execute(Types.Transaction memory transaction) external;
+    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+    function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
+    function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
+    function isEmergencyStopped() external view returns (bool isStopped);
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
+    function simulateExecute(Types.Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+}
+```
+
+...which was generated by the following JSON ABI:
+```json
+[
+  {
+    "type": "function",
+    "name": "emergencyStop",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "execute",
+    "inputs": [
+      {
+        "name": "transaction",
+        "type": "tuple",
+        "internalType": "struct Types.Transaction",
+        "components": [
+          {
+            "name": "actions",
+            "type": "tuple[]",
+            "internalType": "struct Types.Action[]",
+            "components": [
+              {
+                "name": "consumed",
+                "type": "tuple[]",
+                "internalType": "struct Types.Consumed[]",
+                "components": [
+                  {
+                    "name": "nullifier",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "commitmentTreeRoot",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
+                    "type": "tuple",
+                    "internalType": "struct Logic.AppData",
+                    "components": [
+                      {
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "created",
+                "type": "tuple[]",
+                "internalType": "struct Types.Created[]",
+                "components": [
+                  {
+                    "name": "commitment",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
+                    "type": "tuple",
+                    "internalType": "struct Logic.AppData",
+                    "components": [
+                      {
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "delta",
+                "type": "tuple",
+                "internalType": "struct Types.Delta",
+                "components": [
+                  {
+                    "name": "x",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "y",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "actionTreeRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "deltaProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "aggregationProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getKindTableCommitment",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "kindTableCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRiscZeroVerifierRouter",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "verifierRouter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRiscZeroVerifierSelector",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "verifierSelector",
+        "type": "bytes4",
+        "internalType": "bytes4"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isEmergencyStopped",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "isStopped",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setKindTableCommitment",
+    "inputs": [
+      {
+        "name": "newKindTableCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "simulateExecute",
+    "inputs": [
+      {
+        "name": "transaction",
+        "type": "tuple",
+        "internalType": "struct Types.Transaction",
+        "components": [
+          {
+            "name": "actions",
+            "type": "tuple[]",
+            "internalType": "struct Types.Action[]",
+            "components": [
+              {
+                "name": "consumed",
+                "type": "tuple[]",
+                "internalType": "struct Types.Consumed[]",
+                "components": [
+                  {
+                    "name": "nullifier",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "commitmentTreeRoot",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
+                    "type": "tuple",
+                    "internalType": "struct Logic.AppData",
+                    "components": [
+                      {
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "created",
+                "type": "tuple[]",
+                "internalType": "struct Types.Created[]",
+                "components": [
+                  {
+                    "name": "commitment",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "logicRef",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "appData",
+                    "type": "tuple",
+                    "internalType": "struct Logic.AppData",
+                    "components": [
+                      {
+                        "name": "resourcePayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "discoveryPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "externalPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "applicationPayload",
+                        "type": "tuple[]",
+                        "internalType": "struct Logic.ExpirableBlob[]",
+                        "components": [
+                          {
+                            "name": "deletionCriterion",
+                            "type": "uint8",
+                            "internalType": "enum Logic.DeletionCriterion"
+                          },
+                          {
+                            "name": "blob",
+                            "type": "bytes",
+                            "internalType": "bytes"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "delta",
+                "type": "tuple",
+                "internalType": "struct Types.Delta",
+                "components": [
+                  {
+                    "name": "x",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  },
+                  {
+                    "name": "y",
+                    "type": "uint256",
+                    "internalType": "uint256"
+                  }
+                ]
+              },
+              {
+                "name": "actionTreeRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "deltaProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "aggregationProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "skipRiscZeroProofVerification",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "ActionExecuted",
+    "inputs": [
+      {
+        "name": "actionTreeRoot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "nullifiers",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "consumedLogicRefs",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "commitments",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "createdLogicRefs",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ApplicationPayload",
+    "inputs": [
+      {
+        "name": "tag",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "index",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "blob",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "DiscoveryPayload",
+    "inputs": [
+      {
+        "name": "tag",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "index",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "blob",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ExternalPayload",
+    "inputs": [
+      {
+        "name": "tag",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "index",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "blob",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ForwarderCallExecuted",
+    "inputs": [
+      {
+        "name": "untrustedForwarder",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "input",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      },
+      {
+        "name": "output",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "KindTableCommitmentUpdated",
+    "inputs": [
+      {
+        "name": "kindTableCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ResourcePayload",
+    "inputs": [
+      {
+        "name": "tag",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "index",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "blob",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TransactionExecuted",
+    "inputs": [
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  }
+]
+```*/
+#[allow(
+    non_camel_case_types,
+    non_snake_case,
+    clippy::pub_underscore_fields,
+    clippy::style,
+    clippy::empty_structs_with_brackets
+)]
+pub mod IProtocolAdapter {
+    use super::*;
+    use alloy::sol_types as alloy_sol_types;
+    /// The creation / init bytecode of the contract.
+    ///
+    /// ```text
+    ///0x
+    /// ```
+    #[rustfmt::skip]
+    #[allow(clippy::all)]
+    pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
+        b"",
+    );
+    /// The runtime bytecode of the contract, as deployed on the network.
+    ///
+    /// ```text
+    ///0x
+    /// ```
+    #[rustfmt::skip]
+    #[allow(clippy::all)]
+    pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
+        b"",
+    );
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Event with signature `ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])` and selector `0x4ce7c1102060be4f28b229199140fdd5112d4214fe9541bc9b23541e4592cc32`.
@@ -4248,13 +4244,13 @@ function emergencyStop() external;
     #[derive()]
     /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
 ```solidity
-function execute(Transaction memory transaction) external;
+function execute(Types.Transaction memory transaction) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct executeCall {
         #[allow(missing_docs)]
-        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+        pub transaction: <Types::Transaction as alloy::sol_types::SolType>::RustType,
     }
     ///Container type for the return parameters of the [`execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))`](executeCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
@@ -4271,10 +4267,10 @@ function execute(Transaction memory transaction) external;
         {
             #[doc(hidden)]
             #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (Transaction,);
+            type UnderlyingSolTuple<'a> = (Types::Transaction,);
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <Transaction as alloy::sol_types::SolType>::RustType,
+                <Types::Transaction as alloy::sol_types::SolType>::RustType,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -4343,7 +4339,7 @@ function execute(Transaction memory transaction) external;
         }
         #[automatically_derived]
         impl alloy_sol_types::SolCall for executeCall {
-            type Parameters<'a> = (Transaction,);
+            type Parameters<'a> = (Types::Transaction,);
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -4362,7 +4358,11 @@ function execute(Transaction memory transaction) external;
             }
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
-                (<Transaction as alloy_sol_types::SolType>::tokenize(&self.transaction),)
+                (
+                    <Types::Transaction as alloy_sol_types::SolType>::tokenize(
+                        &self.transaction,
+                    ),
+                )
             }
             #[inline]
             fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
@@ -5142,13 +5142,13 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
     #[derive()]
     /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)` and selector `0x87093eba`.
 ```solidity
-function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+function simulateExecute(Types.Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct simulateExecuteCall {
         #[allow(missing_docs)]
-        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+        pub transaction: <Types::Transaction as alloy::sol_types::SolType>::RustType,
         #[allow(missing_docs)]
         pub skipRiscZeroProofVerification: bool,
     }
@@ -5168,12 +5168,12 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             #[doc(hidden)]
             #[allow(dead_code)]
             type UnderlyingSolTuple<'a> = (
-                Transaction,
+                Types::Transaction,
                 alloy::sol_types::sol_data::Bool,
             );
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <Transaction as alloy::sol_types::SolType>::RustType,
+                <Types::Transaction as alloy::sol_types::SolType>::RustType,
                 bool,
             );
             #[cfg(test)]
@@ -5248,7 +5248,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         }
         #[automatically_derived]
         impl alloy_sol_types::SolCall for simulateExecuteCall {
-            type Parameters<'a> = (Transaction, alloy::sol_types::sol_data::Bool);
+            type Parameters<'a> = (Types::Transaction, alloy::sol_types::sol_data::Bool);
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -5268,7 +5268,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
                 (
-                    <Transaction as alloy_sol_types::SolType>::tokenize(
+                    <Types::Transaction as alloy_sol_types::SolType>::tokenize(
                         &self.transaction,
                     ),
                     <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
@@ -6154,7 +6154,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
             &self,
-            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+            transaction: <Types::Transaction as alloy::sol_types::SolType>::RustType,
         ) -> alloy_contract::SolCallBuilder<&P, executeCall, N> {
             self.call_builder(&executeCall { transaction })
         }
@@ -6196,7 +6196,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`simulateExecute`] function.
         pub fn simulateExecute(
             &self,
-            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
+            transaction: <Types::Transaction as alloy::sol_types::SolType>::RustType,
             skipRiscZeroProofVerification: bool,
         ) -> alloy_contract::SolCallBuilder<&P, simulateExecuteCall, N> {
             self.call_builder(

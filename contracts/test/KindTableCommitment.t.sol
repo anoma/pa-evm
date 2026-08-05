@@ -13,7 +13,7 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction} from "../src/Types.sol";
+import {Types} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
 contract KindTableCommitmentStorageTest is Test, ProtocolAdapter {
@@ -76,7 +76,7 @@ contract KindTableCommitmentTest is Test {
     /// @dev A transaction proven against the previous kind table is unencodable after a rotation: the journal the
     /// protocol adapter reconstructs embeds the stored commitment, so the proven digest no longer matches.
     function test_execute_reverts_for_transactions_proven_against_a_different_kind_table() public {
-        (Transaction memory txn,) = vm.transaction({
+        (Types.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
@@ -96,7 +96,7 @@ contract KindTableCommitmentTest is Test {
         vm.prank(_OWNER);
         _mockPa.setKindTableCommitment(newCommitment);
 
-        (Transaction memory txn,) = vm.transaction({
+        (Types.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})

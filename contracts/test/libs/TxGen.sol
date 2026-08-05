@@ -9,7 +9,7 @@ import {Delta} from "../../src/libs/proving/Delta.sol";
 import {Logic} from "../../src/libs/proving/Logic.sol";
 import {VerifyingKeys} from "../../src/libs/proving/VerifyingKeys.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
-import {Transaction, Action, Consumed, Created, Resource} from "./../../src/Types.sol";
+import {Types} from "./../../src/Types.sol";
 import {DeltaGen} from "./DeltaGen.sol";
 import {JournalEncoder} from "./JournalEncoder.sol";
 
@@ -22,7 +22,7 @@ library TxGen {
     }
 
     struct ResourceAndAppData {
-        Resource resource;
+        Types.Resource resource;
         Logic.AppData appData;
     }
 
@@ -36,25 +36,25 @@ library TxGen {
     /// the transaction.
     function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
         internal
-        returns (Action memory action)
+        returns (Types.Action memory action)
     {
         uint256 consumedCount = consumed.length;
         uint256 createdCount = created.length;
 
-        Consumed[] memory consumedData = new Consumed[](consumedCount);
-        Created[] memory createdData = new Created[](createdCount);
+        Types.Consumed[] memory consumedData = new Types.Consumed[](consumedCount);
+        Types.Created[] memory createdData = new Types.Created[](createdCount);
 
-        Delta.Point memory actionDelta;
+        Types.Delta memory actionDelta;
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            consumedData[i] = Consumed({
+            consumedData[i] = Types.Consumed({
                 nullifier: nullifier(consumed[i].resource, 0),
                 logicRef: consumed[i].resource.logicRef,
                 commitmentTreeRoot: initialRoot(),
                 appData: consumed[i].appData
             });
 
-            Delta.Point memory resourceDelta = DeltaGen.generateInstance(
+            Types.Delta memory resourceDelta = DeltaGen.generateInstance(
                 vm,
                 DeltaGen.InstanceInputs({
                     kind: kind(consumed[i].resource),
@@ -67,13 +67,13 @@ library TxGen {
         }
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            createdData[i] = Created({
+            createdData[i] = Types.Created({
                 commitment: commitment(created[i].resource),
                 logicRef: created[i].resource.logicRef,
                 appData: created[i].appData
             });
 
-            Delta.Point memory resourceDelta = DeltaGen.generateInstance(
+            Types.Delta memory resourceDelta = DeltaGen.generateInstance(
                 vm,
                 DeltaGen.InstanceInputs({
                     kind: kind(created[i].resource),
@@ -85,7 +85,7 @@ library TxGen {
             actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : Delta.add(actionDelta, resourceDelta);
         }
 
-        action = Action({
+        action = Types.Action({
             consumed: consumedData,
             created: createdData,
             delta: actionDelta,
@@ -98,7 +98,7 @@ library TxGen {
     /// each created resource quantity `consumedCount`.
     function createDefaultAction(VmSafe vm, bytes32 nonce, uint256 consumedCount, uint256 createdCount)
         internal
-        returns (Action memory action, bytes32 updatedNonce)
+        returns (Types.Action memory action, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
 
@@ -142,9 +142,9 @@ library TxGen {
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
         internal
-        returns (Transaction memory txn)
+        returns (Types.Transaction memory txn)
     {
-        Action[] memory actions = new Action[](actionResources.length);
+        Types.Action[] memory actions = new Types.Action[](actionResources.length);
 
         uint256 resourceCount = 0;
         for (uint256 i = 0; i < actionResources.length; ++i) {
@@ -161,11 +161,11 @@ library TxGen {
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
         internal
-        returns (Transaction memory txn, bytes32 updatedNonce)
+        returns (Types.Transaction memory txn, bytes32 updatedNonce)
     {
         updatedNonce = nonce;
 
-        Action[] memory actions = new Action[](configs.length);
+        Types.Action[] memory actions = new Types.Action[](configs.length);
         uint256 resourceCount = 0;
         for (uint256 i = 0; i < configs.length; ++i) {
             (actions[i], updatedNonce) = createDefaultAction({
@@ -185,9 +185,9 @@ library TxGen {
 
     /// @dev Assembles the transaction and its delta proof. Each resource contributed a value commitment randomness
     /// of 1, so the summed randomness is the resource count.
-    function transactionFromActions(VmSafe vm, Action[] memory actions, uint256 resourceCount)
+    function transactionFromActions(VmSafe vm, Types.Action[] memory actions, uint256 resourceCount)
         internal
-        returns (Transaction memory txn)
+        returns (Types.Transaction memory txn)
     {
         bytes memory proof = "";
         if (resourceCount != 0) {
@@ -200,7 +200,7 @@ library TxGen {
             );
         }
 
-        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
+        txn = Types.Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
     }
 
     /// @dev Mock-proves the aggregation: the seal commits to the journal reconstructed with the same compliance key
@@ -208,9 +208,9 @@ library TxGen {
     /// `JournalEncoder` boundary because the encoders read calldata.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
-        Transaction memory txn,
+        Types.Transaction memory txn,
         bytes32 kindTableCommitment
-    ) internal view returns (Transaction memory aggregatedTxn) {
+    ) internal view returns (Types.Transaction memory aggregatedTxn) {
         aggregatedTxn = txn;
 
         aggregatedTxn.aggregationProof =
@@ -240,81 +240,81 @@ library TxGen {
         commitmentOfEmptyTable = sha256("");
     }
 
-    function transactionId(Transaction memory txn) internal pure returns (bytes32 id) {
+    function transactionId(Types.Transaction memory txn) internal pure returns (bytes32 id) {
         id = Delta.computeVerifyingKey(actionTreeRoots(txn.actions));
     }
 
-    function actionTreeRoots(Action[] memory actions) internal pure returns (bytes32[] memory roots) {
+    function actionTreeRoots(Types.Action[] memory actions) internal pure returns (bytes32[] memory roots) {
         roots = new bytes32[](actions.length);
         for (uint256 i = 0; i < actions.length; ++i) {
             roots[i] = actions[i].actionTreeRoot;
         }
     }
 
-    function countResources(Action[] memory actions) internal pure returns (uint256 resourceCount) {
+    function countResources(Types.Action[] memory actions) internal pure returns (uint256 resourceCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
             resourceCount += actions[i].consumed.length + actions[i].created.length;
         }
     }
 
-    function collectNullifiers(Transaction memory txn) internal pure returns (bytes32[] memory nullifiers) {
+    function collectNullifiers(Types.Transaction memory txn) internal pure returns (bytes32[] memory nullifiers) {
         nullifiers = new bytes32[](countConsumed(txn.actions));
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            Consumed[] memory consumed = txn.actions[i].consumed;
+            Types.Consumed[] memory consumed = txn.actions[i].consumed;
             for (uint256 j = 0; j < consumed.length; ++j) {
                 nullifiers[n++] = consumed[j].nullifier;
             }
         }
     }
 
-    function collectCommitments(Transaction memory txn) internal pure returns (bytes32[] memory commitments) {
+    function collectCommitments(Types.Transaction memory txn) internal pure returns (bytes32[] memory commitments) {
         commitments = new bytes32[](countCreated(txn.actions));
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            Created[] memory created = txn.actions[i].created;
+            Types.Created[] memory created = txn.actions[i].created;
             for (uint256 j = 0; j < created.length; ++j) {
                 commitments[n++] = created[j].commitment;
             }
         }
     }
 
-    function countConsumed(Action[] memory actions) internal pure returns (uint256 consumedCount) {
+    function countConsumed(Types.Action[] memory actions) internal pure returns (uint256 consumedCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
             consumedCount += actions[i].consumed.length;
         }
     }
 
-    function countCreated(Action[] memory actions) internal pure returns (uint256 createdCount) {
+    function countCreated(Types.Action[] memory actions) internal pure returns (uint256 createdCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
             createdCount += actions[i].created.length;
         }
     }
 
-    function actionNullifiers(Action memory action) internal pure returns (bytes32[] memory nullifiers) {
+    function actionNullifiers(Types.Action memory action) internal pure returns (bytes32[] memory nullifiers) {
         nullifiers = new bytes32[](action.consumed.length);
         for (uint256 i = 0; i < action.consumed.length; ++i) {
             nullifiers[i] = action.consumed[i].nullifier;
         }
     }
 
-    function actionConsumedLogicRefs(Action memory action) internal pure returns (bytes32[] memory logicRefs) {
+    function actionConsumedLogicRefs(Types.Action memory action) internal pure returns (bytes32[] memory logicRefs) {
         logicRefs = new bytes32[](action.consumed.length);
         for (uint256 i = 0; i < action.consumed.length; ++i) {
             logicRefs[i] = action.consumed[i].logicRef;
         }
     }
 
-    function actionCommitments(Action memory action) internal pure returns (bytes32[] memory commitments) {
+    function actionCommitments(Types.Action memory action) internal pure returns (bytes32[] memory commitments) {
         commitments = new bytes32[](action.created.length);
         for (uint256 i = 0; i < action.created.length; ++i) {
             commitments[i] = action.created[i].commitment;
         }
     }
 
-    function actionCreatedLogicRefs(Action memory action) internal pure returns (bytes32[] memory logicRefs) {
+    function actionCreatedLogicRefs(Types.Action memory action) internal pure returns (bytes32[] memory logicRefs) {
         logicRefs = new bytes32[](action.created.length);
         for (uint256 i = 0; i < action.created.length; ++i) {
             logicRefs[i] = action.created[i].logicRef;
@@ -324,9 +324,9 @@ library TxGen {
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
         internal
         pure
-        returns (Resource memory mock)
+        returns (Types.Resource memory mock)
     {
-        mock = Resource({
+        mock = Types.Resource({
             logicRef: logicRef,
             labelRef: labelRef,
             valueRef: bytes32(0),
@@ -347,15 +347,15 @@ library TxGen {
         });
     }
 
-    function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
+    function commitment(Types.Resource memory resource) internal pure returns (bytes32 hash) {
         hash = sha256(abi.encode(resource));
     }
 
-    function nullifier(Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 hash) {
+    function nullifier(Types.Resource memory resource, bytes32 nullifierKey) internal pure returns (bytes32 hash) {
         hash = sha256(abi.encode(resource, nullifierKey));
     }
 
-    function kind(Resource memory resource) internal pure returns (uint256 hash) {
+    function kind(Types.Resource memory resource) internal pure returns (uint256 hash) {
         hash = uint256(sha256(abi.encode(resource.logicRef, resource.labelRef)));
     }
 
@@ -375,7 +375,7 @@ library TxGen {
 
     /// @dev The action tree leaves are the consumed nullifiers followed by the created commitments — the canonical
     /// tag order.
-    function computeActionTreeRoot(Consumed[] memory consumed, Created[] memory created)
+    function computeActionTreeRoot(Types.Consumed[] memory consumed, Types.Created[] memory created)
         internal
         pure
         returns (bytes32 root)

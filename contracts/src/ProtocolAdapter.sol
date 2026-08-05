@@ -17,7 +17,7 @@ import {VerifyingKeys} from "./libs/proving/VerifyingKeys.sol";
 import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
-import {Action, Consumed, Created, Transaction} from "./Types.sol";
+import {Types} from "./Types.sol";
 
 /// @title ProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -34,8 +34,8 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
-    using Delta for Delta.Point;
-    using RiscZeroUtils for Transaction;
+    using Delta for Types.Delta;
+    using RiscZeroUtils for Types.Transaction;
 
     /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
     struct ProtocolAdapterStorage {
@@ -104,12 +104,15 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function execute(Transaction calldata transaction) external override {
+    function execute(Types.Transaction calldata transaction) external override {
         _execute({transaction: transaction, skipRiscZeroProofVerification: false});
     }
 
     /// @inheritdoc IProtocolAdapter
-    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external override {
+    function simulateExecute(Types.Transaction calldata transaction, bool skipRiscZeroProofVerification)
+        external
+        override
+    {
         uint256 gasStart = gasleft();
 
         _execute({transaction: transaction, skipRiscZeroProofVerification: skipRiscZeroProofVerification});
@@ -166,7 +169,7 @@ contract ProtocolAdapter is
     /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
     // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
     // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
-    function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)
+    function _execute(Types.Transaction calldata transaction, bool skipRiscZeroProofVerification)
         internal
         nonReentrant
         whenNotPaused
@@ -177,11 +180,11 @@ contract ProtocolAdapter is
         require(actionCount != 0, EmptyTransactionNotAllowed());
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
-        Delta.Point memory transactionDelta = Delta.zero();
+        Types.Delta memory transactionDelta = Delta.zero();
         bytes32 updatedCommitmentTreeRoot = bytes32(0);
 
         for (uint256 i = 0; i < actionCount; ++i) {
-            Action calldata action = transaction.actions[i];
+            Types.Action calldata action = transaction.actions[i];
 
             bytes32 newRoot = _processAction(action);
             if (newRoot != bytes32(0)) {
@@ -226,13 +229,13 @@ contract ProtocolAdapter is
     // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
     // modifier on the calling `_execute`.
     // slither-disable-next-line reentrancy-no-eth
-    function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
+    function _processAction(Types.Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
         uint256 consumedCount = action.consumed.length;
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
         bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            Consumed calldata consumed = action.consumed[i];
+            Types.Consumed calldata consumed = action.consumed[i];
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
@@ -255,7 +258,7 @@ contract ProtocolAdapter is
         bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            Created calldata created = action.created[i];
+            Types.Created calldata created = action.created[i];
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
@@ -371,9 +374,9 @@ contract ProtocolAdapter is
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @return transactionId The delta verifying key doubling as the transaction ID.
     function _verifyGlobalProofs(
-        Transaction calldata transaction,
+        Types.Transaction calldata transaction,
         bytes32[] memory actionTreeRoots,
-        Delta.Point memory transactionDelta,
+        Types.Delta memory transactionDelta,
         bool skipRiscZeroProofVerification
     ) internal view returns (bytes32 transactionId) {
         // The delta proof signs the Keccak-256 hash of the concatenated action tree roots.

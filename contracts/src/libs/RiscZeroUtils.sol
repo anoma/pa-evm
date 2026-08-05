@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {reverseByteOrderUint32} from "risc0-risc0-ethereum-3.0.1/contracts/src/Util.sol";
 
-import {Action, Consumed, Created, Transaction} from "../Types.sol";
+import {Types} from "../Types.sol";
 import {Logic} from "./proving/Logic.sol";
 
 /// @title RiscZeroUtils
@@ -13,7 +13,7 @@ import {Logic} from "./proving/Logic.sol";
 /// digests as raw 32 bytes.
 /// @custom:security-contact security@anoma.foundation
 library RiscZeroUtils {
-    using RiscZeroUtils for Action;
+    using RiscZeroUtils for Types.Action;
     using RiscZeroUtils for Logic.AppData;
 
     /// @notice Converts a transaction to the RISC Zero journal of the aggregation instance.
@@ -23,7 +23,7 @@ library RiscZeroUtils {
     /// @return journal The resulting RISC Zero journal.
     /// @dev Element counts can safely be assumed to not exceed `type(uint32).max` as this would exceed Ethereum's
     /// block gas limit.
-    function toJournal(Transaction calldata transaction, bytes32 complianceKey, bytes32 kindTableCommitment)
+    function toJournal(Types.Transaction calldata transaction, bytes32 complianceKey, bytes32 kindTableCommitment)
         internal
         pure
         returns (bytes memory journal)
@@ -45,13 +45,13 @@ library RiscZeroUtils {
     /// @notice Converts an action to its part of the aggregation journal — the arm `ActionAggregated` encoding.
     /// @param action The action to encode.
     /// @return journal The resulting journal part.
-    function toJournal(Action calldata action) internal pure returns (bytes memory journal) {
+    function toJournal(Types.Action calldata action) internal pure returns (bytes memory journal) {
         uint256 consumedCount = action.consumed.length;
         // forge-lint: disable-next-line(unsafe-typecast)
         journal = abi.encodePacked(reverseByteOrderUint32(uint32(consumedCount)));
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            Consumed calldata consumed = action.consumed[i];
+            Types.Consumed calldata consumed = action.consumed[i];
             journal = abi.encodePacked(
                 journal,
                 consumed.nullifier,
@@ -66,7 +66,7 @@ library RiscZeroUtils {
         journal = abi.encodePacked(journal, reverseByteOrderUint32(uint32(createdCount)));
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            Created calldata created = action.created[i];
+            Types.Created calldata created = action.created[i];
             journal = abi.encodePacked(journal, created.commitment, created.logicRef, created.appData.toJournal());
         }
 

@@ -3,7 +3,7 @@
 //! themselves live in the testkit; this asserts the EVM conversion seam, which
 //! needs the bindings.)
 
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
+use anoma_pa_evm_bindings::generated::protocol_adapter::Types;
 use anoma_pa_testkit::environment::Prover;
 use anoma_pa_testkit::fixtures::trivial;
 use anoma_pa_testkit::prover::LocalProver;
@@ -15,7 +15,7 @@ async fn proven_transaction_into_pa_transaction_yields_actions_and_delta_proof()
     let tx = LocalProver.prove(&actions).await.unwrap();
     let arm_tx: ArmTxn = tx.into_arm();
 
-    let pa_tx: PaContract::Transaction = arm_tx.into();
+    let pa_tx: Types::Transaction = arm_tx.into();
     assert!(!pa_tx.actions.is_empty());
     assert!(!pa_tx.deltaProof.is_empty());
 }

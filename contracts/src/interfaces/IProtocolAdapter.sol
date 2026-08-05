@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Types.sol";
+import {Types} from "../Types.sol";
 
 /// @title IProtocolAdapter
 /// @author Anoma Foundation, 2025
@@ -65,13 +65,13 @@ interface IProtocolAdapter {
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
-    function execute(Transaction calldata transaction) external;
+    function execute(Types.Transaction calldata transaction) external;
 
     /// @notice Simulates a transaction and returns the gas after reverting.
     /// @param transaction The transaction to simulate execution for.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @dev This transaction will always revert.
-    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
+    function simulateExecute(Types.Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
 
     /// @notice Stops the protocol adapter permanently in case of an emergency.
     function emergencyStop() external;
