@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {VmSafe} from "forge-std-1.16.1/src/Vm.sol";
+import {VmSafe} from "forge-std-1.16.2/src/Vm.sol";
 
 import {Delta} from "../../src/libs/proving/Delta.sol";
 
