@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC1967Proxy} from "@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol";
-import {Initializable} from "@openzeppelin-contracts-5.6.1/proxy/utils/Initializable.sol";
-import {Test} from "forge-std-1.16.1/src/Test.sol";
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";

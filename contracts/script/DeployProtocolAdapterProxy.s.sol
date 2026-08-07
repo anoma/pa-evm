@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ERC1967Proxy} from "@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol";
-import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.2.0/src/RiscZeroVerifierSelectors.sol";
-import {SupportedNetworks} from "anoma-risc0-deployments-1.2.0/src/SupportedNetworks.sol";
-import {Script} from "forge-std-1.16.1/src/Script.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.1/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.1/src/Upgrades.sol";
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.2.1/src/RiscZeroVerifierSelectors.sol";
+import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetworks.sol";
+import {Script} from "forge-std-1.16.2/src/Script.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 

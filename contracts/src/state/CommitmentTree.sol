@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Initializable} from "@openzeppelin-contracts-5.6.1/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.6.1/utils/structs/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 
 import {ICommitmentTree} from "../interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../libs/MerkleTree.sol";
