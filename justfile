@@ -248,6 +248,10 @@ bindings-test *args:
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
 
+# Convert a tx-gen transaction (bincode) into `execute` calldata beside it; pass the kind table as second argument to verify first
+bindings-execute-calldata transaction *args:
+    cargo run -p anoma-pa-evm-bindings --example execute_calldata -- {{transaction}} {{ args }}
+
 # Publish bindings
 bindings-publish *args:
     cd crates/bindings && cargo publish {{ args }}
