@@ -102,26 +102,31 @@ contracts-deploy deployer chain *args:
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Verify on sourcify
-contracts-verify-sourcify address chain *args:
-    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+# Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
+contracts-verify-sourcify address contract chain *args:
+    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier sourcify --watch {{ args }}
 
-# Verify on etherscan
-contracts-verify-etherscan address chain *args:
-    cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
-        --chain {{chain}} --verifier etherscan --watch {{ args }}
+# Verify a contract on etherscan (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter). Reads the constructor
+# args from the on-chain creation code and forces submission past a prior similar match.
+contracts-verify-etherscan address contract chain *args:
+    cd contracts && forge verify-contract {{address}} {{contract}} \
+        --chain {{chain}} --verifier etherscan --watch \
+        --rpc-url {{chain}} --guess-constructor-args --skip-is-verified-check {{ args }}
 
-# Verify on custom explorer
-contracts-verify-custom address chain verifier-url *args:
-    cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+# Verify a contract on a custom explorer
+contracts-verify-custom address contract chain verifier-url *args:
+    cd contracts && forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
-# Verify on both sourcify and etherscan
-contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
+# Verify a contract on both sourcify and etherscan
+contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
+
+# Verify a deployment — the protocol adapter implementation and the ERC-1967 proxy pointing at it — on both
+# explorers. The proxy carries the proxy bytecode, not the implementation's, so it verifies against its own source.
+contracts-verify-deployment implementation proxy chain: \
+    (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain) \
+    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
 
 # Publish contracts
 contracts-publish version *args:
