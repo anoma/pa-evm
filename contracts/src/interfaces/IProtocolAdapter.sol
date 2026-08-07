@@ -177,4 +177,8 @@ interface IProtocolAdapter {
     /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
+
+    /// @notice Returns the current implementation contract the calls are delegated to.
+    /// @return current The current implementation contract.
+    function implementation() external view returns (address current);
 }

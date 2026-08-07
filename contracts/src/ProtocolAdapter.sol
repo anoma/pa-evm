@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ERC1967Utils} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Utils.sol";
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
@@ -132,6 +133,11 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function getKindTableCommitment() external view override returns (bytes32 kindTableCommitment) {
         kindTableCommitment = _getProtocolAdapterStorage().kindTableCommitment;
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function implementation() external view override returns (address current) {
+        current = ERC1967Utils.getImplementation();
     }
 
     /// @inheritdoc IVersion
