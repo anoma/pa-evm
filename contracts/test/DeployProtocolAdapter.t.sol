@@ -7,12 +7,12 @@ import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetw
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
-import {DeployProtocolAdapterProxy} from "../script/DeployProtocolAdapterProxy.s.sol";
+import {DeployProtocolAdapter} from "../script/DeployProtocolAdapter.s.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 /// @notice Checks the deploy script and checks the deployments recorded in `deployments.json` — the
 /// single source of truth for deterministic deployments — against the chain state.
-contract DeployProtocolAdapterProxyTest is SupportedNetworks, Test {
+contract DeployProtocolAdapterTest is SupportedNetworks, Test {
     /// @notice A protocol adapter deployment recorded in `deployments.json`.
     /// @dev Fields are ordered alphabetically so the struct decodes from `vm.parseJson`.
     struct Deployment {
@@ -33,7 +33,7 @@ contract DeployProtocolAdapterProxyTest is SupportedNetworks, Test {
         vm.etch(address(data.router), address(router).code);
         vm.copyStorage(address(router), address(data.router));
 
-        new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: msg.sender});
+        new DeployProtocolAdapter().run({isTestDeployment: true, initialOwner: msg.sender});
     }
 
     function test_recorded_deployments_exist_and_revert_on_prod_redeployment() public {
@@ -60,7 +60,7 @@ contract DeployProtocolAdapterProxyTest is SupportedNetworks, Test {
             // reproducible (`via_ir` output depends on the compilation unit), the initcode compiled into
             // this test differs from the broadcast one and would land beside the recorded contracts, so
             // the collision is staged at the address the redeployment actually targets.
-            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+            DeployProtocolAdapter script = new DeployProtocolAdapter();
             address predictedImplementation = vm.computeCreate2Address(
                 script.IMPLEMENTATION_SALT(),
                 keccak256(
