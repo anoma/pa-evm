@@ -222,8 +222,7 @@ library TxGen {
     }
 
     /// @dev Mock-proves the aggregation: the seal commits to the journal reconstructed with the same compliance key
-    /// and kind table commitment the protocol adapter injects. The `abi.encode` restates
-    /// `Aggregation.toJournal` for memory-built actions — the library reads calldata.
+    /// and kind table commitment the protocol adapter injects.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         IProtocolAdapter.Transaction memory txn,
