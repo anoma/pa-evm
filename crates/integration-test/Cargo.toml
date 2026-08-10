@@ -16,7 +16,7 @@ local = ["anoma-pa-testkit/local"]
 e2e = ["anoma-pa-testkit/e2e", "dep:dotenvy"]
 
 [dependencies]
-anoma-pa-testkit = { workspace = true, features = ["fixtures"] }
+anoma-pa-testkit = { workspace = true, features = ["fixtures", "abi_encoding"] }
 anoma-pa-evm-bindings = { workspace = true }
 anoma-risc0-verifier-bindings = { workspace = true }
 
@@ -29,7 +29,7 @@ hex = { workspace = true }
 risc0-zkvm = { workspace = true }
 
 [dev-dependencies]
-anoma-pa-testkit = { workspace = true, features = ["fixtures", "mocks"] }
+anoma-pa-testkit = { workspace = true, features = ["fixtures", "mocks", "abi_encoding"] }
 regex = { workspace = true }
 rstest = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }

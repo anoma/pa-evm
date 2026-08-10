@@ -9,7 +9,7 @@ fn print_verifying_keys() {
     );
 
     println!(
-        "BATCH_AGGREGATION_VK: {:?}",
-        B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_VK.as_bytes())
+        "BATCH_AGGREGATION_EVM_VK: {:?}",
+        B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_EVM_VK.as_bytes())
     );
 }
