@@ -29,7 +29,11 @@ hex = { workspace = true }
 risc0-zkvm = { workspace = true }
 
 [dev-dependencies]
-anoma-pa-testkit = { workspace = true, features = ["fixtures", "mocks", "abi_encoding"] }
+anoma-pa-testkit = { workspace = true, features = [
+  "fixtures",
+  "mocks",
+  "abi_encoding",
+] }
 regex = { workspace = true }
 rstest = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
