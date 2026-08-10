@@ -12,6 +12,7 @@ use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_testkit::environment::Environment;
 use anoma_pa_testkit::transaction::Transaction;
+use anoma_rm_risc0::aggregation_instance::abi_encode_instance;
 use anoma_rm_risc0::proving_system::encode_seal;
 use anyhow::Context;
 use rstest::*;
@@ -40,14 +41,13 @@ where
         .as_ref()
         .context("transaction carries no aggregation")?;
     let seal = encode_seal(&aggregation.proof).context("failed to encode the aggregation seal")?;
-    let journal_words = risc0_zkvm::serde::to_vec(&aggregation.instance)
-        .context("failed to serialize the aggregation instance")?;
+    let journal = abi_encode_instance(aggregation.instance.clone());
 
     router
         .verify(
             Bytes::from(seal),
-            B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_VK.as_bytes()),
-            journal_digest(anoma_rm_risc0::utils::words_to_bytes(&journal_words)),
+            B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_EVM_VK.as_bytes()),
+            journal_digest(&journal),
         )
         .call()
         .await

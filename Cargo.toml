@@ -1,9 +1,6 @@
 [workspace]
 resolver = "3"
-members = [
-  "crates/bindings",
-  "crates/integration-test",
-]
+members = ["crates/bindings", "crates/integration-test"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
@@ -16,11 +13,10 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "2.3.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.36"
-# Pinned by git rev until arm-risc0 publishes v2 to crates.io (v2.0.0-rc.3;
-# crates.io carries only up to 2.0.0-pre.1, which predates the compact
-# aggregation instance and the action-tree-root delta message). Blocks
-# `bindings-publish` until unwound.
-anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", rev = "784fb37c27a4fec51b99d7d3f004ee3e4b5b5695", features = [
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "2a0613c57b0161a2f7512c7c727f4204c5e4ee99" }
+anoma-risc0-verifier-bindings = "1.2.2"
+anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", rev = "a7d28eb5234a02d3d748a1f46475f2b6efd93bc6", features = [
+  "abi_encoding",
   "bonsai",
   "aggregation",
 ] }
@@ -37,9 +33,3 @@ tokio = { version = "1.53.1", features = ["rt-multi-thread"] }
 
 anoma-pa-evm-bindings = { path = "crates/bindings" }
 anoma-pa-evm-integration-test = { path = "crates/integration-test" }
-
-# Backend-agnostic risc0 testkit, pinned by git rev (see anoma-pa-testkit
-# ADR-0002). For cross-repo development, override locally with a `[patch]` to a
-# path checkout.
-anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "1c57ea98de3d18134721a0b5fb6500404054d493" }
-anoma-risc0-verifier-bindings = "1.2.2"

@@ -126,7 +126,7 @@ contracts-verify address contract chain: (contracts-verify-sourcify address cont
 # explorers. The proxy carries the proxy bytecode, not the implementation's, so it verifies against its own source.
 contracts-verify-deployment implementation proxy chain: \
     (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain) \
-    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.6.1/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
+    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
 
 # Publish contracts
 contracts-publish version *args:

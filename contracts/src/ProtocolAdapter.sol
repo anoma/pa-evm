@@ -12,8 +12,8 @@ import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
+import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
-import {RiscZeroUtils} from "./libs/RiscZeroUtils.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
@@ -33,9 +33,9 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet
 {
+    using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
-    using RiscZeroUtils for Transaction;
 
     /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
     struct ProtocolAdapterStorage {
@@ -142,7 +142,7 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
-        version = "2.0.0-alpha.2";
+        version = "2.0.0-alpha.3";
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -390,15 +390,16 @@ contract ProtocolAdapter is
         // Reconstruct the aggregation journal, injecting the compliance circuit verifying key and the stored kind
         // table commitment — a transaction proven against any other values is unencodable and fails verification.
         bytes32 journalDigest = sha256(
-            transaction.toJournal({
-                complianceKey: VerifyingKeys._COMPLIANCE,
-                kindTableCommitment: _getProtocolAdapterStorage().kindTableCommitment
-            })
+            transaction.actions
+                .toJournal({
+                    complianceKey: VerifyingKeys._COMPLIANCE,
+                    kindTableCommitment: _getProtocolAdapterStorage().kindTableCommitment
+                })
         );
 
         // Process the aggregation proof.
         _processRiscZeroProof({
-            verifyingKey: VerifyingKeys._BATCH_AGGREGATION,
+            verifyingKey: VerifyingKeys._BATCH_AGGREGATION_EVM,
             instance: journalDigest,
             proof: transaction.aggregationProof,
             skipVerification: skipRiscZeroProofVerification
