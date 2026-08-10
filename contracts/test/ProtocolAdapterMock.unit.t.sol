@@ -214,9 +214,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @dev An action without resources carries the zero delta point, which is not on the curve. Such an action is
     /// unprovable anyway — the compliance circuit requires at least one consumed resource.
     function test_execute_reverts_on_actions_without_resources() public {
-        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](2);
-        configs[0] = TxGen.ActionConfig({consumedCount: 1, createdCount: 1});
-        configs[1] = TxGen.ActionConfig({consumedCount: 0, createdCount: 0});
+        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](1);
+        configs[0] = TxGen.ActionConfig({consumedCount: 0, createdCount: 0});
 
         (IProtocolAdapter.Transaction memory txn,) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
