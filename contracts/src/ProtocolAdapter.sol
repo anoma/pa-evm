@@ -399,7 +399,7 @@ contract ProtocolAdapter is
 
         // Process the aggregation proof.
         _processRiscZeroProof({
-            verifyingKey: VerifyingKeys._BATCH_AGGREGATION,
+            verifyingKey: VerifyingKeys._BATCH_AGGREGATION_EVM,
             instance: journalDigest,
             proof: transaction.aggregationProof,
             skipVerification: skipRiscZeroProofVerification

@@ -233,7 +233,7 @@ library TxGen {
 
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
-            imageId: VerifyingKeys._BATCH_AGGREGATION,
+            imageId: VerifyingKeys._BATCH_AGGREGATION_EVM,
             journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTableCommitment, txn.actions))
         }).seal;
     }
