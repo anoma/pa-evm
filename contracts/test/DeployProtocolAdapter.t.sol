@@ -36,6 +36,24 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
         new DeployProtocolAdapter().run({isTestDeployment: true, initialOwner: msg.sender});
     }
 
+    /// @dev The deterministic branch CREATE2s both contracts, so it only runs to completion on a chain where the
+    /// salted addresses are still empty — a local one, not a fork of a network already carrying a deployment.
+    function test_run_succeeds_for_a_deterministic_deployment() public {
+        (RiscZeroVerifierRouter router,,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
+
+        vm.chainId(84532); // base-sepolia
+        SupportedNetworks.Data memory data = getRouterData();
+        vm.etch(address(data.router), address(router).code);
+        vm.copyStorage(address(router), address(data.router));
+
+        (address proxy, address implementation) =
+            new DeployProtocolAdapter().run({isTestDeployment: false, initialOwner: msg.sender});
+
+        assertGt(implementation.code.length, 0, "implementation should be deployed");
+        assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
+        assertEq(ProtocolAdapter(proxy).owner(), msg.sender, "proxy should be initialized with the owner");
+    }
+
     function test_recorded_deployments_exist_and_revert_on_prod_redeployment() public {
         Deployment[] memory deployments = _recordedDeployments();
 

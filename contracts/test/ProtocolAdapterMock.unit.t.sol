@@ -178,6 +178,39 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @dev `TxGen.expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
+    /// execution exercises both deletion criteria per payload kind.
+    function test_execute_emits_the_persistent_app_data_blobs_only() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndBlobAppData({nonce: 1});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        bytes32 tag = txn.actions[0].created[0].commitment;
+        bytes memory persistent = TxGen.expirableBlobs()[1].blob;
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ResourcePayload({tag: tag, index: 1, blob: persistent});
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.DiscoveryPayload({tag: tag, index: 1, blob: persistent});
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ApplicationPayload({tag: tag, index: 1, blob: persistent});
+
+        vm.recordLogs();
+        _mockPa.execute(txn);
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        assertEq(_countEvents(logs, IProtocolAdapter.ResourcePayload.selector), 1, "the expiring blob should be kept");
+        assertEq(_countEvents(logs, IProtocolAdapter.DiscoveryPayload.selector), 1, "the expiring blob should be kept");
+        assertEq(
+            _countEvents(logs, IProtocolAdapter.ApplicationPayload.selector), 1, "the expiring blob should be kept"
+        );
+    }
+
     /// @dev An action without resources carries the zero delta point, which is not on the curve. Such an action is
     /// unprovable anyway — the compliance circuit requires at least one consumed resource.
     function test_execute_reverts_on_actions_without_resources() public {
@@ -567,6 +600,26 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
     }
 
+    function _exampleResourceAndBlobAppData(uint256 nonce)
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory data)
+    {
+        data = new TxGen.ResourceAndAppData[](1);
+
+        data[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+            }),
+            appData: IProtocolAdapter.AppData({
+                resourcePayload: TxGen.expirableBlobs(),
+                discoveryPayload: TxGen.expirableBlobs(),
+                externalPayload: new IProtocolAdapter.ExpirableBlob[](0),
+                applicationPayload: TxGen.expirableBlobs()
+            })
+        });
+    }
+
     function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
         private
         view
@@ -606,6 +659,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
         boundResourcePairCount = uint8(bound(resourcePairCount, 1, 5));
         boundActionIndex = uint8(bound(actionIndex, 0, boundActionCount - 1));
         boundResourceIndex = uint8(bound(resourceIndex, 0, boundResourcePairCount - 1));
+    }
+
+    function _countEvents(Vm.Log[] memory logs, bytes32 topic) private pure returns (uint256 count) {
+        for (uint256 i = 0; i < logs.length; ++i) {
+            if (logs[i].topics[0] == topic) {
+                ++count;
+            }
+        }
     }
 
     /// @dev Flips all bits of a seal byte to invalidate the proof it belongs to.
