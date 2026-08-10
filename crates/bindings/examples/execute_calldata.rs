@@ -20,7 +20,9 @@ use alloy::hex;
 use alloy::sol_types::SolCall;
 use anoma_pa_evm_bindings::generated::protocol_adapter::{IProtocolAdapter, ProtocolAdapter};
 use anoma_rm_risc0::Digest;
-use anoma_rm_risc0::constants::{BATCH_AGGREGATION_VK, COMPLIANCE_VK, init_kind_table_from_file};
+use anoma_rm_risc0::constants::{
+    BATCH_AGGREGATION_EVM_VK, COMPLIANCE_VK, init_kind_table_from_file,
+};
 use anoma_rm_risc0::transaction::Transaction;
 use anyhow::Context;
 use std::path::PathBuf;
@@ -70,7 +72,10 @@ fn main() -> anyhow::Result<()> {
 
     let seal = transaction.aggregationProof;
     println!("\nthe protocol adapter must agree on");
-    println!("  batch aggregation vk:  {}", hex32(&BATCH_AGGREGATION_VK));
+    println!(
+        "  batch aggregation vk:  {}",
+        hex32(&BATCH_AGGREGATION_EVM_VK)
+    );
     println!("  compliance vk:         {}", hex32(&COMPLIANCE_VK));
     println!(
         "  kind table commitment: {}",
