@@ -23,17 +23,20 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
 
     function test_run_succeeds_for_a_test_deployment() public {
-        // Deploy the RISC Zero stack locally instead of forking a network.
-        (RiscZeroVerifierRouter router,,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
-
-        // The script resolves the router from the chain ID, so clone the local router — code and
-        // storage, which holds the registered verifier — onto the router address of a supported network.
-        vm.chainId(84532); // base-sepolia
-        SupportedNetworks.Data memory data = getRouterData();
-        vm.etch(address(data.router), address(router).code);
-        vm.copyStorage(address(router), address(data.router));
+        _deployRiscZeroRouter();
 
         new DeployProtocolAdapter().run({isTestDeployment: true, initialOwner: msg.sender});
+    }
+
+    function test_run_succeeds_for_a_deterministic_deployment() public {
+        _deployRiscZeroRouter();
+
+        (address proxy, address implementation) =
+            new DeployProtocolAdapter().run({isTestDeployment: false, initialOwner: msg.sender});
+
+        assertGt(implementation.code.length, 0, "implementation should be deployed");
+        assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
+        assertEq(ProtocolAdapter(proxy).owner(), msg.sender, "proxy should be initialized with the owner");
     }
 
     function test_recorded_deployments_exist_and_revert_on_prod_redeployment() public {
@@ -83,5 +86,17 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
     /// @return deployments The recorded deployments.
     function _recordedDeployments() internal view returns (Deployment[] memory deployments) {
         deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH)), (Deployment[]));
+    }
+
+    /// @notice Deploys the RISC Zero stack locally instead of forking a network.
+    /// @dev The script resolves the router from the chain ID, so the local router — code and storage, which holds
+    /// the registered verifier — is cloned onto the router address of a supported network.
+    function _deployRiscZeroRouter() private {
+        (RiscZeroVerifierRouter router,,) = new DeployRiscZeroContracts().run({admin: msg.sender, guardian: msg.sender});
+
+        vm.chainId(1); // mainnet
+        SupportedNetworks.Data memory data = getRouterData();
+        vm.etch(address(data.router), address(router).code);
+        vm.copyStorage(address(router), address(data.router));
     }
 }
