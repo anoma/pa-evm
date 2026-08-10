@@ -47,16 +47,16 @@ The protocol adapter therefore accepts exactly one kind table — the current on
 is not rejected by a check; it is simply unencodable, and its journal digest
 will not match.
 
-`getKindTableCommitment` exposes the mutable half, so a client can read what the
-deployed adapter expects and compare it off chain. The keys are readable from
-the verified source.
+All three values are exposed through getters — `getKindTableCommitment`,
+`getComplianceVerifyingKey` and `getBatchAggregationVerifyingKey` — so a client
+can read what the deployed adapter expects and compare it off chain.
 
 ## Consequences
 
 - Wrong values surface as an opaque `VerificationFailed()` from the RISC Zero
-  router rather than as a specific error. Reading the commitment back is the
-  intended remedy: a client diffs its own against the deployed one before
-  spending gas.
+  router rather than as a specific error. Reading the getters back is the
+  intended remedy: a client diffs its own three values against the deployed ones
+  before spending gas.
 - The Solidity structs deliberately do not mirror the Rust instances 1:1, which
   makes `crates/bindings/src/conversion.rs` asymmetric — it drops these fields
   on the way to Solidity, and the protocol adapter re-adds them when encoding

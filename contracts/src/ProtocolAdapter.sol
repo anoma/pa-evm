@@ -140,6 +140,16 @@ contract ProtocolAdapter is
         current = ERC1967Utils.getImplementation();
     }
 
+    /// @inheritdoc IProtocolAdapter
+    function getComplianceVerifyingKey() external pure override returns (bytes32 complianceVerifyingKey) {
+        complianceVerifyingKey = VerifyingKeys._COMPLIANCE;
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function getBatchAggregationVerifyingKey() external pure override returns (bytes32 batchAggregationVerifyingKey) {
+        batchAggregationVerifyingKey = VerifyingKeys._BATCH_AGGREGATION_EVM;
+    }
+
     /// @inheritdoc IVersion
     function getVersion() external pure override returns (bytes32 version) {
         version = "2.0.0-alpha.3";

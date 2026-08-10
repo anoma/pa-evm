@@ -52,6 +52,8 @@ interface IProtocolAdapter {
 
     function emergencyStop() external;
     function execute(Transaction memory transaction) external;
+    function getBatchAggregationVerifyingKey() external pure returns (bytes32 batchAggregationVerifyingKey);
+    function getComplianceVerifyingKey() external pure returns (bytes32 complianceVerifyingKey);
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
     function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
     function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
@@ -314,6 +316,32 @@ interface IProtocolAdapter {
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getBatchAggregationVerifyingKey",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "batchAggregationVerifyingKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
+    "name": "getComplianceVerifyingKey",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "complianceVerifyingKey",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -4114,6 +4142,308 @@ function execute(Transaction memory transaction) external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `getBatchAggregationVerifyingKey()` and selector `0xcc0e63cc`.
+```solidity
+function getBatchAggregationVerifyingKey() external pure returns (bytes32 batchAggregationVerifyingKey);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getBatchAggregationVerifyingKeyCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`getBatchAggregationVerifyingKey()`](getBatchAggregationVerifyingKeyCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getBatchAggregationVerifyingKeyReturn {
+        #[allow(missing_docs)]
+        pub batchAggregationVerifyingKey: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getBatchAggregationVerifyingKeyCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getBatchAggregationVerifyingKeyCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getBatchAggregationVerifyingKeyCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getBatchAggregationVerifyingKeyReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getBatchAggregationVerifyingKeyReturn) -> Self {
+                    (value.batchAggregationVerifyingKey,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getBatchAggregationVerifyingKeyReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        batchAggregationVerifyingKey: tuple.0,
+                    }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getBatchAggregationVerifyingKeyCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = alloy::sol_types::private::FixedBytes<32>;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getBatchAggregationVerifyingKey()";
+            const SELECTOR: [u8; 4] = [204u8, 14u8, 99u8, 204u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(ret),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(|r| {
+                        let r: getBatchAggregationVerifyingKeyReturn = r.into();
+                        r.batchAggregationVerifyingKey
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(|r| {
+                        let r: getBatchAggregationVerifyingKeyReturn = r.into();
+                        r.batchAggregationVerifyingKey
+                    })
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `getComplianceVerifyingKey()` and selector `0xbb02c307`.
+```solidity
+function getComplianceVerifyingKey() external pure returns (bytes32 complianceVerifyingKey);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getComplianceVerifyingKeyCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`getComplianceVerifyingKey()`](getComplianceVerifyingKeyCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct getComplianceVerifyingKeyReturn {
+        #[allow(missing_docs)]
+        pub complianceVerifyingKey: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getComplianceVerifyingKeyCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getComplianceVerifyingKeyCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getComplianceVerifyingKeyCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<getComplianceVerifyingKeyReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: getComplianceVerifyingKeyReturn) -> Self {
+                    (value.complianceVerifyingKey,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for getComplianceVerifyingKeyReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        complianceVerifyingKey: tuple.0,
+                    }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for getComplianceVerifyingKeyCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = alloy::sol_types::private::FixedBytes<32>;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "getComplianceVerifyingKey()";
+            const SELECTOR: [u8; 4] = [187u8, 2u8, 195u8, 7u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(ret),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(|r| {
+                        let r: getComplianceVerifyingKeyReturn = r.into();
+                        r.complianceVerifyingKey
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(|r| {
+                        let r: getComplianceVerifyingKeyReturn = r.into();
+                        r.complianceVerifyingKey
+                    })
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `getKindTableCommitment()` and selector `0xffc33f72`.
 ```solidity
 function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
@@ -5181,6 +5511,10 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
+        getBatchAggregationVerifyingKey(getBatchAggregationVerifyingKeyCall),
+        #[allow(missing_docs)]
+        getComplianceVerifyingKey(getComplianceVerifyingKeyCall),
+        #[allow(missing_docs)]
         getKindTableCommitment(getKindTableCommitmentCall),
         #[allow(missing_docs)]
         getRiscZeroVerifierRouter(getRiscZeroVerifierRouterCall),
@@ -5208,7 +5542,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             [99u8, 165u8, 153u8, 164u8],
             [115u8, 171u8, 153u8, 22u8],
             [135u8, 9u8, 62u8, 186u8],
+            [187u8, 2u8, 195u8, 7u8],
             [192u8, 37u8, 48u8, 35u8],
+            [204u8, 14u8, 99u8, 204u8],
             [227u8, 56u8, 69u8, 207u8],
             [253u8, 221u8, 72u8, 55u8],
             [255u8, 195u8, 63u8, 114u8],
@@ -5220,7 +5556,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             ::core::stringify!(emergencyStop),
             ::core::stringify!(execute),
             ::core::stringify!(simulateExecute),
+            ::core::stringify!(getComplianceVerifyingKey),
             ::core::stringify!(setKindTableCommitment),
+            ::core::stringify!(getBatchAggregationVerifyingKey),
             ::core::stringify!(getRiscZeroVerifierSelector),
             ::core::stringify!(isEmergencyStopped),
             ::core::stringify!(getKindTableCommitment),
@@ -5232,7 +5570,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             <emergencyStopCall as alloy_sol_types::SolCall>::SIGNATURE,
             <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
             <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getRiscZeroVerifierSelectorCall as alloy_sol_types::SolCall>::SIGNATURE,
             <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5262,7 +5602,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 9usize;
+        const COUNT: usize = 11usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5270,6 +5610,12 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     <emergencyStopCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
+                Self::getBatchAggregationVerifyingKey(_) => {
+                    <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::getComplianceVerifyingKey(_) => {
+                    <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::SELECTOR
+                }
                 Self::getKindTableCommitment(_) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
                 }
@@ -5364,6 +5710,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     simulateExecute
                 },
                 {
+                    fn getComplianceVerifyingKey(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getComplianceVerifyingKey)
+                    }
+                    getComplianceVerifyingKey
+                },
+                {
                     fn setKindTableCommitment(
                         data: &[u8],
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
@@ -5373,6 +5730,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                             .map(IProtocolAdapterCalls::setKindTableCommitment)
                     }
                     setKindTableCommitment
+                },
+                {
+                    fn getBatchAggregationVerifyingKey(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getBatchAggregationVerifyingKey)
+                    }
+                    getBatchAggregationVerifyingKey
                 },
                 {
                     fn getRiscZeroVerifierSelector(
@@ -5483,6 +5851,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     simulateExecute
                 },
                 {
+                    fn getComplianceVerifyingKey(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getComplianceVerifyingKey)
+                    }
+                    getComplianceVerifyingKey
+                },
+                {
                     fn setKindTableCommitment(
                         data: &[u8],
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
@@ -5492,6 +5871,17 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                             .map(IProtocolAdapterCalls::setKindTableCommitment)
                     }
                     setKindTableCommitment
+                },
+                {
+                    fn getBatchAggregationVerifyingKey(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getBatchAggregationVerifyingKey)
+                    }
+                    getBatchAggregationVerifyingKey
                 },
                 {
                     fn getRiscZeroVerifierSelector(
@@ -5548,6 +5938,16 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
+                Self::getBatchAggregationVerifyingKey(inner) => {
+                    <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
+                Self::getComplianceVerifyingKey(inner) => {
+                    <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::getKindTableCommitment(inner) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -5596,6 +5996,18 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
+                }
+                Self::getBatchAggregationVerifyingKey(inner) => {
+                    <getBatchAggregationVerifyingKeyCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::getComplianceVerifyingKey(inner) => {
+                    <getComplianceVerifyingKeyCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
                 }
                 Self::getKindTableCommitment(inner) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
@@ -6071,6 +6483,18 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             transaction: <Transaction as alloy::sol_types::SolType>::RustType,
         ) -> alloy_contract::SolCallBuilder<&P, executeCall, N> {
             self.call_builder(&executeCall { transaction })
+        }
+        ///Creates a new call builder for the [`getBatchAggregationVerifyingKey`] function.
+        pub fn getBatchAggregationVerifyingKey(
+            &self,
+        ) -> alloy_contract::SolCallBuilder<&P, getBatchAggregationVerifyingKeyCall, N> {
+            self.call_builder(&getBatchAggregationVerifyingKeyCall)
+        }
+        ///Creates a new call builder for the [`getComplianceVerifyingKey`] function.
+        pub fn getComplianceVerifyingKey(
+            &self,
+        ) -> alloy_contract::SolCallBuilder<&P, getComplianceVerifyingKeyCall, N> {
+            self.call_builder(&getComplianceVerifyingKeyCall)
         }
         ///Creates a new call builder for the [`getKindTableCommitment`] function.
         pub fn getKindTableCommitment(

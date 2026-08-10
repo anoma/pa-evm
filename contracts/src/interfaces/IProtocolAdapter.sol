@@ -181,4 +181,14 @@ interface IProtocolAdapter {
     /// @notice Returns the current implementation contract the calls are delegated to.
     /// @return current The current implementation contract.
     function implementation() external view returns (address current);
+
+    /// @notice Returns the compliance circuit verifying key that transactions must be proven against
+    /// (`anoma-rm-risc0` `COMPLIANCE_VK`).
+    /// @return complianceVerifyingKey The compliance circuit verifying key.
+    function getComplianceVerifyingKey() external pure returns (bytes32 complianceVerifyingKey);
+
+    /// @notice Returns the batch aggregation circuit verifying key that transactions must be proven against
+    /// (`anoma-rm-risc0` `BATCH_AGGREGATION_EVM_VK`).
+    /// @return batchAggregationVerifyingKey The batch aggregation circuit verifying key.
+    function getBatchAggregationVerifyingKey() external pure returns (bytes32 batchAggregationVerifyingKey);
 }

@@ -22,6 +22,7 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {VerifyingKeys} from "../src/libs/VerifyingKeys.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
@@ -125,6 +126,18 @@ contract ProtocolAdapterTest is Test {
 
     function test_getRiscZeroVerifierSelector_returns_the_selector() public view {
         assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
+    }
+
+    function test_getComplianceVerifyingKey_returns_the_pinned_compliance_key() public view {
+        assertEq(_pa.getComplianceVerifyingKey(), VerifyingKeys._COMPLIANCE, "compliance key should match");
+    }
+
+    function test_getBatchAggregationVerifyingKey_returns_the_pinned_batch_aggregation_key() public view {
+        assertEq(
+            _pa.getBatchAggregationVerifyingKey(),
+            VerifyingKeys._BATCH_AGGREGATION_EVM,
+            "batch aggregation key should match"
+        );
     }
 
     function test_implementation_returns_the_implementation_behind_the_proxy() public view {
