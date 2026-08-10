@@ -12,6 +12,7 @@ use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_testkit::environment::Environment;
 use anoma_pa_testkit::transaction::Transaction;
+use anoma_rm_risc0::aggregation_instance::abi_encode_instance;
 use anoma_rm_risc0::proving_system::encode_seal;
 use anyhow::Context;
 use rstest::*;
@@ -35,20 +36,18 @@ where
     let router = router(&env).await?;
 
     let arm = tx.as_arm();
-    let proof = arm
-        .aggregation_proof
+    let aggregation = arm
+        .aggregation
         .as_ref()
-        .context("transaction carries no aggregation proof")?;
-    let seal = encode_seal(proof).context("failed to encode the aggregation seal")?;
-    let instance = arm
-        .construct_aggregation_instance()
-        .context("failed to construct the aggregation instance")?;
+        .context("transaction carries no aggregation")?;
+    let seal = encode_seal(&aggregation.proof).context("failed to encode the aggregation seal")?;
+    let journal = abi_encode_instance(aggregation.instance.clone());
 
     router
         .verify(
             Bytes::from(seal),
-            B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_VK.as_bytes()),
-            journal_digest(&instance),
+            B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_EVM_VK.as_bytes()),
+            journal_digest(&journal),
         )
         .call()
         .await

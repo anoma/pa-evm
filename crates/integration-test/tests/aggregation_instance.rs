@@ -1,12 +1,15 @@
-//! Pins the protocol adapter's Solidity aggregation-instance encoding to
-//! arm-risc0's `construct_aggregation_instance`: the mock seal the local
-//! prover mints over the Rust-built instance must pass `simulateExecute`.
-//! A selector other than `Simulated` means the encodings diverge.
+//! Pins the protocol adapter's Solidity aggregation-journal encoding to the
+//! risc0 serde encoding of arm-risc0's `AggregationInstance`: the mock seal
+//! the local prover mints over the Rust-built instance must pass
+//! `simulateExecute`. A selector other than `Simulated` means the encodings
+//! diverge — including the injected compliance key and kind table commitment.
 
 mod common;
 
 use alloy::sol_types::SolError;
-use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
+use anoma_pa_evm_bindings::generated::protocol_adapter::{
+    IProtocolAdapter, ProtocolAdapter as PaContract,
+};
 use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
@@ -32,7 +35,7 @@ where
     let env = env.context("env setup failed")?;
     let proven = prove_trivial_tx(&env).await?;
 
-    let tx: PaContract::Transaction = proven.into_arm().into();
+    let tx: IProtocolAdapter::Transaction = proven.into_arm().into();
 
     let provider = default_signer(&env)?;
     let pa = protocol_adapter(pa_address(&env)?, provider);

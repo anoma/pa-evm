@@ -21,8 +21,8 @@ import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/R
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
+import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Transaction} from "../src/Types.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
 contract ProtocolAdapterTest is Test {
@@ -41,7 +41,7 @@ contract ProtocolAdapterTest is Test {
     ProtocolAdapter internal _pa;
     bytes4 internal _verifierSelector;
 
-    Transaction internal _emptyTx;
+    IProtocolAdapter.Transaction internal _emptyTx;
 
     function setUp() public {
         (_router, _emergencyStop, _verifier) =
@@ -69,10 +69,10 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_reverts_if_the_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
-        (Transaction memory txnWithMockProof,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txnWithMockProof,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, complianceUnitCount: 1})
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
 
         vm.expectRevert(
@@ -125,6 +125,21 @@ contract ProtocolAdapterTest is Test {
 
     function test_getRiscZeroVerifierSelector_returns_the_selector() public view {
         assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
+    }
+
+    function test_implementation_returns_the_implementation_behind_the_proxy() public view {
+        assertEq(
+            _pa.implementation(),
+            Upgrades.getImplementationAddress(address(_pa)),
+            "implementation should match the ERC-1967 slot"
+        );
+    }
+
+    /// @dev Called on the implementation instead of through the proxy, the ERC-1967 slot is unset.
+    function test_implementation_returns_the_zero_address_off_the_proxy() public view {
+        address implementation = Upgrades.getImplementationAddress(address(_pa));
+
+        assertEq(ProtocolAdapter(implementation).implementation(), address(0), "implementation should be unset");
     }
 
     function test_check_that_the_current_version_is_a_not_a_major_release() public view {

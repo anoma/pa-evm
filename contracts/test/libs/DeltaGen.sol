@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std-1.16.2/src/Vm.sol";
 
-import {Delta} from "../../src/libs/proving/Delta.sol";
+import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
 
 library DeltaGen {
     using DeltaGen for uint256;
@@ -47,7 +47,10 @@ library DeltaGen {
     /// @return instance The mocked curve point.
     /// @dev `vm.createWallet` performs the scalar multiplication: it treats the pre-delta as a private key and
     /// exposes the corresponding public key — the curve point we want.
-    function generateInstance(VmSafe vm, InstanceInputs memory inputs) internal returns (Delta.Point memory instance) {
+    function generateInstance(VmSafe vm, InstanceInputs memory inputs)
+        internal
+        returns (IProtocolAdapter.Delta memory instance)
+    {
         // computePreDelta tolerates unreduced inputs (mulmod/addmod handle reduction), and the only failure mode
         // for `vm.createWallet` is a zero pre-delta, which `generateInstanceFromPreDelta` rejects with a named error.
         instance = generateInstanceFromPreDelta(vm, computePreDelta(inputs));
@@ -57,14 +60,17 @@ library DeltaGen {
     /// @param vm The Forge VM interface.
     /// @param preDelta The pre-delta scalar, reduced modulo `SECP256K1_ORDER` and required to be non-zero.
     /// @return instance The mocked curve point.
-    function generateInstanceFromPreDelta(VmSafe vm, uint256 preDelta) internal returns (Delta.Point memory instance) {
+    function generateInstanceFromPreDelta(VmSafe vm, uint256 preDelta)
+        internal
+        returns (IProtocolAdapter.Delta memory instance)
+    {
         // A zero pre-delta is not a valid ECDSA private key, so reject it explicitly rather than letting the cheatcode
         // fail with a less informative error.
         require(preDelta != 0, PreDeltaZero());
 
         // Use the pre-delta as a private key; the resulting public key coordinates are the delta point.
         VmSafe.Wallet memory wallet = vm.createWallet(preDelta);
-        instance = Delta.Point({x: wallet.publicKeyX, y: wallet.publicKeyY});
+        instance = IProtocolAdapter.Delta({x: wallet.publicKeyX, y: wallet.publicKeyY});
     }
 
     /// @notice Mocks a delta proof by signing the verifying key with the value commitment randomness via ECDSA on

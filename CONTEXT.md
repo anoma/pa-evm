@@ -31,6 +31,17 @@ The three proof kinds the PA verifies — compliance for resource bookkeeping, l
 for each resource's application rules, delta for value balance. Aggregation folds
 them into a single proof.
 
+**Aggregation journal**:
+The public statement the aggregation proof attests to — the compliance verifying
+key, the kind table commitment, and the transaction's actions. The PA reconstructs
+it from calldata, injecting the first two, and verifies the aggregation proof
+against its digest.
+
+**Unit Delta**:
+The elliptic-curve point carrying the delta value of an action's compliance
+unit — one per action, summed across the transaction and checked against the
+delta proof.
+
 **Commitment Tree / Nullifier Set**:
 The PA's on-chain state — a Merkle tree of resource commitments and the set of
 spent nullifiers.

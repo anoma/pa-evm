@@ -38,14 +38,110 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
 }
 
 #[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[cfg_attr(feature = "e2e", case::e2e_test(EvmE2eEnv::setup_bare()))]
+#[tokio::test]
+async fn execute_tx_settles_an_n_to_m_transaction<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    let before = commitment_root(&env)?;
+
+    let action = trivial::build(
+        21,
+        trivial::Overrides {
+            consumed_count: Some(2),
+            created_count: Some(3),
+            ..trivial::Overrides::default()
+        },
+    )
+    .context("failed to build an n:m trivial action")?
+    .witnesses;
+    let tx = prove_actions(&env, &[action]).await?;
+
+    execute_tx(&mut env, tx).await?;
+
+    let after = commitment_root(&env)?;
+
+    anyhow::ensure!(before != after, "commitment tree root must change");
+    Ok(())
+}
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[cfg_attr(feature = "e2e", case::e2e_test(EvmE2eEnv::setup_bare()))]
+#[tokio::test]
+async fn execute_tx_settles_a_multi_action_transaction<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    let before = commitment_root(&env)?;
+
+    let actions = trivial::build_many(3, 31).context("failed to build trivial actions")?;
+    let tx = prove_actions(&env, &actions).await?;
+
+    execute_tx(&mut env, tx).await?;
+
+    let after = commitment_root(&env)?;
+
+    anyhow::ensure!(before != after, "commitment tree root must change");
+    Ok(())
+}
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[tokio::test]
+async fn execute_tx_settles_consume_only_transactions_without_a_root_change<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    let before = commitment_root(&env)?;
+
+    let consume_only = |seed| {
+        trivial::build(
+            seed,
+            trivial::Overrides {
+                consumed_count: Some(2),
+                created_count: Some(0),
+                ..trivial::Overrides::default()
+            },
+        )
+        .context("failed to build a consume-only trivial action")
+    };
+
+    let tx = prove_actions(&env, &[consume_only(41)?.witnesses]).await?;
+    execute_tx(&mut env, tx).await?;
+
+    anyhow::ensure!(
+        commitment_root(&env)? == before,
+        "a consume-only transaction must leave the commitment tree root unchanged"
+    );
+
+    // A second consume-only transaction settles as well — no root is stored,
+    // so no pre-existing-root collision can occur.
+    let tx = prove_actions(&env, &[consume_only(42)?.witnesses]).await?;
+    execute_tx(&mut env, tx).await?;
+
+    anyhow::ensure!(
+        commitment_root(&env)? == before,
+        "the commitment tree root must still be unchanged"
+    );
+    Ok(())
+}
+
+#[rstest]
 #[case::local(
     EvmLocalEnv::setup_bare(),
-    expect_integration_panic(Needle::Regexp(
-        regex::Regex::new(
-            r#"proving failed: [^\n]*\n\s*left: 1[^\n]*\n\s*right: 0"#,
-        )
-        .unwrap(),
-    )),
+    expect_integration_panic(Needle::Static("Invalid padding resource"))
 )]
 #[tokio::test]
 async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
@@ -65,7 +161,7 @@ async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
 #[rstest]
 #[case::local(
     EvmLocalEnv::setup_bare(),
-    expect_integration_panic(Needle::Static("assertion failed: self.resource.is_ephemeral"))
+    expect_integration_panic(Needle::Static("Invalid padding resource"))
 )]
 #[tokio::test]
 async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(

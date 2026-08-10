@@ -4,7 +4,8 @@ pragma solidity ^0.8.30;
 import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 
-import {Delta} from "../../src/libs/proving/Delta.sol";
+import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {DeltaProof} from "../../src/libs/DeltaProof.sol";
 
 /**
  * @title EllipticCurvePropertiesTest
@@ -31,28 +32,30 @@ contract EllipticCurvePropertiesTest is Test {
         scalar2 = bound(scalar2, 1, 20);
 
         // P1 = scalar1 * G
-        (uint256 x1, uint256 y1) =
-            EllipticCurve.ecMul({_k: scalar1, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x1, uint256 y1) = EllipticCurve.ecMul({
+            _k: scalar1, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // P2 = scalar2 * G
-        (uint256 x2, uint256 y2) =
-            EllipticCurve.ecMul({_k: scalar2, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x2, uint256 y2) = EllipticCurve.ecMul({
+            _k: scalar2, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Verify both points are on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P1 must be on curve"
         );
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P2 must be on curve"
         );
 
         // Test commutativity: P1 + P2 = P2 + P1
         (uint256 resultX1, uint256 resultY1) =
-            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
         (uint256 resultX2, uint256 resultY2) =
-            EllipticCurve.ecAdd({_x1: x2, _y1: y2, _x2: x1, _y2: y1, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x2, _y1: y2, _x2: x1, _y2: y1, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         assertEq(resultX1, resultX2, "GROUP PROPERTY: P + Q must equal Q + P");
         assertEq(resultY1, resultY2, "GROUP PROPERTY: P + Q must equal Q + P");
@@ -63,18 +66,19 @@ contract EllipticCurvePropertiesTest is Test {
         scalar = bound(scalar, 1, 20);
 
         // P = scalar * G (guaranteed on curve)
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecMul({_k: scalar, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x, uint256 y) = EllipticCurve.ecMul({
+            _k: scalar, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Verify P is on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x, _y: y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x, _y: y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P must be on curve"
         );
 
         // P + O should equal P
         (uint256 resultX, uint256 resultY) =
-            EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: 0, _y2: 0, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: 0, _y2: 0, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         assertEq(resultX, x, "GROUP PROPERTY: P + O must equal P");
         assertEq(resultY, y, "GROUP PROPERTY: P + O must equal P");
@@ -85,30 +89,34 @@ contract EllipticCurvePropertiesTest is Test {
         scalar = bound(scalar, 1, 20);
 
         // P = scalar * G (guaranteed on curve)
-        (uint256 x, uint256 y) =
-            EllipticCurve.ecMul({_k: scalar, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x, uint256 y) = EllipticCurve.ecMul({
+            _k: scalar, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Verify P is on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x, _y: y, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x, _y: y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P must be on curve"
         );
 
         // Get -P
-        (uint256 invX, uint256 invY) = EllipticCurve.ecInv({_x: x, _y: y, _pp: Delta._PP});
+        (uint256 invX, uint256 invY) = EllipticCurve.ecInv({_x: x, _y: y, _pp: DeltaProof._PP});
 
         // Verify -P is on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: invX, _y: invY, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({
+                _x: invX, _y: invY, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
+            }),
             "-P must be on curve"
         );
 
         // P + (-P) should equal O
         (uint256 resultX, uint256 resultY) =
-            EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x, _y1: y, _x2: invX, _y2: invY, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         assertTrue(
-            _isPointAtInfinity(Delta.Point(resultX, resultY)), "GROUP PROPERTY: P + (-P) must equal point at infinity"
+            _isPointAtInfinity(IProtocolAdapter.Delta(resultX, resultY)),
+            "GROUP PROPERTY: P + (-P) must equal point at infinity"
         );
     }
 
@@ -122,39 +130,42 @@ contract EllipticCurvePropertiesTest is Test {
         scalar3 = bound(scalar3, 1, 10);
 
         // Generate three points on curve
-        (uint256 x1, uint256 y1) =
-            EllipticCurve.ecMul({_k: scalar1, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
-        (uint256 x2, uint256 y2) =
-            EllipticCurve.ecMul({_k: scalar2, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
-        (uint256 x3, uint256 y3) =
-            EllipticCurve.ecMul({_k: scalar3, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x1, uint256 y1) = EllipticCurve.ecMul({
+            _k: scalar1, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
+        (uint256 x2, uint256 y2) = EllipticCurve.ecMul({
+            _k: scalar2, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
+        (uint256 x3, uint256 y3) = EllipticCurve.ecMul({
+            _k: scalar3, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Verify all points are on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P1 must be on curve"
         );
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P2 must be on curve"
         );
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x3, _y: y3, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x3, _y: y3, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P3 must be on curve"
         );
 
         // Compute (P + Q) + R
         (uint256 pqX, uint256 pqY) =
-            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
         (uint256 resultX1, uint256 resultY1) =
-            EllipticCurve.ecAdd({_x1: pqX, _y1: pqY, _x2: x3, _y2: y3, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: pqX, _y1: pqY, _x2: x3, _y2: y3, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         // Compute P + (Q + R)
         (uint256 qrX, uint256 qrY) =
-            EllipticCurve.ecAdd({_x1: x2, _y1: y2, _x2: x3, _y2: y3, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x2, _y1: y2, _x2: x3, _y2: y3, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         (uint256 resultX2, uint256 resultY2) =
-            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: qrX, _y2: qrY, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: qrX, _y2: qrY, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         assertEq(resultX1, resultX2, "GROUP PROPERTY: Associativity must hold");
         assertEq(resultY1, resultY2, "GROUP PROPERTY: Associativity must hold");
@@ -166,29 +177,32 @@ contract EllipticCurvePropertiesTest is Test {
         scalar2 = bound(scalar2, 1, 20);
 
         // Generate two points on curve
-        (uint256 x1, uint256 y1) =
-            EllipticCurve.ecMul({_k: scalar1, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
-        (uint256 x2, uint256 y2) =
-            EllipticCurve.ecMul({_k: scalar2, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 x1, uint256 y1) = EllipticCurve.ecMul({
+            _k: scalar1, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
+        (uint256 x2, uint256 y2) = EllipticCurve.ecMul({
+            _k: scalar2, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Verify inputs are on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x1, _y: y1, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P1 must be on curve"
         );
         assertTrue(
-            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: x2, _y: y2, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "P2 must be on curve"
         );
 
         // Add points
         (uint256 resultX, uint256 resultY) =
-            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: x1, _y1: y1, _x2: x2, _y2: y2, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
 
         // Result must be on curve or at infinity
-        bool atInfinity = _isPointAtInfinity(Delta.Point(resultX, resultY));
-        bool onCurve =
-            EllipticCurve.isOnCurve({_x: resultX, _y: resultY, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP});
+        bool atInfinity = _isPointAtInfinity(IProtocolAdapter.Delta(resultX, resultY));
+        bool onCurve = EllipticCurve.isOnCurve({
+            _x: resultX, _y: resultY, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
+        });
 
         assertTrue(atInfinity || onCurve, "GROUP PROPERTY: Closure - result must be on curve or at infinity");
     }
@@ -206,7 +220,7 @@ contract EllipticCurvePropertiesTest is Test {
 
         // P + (-P) should equal point at infinity
         assertTrue(
-            _isPointAtInfinity(Delta.Point(rx, ry)),
+            _isPointAtInfinity(IProtocolAdapter.Delta(rx, ry)),
             "With REDUCED coordinates: (3,5) + (3,2) correctly gives point at infinity"
         );
     }
@@ -216,7 +230,12 @@ contract EllipticCurvePropertiesTest is Test {
     /// @notice Concrete: G + G = 2G
     function test_doubling_secp256k1() public pure {
         (uint256 rx, uint256 ry) = EllipticCurve.ecAdd({
-            _x1: Delta._GX, _y1: Delta._GY, _x2: Delta._GX, _y2: Delta._GY, _aa: Delta._AA, _pp: Delta._PP
+            _x1: DeltaProof._GX,
+            _y1: DeltaProof._GY,
+            _x2: DeltaProof._GX,
+            _y2: DeltaProof._GY,
+            _aa: DeltaProof._AA,
+            _pp: DeltaProof._PP
         });
 
         // Expected 2G
@@ -233,55 +252,63 @@ contract EllipticCurvePropertiesTest is Test {
 
         // Verify result is on curve
         assertTrue(
-            EllipticCurve.isOnCurve({_x: rx, _y: ry, _aa: Delta._AA, _bb: Delta._BB, _pp: Delta._PP}),
+            EllipticCurve.isOnCurve({_x: rx, _y: ry, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP}),
             "2G must be on curve"
         );
     }
 
     /// @notice Concrete: G + O = G
     function test_group_property_identity_secp256k1() public pure {
-        (uint256 rx, uint256 ry) =
-            EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: 0, _y2: 0, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 rx, uint256 ry) = EllipticCurve.ecAdd({
+            _x1: DeltaProof._GX, _y1: DeltaProof._GY, _x2: 0, _y2: 0, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
-        assertEq(rx, Delta._GX, "G + O x-coordinate should equal G");
-        assertEq(ry, Delta._GY, "G + O y-coordinate should equal G");
+        assertEq(rx, DeltaProof._GX, "G + O x-coordinate should equal G");
+        assertEq(ry, DeltaProof._GY, "G + O y-coordinate should equal G");
     }
 
     /// @notice Concrete: G + (-G) = O
     function test_inverse_secp256k1() public pure {
-        (uint256 invX, uint256 invY) = EllipticCurve.ecInv({_x: Delta._GX, _y: Delta._GY, _pp: Delta._PP});
+        (uint256 invX, uint256 invY) =
+            EllipticCurve.ecInv({_x: DeltaProof._GX, _y: DeltaProof._GY, _pp: DeltaProof._PP});
 
-        (uint256 rx, uint256 ry) =
-            EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: invX, _y2: invY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 rx, uint256 ry) = EllipticCurve.ecAdd({
+            _x1: DeltaProof._GX, _y1: DeltaProof._GY, _x2: invX, _y2: invY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
-        assertTrue(_isPointAtInfinity(Delta.Point(rx, ry)), "G + (-G) should be point at infinity");
+        assertTrue(_isPointAtInfinity(IProtocolAdapter.Delta(rx, ry)), "G + (-G) should be point at infinity");
     }
 
     /// @notice Concrete: (G + 2G) + 3G = G + (2G + 3G) = 6G
     function test_associativity_secp256k1() public pure {
         // Compute 2G, 3G
 
-        (uint256 p2gX, uint256 p2gY) =
-            EllipticCurve.ecMul({_k: 2, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
-        (uint256 p3gX, uint256 p3gY) =
-            EllipticCurve.ecMul({_k: 3, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 p2gX, uint256 p2gY) = EllipticCurve.ecMul({
+            _k: 2, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
+        (uint256 p3gX, uint256 p3gY) = EllipticCurve.ecMul({
+            _k: 3, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Compute (G + 2G) + 3G
-        (uint256 pg2gX, uint256 pg2gY) =
-            EllipticCurve.ecAdd({_x1: Delta._GX, _y1: Delta._GY, _x2: p2gX, _y2: p2gY, _aa: Delta._AA, _pp: Delta._PP});
-        (uint256 result1X, uint256 result1Y) =
-            EllipticCurve.ecAdd({_x1: pg2gX, _y1: pg2gY, _x2: p3gX, _y2: p3gY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 pg2gX, uint256 pg2gY) = EllipticCurve.ecAdd({
+            _x1: DeltaProof._GX, _y1: DeltaProof._GY, _x2: p2gX, _y2: p2gY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
+        (uint256 result1X, uint256 result1Y) = EllipticCurve.ecAdd({
+            _x1: pg2gX, _y1: pg2gY, _x2: p3gX, _y2: p3gY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         // Compute G + (2G + 3G)
         (uint256 p2g3gX, uint256 p2g3gY) =
-            EllipticCurve.ecAdd({_x1: p2gX, _y1: p2gY, _x2: p3gX, _y2: p3gY, _aa: Delta._AA, _pp: Delta._PP});
+            EllipticCurve.ecAdd({_x1: p2gX, _y1: p2gY, _x2: p3gX, _y2: p3gY, _aa: DeltaProof._AA, _pp: DeltaProof._PP});
         (uint256 result2X, uint256 result2Y) = EllipticCurve.ecAdd({
-            _x1: Delta._GX, _y1: Delta._GY, _x2: p2g3gX, _y2: p2g3gY, _aa: Delta._AA, _pp: Delta._PP
+            _x1: DeltaProof._GX, _y1: DeltaProof._GY, _x2: p2g3gX, _y2: p2g3gY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
         });
 
         // Both should equal 6G
-        (uint256 p6gx, uint256 p6gy) =
-            EllipticCurve.ecMul({_k: 6, _x: Delta._GX, _y: Delta._GY, _aa: Delta._AA, _pp: Delta._PP});
+        (uint256 p6gx, uint256 p6gy) = EllipticCurve.ecMul({
+            _k: 6, _x: DeltaProof._GX, _y: DeltaProof._GY, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
 
         assertEq(result1X, result2X, "Associativity: (G+2G)+3G = G+(2G+3G)");
 
@@ -293,7 +320,7 @@ contract EllipticCurvePropertiesTest is Test {
     /// @notice Returns whether a point is at infinity or not..
     /// @param p The point to check.
     /// @return isAtInfinity Whether the point is at infinity or not.
-    function _isPointAtInfinity(Delta.Point memory p) internal pure returns (bool isAtInfinity) {
+    function _isPointAtInfinity(IProtocolAdapter.Delta memory p) internal pure returns (bool isAtInfinity) {
         isAtInfinity = p.x == 0 && p.y == 0;
     }
 }
