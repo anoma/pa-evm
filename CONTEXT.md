@@ -24,7 +24,14 @@ A bundle of consumed and created resources proven together — one compliance un
 plus the per-resource logic proofs.
 
 **Transaction**:
-A set of actions plus a delta proof, submitted to the PA's `execute` function.
+An ordered sequence of actions plus a delta proof, submitted to the PA's `execute`
+function. The order is meaningful: it fixes the transaction ID and the order in
+which effects are enacted.
+
+**Tag**:
+A resource's identifier within a transaction — its nullifier if consumed, its
+commitment if created. Unique per transaction, and what payload blobs are
+attributed to.
 
 **Compliance / Logic / Delta**:
 The three proof kinds the PA verifies — compliance for resource bookkeeping, logic
