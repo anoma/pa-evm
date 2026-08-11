@@ -52,6 +52,10 @@ So a resource logic already constrains its own calls byte for byte, in order.
 **Array position is a proven total order.** Nothing can be reordered after
 proving, and the "user fixes the order" option therefore needs no change at all.
 
+Two further properties matter for what follows. `execute` is **permissionless** —
+anyone who sees a transaction can submit it — and each call's return data is
+checked for **exact equality** against a proven `expectedOutput`.
+
 ## Options considered
 
 ### A. Proven ordering field
@@ -157,6 +161,34 @@ Today a call is attributed to its resource by *event position* — it is emitted
 between that action's state writes and its `ActionExecuted`. A global schedule
 destroys that nesting, so the attribution has to move into the event itself.
 
+## Output determinism bounds the scope
+
+`expectedOutput` stays an exact equality. The adapter cannot check that a call is
+deterministic, so determinism is not a validated precondition — it is enforced by
+failure. A call whose return data shifts under reordering fails the equality check
+and takes the transaction with it.
+
+That fixes what the schedule is for. A solver may only choose among permutations
+under which every call returns byte-identical data, so this buys **feasibility
+ordering, not price optimization**: finding an order in which every call succeeds
+(the swap runs after the release that funds it), never an order that produces a
+better fill. A better route yields a different `amountOut`, a different return
+value, and a revert.
+
+The same check is what makes an unproven schedule tolerable at all. Because
+`execute` is permissionless, an arbitrary submitter can rewrite `callSchedule`
+freely; equality means any economically meaningful permutation reverts, so the
+attacker burns gas and gains nothing.
+
+The declarative gain that survives is real but narrower than the thread's
+ambition: the user no longer needs to know what else is in the transaction. They
+authorize their resources and their dependencies; whoever composes the transaction
+works out an order that runs.
+
+Loosening equality — an opt-out flag, or an `AtLeast` predicate — is what price
+optimization would require, and it reopens exactly the MEV surface equality
+closes. Deferred until something needs it.
+
 ## Execution and validation
 
 A global schedule cannot be executed inside the per-action loop, so `execute`
@@ -208,7 +240,9 @@ callSchedule = [2, 0, 3, 4, 1]   →   approve(100), release, swap, approve(0), 
 Valid: the swap carrier's calls hold their relative order (positions 0 < 2 < 3);
 `release` precedes `swap` (1 < 2); every swap carrier call precedes `pull`
 (0, 2, 3 < 4). The solver got its interleave — `release` landing between the
-approval and the swap — without the user ever having written a sequence.
+approval and the swap — without the user ever having written a sequence. Every
+call returns what it would have returned in appearance order, so the equality
+checks pass.
 
 ## Blast radius
 
@@ -251,6 +285,18 @@ Concretely:
 
 ## Open questions
 
+- **Should the implicit rule key on the resource or on the forwarder?** Equality
+  does not catch effects no return value reports. Two carrier resources of one app
+  driving the same forwarder, one calling `approve(dex, max)` and the other
+  `approve(dex, 0)`, both return `true`; the intra-resource rule does not bind them
+  because they are different resources, and the surviving allowance is whichever
+  the solver chose. Keying the rule on `untrustedForwarder` instead subsumes the
+  resource rule, is the same shape of check — a monotonicity counter keyed by
+  address rather than by resource index — and makes silence safe rather than
+  exposed. The forwarder is the `msg.sender` whose balances and allowances move,
+  and two different forwarders cannot collide on an allowance slot at all. It costs
+  an app the ability to interleave its own two resources without declaring
+  `predecessors` explicitly.
 - **May a resource impose on a resource that did not agree?** Declaring `t` as a
   predecessor constrains `t`'s position as much as one's own. The damage is
   bounded to a revert, since an unsatisfiable graph fails validation and the
