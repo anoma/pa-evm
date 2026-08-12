@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
 
 import {ForwarderExample} from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderExample.sol";
 import {
@@ -31,6 +32,7 @@ import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
+import {ReentrantForwarderMock} from "./mocks/ReentrantForwarder.m.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for IProtocolAdapter.Action[];
@@ -211,6 +213,46 @@ contract ProtocolAdapterMockVerifierTest is Test {
         );
     }
 
+    function test_execute_emits_the_persistent_external_call_blob() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ExternalPayload({
+            tag: txn.actions[0].created[0].commitment, index: 0, blob: abi.encode(_fwd, _input, EXPECTED_OUTPUT)
+        });
+        _mockPa.execute(txn);
+    }
+
+    /// @dev The deletion criterion only gates the event emission — an expiring call blob is still executed.
+    function test_execute_executes_expiring_call_blobs_without_emitting_them() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        created[0].appData.externalPayload[0].deletionCriterion = IProtocolAdapter.DeletionCriterion.Immediately;
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd), input: _input, output: EXPECTED_OUTPUT
+        });
+
+        vm.recordLogs();
+        _mockPa.execute(txn);
+
+        assertEq(
+            _countEvents(vm.getRecordedLogs(), IProtocolAdapter.ExternalPayload.selector),
+            0,
+            "the expiring call blob should not be emitted"
+        );
+    }
+
     /// @dev An action without resources carries the zero delta point, which is not on the curve. Such an action is
     /// unprovable anyway — the compliance circuit requires at least one consumed resource.
     function test_execute_reverts_on_actions_without_resources() public {
@@ -322,6 +364,37 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(tx1);
     }
 
+    function test_execute_reverts_on_a_duplicate_nullifier_within_an_action() public {
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](2);
+        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0];
+        consumed[1] = consumed[0];
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: new TxGen.ResourceAndAppData[](0)});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        bytes32 duplicate = txn.actions[0].consumed[0].nullifier;
+        assertEq(txn.actions[0].consumed[1].nullifier, duplicate, "the two consumed resources should share a nullifier");
+
+        vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, duplicate));
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_reverts_on_a_duplicate_nullifier_across_actions() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: new TxGen.ResourceAndAppData[](0)});
+        resourceLists[1] = TxGen.ResourceLists({consumed: consumed, created: new TxGen.ResourceAndAppData[](0)});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        bytes32 duplicate = txn.actions[0].consumed[0].nullifier;
+        assertEq(txn.actions[1].consumed[0].nullifier, duplicate, "the two actions should consume the same nullifier");
+
+        vm.expectRevert(abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, duplicate));
+        _mockPa.execute(txn);
+    }
+
     /// @notice Test that transactions with nonexistent roots fail.
     function testFuzz_execute_reverts_on_non_existing_root(
         uint8 actionCount,
@@ -401,6 +474,51 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @notice Tampering a commitment makes the reconstructed journal mismatch the proven one. The delta proof
+    /// still passes — it signs the untouched calldata action tree roots — so the aggregation proof is the check
+    /// binding the created commitments.
+    function testFuzz_execute_reverts_on_tampered_commitment(
+        uint8 actionCount,
+        uint8 resourcePairCount,
+        uint8 actionIndex,
+        uint8 resourceIndex,
+        bytes32 nonce
+    ) public {
+        (actionCount, resourcePairCount, actionIndex, resourceIndex) =
+            _bindParameters(actionCount, resourcePairCount, actionIndex, resourceIndex);
+
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({
+                actionCount: actionCount, consumedCount: resourcePairCount, createdCount: resourcePairCount
+            })
+        });
+
+        bytes32 originalCommitment = txn.actions[actionIndex].created[resourceIndex].commitment;
+        txn.actions[actionIndex].created[resourceIndex].commitment = SHA256.hash(originalCommitment, nonce);
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.execute(txn);
+    }
+
+    /// @notice Tampering an app data blob makes the reconstructed journal mismatch the proven one, pinning that
+    /// the app data lies inside the proven region.
+    function test_execute_reverts_on_a_tampered_app_data_blob() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndBlobAppData({nonce: 1});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        bytes memory blob = txn.actions[0].created[0].appData.resourcePayload[1].blob;
+        blob[0] = _flipBits(blob[0]);
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.execute(txn);
+    }
+
     function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
@@ -419,6 +537,22 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
         );
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_reverts_on_a_reentering_forwarder_call() public {
+        address[] memory reentrantList = new address[](1);
+        reentrantList[0] = address(new ReentrantForwarderMock(_mockPa));
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCarrierResourceAndAppData({nonce: 1, fwdList: reentrantList});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector);
         _mockPa.execute(txn);
     }
 
@@ -581,6 +715,32 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.aggregationProof = proof;
 
         vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
+        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
+    }
+
+    /// @dev The selector check precedes the skippable verifier call, so even simulations reject proofs from a
+    /// foreign verifier.
+    function test_simulateExecute_checks_the_selector_even_when_skipping_verification() public {
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
+        });
+
+        bytes memory proof = txn.aggregationProof;
+        for (uint256 i = 0; i < 4; ++i) {
+            proof[i] = _flipBits(proof[i]);
+        }
+        txn.aggregationProof = proof;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ProtocolAdapter.RiscZeroVerifierSelectorMismatch.selector,
+                _mockVerifier.SELECTOR(),
+                _mockVerifier.SELECTOR() ^ bytes4(0xffffffff)
+            ),
+            address(_mockPa)
+        );
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
     }
 
