@@ -85,33 +85,27 @@ For each chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <CHAIN_NAME>
+  just contracts-simulate-proxy <CHAIN_NAME>
   ```
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <CHAIN_NAME>
+  just contracts-deploy-proxy deployer <CHAIN_NAME>
   ```
 
-- [ ] Export the address of the newly deployed protocol adapter contract with
+- [ ] Export the addresses of the newly deployed implementation and proxy with
 
   ```sh
+  export IMPL_ADDRESS=<ADDRESS>
   export PA_ADDRESS=<ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the implementation and proxy on sourcify and Etherscan by running
 
-    ```sh
-    just contracts-verify-sourcify <PA_ADDRESS> <CHAIN>
-    ```
-
-  - [ ] Etherscan
-
-    ```sh
-    just contracts-verify-etherscan <PA_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-deployment <IMPL_ADDRESS> <PA_ADDRESS> <CHAIN>
+  ```
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
@@ -227,33 +221,27 @@ For each **new** chain, you want to deploy to, do the following:
 - [ ] **Simulate** the deployment by running
 
   ```sh
-  just contracts-simulate <CHAIN_NAME>
+  just contracts-simulate-proxy <CHAIN_NAME>
   ```
 
 - [ ] After successful simulation, **deploy** the contract by running
 
   ```sh
-  just contracts-deploy deployer <CHAIN_NAME>
+  just contracts-deploy-proxy deployer <CHAIN_NAME>
   ```
 
-- [ ] Export the address of the newly deployed protocol adapter contract with
+- [ ] Export the addresses of the newly deployed implementation and proxy with
 
   ```sh
+  export IMPL_ADDRESS=<ADDRESS>
   export PA_ADDRESS=<ADDRESS>
   ```
 
-- [ ] Verify the contract on
-  - [ ] sourcify
+- [ ] Verify the implementation and proxy on sourcify and Etherscan by running
 
-    ```sh
-    just contracts-verify-sourcify <PA_ADDRESS> <CHAIN>
-    ```
-
-  - [ ] Etherscan
-
-    ```sh
-    just contracts-verify-etherscan <PA_ADDRESS> <CHAIN>
-    ```
+  ```sh
+  just contracts-verify-deployment <IMPL_ADDRESS> <PA_ADDRESS> <CHAIN>
+  ```
 
   and check that the verification worked (e.g., on https://sourcify.dev/#/lookup).
 
