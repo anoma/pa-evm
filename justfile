@@ -1,7 +1,7 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) and `INITIAL_OWNER`
+# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) and `PA_OWNER`
 # (deploys) from the environment; forge does not load this file itself. The file
 # is absent in CI, where the values come from secrets instead, so loading it
 # stays optional. `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the
@@ -87,11 +87,11 @@ contracts-gen-bindings:
 # Simulate deployment (dry-run)
 contracts-simulate chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "INITIAL_OWNER: $INITIAL_OWNER"
+    @echo "PA_OWNER: $PA_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy protocol adapter
@@ -99,7 +99,7 @@ contracts-deploy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $INITIAL_OWNER \
+        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)

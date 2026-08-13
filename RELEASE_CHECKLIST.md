@@ -53,7 +53,7 @@ We distinguish between three release cases:
 - [ ] Check that the initial owner address is set up correctly and export it with
 
   ```sh
-  export INITIAL_OWNER=<ADDRESS>
+  export PA_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
@@ -200,7 +200,7 @@ For each chain, you want to deploy to, do the following:
 - [ ] Check that the initial owner address is set up correctly and export it with
 
   ```sh
-  export INITIAL_OWNER=<ADDRESS>
+  export PA_OWNER=<ADDRESS>
   ```
 
 - [ ] Set the Alchemy RPC provider by exporting
