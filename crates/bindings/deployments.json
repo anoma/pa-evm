@@ -1,6 +1,10 @@
 [
   {
+    "chainId": 11155111,
+    "contractAddress": "0xb7f6DE4Edc94b871B5dB57aa40BbBabC6E9F56fE"
+  },
+  {
     "chainId": 84532,
-    "contractAddress": "0xd4579357B5389c113daE59dcDDDD85fd26B301f1"
+    "contractAddress": "0x6BbDF59F869957dDC96e8a4d79077613727e6537"
   }
 ]
