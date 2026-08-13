@@ -10,12 +10,12 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-/// @title DeployProtocolAdapter
+/// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2025
 /// @notice A script to deploy the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported
 /// networks.
 /// @custom:security-contact security@anoma.foundation
-contract DeployProtocolAdapter is SupportedNetworks, Script {
+contract DeployProtocolAdapterProxy is SupportedNetworks, Script {
     /// @notice The CREATE2 salt for the deterministic implementation deployment.
     bytes32 public constant IMPLEMENTATION_SALT = keccak256("ProtocolAdapterImplementation");
 

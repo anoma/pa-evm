@@ -42,7 +42,7 @@ pub async fn deploy_implementation(
 
 /// Deploys an ERC-1967 proxy delegating to `implementation_address` and
 /// initializes it in the same transaction, mirroring
-/// `DeployProtocolAdapter.s.sol`. Initializing through the constructor
+/// `DeployProtocolAdapterProxy.s.sol`. Initializing through the constructor
 /// seeds the commitment tree with its initial root and sets the owner, so the
 /// protocol adapter is usable the moment it exists.
 pub async fn deploy_proxy(

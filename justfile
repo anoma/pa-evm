@@ -75,7 +75,7 @@ contracts-test *args:
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
-    # enters the compilation graph through `DeployProtocolAdapter.s.sol`;
+    # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
     cd contracts && forge clean && forge bind \
         --skip test \
@@ -90,7 +90,7 @@ contracts-simulate chain *args:
     @echo "PA_OWNER: $PA_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --rpc-url {{chain}} {{ args }}
 
@@ -98,7 +98,7 @@ contracts-simulate chain *args:
 contracts-deploy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
