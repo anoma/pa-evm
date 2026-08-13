@@ -7,6 +7,7 @@ import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetw
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
+import {DeployProtocolAdapterImplementation} from "../script/DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../script/DeployProtocolAdapterProxy.s.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
@@ -65,7 +66,7 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
             // the collision is staged at the address the redeployment actually targets.
             DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
             address predictedImplementation = vm.computeCreate2Address(
-                script.IMPLEMENTATION_SALT(),
+                new DeployProtocolAdapterImplementation().IMPLEMENTATION_SALT(),
                 keccak256(
                     abi.encodePacked(
                         type(ProtocolAdapter).creationCode,
