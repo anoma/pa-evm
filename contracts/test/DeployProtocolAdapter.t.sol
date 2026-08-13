@@ -79,6 +79,8 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
 
             vm.expectRevert();
             script.run({isTestDeployment: false, initialOwner: msg.sender});
+
+            vm.stopBroadcast();
         }
     }
 
