@@ -11,9 +11,9 @@ import {DeployProtocolAdapterImplementation} from "../script/DeployProtocolAdapt
 import {DeployProtocolAdapterProxy} from "../script/DeployProtocolAdapterProxy.s.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-/// @notice Checks the deploy script and checks the deployments recorded in `deployments.json` — the
+/// @notice Checks the proxy deploy script and checks the deployments recorded in `deployments.json` — the
 /// single source of truth for deterministic deployments — against the chain state.
-contract DeployProtocolAdapterTest is SupportedNetworks, Test {
+contract DeployProtocolAdapterProxyTest is SupportedNetworks, Test {
     /// @notice A protocol adapter deployment recorded in `deployments.json`.
     /// @dev Fields are ordered alphabetically so the struct decodes from `vm.parseJson`.
     struct Deployment {
