@@ -52,12 +52,16 @@ remappings = [
     "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
     "openzeppelin/contracts/=dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
     "risc0-risc0-ethereum-3.0.1/=dependencies/risc0-risc0-ethereum-3.0.1/",
+    "safe-smart-account/=dependencies/safe-utils-0.0.22/lib/safe-smart-account/contracts/",
+    "safe-utils-0.0.22/=dependencies/safe-utils-0.0.22/",
     "solady-0.1.26/=dependencies/solady-0.1.26/",
+    "solidity-http/=dependencies/safe-utils-0.0.22/lib/solidity-http/src/",
 ]
 ignored_warnings_from = [
     "dependencies/@openzeppelin-contracts-5.7.0/utils",      # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/openzeppelin-foundry-upgrades-0.4.2/src",  # Warning 2018: Function state mutability can be restricted to pure
     "dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/safe-utils-0.0.22/lib/solidity-http/src/", # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
@@ -70,6 +74,7 @@ ignored_warnings_from = [
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
 "openzeppelin-foundry-upgrades" = "0.4.2"
 "risc0-risc0-ethereum" = "3.0.1"
+"safe-utils" = { version = "0.0.22", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.22" }
 "solady" = "0.1.26"
 
 [soldeer]
