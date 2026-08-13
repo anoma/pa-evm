@@ -119,6 +119,24 @@ contracts-deploy-proxy deployer chain *args:
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Simulate the upgrade proposal (dry-run): deploys the implementation and simulates the Safe executing the upgrade
+contracts-simulate-upgrade-proposal proxy safe proposer chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/ProposeUpgradeProtocolAdapterProxy.s.sol:ProposeUpgradeProtocolAdapterProxy \
+        --sig "run(bool,address,address,address)" $IS_TEST_DEPLOYMENT {{proxy}} {{safe}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy the implementation and propose upgrading the proxy to it to the owning Safe (proposer = unlocked deployer)
+contracts-propose-upgrade deployer proxy safe proposer chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/ProposeUpgradeProtocolAdapterProxy.s.sol:ProposeUpgradeProtocolAdapterProxy \
+        --sig "run(bool,address,address,address)" $IS_TEST_DEPLOYMENT {{proxy}} {{safe}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
 contracts-verify-sourcify address contract chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \
