@@ -14,10 +14,15 @@ pub enum Environment {
 }
 
 #[derive(Deserialize)]
+struct Proxy {
+    address: String,
+}
+
+#[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct DeploymentEntry {
     chain_id: u64,
-    proxy: String,
+    proxy: Proxy,
 }
 
 #[derive(Deserialize)]
@@ -36,7 +41,7 @@ static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>>
                 .into_iter()
                 .filter_map(|e| {
                     let chain = NamedChain::try_from(e.chain_id).ok()?;
-                    let proxy: Address = e.proxy.parse().ok()?;
+                    let proxy: Address = e.proxy.address.parse().ok()?;
                     Some((chain, proxy))
                 })
                 .collect()

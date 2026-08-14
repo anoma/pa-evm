@@ -8,10 +8,15 @@ use std::collections::HashSet;
 const ENVIRONMENTS: [Environment; 2] = [Environment::Staging, Environment::Production];
 
 #[derive(serde::Deserialize)]
+struct RawProxy {
+    address: String,
+}
+
+#[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RawEntry {
     chain_id: u64,
-    proxy: String,
+    proxy: RawProxy,
 }
 
 #[derive(serde::Deserialize)]
@@ -48,10 +53,10 @@ fn all_entries_have_valid_chain_ids() {
 fn all_entries_have_valid_addresses() {
     for environment in ENVIRONMENTS {
         for entry in raw_entries(environment) {
-            entry.proxy.parse::<Address>().unwrap_or_else(|_| {
+            entry.proxy.address.parse::<Address>().unwrap_or_else(|_| {
                 panic!(
                     "invalid proxy address '{}' for chain ID '{}' of environment {environment:?}",
-                    entry.proxy, entry.chain_id
+                    entry.proxy.address, entry.chain_id
                 )
             });
         }

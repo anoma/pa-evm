@@ -18,16 +18,23 @@ import {SafeFixture} from "../fixtures/SafeFixture.sol";
 /// environment must run the source version exactly; the production environment may trail it, must run a release
 /// version, and must be owned by a Safe. An environment without recorded deployments passes vacuously.
 contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
-    /// @notice A protocol adapter deployment recorded in `deployments.json`.
-    /// @dev Fields are ordered alphabetically so the struct decodes from `vm.parseJson`. The genesis fields pin the
-    /// first deployment: the ERC-1967 proxy creation code and constructor arguments determine the address together
-    /// with the environment salt, and none of them can be recovered from the chain once the proxy is upgraded.
-    struct Deployment {
-        uint256 chainId;
+    /// @notice A protocol adapter proxy recorded in `deployments.json`.
+    /// @dev The genesis fields pin the first deployment: the ERC-1967 proxy creation code and constructor arguments
+    /// determine the address together with the environment salt, and none of them can be recovered from the chain
+    /// once the proxy is upgraded.
+    struct Proxy {
+        address addr;
         bytes creationCode;
         address initialImplementation;
         bytes initializerData;
-        address proxy;
+    }
+
+    /// @notice A protocol adapter deployment recorded in `deployments.json`.
+    /// @dev Fields are ordered alphabetically by their JSON key so the struct decodes from `vm.parseJson`, which
+    /// encodes object values in that order — the Solidity names themselves are irrelevant.
+    struct Deployment {
+        uint256 chainId;
+        Proxy proxy;
     }
 
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
@@ -56,26 +63,24 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     function test_recorded_deployments_were_deployed_with_the_environment_salt() public {
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-
-        _expectGenesisDeployment(_recordedDeployments(".staging"), script.PROXY_SALT_STAGING());
-        _expectGenesisDeployment(_recordedDeployments(".production"), script.PROXY_SALT_PRODUCTION());
+        _expectGenesisDeployment({isProduction: false});
+        _expectGenesisDeployment({isProduction: true});
     }
 
     function test_recorded_staging_deployments_at_the_source_version_are_reproducible() public {
-        _expectReproducibleDeployments({environment: ".staging", isProductionDeployment: false});
+        _expectReproducibleDeployments({isProduction: false});
     }
 
     function test_recorded_production_deployments_at_the_source_version_are_reproducible() public {
-        _expectReproducibleDeployments({environment: ".production", isProductionDeployment: true});
+        _expectReproducibleDeployments({isProduction: true});
     }
 
     function test_recorded_staging_deployments_run_the_source_version() public {
-        Deployment[] memory deployments = _recordedDeployments(".staging");
+        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
-            address proxy = deployments[i].proxy;
+            address proxy = deployments[i].proxy.addr;
 
             assertGt(proxy.code.length, 0, "recorded staging deployment missing on-chain");
             assertEq(
@@ -87,11 +92,11 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     function test_recorded_production_deployments_trail_the_source_version_and_are_safe_owned() public {
-        Deployment[] memory deployments = _recordedDeployments(".production");
+        Deployment[] memory deployments = _recordedDeployments({isProduction: true});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
-            address proxy = deployments[i].proxy;
+            address proxy = deployments[i].proxy.addr;
 
             assertGt(proxy.code.length, 0, "recorded production deployment missing on-chain");
 
@@ -126,11 +131,17 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
             new ProtocolAdapter(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR).VERSION();
     }
 
-    /// @notice Reads the deployments of an environment (`".staging"` or `".production"`) recorded in
-    /// `deployments.json`.
+    /// @notice Reads the deployments of an environment recorded in `deployments.json`.
     /// @return deployments The recorded deployments.
-    function _recordedDeployments(string memory environment) internal view returns (Deployment[] memory deployments) {
+    function _recordedDeployments(bool isProduction) internal view returns (Deployment[] memory deployments) {
+        string memory environment = string.concat(".", _environmentName(isProduction));
+
         deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH), environment), (Deployment[]));
+    }
+
+    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
+    function _environmentName(bool isProduction) internal pure returns (string memory name) {
+        name = isProduction ? "production" : "staging";
     }
 
     /// @notice Returns whether a version carries a prerelease suffix (e.g. `2.0.0-rc.1`).
@@ -143,21 +154,26 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     /// @notice Checks that the deploy script still reproduces every recorded deployment running the source version.
     /// A deployment of an earlier version is skipped: its proxy address commits to the implementation it was
     /// initialized with, so the current source deploys a new proxy instead of reproducing it.
-    function _expectReproducibleDeployments(string memory environment, bool isProductionDeployment) private {
-        Deployment[] memory deployments = _recordedDeployments(environment);
+    function _expectReproducibleDeployments(bool isProduction) private {
+        Deployment[] memory deployments = _recordedDeployments(isProduction);
+        string memory environment = _environmentName(isProduction);
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
-            address proxy = deployments[i].proxy;
+            address proxy = deployments[i].proxy.addr;
 
-            assertGt(proxy.code.length, 0, "recorded deployment missing on-chain");
+            assertGt(proxy.code.length, 0, string.concat("recorded ", environment, " deployment missing on-chain"));
             if (keccak256(bytes(ProtocolAdapter(proxy).VERSION())) != keccak256(bytes(_sourceVersion()))) {
                 continue;
             }
 
-            (address deployed,) = new DeployProtocolAdapterProxy().run({isProductionDeployment: isProductionDeployment});
+            (address deployed,) = new DeployProtocolAdapterProxy().run({isProductionDeployment: isProduction});
 
-            assertEq(deployed, proxy, "the deploy script no longer reproduces the recorded deployment");
+            assertEq(
+                deployed,
+                proxy,
+                string.concat("the deploy script no longer reproduces the recorded ", environment, " deployment")
+            );
         }
     }
 
@@ -186,22 +202,30 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     /// @notice Checks that every recorded proxy sits at the address its genesis deployment determines under the
     /// environment salt — the check that the first deployment of an environment used the right salt.
-    function _expectGenesisDeployment(Deployment[] memory deployments, bytes32 salt) private pure {
+    function _expectGenesisDeployment(bool isProduction) private {
+        Deployment[] memory deployments = _recordedDeployments(isProduction);
+
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        bytes32 salt = isProduction ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING();
+
         for (uint256 i = 0; i < deployments.length; ++i) {
-            Deployment memory deployment = deployments[i];
+            Proxy memory proxy = deployments[i].proxy;
 
             assertEq(
-                deployment.proxy,
+                proxy.addr,
                 vm.computeCreate2Address(
                     salt,
                     keccak256(
                         abi.encodePacked(
-                            deployment.creationCode,
-                            abi.encode(deployment.initialImplementation, deployment.initializerData)
+                            proxy.creationCode, abi.encode(proxy.initialImplementation, proxy.initializerData)
                         )
                     )
                 ),
-                "recorded deployment was not deployed with the environment salt"
+                string.concat(
+                    "recorded ",
+                    _environmentName(isProduction),
+                    " deployment was not deployed with the environment salt"
+                )
             );
         }
     }
