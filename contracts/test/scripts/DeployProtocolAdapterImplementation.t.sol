@@ -10,19 +10,11 @@ import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 
 /// @notice Checks the implementation deploy script.
 contract DeployProtocolAdapterImplementationTest is RiscZeroRouterFixture {
-    function test_run_succeeds_for_a_test_deployment() public {
-        _deployRiscZeroRouter();
-
-        address implementation = new DeployProtocolAdapterImplementation().run({isTestDeployment: true});
-
-        assertGt(implementation.code.length, 0, "implementation should be deployed");
-    }
-
-    function test_run_succeeds_for_a_deterministic_deployment() public {
+    function test_run_deploys_deterministically() public {
         _deployRiscZeroRouter();
 
         DeployProtocolAdapterImplementation script = new DeployProtocolAdapterImplementation();
-        address implementation = script.run({isTestDeployment: false});
+        address implementation = script.run();
 
         SupportedNetworks.Data memory data = getRouterData();
         address predicted = vm.computeCreate2Address(

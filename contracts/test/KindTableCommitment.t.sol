@@ -16,7 +16,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
 contract KindTableCommitmentStorageTest is Test, ProtocolAdapter {
-    constructor() ProtocolAdapter(RiscZeroVerifierRouter(address(1)), bytes4(uint32(1))) {}
+    constructor() ProtocolAdapter(address(1), bytes4(uint32(1))) {}
 
     function test_storage_slot() public pure {
         assertEq(_PROTOCOL_ADAPTER_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.ProtocolAdapter"));

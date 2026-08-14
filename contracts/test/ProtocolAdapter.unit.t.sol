@@ -19,6 +19,7 @@ import {
 } from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
@@ -119,12 +120,12 @@ contract ProtocolAdapterTest is Test {
         _pa.emergencyStop();
     }
 
-    function test_getRiscZeroVerifierRouter_returns_the_router_address() public view {
-        assertEq(_pa.getRiscZeroVerifierRouter(), address(_router), "router address should match");
+    function test_RISC_ZERO_VERIFIER_ROUTER_returns_the_router_address() public view {
+        assertEq(_pa.RISC_ZERO_VERIFIER_ROUTER(), address(_router), "router address should match");
     }
 
-    function test_getRiscZeroVerifierSelector_returns_the_selector() public view {
-        assertEq(_pa.getRiscZeroVerifierSelector(), _verifierSelector, "verifier selector should match");
+    function test_RISC_ZERO_VERIFIER_SELECTOR_returns_the_selector() public view {
+        assertEq(_pa.RISC_ZERO_VERIFIER_SELECTOR(), _verifierSelector, "verifier selector should match");
     }
 
     function test_implementation_returns_the_implementation_behind_the_proxy() public view {
@@ -147,7 +148,17 @@ contract ProtocolAdapterTest is Test {
         //int256 eq = 0;
         int256 gt = 1;
 
-        assertEq(SemVerLib.cmp(_pa.getVersion(), "1.0.0"), gt, "version should be greater than 1.0.0");
-        assertEq(SemVerLib.cmp(_pa.getVersion(), "2.0.0"), lt, "version should be less than 2.0.0");
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_pa.VERSION()), "1.0.0"), gt, "version should be greater than 1.0.0"
+        );
+        assertEq(
+            SemVerLib.cmp(LibString.toSmallString(_pa.VERSION()), "2.0.0"), lt, "version should be less than 2.0.0"
+        );
+    }
+
+    /// @dev `toSmallString` reverts if the version does not fit into `bytes32`, which `SemVerLib` comparisons
+    /// and the deployment canaries rely on.
+    function test_VERSION_fits_into_bytes32() public view {
+        LibString.toSmallString(_pa.VERSION());
     }
 }

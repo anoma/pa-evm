@@ -1,11 +1,11 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) and `PA_OWNER`
-# (deploys) from the environment; forge does not load this file itself. The file
-# is absent in CI, where the values come from secrets instead, so loading it
-# stays optional. `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the
-# release checklist, which exports it once per deployment session.
+# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
+# forge does not load this file itself. The file is absent in CI, where the
+# values come from secrets instead, so loading it stays optional.
+# `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the release
+# checklist, which exports it once per deployment session.
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
@@ -86,29 +86,27 @@ contracts-gen-bindings:
 
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
-    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
-        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --sig "run()" \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy the protocol adapter implementation
+# Deploy the implementation shared by the test and prod environments (idempotent)
 contracts-deploy-impl deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
-        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --sig "run()" \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the implementation and proxy deployment (dry-run)
 contracts-simulate-proxy chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "PA_OWNER: $PA_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the protocol adapter implementation and proxy
@@ -116,25 +114,39 @@ contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the upgrade proposal (dry-run): deploys the implementation and simulates the Safe executing the upgrade
 contracts-simulate-upgrade-proposal proxy safe proposer chain *args:
-    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeUpgradeProtocolAdapterProxy.s.sol:ProposeUpgradeProtocolAdapterProxy \
-        --sig "run(bool,address,address,address)" $IS_TEST_DEPLOYMENT {{proxy}} {{safe}} {{proposer}} \
+    cd contracts && forge script script/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address,address,address)" {{proxy}} {{safe}} {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the implementation and propose upgrading the proxy to it to the owning Safe (proposer = unlocked deployer)
 contracts-propose-upgrade deployer proxy safe proposer chain *args:
-    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeUpgradeProtocolAdapterProxy.s.sol:ProposeUpgradeProtocolAdapterProxy \
-        --sig "run(bool,address,address,address)" $IS_TEST_DEPLOYMENT {{proxy}} {{safe}} {{proposer}} \
+    cd contracts && forge script script/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address,address,address)" {{proxy}} {{safe}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the kind table update proposal (dry-run): simulates the Safe executing the update
+contracts-simulate-kind-table-proposal proxy safe proposer commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+        --sig "run(address,address,address,bytes32)" {{proxy}} {{safe}} {{proposer}} {{commitment}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose updating the kind table commitment to the owning Safe (proposer = unlocked deployer)
+contracts-propose-kind-table-update deployer proxy safe proposer commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+        --sig "run(address,address,address,bytes32)" {{proxy}} {{safe}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)

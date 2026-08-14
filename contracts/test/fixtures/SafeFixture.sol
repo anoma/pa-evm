@@ -27,6 +27,16 @@ abstract contract SafeFixture is Test {
         });
     }
 
+    /// @notice Deploys a Safe with a single owner and a threshold of one, and installs it at the target address.
+    function _deploySafeAt(address owner, address target) internal returns (address safe) {
+        address deployed = _deploySafe(owner);
+
+        vm.etch(target, deployed.code);
+        vm.copyStorage(deployed, target);
+
+        safe = target;
+    }
+
     /// @notice Identifies a Safe by probing its owner set and threshold, which every set-up Safe links through
     /// `1 <= threshold <= owners.length`.
     function _isSafe(address account) internal view returns (bool isSafe) {

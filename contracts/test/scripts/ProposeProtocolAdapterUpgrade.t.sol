@@ -22,27 +22,19 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
 
         _deployRiscZeroRouter();
 
+        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+
         _owner = makeAddr("safe owner");
-        _safe = _deploySafe(_owner);
+        _safe = _deploySafeAt(_owner, deployScript.PROD_PROXY_OWNER());
 
-        (_proxy,) = new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: _safe});
+        (_proxy,) = deployScript.run({isTestDeployment: false});
     }
 
-    function test_run_upgrades_the_proxy_for_a_test_deployment() public {
-        _expectUpgrade({isTestDeployment: true});
-    }
-
-    function test_run_upgrades_the_proxy_for_a_deterministic_deployment() public {
-        _expectUpgrade({isTestDeployment: false});
-    }
-
-    /// @notice Runs the proposal script and checks that the simulated Safe execution upgrades the proxy.
-    function _expectUpgrade(bool isTestDeployment) private {
+    function test_run_upgrades_the_proxy() public {
         vm.expectEmit({checkTopic1: false, checkTopic2: false, checkTopic3: false, checkData: false, emitter: _proxy});
         emit IERC1967.Upgraded(address(0));
 
-        address implementation = new ProposeProtocolAdapterUpgrade()
-            .run({isTestDeployment: isTestDeployment, proxy: _proxy, safe: _safe, proposer: _owner});
+        address implementation = new ProposeProtocolAdapterUpgrade().run({proxy: _proxy, safe: _safe, proposer: _owner});
 
         assertEq(ProtocolAdapter(_proxy).implementation(), implementation, "proxy should run the new implementation");
     }

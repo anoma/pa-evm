@@ -8,7 +8,6 @@ import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/Reen
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
 import {IForwarder} from "anoma-forwarder-bases-2.0.0/src/interfaces/IForwarder.sol";
-import {IVersion} from "anoma-forwarder-bases-2.0.0/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -24,7 +23,6 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
-    IVersion,
     Initializable,
     UUPSUpgradeable,
     ReentrancyGuardTransient,
@@ -51,11 +49,16 @@ contract ProtocolAdapter is
     bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
         0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
 
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    RiscZeroVerifierRouter internal immutable _TRUSTED_RISC_ZERO_VERIFIER_ROUTER;
+    /// @inheritdoc IProtocolAdapter
+    string public constant override VERSION = "2.0.0-alpha.6";
 
+    /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    bytes4 internal immutable _RISC_ZERO_VERIFIER_SELECTOR;
+    address public immutable override RISC_ZERO_VERIFIER_ROUTER;
+
+    /// @inheritdoc IProtocolAdapter
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    bytes4 public immutable override RISC_ZERO_VERIFIER_SELECTOR;
 
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
@@ -67,15 +70,15 @@ contract ProtocolAdapter is
     error Simulated(uint256 gasUsed);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
-    /// @param riscZeroVerifierRouter The RISC Zero verifier router contract.
+    /// @param riscZeroVerifierRouter The RISC Zero verifier router contract address.
     /// @param riscZeroVerifierSelector The RISC Zero verifier selector this protocol adapter is associated with.
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
-        require(address(riscZeroVerifierRouter) != address(0), ZeroRiscZeroVerifierRouterNotAllowed());
+    constructor(address riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector) {
+        require(riscZeroVerifierRouter != address(0), ZeroRiscZeroVerifierRouterNotAllowed());
         require(riscZeroVerifierSelector != bytes4(0), ZeroRiscZeroVerifierSelectorNotAllowed());
 
-        _TRUSTED_RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
-        _RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
+        RISC_ZERO_VERIFIER_ROUTER = riscZeroVerifierRouter;
+        RISC_ZERO_VERIFIER_SELECTOR = riscZeroVerifierSelector;
 
         _disableInitializers();
     }
@@ -140,28 +143,13 @@ contract ProtocolAdapter is
         current = ERC1967Utils.getImplementation();
     }
 
-    /// @inheritdoc IVersion
-    function getVersion() external pure override returns (bytes32 version) {
-        version = "2.0.0-alpha.5";
-    }
-
     /// @inheritdoc IProtocolAdapter
     function isEmergencyStopped() public view override returns (bool isStopped) {
         bool risc0Paused = PausableUpgradeable(
-                address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER.getVerifier(getRiscZeroVerifierSelector()))
+                address(RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).getVerifier(RISC_ZERO_VERIFIER_SELECTOR))
             ).paused();
 
         isStopped = risc0Paused || paused();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierRouter() public view override returns (address verifierRouter) {
-        verifierRouter = address(_TRUSTED_RISC_ZERO_VERIFIER_ROUTER);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function getRiscZeroVerifierSelector() public view override returns (bytes4 verifierSelector) {
-        verifierSelector = _RISC_ZERO_VERIFIER_SELECTOR;
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
@@ -420,7 +408,8 @@ contract ProtocolAdapter is
 
         if (!skipVerification) {
             // slither-disable-next-line calls-loop
-            _TRUSTED_RISC_ZERO_VERIFIER_ROUTER.verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
+            RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER)
+                .verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
         }
     }
 
@@ -428,8 +417,8 @@ contract ProtocolAdapter is
     /// @param selector The RISC Zero verifier selector to check.
     function _checkSelector(bytes4 selector) internal view {
         require(
-            selector == _RISC_ZERO_VERIFIER_SELECTOR,
-            RiscZeroVerifierSelectorMismatch({expected: _RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
+            selector == RISC_ZERO_VERIFIER_SELECTOR,
+            RiscZeroVerifierSelectorMismatch({expected: RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
         );
     }
 

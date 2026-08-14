@@ -82,12 +82,12 @@ contract ProtocolAdapterUpgradeTest is Test {
         // Upgrade the proxy to an implementation bound to the new selector. `UnsafeUpgrades` is used because the
         // upgrade-safety validator rejects same-contract storage layout references and the implementation source
         // is unchanged (it is already validated during the proxy deployment in `setUp`).
-        address newImplementation = address(new ProtocolAdapter(_router, _NEW_VERIFIER_SELECTOR));
+        address newImplementation = address(new ProtocolAdapter(address(_router), _NEW_VERIFIER_SELECTOR));
 
         UnsafeUpgrades.upgradeProxy(address(_pa), newImplementation, "", _OWNER);
 
         // The new selector is in place and the protocol adapter is operational again.
-        assertEq(_pa.getRiscZeroVerifierSelector(), _NEW_VERIFIER_SELECTOR, "the new selector should be in place");
+        assertEq(_pa.RISC_ZERO_VERIFIER_SELECTOR(), _NEW_VERIFIER_SELECTOR, "the new selector should be in place");
         assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
 
         // The protocol adapter state survived the upgrade.
@@ -179,7 +179,7 @@ contract ProtocolAdapterUpgradeTest is Test {
     }
 
     function test_upgrade_reverts_if_the_caller_is_not_the_owner() public {
-        ProtocolAdapter newImplementation = new ProtocolAdapter(_router, _NEW_VERIFIER_SELECTOR);
+        ProtocolAdapter newImplementation = new ProtocolAdapter(address(_router), _NEW_VERIFIER_SELECTOR);
 
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(

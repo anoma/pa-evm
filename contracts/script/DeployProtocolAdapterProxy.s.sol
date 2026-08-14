@@ -13,30 +13,39 @@ import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplem
 /// networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
-    /// @notice The CREATE2 salt for the deterministic proxy deployment.
-    bytes32 public constant PROXY_SALT = keccak256("ProtocolAdapterProxy");
+    /// @notice The CREATE2 salt for the test environment proxy deployment.
+    bytes32 public constant TEST_PROXY_SALT = "TEST_ProtocolAdapterProxy";
 
-    /// @notice Deploys the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported networks
-    /// and allows for test deployments. The implementation is validated for upgrade safety in both cases.
-    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the
-    /// implementation and proxy are deployed deterministically.
-    /// @param initialOwner The account receiving ownership of the deployed proxy, and with it the authority to stop the
-    /// protocol adapter in an emergency and to authorize upgrades.
+    /// @notice The CREATE2 salt for the prod environment proxy deployment.
+    bytes32 public constant PROD_PROXY_SALT = "PROD_ProtocolAdapterProxy";
+
+    /// @notice The test environment proxy owner — the deployment wallet, upgrading instantly.
+    address public constant TEST_PROXY_OWNER = 0x61462bE56782568376f9cB069382EFa72764a407;
+
+    /// @notice The prod environment proxy owner — the Safe multisig queueing upgrades.
+    address public constant PROD_PROXY_OWNER = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
+
+    /// @notice Deploys the protocol adapter implementation and an ERC-1967 proxy pointing to it deterministically.
+    /// The implementation is validated for upgrade safety.
+    /// @param isTestDeployment Whether to deploy the test or the prod environment proxy, selecting the CREATE2 salt
+    /// and the owner receiving the authority to stop the protocol adapter in an emergency and to authorize upgrades.
     /// @return proxy The protocol adapter proxy contract to interact with.
     /// @return implementation The protocol adapter implementation contract the proxy delegates to — the contract to
     /// verify on block explorers, which carries the source, whereas the proxy carries the ERC-1967 bytecode.
-    function run(bool isTestDeployment, address initialOwner) public returns (address proxy, address implementation) {
-        implementation = new DeployProtocolAdapterImplementation().run(isTestDeployment);
+    function run(bool isTestDeployment) public returns (address proxy, address implementation) {
+        implementation = new DeployProtocolAdapterImplementation().run();
 
-        bytes memory initializerData = abi.encodeCall(ProtocolAdapter.initialize, (initialOwner));
+        bytes memory initializerData =
+            abi.encodeCall(ProtocolAdapter.initialize, (isTestDeployment ? TEST_PROXY_OWNER : PROD_PROXY_OWNER));
 
         vm.startBroadcast();
-        if (isTestDeployment) {
-            proxy = address(new ERC1967Proxy({implementation: implementation, _data: initializerData}));
-        } else {
-            proxy =
-                address(new ERC1967Proxy{salt: PROXY_SALT}({implementation: implementation, _data: initializerData}));
-        }
+
+        proxy = address(
+            new ERC1967Proxy{salt: isTestDeployment ? TEST_PROXY_SALT : PROD_PROXY_SALT}({
+                implementation: implementation, _data: initializerData
+            })
+        );
+
         vm.stopBroadcast();
     }
 }

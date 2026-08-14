@@ -39,7 +39,7 @@ where
     let pa = protocol_adapter(pa_address(env)?, provider.clone());
 
     let router_address = pa
-        .getRiscZeroVerifierRouter()
+        .RISC_ZERO_VERIFIER_ROUTER()
         .call()
         .await
         .context("failed to query the verifier router address from the protocol adapter")?;

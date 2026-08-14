@@ -160,25 +160,33 @@ interface IProtocolAdapter {
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 
+    /// @notice Returns the kind table commitment that transactions must be proven against.
+    /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
+    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+
     /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
     /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
     /// 2. The protocol adapter itself was stopped by the owner.
     /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
 
-    /// @notice Returns the kind table commitment that transactions must be proven against.
-    /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
-    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
-
-    /// @notice Returns the RISC Zero verifier router associated with the protocol adapter.
-    /// @return verifierRouter The RISC Zero verifier router.
-    function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
-
-    /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
-    /// @return verifierSelector The RISC Zero verifier selector.
-    function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
-
     /// @notice Returns the current implementation contract the calls are delegated to.
     /// @return current The current implementation contract.
     function implementation() external view returns (address current);
+
+    // solhint-disable func-name-mixedcase
+
+    /// @notice The trusted RISC Zero verifier router associated with the protocol adapter.
+    /// @return verifierRouter The RISC Zero verifier router address.
+    function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
+
+    /// @notice The RISC Zero verifier selector associated with the protocol adapter.
+    /// @return verifierSelector The RISC Zero verifier selector.
+    function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
+
+    /// @notice The version of the protocol adapter implementation.
+    /// @return version The semantic version, short enough to fit into `bytes32` as a small string.
+    function VERSION() external view returns (string memory version);
+
+    // solhint-enable func-name-mixedcase
 }
