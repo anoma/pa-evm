@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.2.1/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetworks.sol";
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
@@ -28,18 +29,25 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     function test_run_succeeds_for_a_test_deployment() public {
         _deployRiscZeroRouter();
 
-        new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: msg.sender});
+        _expectDeployment({isTestDeployment: true});
     }
 
     function test_run_succeeds_for_a_prod_deployment() public {
         _deployRiscZeroRouter();
 
-        (address proxy, address implementation) =
-            new DeployProtocolAdapterProxy().run({isTestDeployment: false, initialOwner: msg.sender});
+        _expectDeployment({isTestDeployment: false});
+    }
 
-        assertGt(implementation.code.length, 0, "implementation should be deployed");
-        assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
-        assertEq(ProtocolAdapter(proxy).owner(), msg.sender, "proxy should be initialized with the owner");
+    function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        (address testProxy, address testImplementation) = script.run({isTestDeployment: true, initialOwner: msg.sender});
+        (address prodProxy, address prodImplementation) =
+            script.run({isTestDeployment: false, initialOwner: msg.sender});
+
+        assertNotEq(testProxy, prodProxy, "the environments should have distinct proxies");
+        assertEq(testImplementation, prodImplementation, "the environments should share the implementation");
     }
 
     function test_recorded_test_deployments_run_the_source_version() public {
@@ -105,5 +113,28 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         for (uint256 i = 0; i < 32 && version[i] != 0; ++i) {
             if (version[i] == "-") return true;
         }
+    }
+
+    /// @notice Runs the deploy script for the environment and checks that the proxy lands at the predicted
+    /// deterministic address, delegates to a deployed implementation, and is initialized with the owner.
+    function _expectDeployment(bool isTestDeployment) private {
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        (address proxy, address implementation) =
+            script.run({isTestDeployment: isTestDeployment, initialOwner: msg.sender});
+
+        address predicted = vm.computeCreate2Address(
+            isTestDeployment ? script.TEST_PROXY_SALT() : script.PROD_PROXY_SALT(),
+            keccak256(
+                abi.encodePacked(
+                    type(ERC1967Proxy).creationCode,
+                    abi.encode(implementation, abi.encodeCall(ProtocolAdapter.initialize, (msg.sender)))
+                )
+            )
+        );
+
+        assertEq(proxy, predicted, "proxy should land at the predicted deterministic address");
+        assertGt(implementation.code.length, 0, "implementation should be deployed");
+        assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
+        assertEq(ProtocolAdapter(proxy).owner(), msg.sender, "proxy should be initialized with the owner");
     }
 }
