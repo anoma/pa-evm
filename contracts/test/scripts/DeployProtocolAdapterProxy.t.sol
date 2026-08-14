@@ -57,8 +57,8 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         _deployRiscZeroRouter();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address stagingProxy, address stagingImplementation) = script.run({isProduction: false});
-        (address productionProxy, address productionImplementation) = script.run({isProduction: true});
+        (address stagingProxy, address stagingImplementation,,) = script.run({isProduction: false});
+        (address productionProxy, address productionImplementation,,) = script.run({isProduction: true});
 
         assertNotEq(stagingProxy, productionProxy, "staging and production proxy addresses are equal");
         assertEq(stagingImplementation, productionImplementation, "staging and production implementations differ");
@@ -176,7 +176,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
             assertGt(recordedProxy.code.length, 0, string.concat(context, ": deployment missing on-chain"));
 
             if (keccak256(bytes(ProtocolAdapter(recordedProxy).VERSION())) == keccak256(bytes(_sourceVersion()))) {
-                (address sourceProxy,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
+                (address sourceProxy,,,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
 
                 assertEq(sourceProxy, recordedProxy, string.concat(context, ": recorded proxy address differs"));
             }
@@ -187,7 +187,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     /// deterministic address, delegates to a deployed implementation, and is initialized with the environment owner.
     function _expectDeployment(bool isProduction) private {
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address proxy, address implementation) = script.run({isProduction: isProduction});
+        (address proxy, address implementation,,) = script.run({isProduction: isProduction});
 
         address owner = isProduction ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
         address predicted = vm.computeCreate2Address(
