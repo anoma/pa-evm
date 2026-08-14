@@ -18,11 +18,13 @@ import {SafeFixture} from "../fixtures/SafeFixture.sol";
 /// environment must run the source version exactly; the production environment may trail it, must run a release
 /// version, and must be owned by a Safe. An environment without recorded deployments passes vacuously.
 contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
+    using LibString for *;
+
     /// @notice A protocol adapter proxy recorded in `deployments.json`.
     /// @dev The genesis fields pin the first deployment: the ERC-1967 proxy creation code and constructor arguments
     /// determine the address together with the environment salt, and none of them can be recovered from the chain
     /// once the proxy is upgraded.
-    struct Proxy {
+    struct ProxyData {
         address addr;
         bytes creationCode;
         address initialImplementation;
@@ -34,7 +36,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     /// encodes object values in that order — the Solidity names themselves are irrelevant.
     struct Deployment {
         uint256 chainId;
-        Proxy proxy;
+        ProxyData proxy;
     }
 
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
@@ -100,9 +102,9 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
             assertGt(proxy.code.length, 0, "recorded production deployment missing on-chain");
 
-            bytes32 deployedVersion = LibString.toSmallString(ProtocolAdapter(proxy).VERSION());
+            bytes32 deployedVersion = ProtocolAdapter(proxy).VERSION().toSmallString();
             assertLe(
-                SemVerLib.cmp(deployedVersion, LibString.toSmallString(_sourceVersion())),
+                SemVerLib.cmp(deployedVersion, _sourceVersion().toSmallString()),
                 0,
                 "recorded production deployment must not lead the source version"
             );
@@ -160,20 +162,25 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
-            address proxy = deployments[i].proxy.addr;
+            address recordedProxy = deployments[i].proxy.addr;
 
-            assertGt(proxy.code.length, 0, string.concat("recorded ", environment, " deployment missing on-chain"));
-            if (keccak256(bytes(ProtocolAdapter(proxy).VERSION())) != keccak256(bytes(_sourceVersion()))) {
-                continue;
-            }
-
-            (address deployed,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
-
-            assertEq(
-                deployed,
-                proxy,
-                string.concat("the deploy script no longer reproduces the recorded ", environment, " deployment")
+            assertGt(
+                recordedProxy.code.length,
+                0,
+                string.concat(environment, ", ", deployments[i].chainId.toString(), ": deployment missing on-chain")
             );
+
+            if (keccak256(bytes(ProtocolAdapter(recordedProxy).VERSION())) == keccak256(bytes(_sourceVersion()))) {
+                (address sourceProxy,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
+
+                assertEq(
+                    sourceProxy,
+                    recordedProxy,
+                    string.concat(
+                        environment, ", ", deployments[i].chainId.toString(), ": recorded proxy address differs"
+                    )
+                );
+            }
         }
     }
 
@@ -209,22 +216,18 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         bytes32 salt = isProduction ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            Proxy memory proxy = deployments[i].proxy;
+            ProxyData memory proxy = deployments[i].proxy;
+
+            bytes memory constructorArgs = abi.encode(proxy.initialImplementation, proxy.initializerData);
 
             assertEq(
+                vm.computeCreate2Address(salt, keccak256(abi.encodePacked(proxy.creationCode, constructorArgs))),
                 proxy.addr,
-                vm.computeCreate2Address(
-                    salt,
-                    keccak256(
-                        abi.encodePacked(
-                            proxy.creationCode, abi.encode(proxy.initialImplementation, proxy.initializerData)
-                        )
-                    )
-                ),
                 string.concat(
-                    "recorded ",
                     _environmentName(isProduction),
-                    " deployment was not deployed with the environment salt"
+                    ", ",
+                    deployments[i].chainId.toString(),
+                    ": recorded proxy address differs"
                 )
             );
         }
