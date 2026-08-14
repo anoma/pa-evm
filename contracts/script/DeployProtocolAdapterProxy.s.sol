@@ -26,7 +26,9 @@ contract DeployProtocolAdapterProxy is Script {
     address public constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
 
     /// @notice Deploys the protocol adapter implementation and an ERC-1967 proxy pointing to it deterministically.
-    /// The implementation is validated for upgrade safety.
+    /// The implementation is validated for upgrade safety. Idempotent: if the proxy of this source version is
+    /// already deployed, the existing deployment is returned. The proxy address commits to the implementation and
+    /// the owner it is initialized with, so a later version deploys a new proxy instead.
     /// @param isProductionDeployment Whether to deploy the production or the staging environment proxy, selecting
     /// the CREATE2 salt and the owner receiving the authority to stop the protocol adapter in an emergency and to
     /// authorize upgrades.
@@ -39,15 +41,18 @@ contract DeployProtocolAdapterProxy is Script {
         bytes memory initializerData = abi.encodeCall(
             ProtocolAdapter.initialize, (isProductionDeployment ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
         );
+        bytes32 salt = isProductionDeployment ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        proxy = vm.computeCreate2Address(
+            salt,
+            keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initializerData)))
+        );
+        if (proxy.code.length != 0) {
+            return (proxy, implementation);
+        }
 
         vm.startBroadcast();
-
-        proxy = address(
-            new ERC1967Proxy{salt: isProductionDeployment ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING}({
-                implementation: implementation, _data: initializerData
-            })
-        );
-
+        proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
         vm.stopBroadcast();
     }
 }
