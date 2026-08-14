@@ -7,12 +7,13 @@ import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetw
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
-import {DeployProtocolAdapter} from "../script/DeployProtocolAdapter.s.sol";
+import {DeployProtocolAdapterImplementation} from "../script/DeployProtocolAdapterImplementation.s.sol";
+import {DeployProtocolAdapterProxy} from "../script/DeployProtocolAdapterProxy.s.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
-/// @notice Checks the deploy script and checks the deployments recorded in `deployments.json` — the
+/// @notice Checks the proxy deploy script and checks the deployments recorded in `deployments.json` — the
 /// single source of truth for deterministic deployments — against the chain state.
-contract DeployProtocolAdapterTest is SupportedNetworks, Test {
+contract DeployProtocolAdapterProxyTest is SupportedNetworks, Test {
     /// @notice A protocol adapter deployment recorded in `deployments.json`.
     /// @dev Fields are ordered alphabetically so the struct decodes from `vm.parseJson`.
     struct Deployment {
@@ -25,14 +26,14 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
     function test_run_succeeds_for_a_test_deployment() public {
         _deployRiscZeroRouter();
 
-        new DeployProtocolAdapter().run({isTestDeployment: true, initialOwner: msg.sender});
+        new DeployProtocolAdapterProxy().run({isTestDeployment: true, initialOwner: msg.sender});
     }
 
     function test_run_succeeds_for_a_deterministic_deployment() public {
         _deployRiscZeroRouter();
 
         (address proxy, address implementation) =
-            new DeployProtocolAdapter().run({isTestDeployment: false, initialOwner: msg.sender});
+            new DeployProtocolAdapterProxy().run({isTestDeployment: false, initialOwner: msg.sender});
 
         assertGt(implementation.code.length, 0, "implementation should be deployed");
         assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
@@ -63,9 +64,9 @@ contract DeployProtocolAdapterTest is SupportedNetworks, Test {
             // reproducible (`via_ir` output depends on the compilation unit), the initcode compiled into
             // this test differs from the broadcast one and would land beside the recorded contracts, so
             // the collision is staged at the address the redeployment actually targets.
-            DeployProtocolAdapter script = new DeployProtocolAdapter();
+            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
             address predictedImplementation = vm.computeCreate2Address(
-                script.IMPLEMENTATION_SALT(),
+                new DeployProtocolAdapterImplementation().IMPLEMENTATION_SALT(),
                 keccak256(
                     abi.encodePacked(
                         type(ProtocolAdapter).creationCode,

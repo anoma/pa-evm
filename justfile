@@ -75,7 +75,7 @@ contracts-test *args:
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
-    # enters the compilation graph through `DeployProtocolAdapter.s.sol`;
+    # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
     cd contracts && forge clean && forge bind \
         --skip test \
@@ -84,21 +84,38 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
-# Simulate deployment (dry-run)
-contracts-simulate chain *args:
+# Simulate the implementation deployment (dry-run)
+contracts-simulate-impl chain *args:
+    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy the protocol adapter implementation
+contracts-deploy-impl deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the implementation and proxy deployment (dry-run)
+contracts-simulate-proxy chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
     @echo "PA_OWNER: $PA_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy protocol adapter
-contracts-deploy deployer chain *args:
+# Deploy the protocol adapter implementation and proxy
+contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
         --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -122,11 +139,17 @@ contracts-verify-custom address contract chain verifier-url *args:
 # Verify a contract on both sourcify and etherscan
 contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
 
-# Verify a deployment — the protocol adapter implementation and the ERC-1967 proxy pointing at it — on both
-# explorers. The proxy carries the proxy bytecode, not the implementation's, so it verifies against its own source.
-contracts-verify-deployment implementation proxy chain: \
-    (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain) \
+# Verify the protocol adapter implementation on both explorers
+contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
+
+# Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
+contracts-verify-proxy proxy chain: \
     (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
+
+# Verify a deployment — the protocol adapter implementation and the ERC-1967 proxy pointing at it — on both explorers
+contracts-verify-deployment implementation proxy chain: \
+    (contracts-verify-impl implementation chain) \
+    (contracts-verify-proxy proxy chain)
 
 # Publish contracts
 contracts-publish version *args:
