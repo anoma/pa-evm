@@ -117,36 +117,68 @@ contracts-deploy-proxy deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION_DEPLOYMENT \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the upgrade proposal (dry-run): deploys the implementation and simulates the Safe executing the upgrade
-contracts-simulate-upgrade-proposal proxy safe proposer chain *args:
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
+contracts-simulate-staging-upgrade sender proxy chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{safe}} {{proposer}} \
-        --rpc-url {{chain}} {{ args }}
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
+        --sig "run(address)" {{proxy}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Deploy the implementation and propose upgrading the proxy to it to the owning Safe (proposer = unlocked deployer)
-contracts-propose-upgrade deployer proxy safe proposer chain *args:
+# Execute the staging upgrade to the deployed implementation as the proxy owner
+contracts-execute-staging-upgrade deployer proxy chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{safe}} {{proposer}} \
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
+        --sig "run(address)" {{proxy}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the kind table update proposal (dry-run): simulates the Safe executing the update
-contracts-simulate-kind-table-proposal proxy safe proposer commitment chain *args:
+# Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
+contracts-simulate-production-upgrade-proposal proxy proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,address,bytes32)" {{proxy}} {{safe}} {{proposer}} {{commitment}} \
+    cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose updating the kind table commitment to the owning Safe (proposer = unlocked deployer)
-contracts-propose-kind-table-update deployer proxy safe proposer commitment chain *args:
+# Propose the production upgrade to the deployed implementation to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-upgrade deployer proxy proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,address,bytes32)" {{proxy}} {{safe}} {{proposer}} {{commitment}} \
+    cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the staging kind table update (dry-run): impersonates the owner (sender = the staging proxy owner)
+contracts-simulate-staging-kind-table-update sender proxy commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
+        --sig "run(address,bytes32)" {{proxy}} {{commitment}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Execute the staging kind table update as the proxy owner
+contracts-execute-staging-kind-table-update deployer proxy commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
+        --sig "run(address,bytes32)" {{proxy}} {{commitment}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production kind table update proposal (dry-run): simulates the Safe executing the update
+contracts-simulate-production-kind-table-proposal proxy proposer commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose updating the production kind table commitment to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-kind-table-update deployer proxy proposer commitment chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)

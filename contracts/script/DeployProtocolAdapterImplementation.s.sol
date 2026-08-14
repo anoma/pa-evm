@@ -17,6 +17,13 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 public constant IMPLEMENTATION_SALT = "ProtocolAdapterImpl";
 
+    /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
+    /// empty because the current version requires no reinitialization.
+    bytes public constant INITIALIZATION_DATA = "";
+
+    /// @notice Thrown if the implementation of the current source version is not deployed yet.
+    error ImplementationNotDeployed(address implementation);
+
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
@@ -27,21 +34,15 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @return implementation The protocol adapter implementation contract — the contract to verify on block
     /// explorers, which carries the source.
     function run() public returns (address implementation) {
-        // Lookup the RISC Zero router address from the supported networks.
-        SupportedNetworks.Data memory data = getRouterData();
-
-        Options memory opts;
-        opts.constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
-
-        implementation = vm.computeCreate2Address(
-            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, opts.constructorData))
-        );
+        implementation = predict();
         if (implementation.code.length != 0) {
             return implementation;
         }
 
-        // Validate the implementation for upgrade safety.
-        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
+        validate();
+
+        // Lookup the RISC Zero router address from the supported networks.
+        SupportedNetworks.Data memory data = getRouterData();
 
         vm.startBroadcast();
         implementation = address(
@@ -51,5 +52,36 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
             })
         );
         vm.stopBroadcast();
+    }
+
+    /// @notice Returns the deployed implementation of the current source version, validated for upgrade safety.
+    /// @return implementation The deployed protocol adapter implementation contract.
+    function deployed() public returns (address implementation) {
+        implementation = predict();
+        require(implementation.code.length != 0, ImplementationNotDeployed(implementation));
+
+        validate();
+    }
+
+    /// @notice Validates the protocol adapter implementation for upgrade safety.
+    function validate() public {
+        Options memory opts;
+        opts.constructorData = _constructorData();
+
+        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
+    }
+
+    /// @notice Predicts the deterministic address the implementation of this source version deploys to.
+    /// @return implementation The predicted implementation contract address.
+    function predict() public view returns (address implementation) {
+        implementation = vm.computeCreate2Address(
+            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, _constructorData()))
+        );
+    }
+
+    /// @notice Returns the implementation constructor arguments for the current chain.
+    function _constructorData() internal view returns (bytes memory constructorData) {
+        SupportedNetworks.Data memory data = getRouterData();
+        constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
     }
 }
