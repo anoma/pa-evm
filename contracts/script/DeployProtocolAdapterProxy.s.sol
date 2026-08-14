@@ -14,10 +14,10 @@ import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplem
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
-    bytes32 public constant PROXY_SALT_STAGING = "TEST_ProtocolAdapterProxy";
+    bytes32 public constant PROXY_SALT_STAGING = "ProtocolAdapterProxyStaging";
 
     /// @notice The CREATE2 salt for the production environment proxy deployment.
-    bytes32 public constant PROXY_SALT_PRODUCTION = "PRODUCTION_ProtocolAdapterProxy";
+    bytes32 public constant PROXY_SALT_PRODUCTION = "ProtocolAdapterProxyProduction";
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
     address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
