@@ -27,7 +27,7 @@ contract DeployProtocolAdapterImplementationTest is RiscZeroRouterFixture {
             )
         );
 
-        assertEq(implementation, predicted, "implementation should land at the predicted CREATE2 address");
-        assertGt(implementation.code.length, 0, "implementation should be deployed");
+        assertEq(implementation, predicted, "implementation address differs from the prediction");
+        assertGt(implementation.code.length, 0, "implementation is not deployed");
     }
 }

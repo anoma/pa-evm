@@ -44,8 +44,8 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
 
         address implementation = script.run({proxy: _proxy, proposer: _owner});
 
-        assertEq(implementation, _implementation, "the prepared implementation should be proposed");
-        assertEq(ProtocolAdapter(_proxy).implementation(), _implementation, "proxy should run the new implementation");
+        assertEq(implementation, _implementation, "proposed implementation differs");
+        assertEq(ProtocolAdapter(_proxy).implementation(), _implementation, "proxy runs a different implementation");
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {

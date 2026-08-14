@@ -45,7 +45,7 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         assertEq(
             ProtocolAdapter(_proxy).getKindTableCommitment(),
             _NEW_KIND_TABLE_COMMITMENT,
-            "proxy should hold the new kind table commitment"
+            "kind table commitment differs"
         );
     }
 
