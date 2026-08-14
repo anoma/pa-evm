@@ -16,7 +16,7 @@ contract ExecuteKindTableUpdate is StagingScript {
     /// @param proxy The staging environment protocol adapter proxy to update.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
     function run(address proxy, bytes32 newKindTableCommitment) public {
-        _authorizeSender(proxy);
+        _checkSenderAuthorization(proxy);
 
         vm.startBroadcast();
         IProtocolAdapter(proxy).setKindTableCommitment(newKindTableCommitment);

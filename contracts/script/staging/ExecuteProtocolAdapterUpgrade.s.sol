@@ -22,7 +22,7 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
         implementation = implementationScript.deployed();
 
-        _authorizeSender(proxy);
+        _checkSenderAuthorization(proxy);
 
         vm.startBroadcast();
         UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationScript.INITIALIZATION_DATA());
