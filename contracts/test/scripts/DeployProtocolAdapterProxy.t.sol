@@ -7,6 +7,7 @@ import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetw
 import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
+import {DeployProtocolAdapterImplementation} from "../../script/DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
@@ -43,18 +44,21 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     function test_run_succeeds_for_a_staging_deployment() public {
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         _expectDeployment({isProduction: false});
     }
 
     function test_run_succeeds_for_a_production_deployment() public {
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         _expectDeployment({isProduction: true});
     }
 
     function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
         (address stagingProxy, address stagingImplementation,,) = script.run({isProduction: false});
@@ -93,6 +97,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     function test_run_reverts_if_the_proxy_is_already_deployed() public {
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
         (address proxy,,,) = script.run({isProduction: false});

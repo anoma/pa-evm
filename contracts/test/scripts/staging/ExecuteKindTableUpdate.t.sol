@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ExecuteKindTableUpdate} from "../../../script/staging/ExecuteKindTableUpdate.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
@@ -18,6 +19,7 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
 
     function setUp() public {
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();

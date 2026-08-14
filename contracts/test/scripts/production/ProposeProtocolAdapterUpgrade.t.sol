@@ -26,6 +26,7 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
         vm.setEnv("SAFE_BROADCAST", "false");
 
         _deployRiscZeroRouter();
+        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
 

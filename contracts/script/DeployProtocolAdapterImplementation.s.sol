@@ -24,6 +24,9 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Thrown if the implementation of the current source version is not deployed yet.
     error ImplementationNotDeployed(address implementation);
 
+    /// @notice Thrown if the implementation of the current source version is already deployed.
+    error ImplementationAlreadyDeployed(address implementation);
+
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
@@ -31,6 +34,9 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
+        implementation = predict();
+        require(implementation.code.length == 0, ImplementationAlreadyDeployed(implementation));
+
         validate();
 
         // Lookup the RISC Zero router address from the supported networks.

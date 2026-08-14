@@ -49,7 +49,7 @@ contract DeployProtocolAdapterProxy is Script {
     {
         _requireUnrecorded(isProduction);
 
-        implementation = new DeployProtocolAdapterImplementation().run();
+        implementation = new DeployProtocolAdapterImplementation().deployed();
 
         initializerData =
             abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
