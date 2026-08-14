@@ -51,14 +51,8 @@ contract DeployProtocolAdapterProxy is Script {
 
         implementation = new DeployProtocolAdapterImplementation().deployed();
 
-        initializerData =
-            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
-        creationCode = type(ERC1967Proxy).creationCode;
-        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
-
-        proxy = vm.computeCreate2Address(
-            salt, keccak256(abi.encodePacked(creationCode, abi.encode(implementation, initializerData)))
-        );
+        bytes32 salt;
+        (proxy, salt, initializerData, creationCode) = _predict(implementation, isProduction);
         require(proxy.code.length == 0, ProxyAlreadyDeployed(proxy));
 
         vm.startBroadcast();
@@ -69,19 +63,28 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Predicts the deterministic address the proxy of this source version deploys to.
     /// @return proxy The predicted protocol adapter proxy contract address.
     function predict(bool isProduction) public returns (address proxy) {
-        address implementation = new DeployProtocolAdapterImplementation().predict();
-        bytes memory initializerData =
-            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
-
-        proxy = vm.computeCreate2Address(
-            isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING,
-            keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initializerData)))
-        );
+        (proxy,,,) = _predict(new DeployProtocolAdapterImplementation().predict(), isProduction);
     }
 
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
+    }
+
+    /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
+    function _predict(address implementation, bool isProduction)
+        internal
+        view
+        returns (address proxy, bytes32 salt, bytes memory initializerData, bytes memory creationCode)
+    {
+        salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+        initializerData =
+            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
+        creationCode = type(ERC1967Proxy).creationCode;
+
+        proxy = vm.computeCreate2Address(
+            salt, keccak256(abi.encodePacked(creationCode, abi.encode(implementation, initializerData)))
+        );
     }
 
     /// @notice Checks that the environment has no deployment recorded for this chain yet.

@@ -34,19 +34,17 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
-        implementation = predict();
+        (address router, bytes4 selector, bytes memory constructorData) = _constructorArgs();
+
+        implementation = _predict(constructorData);
         require(implementation.code.length == 0, ImplementationAlreadyDeployed(implementation));
 
-        validate();
-
-        // Lookup the RISC Zero router address from the supported networks.
-        SupportedNetworks.Data memory data = getRouterData();
+        _validate(constructorData);
 
         vm.startBroadcast();
         implementation = address(
             new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
-                riscZeroVerifierRouter: address(data.router),
-                riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
+                riscZeroVerifierRouter: router, riscZeroVerifierSelector: selector
             })
         );
         vm.stopBroadcast();
@@ -55,31 +53,41 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Returns the deployed implementation of the current source version, validated for upgrade safety.
     /// @return implementation The deployed protocol adapter implementation contract.
     function deployed() public returns (address implementation) {
-        implementation = predict();
+        (,, bytes memory constructorData) = _constructorArgs();
+
+        implementation = _predict(constructorData);
         require(implementation.code.length != 0, ImplementationNotDeployed(implementation));
 
-        validate();
+        _validate(constructorData);
+    }
+
+    /// @notice Predicts the deterministic address the implementation of this source version deploys to.
+    /// @return implementation The predicted protocol adapter implementation contract address.
+    function predict() public view returns (address implementation) {
+        (,, bytes memory constructorData) = _constructorArgs();
+
+        implementation = _predict(constructorData);
     }
 
     /// @notice Validates the protocol adapter implementation for upgrade safety.
-    function validate() public {
+    function _validate(bytes memory constructorData) internal {
         Options memory opts;
-        opts.constructorData = _constructorData();
+        opts.constructorData = constructorData;
 
         Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
     }
 
-    /// @notice Predicts the deterministic address the implementation of this source version deploys to.
-    /// @return implementation The predicted implementation contract address.
-    function predict() public view returns (address implementation) {
-        implementation = vm.computeCreate2Address(
-            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, _constructorData()))
-        );
+    /// @notice Returns the implementation constructor arguments for the current chain.
+    function _constructorArgs() internal view returns (address router, bytes4 selector, bytes memory constructorData) {
+        router = address(getRouterData().router);
+        selector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;
+        constructorData = abi.encode(router, selector);
     }
 
-    /// @notice Returns the implementation constructor arguments for the current chain.
-    function _constructorData() internal view returns (bytes memory constructorData) {
-        SupportedNetworks.Data memory data = getRouterData();
-        constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
+    /// @notice Predicts the deterministic address for the provided constructor arguments.
+    function _predict(bytes memory constructorData) internal view returns (address implementation) {
+        implementation = vm.computeCreate2Address(
+            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData))
+        );
     }
 }
