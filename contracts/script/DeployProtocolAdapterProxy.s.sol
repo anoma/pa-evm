@@ -49,4 +49,17 @@ contract DeployProtocolAdapterProxy is Script {
         proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
         vm.stopBroadcast();
     }
+
+    /// @notice Predicts the deterministic address the proxy of this source version deploys to.
+    /// @return proxy The predicted protocol adapter proxy contract address.
+    function predict(bool isProduction) public returns (address proxy) {
+        address implementation = new DeployProtocolAdapterImplementation().predict();
+        bytes memory initializerData =
+            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
+
+        proxy = vm.computeCreate2Address(
+            isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING,
+            keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initializerData)))
+        );
+    }
 }

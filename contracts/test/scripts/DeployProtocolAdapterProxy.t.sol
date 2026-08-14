@@ -176,7 +176,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
             assertGt(recordedProxy.code.length, 0, string.concat(context, ": deployment missing on-chain"));
 
             if (keccak256(bytes(ProtocolAdapter(recordedProxy).VERSION())) == keccak256(bytes(_sourceVersion()))) {
-                (address sourceProxy,,,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
+                address sourceProxy = new DeployProtocolAdapterProxy().predict({isProduction: isProduction});
 
                 assertEq(sourceProxy, recordedProxy, string.concat(context, ": recorded proxy address differs"));
             }
