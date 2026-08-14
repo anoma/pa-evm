@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
-
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 
 /// @notice A mock protocol adapter upgrade implementation to that resumes operations by unpausing.
@@ -10,7 +8,7 @@ import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 /// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract ProtocolAdapterResumableMock is ProtocolAdapter {
     /// @custom:oz-upgrades-unsafe-allow constructor state-variable-immutable
-    constructor(RiscZeroVerifierRouter riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector)
+    constructor(address riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector)
         ProtocolAdapter(riscZeroVerifierRouter, riscZeroVerifierSelector)
     {}
 

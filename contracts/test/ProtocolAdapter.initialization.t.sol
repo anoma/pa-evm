@@ -38,16 +38,16 @@ contract ProtocolAdapterInitializationTest is Test {
         bytes4 verifierSelector = _verifier.SELECTOR();
 
         vm.expectRevert(ProtocolAdapter.ZeroRiscZeroVerifierRouterNotAllowed.selector);
-        new ProtocolAdapter(RiscZeroVerifierRouter(address(0)), verifierSelector);
+        new ProtocolAdapter(address(0), verifierSelector);
     }
 
     function test_constructor_reverts_on_zero_risc_zero_verifier_selector() public {
         vm.expectRevert(ProtocolAdapter.ZeroRiscZeroVerifierSelectorNotAllowed.selector);
-        new ProtocolAdapter(_router, bytes4(0));
+        new ProtocolAdapter(address(_router), bytes4(0));
     }
 
     function test_initialize_reverts_on_vulnerable_risc_zero_verifier() public {
-        ProtocolAdapter implementation = new ProtocolAdapter(_router, _verifier.SELECTOR());
+        ProtocolAdapter implementation = new ProtocolAdapter(address(_router), _verifier.SELECTOR());
 
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
@@ -62,7 +62,7 @@ contract ProtocolAdapterInitializationTest is Test {
     }
 
     function test_initialize_reverts_on_implementation_contract() public {
-        ProtocolAdapter implementation = new ProtocolAdapter(_router, _verifier.SELECTOR());
+        ProtocolAdapter implementation = new ProtocolAdapter(address(_router), _verifier.SELECTOR());
 
         vm.expectRevert(Initializable.InvalidInitialization.selector, address(implementation));
         implementation.initialize(_OWNER);

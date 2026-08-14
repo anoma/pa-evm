@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.2.1/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-1.2.1/src/SupportedNetworks.sol";
+import {LibString} from "solady-0.1.26/src/utils/LibString.sol";
 import {SemVerLib} from "solady-0.1.26/src/utils/SemVerLib.sol";
 
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
@@ -50,7 +51,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
             assertGt(proxy.code.length, 0, "recorded test deployment missing on-chain");
             assertEq(
-                ProtocolAdapter(proxy).getVersion(),
+                ProtocolAdapter(proxy).VERSION(),
                 _sourceVersion(),
                 "recorded test deployment must run the source version"
             );
@@ -66,9 +67,9 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
             assertGt(proxy.code.length, 0, "recorded prod deployment missing on-chain");
 
-            bytes32 deployedVersion = ProtocolAdapter(proxy).getVersion();
+            bytes32 deployedVersion = LibString.toSmallString(ProtocolAdapter(proxy).VERSION());
             assertLe(
-                SemVerLib.cmp(deployedVersion, _sourceVersion()),
+                SemVerLib.cmp(deployedVersion, LibString.toSmallString(_sourceVersion())),
                 0,
                 "recorded prod deployment must not lead the source version"
             );
@@ -76,12 +77,6 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
             assertTrue(_isSafe(ProtocolAdapter(proxy).owner()), "recorded prod deployment must be owned by a Safe");
         }
-    }
-
-    /// @notice Reads the deployments of an environment (`".test"` or `".prod"`) recorded in `deployments.json`.
-    /// @return deployments The recorded deployments.
-    function _recordedDeployments(string memory environment) internal view returns (Deployment[] memory deployments) {
-        deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH), environment), (Deployment[]));
     }
 
     /// @notice Selects a fork of the supported network with the provided chain ID.
@@ -93,10 +88,16 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     /// @notice Returns the version of this source tree by constructing a fresh implementation on the fork.
-    function _sourceVersion() internal returns (bytes32 sourceVersion) {
+    function _sourceVersion() internal returns (string memory sourceVersion) {
         SupportedNetworks.Data memory data = getRouterData();
         sourceVersion =
-            new ProtocolAdapter(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR).getVersion();
+            new ProtocolAdapter(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR).VERSION();
+    }
+
+    /// @notice Reads the deployments of an environment (`".test"` or `".prod"`) recorded in `deployments.json`.
+    /// @return deployments The recorded deployments.
+    function _recordedDeployments(string memory environment) internal view returns (Deployment[] memory deployments) {
+        deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH), environment), (Deployment[]));
     }
 
     /// @notice Returns whether a version carries a prerelease suffix (e.g. `2.0.0-rc.1`).

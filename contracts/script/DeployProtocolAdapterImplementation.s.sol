@@ -46,7 +46,7 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
         vm.startBroadcast();
         implementation = address(
             new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
-                riscZeroVerifierRouter: data.router,
+                riscZeroVerifierRouter: address(data.router),
                 riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
             })
         );

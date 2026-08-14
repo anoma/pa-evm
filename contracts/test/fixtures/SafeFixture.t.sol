@@ -15,12 +15,12 @@ contract SafeFixtureTest is SafeFixture {
         assertFalse(_isSafe(makeAddr("eoa")));
     }
 
-    function test_isSafe_rejects_a_contract_without_the_safe_getters() public view {
-        assertFalse(_isSafe(address(this)));
-    }
-
     function test_isSafe_rejects_a_safe_singleton_without_owners() public {
         // The singleton locks itself with a threshold of one but has no owners, so the linkage fails.
         assertFalse(_isSafe(address(new SafeSmartAccount())));
+    }
+
+    function test_isSafe_rejects_a_contract_without_the_safe_getters() public view {
+        assertFalse(_isSafe(address(this)));
     }
 }

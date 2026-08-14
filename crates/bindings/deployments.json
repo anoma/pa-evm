@@ -1,11 +1,12 @@
 {
-  "prod": [],
+  "prod": [
+    {
+      "chainId": 84532,
+      "contractAddress": "0x6BbDF59F869957dDC96e8a4d79077613727e6537"
+    }
+  ],
 
   "test": [
-    {
-      "chainId": 11155111,
-      "proxy": "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
-    },
     {
       "chainId": 84532,
       "proxy": "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
