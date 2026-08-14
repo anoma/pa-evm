@@ -5,7 +5,7 @@ use anoma_pa_evm_bindings::addresses::{
 };
 use std::collections::HashSet;
 
-const ENVIRONMENTS: [Environment; 2] = [Environment::Test, Environment::Prod];
+const ENVIRONMENTS: [Environment; 2] = [Environment::Staging, Environment::Production];
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,8 +16,8 @@ struct RawEntry {
 
 #[derive(serde::Deserialize)]
 struct RawDeployments {
-    test: Vec<RawEntry>,
-    prod: Vec<RawEntry>,
+    staging: Vec<RawEntry>,
+    production: Vec<RawEntry>,
 }
 
 fn raw_entries(environment: Environment) -> Vec<RawEntry> {
@@ -25,8 +25,8 @@ fn raw_entries(environment: Environment) -> Vec<RawEntry> {
         .expect("deployments.json: invalid JSON");
 
     match environment {
-        Environment::Test => deployments.test,
-        Environment::Prod => deployments.prod,
+        Environment::Staging => deployments.staging,
+        Environment::Production => deployments.production,
     }
 }
 

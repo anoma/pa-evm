@@ -14,7 +14,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// @notice A script to deploy the protocol adapter implementation on supported networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
-    /// @notice The CREATE2 salt for the implementation deployment, shared by the test and prod environments.
+    /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 public constant IMPLEMENTATION_SALT = "ProtocolAdapterImpl";
 
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
@@ -22,8 +22,8 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     constructor() SupportedNetworks() {}
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
-    /// Idempotent: if the current version is already deployed, the existing deployment is returned so that the test
-    /// and prod environments can share it.
+    /// Idempotent: if the current version is already deployed, the existing deployment is returned so that the
+    /// staging and production environments can share it.
     /// @return implementation The protocol adapter implementation contract — the contract to verify on block
     /// explorers, which carries the source.
     function run() public returns (address implementation) {
