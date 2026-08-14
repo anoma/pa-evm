@@ -29,10 +29,7 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     constructor() SupportedNetworks() {}
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
-    /// Idempotent: if the current version is already deployed, the existing deployment is returned so that the
-    /// staging and production environments can share it.
-    /// @return implementation The protocol adapter implementation contract — the contract to verify on block
-    /// explorers, which carries the source.
+    /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
         implementation = predict();
         if (implementation.code.length != 0) {
