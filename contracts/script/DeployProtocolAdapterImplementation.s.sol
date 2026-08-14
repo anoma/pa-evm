@@ -14,44 +14,42 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// @notice A script to deploy the protocol adapter implementation on supported networks.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
-    /// @notice The CREATE2 salt for the deterministic implementation deployment.
-    bytes32 public constant IMPLEMENTATION_SALT = keccak256("ProtocolAdapterImplementation");
+    /// @notice The CREATE2 salt for the implementation deployment, shared by the test and prod environments.
+    bytes32 public constant IMPLEMENTATION_SALT = "ProtocolAdapterImpl";
 
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
-    /// @param isTestDeployment Whether the deployment is a test deployment or not. If set to `false`, the
-    /// implementation is deployed deterministically.
+    /// Idempotent: if the current version is already deployed, the existing deployment is returned so that the test
+    /// and prod environments can share it.
     /// @return implementation The protocol adapter implementation contract — the contract to verify on block
     /// explorers, which carries the source.
-    function run(bool isTestDeployment) public returns (address implementation) {
+    function run() public returns (address implementation) {
         // Lookup the RISC Zero router address from the supported networks.
         SupportedNetworks.Data memory data = getRouterData();
 
         Options memory opts;
         opts.constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
 
+        implementation = vm.computeCreate2Address(
+            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, opts.constructorData))
+        );
+        if (implementation.code.length != 0) {
+            return implementation;
+        }
+
         // Validate the implementation for upgrade safety.
         Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
 
         vm.startBroadcast();
-        if (isTestDeployment) {
-            implementation = address(
-                new ProtocolAdapter({
-                    riscZeroVerifierRouter: data.router,
-                    riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
-                })
-            );
-        } else {
-            implementation = address(
-                new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
-                    riscZeroVerifierRouter: data.router,
-                    riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
-                })
-            );
-        }
+        implementation = address(
+            new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
+                riscZeroVerifierRouter: data.router,
+                riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
+            })
+        );
         vm.stopBroadcast();
     }
 }
