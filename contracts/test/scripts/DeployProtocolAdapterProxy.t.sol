@@ -42,21 +42,21 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     function test_run_succeeds_for_a_staging_deployment() public {
         _deployRiscZeroRouter();
 
-        _expectDeployment({isProductionDeployment: false});
+        _expectDeployment({isProduction: false});
     }
 
     function test_run_succeeds_for_a_production_deployment() public {
         _deployRiscZeroRouter();
 
-        _expectDeployment({isProductionDeployment: true});
+        _expectDeployment({isProduction: true});
     }
 
     function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
         _deployRiscZeroRouter();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address stagingProxy, address stagingImplementation) = script.run({isProductionDeployment: false});
-        (address productionProxy, address productionImplementation) = script.run({isProductionDeployment: true});
+        (address stagingProxy, address stagingImplementation) = script.run({isProduction: false});
+        (address productionProxy, address productionImplementation) = script.run({isProduction: true});
 
         assertNotEq(stagingProxy, productionProxy, "the environments should have distinct proxies");
         assertEq(stagingImplementation, productionImplementation, "the environments should share the implementation");
@@ -167,7 +167,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
                 continue;
             }
 
-            (address deployed,) = new DeployProtocolAdapterProxy().run({isProductionDeployment: isProduction});
+            (address deployed,) = new DeployProtocolAdapterProxy().run({isProduction: isProduction});
 
             assertEq(
                 deployed,
@@ -179,13 +179,13 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     /// @notice Runs the deploy script for the environment and checks that the proxy lands at the predicted
     /// deterministic address, delegates to a deployed implementation, and is initialized with the environment owner.
-    function _expectDeployment(bool isProductionDeployment) private {
+    function _expectDeployment(bool isProduction) private {
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address proxy, address implementation) = script.run({isProductionDeployment: isProductionDeployment});
+        (address proxy, address implementation) = script.run({isProduction: isProduction});
 
-        address owner = isProductionDeployment ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
+        address owner = isProduction ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
         address predicted = vm.computeCreate2Address(
-            isProductionDeployment ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING(),
+            isProduction ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING(),
             keccak256(
                 abi.encodePacked(
                     type(ERC1967Proxy).creationCode,

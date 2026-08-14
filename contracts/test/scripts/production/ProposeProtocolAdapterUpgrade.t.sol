@@ -32,8 +32,8 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
 
-        (_proxy, _implementation) = deployScript.run({isProductionDeployment: true});
-        (_stagingProxy,) = deployScript.run({isProductionDeployment: false});
+        (_proxy, _implementation) = deployScript.run({isProduction: true});
+        (_stagingProxy,) = deployScript.run({isProduction: false});
     }
 
     function test_run_upgrades_the_proxy() public {

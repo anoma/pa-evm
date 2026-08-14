@@ -29,19 +29,18 @@ contract DeployProtocolAdapterProxy is Script {
     /// The implementation is validated for upgrade safety. Idempotent: if the proxy of this source version is
     /// already deployed, the existing deployment is returned. The proxy address commits to the implementation and
     /// the owner it is initialized with, so a later version deploys a new proxy instead.
-    /// @param isProductionDeployment Whether to deploy the production or the staging environment proxy, selecting
+    /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting
     /// the CREATE2 salt and the owner receiving the authority to stop the protocol adapter in an emergency and to
     /// authorize upgrades.
     /// @return proxy The protocol adapter proxy contract to interact with.
     /// @return implementation The protocol adapter implementation contract the proxy delegates to — the contract to
     /// verify on block explorers, which carries the source, whereas the proxy carries the ERC-1967 bytecode.
-    function run(bool isProductionDeployment) public returns (address proxy, address implementation) {
+    function run(bool isProduction) public returns (address proxy, address implementation) {
         implementation = new DeployProtocolAdapterImplementation().run();
 
-        bytes memory initializerData = abi.encodeCall(
-            ProtocolAdapter.initialize, (isProductionDeployment ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
-        );
-        bytes32 salt = isProductionDeployment ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+        bytes memory initializerData =
+            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
         proxy = vm.computeCreate2Address(
             salt,

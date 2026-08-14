@@ -31,8 +31,8 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
 
-        (_proxy,) = deployScript.run({isProductionDeployment: true});
-        (_stagingProxy,) = deployScript.run({isProductionDeployment: false});
+        (_proxy,) = deployScript.run({isProduction: true});
+        (_stagingProxy,) = deployScript.run({isProduction: false});
     }
 
     function test_run_updates_the_kind_table_commitment() public {

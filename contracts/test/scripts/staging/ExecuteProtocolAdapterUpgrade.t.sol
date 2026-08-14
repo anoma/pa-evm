@@ -22,8 +22,8 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();
 
-        (_proxy, _implementation) = deployScript.run({isProductionDeployment: false});
-        (_productionProxy,) = deployScript.run({isProductionDeployment: true});
+        (_proxy, _implementation) = deployScript.run({isProduction: false});
+        (_productionProxy,) = deployScript.run({isProduction: true});
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
