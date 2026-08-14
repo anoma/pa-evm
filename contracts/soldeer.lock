@@ -24,7 +24,7 @@ name = "anoma-risc0-deployments"
 version = "1.2.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_1_07-08-2026_12:38:36_contracts.zip"
 checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
-integrity = "0dd16476e74f7a33bb67410661b7d7a027939f8b8371531b170fabb18cf63c9a"
+integrity = "ddede64660f8fe10b4cfb0c0a1de4c81308371c467f01ed92a36480361aa7b18"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -51,7 +51,13 @@ name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "591d1f9c38cfff996b3876e7b5e42f3571f47f1aa85f57b3a2a6f076468d8549"
+integrity = "6a44a4c9c9d8d643180a56097de75c3918c545f411cf7fdcf272d9778bccaefc"
+
+[[dependencies]]
+name = "safe-utils"
+version = "0.0.22"
+git = "https://github.com/Recon-Fuzz/safe-utils.git"
+rev = "273945a35ade03a78648a350140aace72707d5a7"
 
 [[dependencies]]
 name = "solady"
