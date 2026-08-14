@@ -42,9 +42,8 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         _deployRiscZeroRouter();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address testProxy, address testImplementation) = script.run({isTestDeployment: true, initialOwner: msg.sender});
-        (address prodProxy, address prodImplementation) =
-            script.run({isTestDeployment: false, initialOwner: msg.sender});
+        (address testProxy, address testImplementation) = script.run({isTestDeployment: true});
+        (address prodProxy, address prodImplementation) = script.run({isTestDeployment: false});
 
         assertNotEq(testProxy, prodProxy, "the environments should have distinct proxies");
         assertEq(testImplementation, prodImplementation, "the environments should share the implementation");
@@ -116,18 +115,18 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     /// @notice Runs the deploy script for the environment and checks that the proxy lands at the predicted
-    /// deterministic address, delegates to a deployed implementation, and is initialized with the owner.
+    /// deterministic address, delegates to a deployed implementation, and is initialized with the environment owner.
     function _expectDeployment(bool isTestDeployment) private {
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address proxy, address implementation) =
-            script.run({isTestDeployment: isTestDeployment, initialOwner: msg.sender});
+        (address proxy, address implementation) = script.run({isTestDeployment: isTestDeployment});
 
+        address owner = isTestDeployment ? script.TEST_PROXY_OWNER() : script.PROD_PROXY_OWNER();
         address predicted = vm.computeCreate2Address(
             isTestDeployment ? script.TEST_PROXY_SALT() : script.PROD_PROXY_SALT(),
             keccak256(
                 abi.encodePacked(
                     type(ERC1967Proxy).creationCode,
-                    abi.encode(implementation, abi.encodeCall(ProtocolAdapter.initialize, (msg.sender)))
+                    abi.encode(implementation, abi.encodeCall(ProtocolAdapter.initialize, (owner)))
                 )
             )
         );
@@ -135,6 +134,6 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         assertEq(proxy, predicted, "proxy should land at the predicted deterministic address");
         assertGt(implementation.code.length, 0, "implementation should be deployed");
         assertEq(ProtocolAdapter(proxy).implementation(), implementation, "proxy should delegate to the implementation");
-        assertEq(ProtocolAdapter(proxy).owner(), msg.sender, "proxy should be initialized with the owner");
+        assertEq(ProtocolAdapter(proxy).owner(), owner, "proxy should be initialized with the environment owner");
     }
 }

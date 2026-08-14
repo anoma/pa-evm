@@ -5,8 +5,15 @@ import {Safe as SafeSmartAccount} from "safe-smart-account-1.5.0/contracts/Safe.
 
 import {SafeFixture} from "./SafeFixture.sol";
 
-/// @notice Checks the Safe identification of the fixture.
+/// @notice Checks the Safe deployment and identification helpers of the fixture.
 contract SafeFixtureTest is SafeFixture {
+    function test_deploySafeAt_installs_a_safe_at_the_target() public {
+        address target = makeAddr("target");
+
+        assertEq(_deploySafeAt(makeAddr("safe owner"), target), target);
+        assertTrue(_isSafe(target));
+    }
+
     function test_isSafe_identifies_a_safe() public {
         assertTrue(_isSafe(_deploySafe(makeAddr("safe owner"))));
     }
