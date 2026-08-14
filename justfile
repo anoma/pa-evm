@@ -1,11 +1,11 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
-# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) and `PA_OWNER`
-# (deploys) from the environment; forge does not load this file itself. The file
-# is absent in CI, where the values come from secrets instead, so loading it
-# stays optional. `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the
-# release checklist, which exports it once per deployment session.
+# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
+# forge does not load this file itself. The file is absent in CI, where the
+# values come from secrets instead, so loading it stays optional.
+# `IS_TEST_DEPLOYMENT` is deliberately not kept here — see the release
+# checklist, which exports it once per deployment session.
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
@@ -103,11 +103,10 @@ contracts-deploy-impl deployer chain *args:
 # Simulate the implementation and proxy deployment (dry-run)
 contracts-simulate-proxy chain *args:
     @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "PA_OWNER: $PA_OWNER"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the protocol adapter implementation and proxy
@@ -115,7 +114,7 @@ contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $PA_OWNER \
+        --sig "run(bool)" $IS_TEST_DEPLOYMENT \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the upgrade proposal (dry-run): deploys the implementation and simulates the Safe executing the upgrade
