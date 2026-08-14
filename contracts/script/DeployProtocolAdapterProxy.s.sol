@@ -25,6 +25,15 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
     address public constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
 
+    /// @notice The deployments recorded per environment, relative to the Foundry root.
+    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
+
+    /// @notice Thrown if the environment already has a deployment recorded for this chain.
+    error DeploymentAlreadyRecorded(string environment, uint256 chainId);
+
+    /// @notice Thrown if the proxy of this source version is already deployed.
+    error ProxyAlreadyDeployed(address proxy);
+
     /// @notice Deploys the protocol adapter implementation and an ERC-1967 proxy pointing to it deterministically.
     /// The implementation is validated for upgrade safety.
     /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting
@@ -38,12 +47,19 @@ contract DeployProtocolAdapterProxy is Script {
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
+        _requireUnrecorded(isProduction);
+
         implementation = new DeployProtocolAdapterImplementation().run();
 
         initializerData =
             abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
         creationCode = type(ERC1967Proxy).creationCode;
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        proxy = vm.computeCreate2Address(
+            salt, keccak256(abi.encodePacked(creationCode, abi.encode(implementation, initializerData)))
+        );
+        require(proxy.code.length == 0, ProxyAlreadyDeployed(proxy));
 
         vm.startBroadcast();
         proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
@@ -61,5 +77,29 @@ contract DeployProtocolAdapterProxy is Script {
             isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING,
             keccak256(abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initializerData)))
         );
+    }
+
+    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
+    function environmentName(bool isProduction) public pure returns (string memory name) {
+        name = isProduction ? "production" : "staging";
+    }
+
+    /// @notice Checks that the environment has no deployment recorded for this chain yet.
+    function _requireUnrecorded(bool isProduction) internal view {
+        string memory json = vm.readFile(_DEPLOYMENTS_PATH);
+        string memory environment = environmentName(isProduction);
+
+        for (uint256 i = 0;; ++i) {
+            // solhint-disable-next-line func-named-parameters
+            string memory entry = string.concat(".", environment, "[", vm.toString(i), "]");
+            if (!vm.keyExistsJson(json, entry)) {
+                return;
+            }
+
+            require(
+                vm.parseJsonUint(json, string.concat(entry, ".chainId")) != block.chainid,
+                DeploymentAlreadyRecorded(environment, block.chainid)
+            );
+        }
     }
 }

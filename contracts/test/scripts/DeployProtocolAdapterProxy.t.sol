@@ -72,6 +72,35 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
         _expectGenesisDeployments({isProduction: true});
     }
 
+    function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
+        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            _selectForkAt(deployments[i].chainId);
+
+            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
+                    _environmentName({isProduction: false}),
+                    deployments[i].chainId
+                )
+            );
+            script.run({isProduction: false});
+        }
+    }
+
+    function test_run_reverts_if_the_proxy_is_already_deployed() public {
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        (address proxy,,,) = script.run({isProduction: false});
+
+        vm.expectRevert(abi.encodeWithSelector(DeployProtocolAdapterProxy.ProxyAlreadyDeployed.selector, proxy));
+        script.run({isProduction: false});
+    }
+
     function test_recorded_staging_deployments_at_the_source_version_are_reproducible() public {
         _expectReproducibleDeployments({isProduction: false});
     }

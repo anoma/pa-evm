@@ -31,11 +31,6 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
-        implementation = predict();
-        if (implementation.code.length != 0) {
-            return implementation;
-        }
-
         validate();
 
         // Lookup the RISC Zero router address from the supported networks.
