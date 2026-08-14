@@ -1,15 +1,10 @@
 {
-  "prod": [
-    {
-      "chainId": 84532,
-      "proxy": "0x6BbDF59F869957dDC96e8a4d79077613727e6537"
-    }
-  ],
+  "prod": [],
 
   "test": [
     {
-      "chainId": 84532,
-      "proxy": "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+      "chainId": 11155111,
+      "proxy": "0x8E073498bB4465b65f6eac85A24663A182013609"
     }
   ]
 }
