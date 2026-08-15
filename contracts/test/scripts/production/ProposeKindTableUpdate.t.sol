@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeKindTableUpdate} from "../../../script/production/ProposeKindTableUpdate.s.sol";
@@ -26,7 +25,6 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         vm.setEnv("SAFE_BROADCAST", "false");
 
         _deployRiscZeroRouter();
-        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
 

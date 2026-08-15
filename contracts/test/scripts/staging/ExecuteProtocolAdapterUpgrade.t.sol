@@ -18,7 +18,6 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
 
     function setUp() public {
         _deployRiscZeroRouter();
-        new DeployProtocolAdapterImplementation().run();
 
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();

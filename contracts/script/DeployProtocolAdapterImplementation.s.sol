@@ -34,60 +34,35 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
-        (address router, bytes4 selector, bytes memory constructorData) = _constructorArgs();
+        bytes memory constructorData;
+        (implementation, constructorData) = predict();
+        require(implementation.code.length == 0, ImplementationAlreadyDeployed({implementation: implementation}));
 
-        implementation = _predict(constructorData);
-        require(implementation.code.length == 0, ImplementationAlreadyDeployed(implementation));
+        Options memory opts;
+        opts.constructorData = constructorData;
 
-        _validate(constructorData);
+        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
 
         vm.startBroadcast();
         implementation = address(
             new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
-                riscZeroVerifierRouter: router, riscZeroVerifierSelector: selector
+                riscZeroVerifierRouter: address(getRouterData().router),
+                riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
             })
         );
         vm.stopBroadcast();
     }
 
-    /// @notice Returns the deployed implementation of the current source version, validated for upgrade safety.
-    /// @return implementation The deployed protocol adapter implementation contract.
-    function deployed() public returns (address implementation) {
-        (,, bytes memory constructorData) = _constructorArgs();
-
-        implementation = _predict(constructorData);
-        require(implementation.code.length != 0, ImplementationNotDeployed(implementation));
-
-        _validate(constructorData);
-    }
-
     /// @notice Predicts the deterministic address the implementation of this source version deploys to.
-    /// @return implementation The predicted protocol adapter implementation contract address.
-    function predict() public view returns (address implementation) {
-        (,, bytes memory constructorData) = _constructorArgs();
+    /// @return implementation The predicted implementation contract address.
+    function predict() public view returns (address implementation, bytes memory constructorData) {
+        address riscZeroVerifierRouter = address(getRouterData().router);
+        bytes4 riscZeroVerifierSelector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;
 
-        implementation = _predict(constructorData);
-    }
+        bytes32 salt = IMPLEMENTATION_SALT;
+        constructorData = abi.encode(riscZeroVerifierRouter, riscZeroVerifierSelector);
+        bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
 
-    /// @notice Validates the protocol adapter implementation for upgrade safety.
-    function _validate(bytes memory constructorData) internal {
-        Options memory opts;
-        opts.constructorData = constructorData;
-
-        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
-    }
-
-    /// @notice Returns the implementation constructor arguments for the current chain.
-    function _constructorArgs() internal view returns (address router, bytes4 selector, bytes memory constructorData) {
-        router = address(getRouterData().router);
-        selector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;
-        constructorData = abi.encode(router, selector);
-    }
-
-    /// @notice Predicts the deterministic address for the provided constructor arguments.
-    function _predict(bytes memory constructorData) internal view returns (address implementation) {
-        implementation = vm.computeCreate2Address(
-            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData))
-        );
+        implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
     }
 }

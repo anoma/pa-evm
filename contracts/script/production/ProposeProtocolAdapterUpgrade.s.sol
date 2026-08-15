@@ -20,7 +20,12 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     /// @return implementation The deployed implementation contract the upgrade was proposed for.
     function run(address proxy, address proposer) public returns (address implementation) {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
-        implementation = implementationScript.deployed();
+        (implementation,) = implementationScript.predict();
+
+        require(
+            implementation.code.length != 0,
+            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
+        );
 
         _propose({
             proxy: proxy,

@@ -20,7 +20,11 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
     /// @return implementation The deployed implementation contract the proxy was upgraded to.
     function run(address proxy) public returns (address implementation) {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
-        implementation = implementationScript.deployed();
+        (implementation,) = implementationScript.predict();
+        require(
+            implementation.code.length != 0,
+            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
+        );
 
         _checkSenderAuthorization(proxy);
 

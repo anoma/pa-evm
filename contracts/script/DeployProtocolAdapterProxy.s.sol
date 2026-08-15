@@ -34,8 +34,9 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Thrown if the proxy of this source version is already deployed.
     error ProxyAlreadyDeployed(address proxy);
 
-    /// @notice Deploys the protocol adapter implementation and an ERC-1967 proxy pointing to it deterministically.
-    /// The implementation is validated for upgrade safety.
+    /// @notice Deploys an ERC-1967 proxy pointing to the protocol adapter implementation deterministically, deploying
+    /// the implementation first unless the environments already share it. The implementation is validated for upgrade
+    /// safety.
     /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting
     /// the CREATE2 salt and the owner receiving the authority to stop the protocol adapter in an emergency and to
     /// authorize upgrades.
@@ -47,13 +48,25 @@ contract DeployProtocolAdapterProxy is Script {
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
-        _requireUnrecorded(isProduction);
+        DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
 
-        implementation = new DeployProtocolAdapterImplementation().deployed();
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
-        bytes32 salt;
-        (proxy, salt, initializerData, creationCode) = _predict(implementation, isProduction);
-        require(proxy.code.length == 0, ProxyAlreadyDeployed(proxy));
+        // Checks
+        {
+            _requireUnrecorded(isProduction);
+
+            (implementation,) = implementationScript.predict();
+
+            (proxy, initializerData, creationCode) =
+                _predict({salt: salt, implementation: implementation, isProduction: isProduction});
+            require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
+        }
+
+        // Deployment
+        if (implementation.code.length == 0) {
+            implementationScript.run();
+        }
 
         vm.startBroadcast();
         proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
@@ -62,29 +75,18 @@ contract DeployProtocolAdapterProxy is Script {
 
     /// @notice Predicts the deterministic address the proxy of this source version deploys to.
     /// @return proxy The predicted protocol adapter proxy contract address.
-    function predict(bool isProduction) public returns (address proxy) {
-        (proxy,,,) = _predict(new DeployProtocolAdapterImplementation().predict(), isProduction);
+    /// @return implementation The predicted implementation contract address the proxy commits to.
+    function predict(bool isProduction) public returns (address proxy, address implementation) {
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        (implementation,) = new DeployProtocolAdapterImplementation().predict();
+
+        (proxy,,) = _predict({salt: salt, implementation: implementation, isProduction: isProduction});
     }
 
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
-    }
-
-    /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
-    function _predict(address implementation, bool isProduction)
-        internal
-        view
-        returns (address proxy, bytes32 salt, bytes memory initializerData, bytes memory creationCode)
-    {
-        salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
-        initializerData =
-            abi.encodeCall(ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING));
-        creationCode = type(ERC1967Proxy).creationCode;
-
-        proxy = vm.computeCreate2Address(
-            salt, keccak256(abi.encodePacked(creationCode, abi.encode(implementation, initializerData)))
-        );
     }
 
     /// @notice Checks that the environment has no deployment recorded for this chain yet.
@@ -104,5 +106,23 @@ contract DeployProtocolAdapterProxy is Script {
                 DeploymentAlreadyRecorded(environment, block.chainid)
             );
         }
+    }
+
+    /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
+    function _predict(bytes32 salt, address implementation, bool isProduction)
+        internal
+        pure
+        returns (address proxy, bytes memory initializerData, bytes memory creationCode)
+    {
+        initializerData = abi.encodeCall(
+            ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
+        );
+        creationCode = type(ERC1967Proxy).creationCode;
+
+        bytes memory constructorArgs = abi.encode(implementation, initializerData);
+
+        bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
+
+        proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
     }
 }
