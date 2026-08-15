@@ -8,8 +8,8 @@ import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 
 /// @notice Checks the guards of the staging-only upgrade execution script. The upgrade itself is not exercised
-/// here: the script broadcasts as the proxy owner, and forge rejects broadcasts under the prank that makes the sender the
-/// owner in the first place. `ProtocolAdapter.upgrade.t.sol` covers the upgrade mechanism itself.
+/// here: the script broadcasts as the proxy owner, and forge rejects broadcasts under the prank that makes the
+/// sender the owner in the first place. `ProtocolAdapter.upgrade.t.sol` covers the upgrade mechanism itself.
 contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
     address internal _stagingOwner;
     address internal _stagingProxy;

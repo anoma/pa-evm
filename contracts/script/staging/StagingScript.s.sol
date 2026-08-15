@@ -19,6 +19,7 @@ abstract contract StagingScript is Script {
     error UnauthorizedSender(address sender);
 
     /// @notice Checks that the proxy belongs to the staging environment and that the sender owns it.
+    /// @param proxy The staging environment protocol adapter proxy to act on.
     function _checkSenderAuthorization(address proxy) internal {
         address owner = ProtocolAdapter(proxy).owner();
         require(owner == new DeployProtocolAdapterProxy().PROXY_OWNER_STAGING(), NotAStagingDeployment(proxy));

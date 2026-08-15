@@ -12,8 +12,8 @@ import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../fixtures/SafeFixture.sol";
 
-/// @notice Checks the proxy deploy script and checks the deployments recorded per environment in
-/// `deployments.json` — the single source of truth for the deterministic deployments — against the chain state.
+/// @notice Checks the proxy deploy script, and the deployments recorded per environment in `deployments.json` —
+/// the single source of truth for the deterministic deployments — against the chain state.
 /// Every recorded proxy must sit at the address its genesis deployment and environment salt determine; the staging
 /// environment must run the source version exactly; the production environment may trail it, must run a release
 /// version, and must be owned by a Safe. An environment without recorded deployments passes vacuously.

@@ -55,6 +55,7 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
 
     /// @notice Predicts the deterministic address the implementation of this source version deploys to.
     /// @return implementation The predicted implementation contract address.
+    /// @return constructorData The constructor arguments the predicted address commits to.
     function predict() public view returns (address implementation, bytes memory constructorData) {
         address riscZeroVerifierRouter = address(getRouterData().router);
         bytes4 riscZeroVerifierSelector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;

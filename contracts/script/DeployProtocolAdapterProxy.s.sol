@@ -34,12 +34,12 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Thrown if the proxy of this source version is already deployed.
     error ProxyAlreadyDeployed(address proxy);
 
-    /// @notice Deploys an ERC-1967 proxy pointing to the protocol adapter implementation deterministically, deploying
-    /// the implementation first unless the environments already share it. The implementation is validated for upgrade
-    /// safety.
-    /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting
-    /// the CREATE2 salt and the owner receiving the authority to stop the protocol adapter in an emergency and to
-    /// authorize upgrades.
+    /// @notice Deploys an ERC-1967 proxy pointing to the protocol adapter implementation deterministically. The
+    /// implementation is validated for upgrade safety and deployed first, unless the other environment deployed it
+    /// already.
+    /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
+    /// salt and the owner receiving the authority to stop the protocol adapter in an emergency and to authorize
+    /// upgrades.
     /// @return proxy The protocol adapter proxy contract to interact with.
     /// @return implementation The protocol adapter implementation contract the proxy delegates to.
     /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
@@ -74,6 +74,7 @@ contract DeployProtocolAdapterProxy is Script {
     }
 
     /// @notice Predicts the deterministic address the proxy of this source version deploys to.
+    /// @param isProduction Whether to predict the production or the staging environment proxy.
     /// @return proxy The predicted protocol adapter proxy contract address.
     /// @return implementation The predicted implementation contract address the proxy commits to.
     function predict(bool isProduction) public returns (address proxy, address implementation) {
@@ -85,11 +86,14 @@ contract DeployProtocolAdapterProxy is Script {
     }
 
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
+    /// @param isProduction Whether to name the production or the staging environment.
+    /// @return name The environment name.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
     }
 
     /// @notice Checks that the environment has no deployment recorded for this chain yet.
+    /// @param isProduction Whether to check the production or the staging environment.
     function _requireUnrecorded(bool isProduction) internal view {
         string memory json = vm.readFile(_DEPLOYMENTS_PATH);
         string memory environment = environmentName(isProduction);
@@ -109,6 +113,12 @@ contract DeployProtocolAdapterProxy is Script {
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
+    /// @param salt The CREATE2 salt of the environment.
+    /// @param implementation The implementation contract the proxy delegates to.
+    /// @param isProduction Whether to derive the production or the staging environment proxy, selecting the owner.
+    /// @return proxy The deterministic protocol adapter proxy contract address.
+    /// @return initializerData The proxy constructor's initializer data.
+    /// @return creationCode The ERC-1967 proxy creation code.
     function _predict(bytes32 salt, address implementation, bool isProduction)
         internal
         pure
