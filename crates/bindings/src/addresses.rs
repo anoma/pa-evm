@@ -7,10 +7,10 @@ use std::sync::LazyLock;
 /// The deployment environment of a recorded protocol adapter proxy.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Environment {
-    /// The test environment, owned by the deployment wallet and always running the source version.
-    Test,
-    /// The prod environment, owned by a Safe and possibly trailing the source version.
-    Prod,
+    /// The staging environment, owned by the deployment wallet and always running the source version.
+    Staging,
+    /// The production environment, owned by a Safe and possibly trailing the source version.
+    Production,
 }
 
 #[derive(Deserialize)]
@@ -22,8 +22,8 @@ struct DeploymentEntry {
 
 #[derive(Deserialize)]
 struct Deployments {
-    test: Vec<DeploymentEntry>,
-    prod: Vec<DeploymentEntry>,
+    staging: Vec<DeploymentEntry>,
+    production: Vec<DeploymentEntry>,
 }
 
 static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>> =
@@ -43,8 +43,8 @@ static DEPLOYMENTS: LazyLock<HashMap<Environment, HashMap<NamedChain, Address>>>
         };
 
         HashMap::from([
-            (Environment::Test, to_map(deployments.test)),
-            (Environment::Prod, to_map(deployments.prod)),
+            (Environment::Staging, to_map(deployments.staging)),
+            (Environment::Production, to_map(deployments.production)),
         ])
     });
 

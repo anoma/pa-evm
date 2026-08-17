@@ -14,7 +14,7 @@ import {SafeFixture} from "../fixtures/SafeFixture.sol";
 
 /// @notice Checks the proxy deploy script and checks the deployments recorded per environment in
 /// `deployments.json` — the single source of truth for the deterministic deployments — against the chain state.
-/// The test environment must run the source version exactly; the prod environment may trail it, must run a release
+/// The staging environment must run the source version exactly; the production environment may trail it, must run a release
 /// version, and must be owned by a Safe.
 contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
     /// @notice A protocol adapter deployment recorded in `deployments.json`.
@@ -26,63 +26,67 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
 
-    function test_run_succeeds_for_a_test_deployment() public {
+    function test_run_succeeds_for_a_staging_deployment() public {
         _deployRiscZeroRouter();
 
-        _expectDeployment({isTestDeployment: true});
+        _expectDeployment({isProductionDeployment: false});
     }
 
-    function test_run_succeeds_for_a_prod_deployment() public {
+    function test_run_succeeds_for_a_production_deployment() public {
         _deployRiscZeroRouter();
 
-        _expectDeployment({isTestDeployment: false});
+        _expectDeployment({isProductionDeployment: true});
     }
 
     function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
         _deployRiscZeroRouter();
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address testProxy, address testImplementation) = script.run({isTestDeployment: true});
-        (address prodProxy, address prodImplementation) = script.run({isTestDeployment: false});
+        (address stagingProxy, address stagingImplementation) = script.run({isProductionDeployment: false});
+        (address productionProxy, address productionImplementation) = script.run({isProductionDeployment: true});
 
-        assertNotEq(testProxy, prodProxy, "the environments should have distinct proxies");
-        assertEq(testImplementation, prodImplementation, "the environments should share the implementation");
+        assertNotEq(stagingProxy, productionProxy, "the environments should have distinct proxies");
+        assertEq(stagingImplementation, productionImplementation, "the environments should share the implementation");
     }
 
-    function test_recorded_test_deployments_run_the_source_version() public {
-        Deployment[] memory deployments = _recordedDeployments(".test");
+    function test_recorded_staging_deployments_run_the_source_version() public {
+        Deployment[] memory deployments = _recordedDeployments(".staging");
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
             address proxy = deployments[i].proxy;
 
-            assertGt(proxy.code.length, 0, "recorded test deployment missing on-chain");
+            assertGt(proxy.code.length, 0, "recorded staging deployment missing on-chain");
             assertEq(
                 ProtocolAdapter(proxy).VERSION(),
                 _sourceVersion(),
-                "recorded test deployment must run the source version"
+                "recorded staging deployment must run the source version"
             );
         }
     }
 
-    function test_recorded_prod_deployments_trail_the_source_version_and_are_safe_owned() public {
-        Deployment[] memory deployments = _recordedDeployments(".prod");
+    function test_recorded_production_deployments_trail_the_source_version_and_are_safe_owned() public {
+        Deployment[] memory deployments = _recordedDeployments(".production");
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             _selectForkAt(deployments[i].chainId);
             address proxy = deployments[i].proxy;
 
-            assertGt(proxy.code.length, 0, "recorded prod deployment missing on-chain");
+            assertGt(proxy.code.length, 0, "recorded production deployment missing on-chain");
 
             bytes32 deployedVersion = LibString.toSmallString(ProtocolAdapter(proxy).VERSION());
             assertLe(
                 SemVerLib.cmp(deployedVersion, LibString.toSmallString(_sourceVersion())),
                 0,
-                "recorded prod deployment must not lead the source version"
+                "recorded production deployment must not lead the source version"
             );
-            assertFalse(_hasPrereleaseSuffix(deployedVersion), "recorded prod deployment must run a release version");
+            assertFalse(
+                _hasPrereleaseSuffix(deployedVersion), "recorded production deployment must run a release version"
+            );
 
-            assertTrue(_isSafe(ProtocolAdapter(proxy).owner()), "recorded prod deployment must be owned by a Safe");
+            assertTrue(
+                _isSafe(ProtocolAdapter(proxy).owner()), "recorded production deployment must be owned by a Safe"
+            );
         }
     }
 
@@ -101,7 +105,8 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
             new ProtocolAdapter(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR).VERSION();
     }
 
-    /// @notice Reads the deployments of an environment (`".test"` or `".prod"`) recorded in `deployments.json`.
+    /// @notice Reads the deployments of an environment (`".staging"` or `".production"`) recorded in
+    /// `deployments.json`.
     /// @return deployments The recorded deployments.
     function _recordedDeployments(string memory environment) internal view returns (Deployment[] memory deployments) {
         deployments = abi.decode(vm.parseJson(vm.readFile(_DEPLOYMENTS_PATH), environment), (Deployment[]));
@@ -116,13 +121,13 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, SafeFixture {
 
     /// @notice Runs the deploy script for the environment and checks that the proxy lands at the predicted
     /// deterministic address, delegates to a deployed implementation, and is initialized with the environment owner.
-    function _expectDeployment(bool isTestDeployment) private {
+    function _expectDeployment(bool isProductionDeployment) private {
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-        (address proxy, address implementation) = script.run({isTestDeployment: isTestDeployment});
+        (address proxy, address implementation) = script.run({isProductionDeployment: isProductionDeployment});
 
-        address owner = isTestDeployment ? script.TEST_PROXY_OWNER() : script.PROD_PROXY_OWNER();
+        address owner = isProductionDeployment ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
         address predicted = vm.computeCreate2Address(
-            isTestDeployment ? script.TEST_PROXY_SALT() : script.PROD_PROXY_SALT(),
+            isProductionDeployment ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING(),
             keccak256(
                 abi.encodePacked(
                     type(ERC1967Proxy).creationCode,

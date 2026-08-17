@@ -11,7 +11,7 @@ use anoma_pa_evm_bindings::helpers::alchemy_url;
 #[tokio::test]
 async fn versions_of_deployed_protocol_adapters_match_the_expected_version() {
     // Iterate over all supported chains
-    for chain in protocol_adapter_deployments_map(Environment::Test).keys() {
+    for chain in protocol_adapter_deployments_map(Environment::Staging).keys() {
         let existing_pa = pa_instance(chain).await;
 
         // `VERSION` is a constant, so the freshly deployed implementation answers
@@ -60,7 +60,7 @@ async fn pa_instance(
     let provider = ProviderBuilder::new()
         .connect_anvil_with_wallet_and_config(|a| a.fork(rpc_url))
         .expect("Couldn't create anvil provider");
-    protocol_adapter(&provider.erased(), Environment::Test)
+    protocol_adapter(&provider.erased(), Environment::Staging)
         .await
         .expect("Couldn't get protocol adapter instance")
 }

@@ -1,7 +1,7 @@
 {
-  "prod": [],
+  "production": [],
 
-  "test": [
+  "staging": [
     {
       "chainId": 11155111,
       "proxy": "0x8E073498bB4465b65f6eac85A24663A182013609"
