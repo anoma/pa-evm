@@ -7,9 +7,9 @@ use std::sync::LazyLock;
 /// The deployment environment of a recorded protocol adapter proxy.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Environment {
-    /// The staging environment, owned by the deployment wallet and always running the source version.
+    /// The staging environment, owned by the deployment wallet and running what the `staging` branch promoted.
     Staging,
-    /// The production environment, owned by a Safe and possibly trailing the source version.
+    /// The production environment, owned by a Safe and running the release the `main` branch promoted.
     Production,
 }
 
