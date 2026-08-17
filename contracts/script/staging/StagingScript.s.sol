@@ -7,7 +7,7 @@ import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
 /// @title StagingScript
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice The base of the scripts acting on the staging environment protocol adapter proxy, which the staging proxy
 /// owner drives directly.
 /// @custom:security-contact security@anoma.foundation

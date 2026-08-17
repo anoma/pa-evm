@@ -7,7 +7,7 @@ import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImple
 import {StagingScript} from "./StagingScript.s.sol";
 
 /// @title ExecuteProtocolAdapterUpgrade
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script to execute upgrading the staging environment protocol adapter proxy to the deployed
 /// implementation of the current source version (see `DeployProtocolAdapterImplementation`). Staging only: the
 /// production proxy is owned by a Safe multisig, whose owners execute the upgrade proposed by
@@ -26,7 +26,7 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
             DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
         );
 
-        _checkSenderAuthorization(proxy);
+        _checkSenderAuthorization({proxy: proxy});
 
         vm.startBroadcast();
         UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationScript.INITIALIZATION_DATA());

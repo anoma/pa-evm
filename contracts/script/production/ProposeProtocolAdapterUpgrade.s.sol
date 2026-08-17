@@ -7,14 +7,13 @@ import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImple
 import {ProductionScript} from "./ProductionScript.s.sol";
 
 /// @title ProposeProtocolAdapterUpgrade
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script to propose upgrading the production environment protocol adapter proxy to the deployed
 /// implementation of the current source version (see `DeployProtocolAdapterImplementation`) to the Safe owning the
 /// proxy. The Safe owners confirm and execute the proposed upgrade in the Safe app.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeProtocolAdapterUpgrade is ProductionScript {
-    /// @notice Proposes the upgrade to the Safe owning the proxy. Without `--broadcast`, the Safe execution of the
-    /// upgrade is simulated instead of proposed.
+    /// @notice Proposes the upgrade to the Safe owning the proxy.
     /// @param proxy The production environment protocol adapter proxy to upgrade.
     /// @param proposer The Safe owner or delegate proposing the transaction.
     /// @return implementation The deployed implementation contract the upgrade was proposed for.
