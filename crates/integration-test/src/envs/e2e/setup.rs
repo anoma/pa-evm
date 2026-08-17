@@ -3,9 +3,7 @@ use alloy::primitives::utils::parse_ether;
 use alloy::providers::Provider;
 use alloy::providers::ProviderBuilder;
 use alloy::providers::ext::AnvilApi;
-use anoma_pa_evm_bindings::addresses::{
-    Environment as DeploymentEnvironment, protocol_adapter_address,
-};
+use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anoma_pa_testkit::environment::StateBuilder;
 use anoma_pa_testkit::fixtures::identities;
@@ -64,8 +62,13 @@ impl Environment {
             )
             .await?;
 
-        let pa_address = protocol_adapter_address(DeploymentEnvironment::Staging, &chain)
-            .with_context(|| format!("no protocol adapter deployment for chain {chain:?}"))?;
+        let pa_address =
+            protocol_adapter_address(config.environment, &chain).with_context(|| {
+                format!(
+                    "no {:?} protocol adapter deployment for chain {chain:?}",
+                    config.environment
+                )
+            })?;
         let pa = protocol_adapter(pa_address, provider.clone());
 
         let prover = QueueProver::new(&config.queue_base_url, &config.queue_auth_token)
