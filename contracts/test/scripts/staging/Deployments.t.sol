@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {DeploymentsFixture} from "../../fixtures/DeploymentsFixture.sol";
 
 /// @notice Checks the staging deployments recorded in `deployments.json`. The genesis check needs no chain access and
@@ -19,5 +20,20 @@ contract DeploymentsStagingTest is DeploymentsFixture {
 
     function test_recorded_deployments_run_the_source_implementation() public onlyStaging {
         _expectSourceImplementations({isProduction: false});
+    }
+
+    function test_recorded_deployments_run_a_release_or_release_candidate_version() public onlyStaging {
+        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            _selectForkAt(deployments[i].chainId);
+            string memory version = ProtocolAdapter(deployments[i].proxy.addr).VERSION();
+            string memory context = _deploymentContext({isProduction: false, chainId: deployments[i].chainId});
+
+            assertTrue(
+                _isReleaseOrCandidate(version),
+                string.concat(context, ": version is neither a release nor a release candidate: ", version)
+            );
+        }
     }
 }

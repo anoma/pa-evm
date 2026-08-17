@@ -127,4 +127,33 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     function _deploymentContext(bool isProduction, uint256 chainId) internal pure returns (string memory context) {
         context = string.concat(_environmentName(isProduction), ", ", chainId.toString());
     }
+
+    /// @notice Returns whether a version is a release or a release candidate, i.e. carries no prerelease suffix or an
+    /// `-rc.<number>` one. Any other prerelease (`-alpha.1`, `-rc`, `-rc.x`) is neither.
+    /// @param version The version to classify.
+    /// @return isReleaseOrCandidate Whether the version is a release or a release candidate.
+    function _isReleaseOrCandidate(string memory version) internal pure returns (bool isReleaseOrCandidate) {
+        uint256 separator = version.indexOf("-");
+        if (separator == LibString.NOT_FOUND) {
+            return true;
+        }
+
+        string memory suffix = version.slice(separator + 1);
+        if (!suffix.startsWith("rc.")) {
+            return false;
+        }
+
+        bytes memory number = bytes(suffix.slice(3));
+        if (number.length == 0) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < number.length; ++i) {
+            if (number[i] < "0" || number[i] > "9") {
+                return false;
+            }
+        }
+
+        isReleaseOrCandidate = true;
+    }
 }
