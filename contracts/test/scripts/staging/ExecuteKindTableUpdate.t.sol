@@ -13,7 +13,7 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
     bytes32 internal constant _NEW_KIND_TABLE_COMMITMENT = keccak256("new kind table commitment");
 
     address internal _stagingOwner;
-    address internal _proxy;
+    address internal _stagingProxy;
     address internal _productionProxy;
 
     function setUp() public {
@@ -22,8 +22,8 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();
 
-        (_proxy,) = deployScript.run({isProductionDeployment: false});
-        (_productionProxy,) = deployScript.run({isProductionDeployment: true});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false});
+        (_productionProxy,,,) = deployScript.run({isProduction: true});
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
@@ -40,6 +40,6 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
 
         vm.prank(outsider);
         vm.expectRevert(abi.encodeWithSelector(StagingScript.UnauthorizedSender.selector, outsider));
-        script.run({proxy: _proxy, newKindTableCommitment: _NEW_KIND_TABLE_COMMITMENT});
+        script.run({proxy: _stagingProxy, newKindTableCommitment: _NEW_KIND_TABLE_COMMITMENT});
     }
 }

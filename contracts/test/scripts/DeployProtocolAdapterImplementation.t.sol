@@ -27,7 +27,21 @@ contract DeployProtocolAdapterImplementationTest is RiscZeroRouterFixture {
             )
         );
 
-        assertEq(implementation, predicted, "implementation should land at the predicted CREATE2 address");
-        assertGt(implementation.code.length, 0, "implementation should be deployed");
+        assertEq(implementation, predicted, "implementation address differs from the prediction");
+        assertGt(implementation.code.length, 0, "implementation is not deployed");
+    }
+
+    function test_run_reverts_if_the_implementation_is_already_deployed() public {
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterImplementation script = new DeployProtocolAdapterImplementation();
+        address implementation = script.run();
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                DeployProtocolAdapterImplementation.ImplementationAlreadyDeployed.selector, implementation
+            )
+        );
+        script.run();
     }
 }

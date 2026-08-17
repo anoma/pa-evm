@@ -8,11 +8,11 @@ import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 
 /// @notice Checks the guards of the staging-only upgrade execution script. The upgrade itself is not exercised
-/// here: the script broadcasts as the proxy owner, and forge rejects broadcasts under the prank that makes the sender the
-/// owner in the first place. `ProtocolAdapter.upgrade.t.sol` covers the upgrade mechanism itself.
+/// here: the script broadcasts as the proxy owner, and forge rejects broadcasts under the prank that makes the
+/// sender the owner in the first place. `ProtocolAdapter.upgrade.t.sol` covers the upgrade mechanism itself.
 contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
     address internal _stagingOwner;
-    address internal _proxy;
+    address internal _stagingProxy;
     address internal _productionProxy;
     address internal _implementation;
 
@@ -22,8 +22,8 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();
 
-        (_proxy, _implementation) = deployScript.run({isProductionDeployment: false});
-        (_productionProxy,) = deployScript.run({isProductionDeployment: true});
+        (_stagingProxy, _implementation,,) = deployScript.run({isProduction: false});
+        (_productionProxy,,,) = deployScript.run({isProduction: true});
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
@@ -40,7 +40,7 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
 
         vm.prank(outsider);
         vm.expectRevert(abi.encodeWithSelector(StagingScript.UnauthorizedSender.selector, outsider));
-        script.run({proxy: _proxy});
+        script.run({proxy: _stagingProxy});
     }
 
     function test_run_reverts_if_the_implementation_is_not_deployed() public {
@@ -53,6 +53,6 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
                 DeployProtocolAdapterImplementation.ImplementationNotDeployed.selector, _implementation
             )
         );
-        script.run({proxy: _proxy});
+        script.run({proxy: _stagingProxy});
     }
 }

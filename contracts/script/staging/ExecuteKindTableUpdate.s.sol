@@ -5,7 +5,7 @@ import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
 import {StagingScript} from "./StagingScript.s.sol";
 
 /// @title ExecuteKindTableUpdate
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script to execute updating the kind table commitment of the staging environment protocol adapter proxy.
 /// Staging only: the production proxy is owned by a Safe multisig, whose owners execute the update proposed by
 /// `production/ProposeKindTableUpdate` in the Safe app instead.
@@ -16,7 +16,7 @@ contract ExecuteKindTableUpdate is StagingScript {
     /// @param proxy The staging environment protocol adapter proxy to update.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
     function run(address proxy, bytes32 newKindTableCommitment) public {
-        _authorizeSender(proxy);
+        _checkSenderAuthorization({proxy: proxy});
 
         vm.startBroadcast();
         IProtocolAdapter(proxy).setKindTableCommitment(newKindTableCommitment);

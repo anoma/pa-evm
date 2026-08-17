@@ -24,64 +24,46 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Thrown if the implementation of the current source version is not deployed yet.
     error ImplementationNotDeployed(address implementation);
 
+    /// @notice Thrown if the implementation of the current source version is already deployed.
+    error ImplementationAlreadyDeployed(address implementation);
+
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
-    /// Idempotent: if the current version is already deployed, the existing deployment is returned so that the
-    /// staging and production environments can share it.
-    /// @return implementation The protocol adapter implementation contract — the contract to verify on block
-    /// explorers, which carries the source.
+    /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
-        implementation = predict();
-        if (implementation.code.length != 0) {
-            return implementation;
-        }
+        bytes memory constructorData;
+        (implementation, constructorData) = predict();
+        require(implementation.code.length == 0, ImplementationAlreadyDeployed({implementation: implementation}));
 
-        validate();
+        Options memory opts;
+        opts.constructorData = constructorData;
 
-        // Lookup the RISC Zero router address from the supported networks.
-        SupportedNetworks.Data memory data = getRouterData();
+        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
 
         vm.startBroadcast();
         implementation = address(
             new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
-                riscZeroVerifierRouter: address(data.router),
+                riscZeroVerifierRouter: address(getRouterData().router),
                 riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
             })
         );
         vm.stopBroadcast();
     }
 
-    /// @notice Returns the deployed implementation of the current source version, validated for upgrade safety.
-    /// @return implementation The deployed protocol adapter implementation contract.
-    function deployed() public returns (address implementation) {
-        implementation = predict();
-        require(implementation.code.length != 0, ImplementationNotDeployed(implementation));
-
-        validate();
-    }
-
-    /// @notice Validates the protocol adapter implementation for upgrade safety.
-    function validate() public {
-        Options memory opts;
-        opts.constructorData = _constructorData();
-
-        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
-    }
-
     /// @notice Predicts the deterministic address the implementation of this source version deploys to.
     /// @return implementation The predicted implementation contract address.
-    function predict() public view returns (address implementation) {
-        implementation = vm.computeCreate2Address(
-            IMPLEMENTATION_SALT, keccak256(abi.encodePacked(type(ProtocolAdapter).creationCode, _constructorData()))
-        );
-    }
+    /// @return constructorData The constructor arguments the predicted address commits to.
+    function predict() public view returns (address implementation, bytes memory constructorData) {
+        address riscZeroVerifierRouter = address(getRouterData().router);
+        bytes4 riscZeroVerifierSelector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;
 
-    /// @notice Returns the implementation constructor arguments for the current chain.
-    function _constructorData() internal view returns (bytes memory constructorData) {
-        SupportedNetworks.Data memory data = getRouterData();
-        constructorData = abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
+        bytes32 salt = IMPLEMENTATION_SALT;
+        constructorData = abi.encode(riscZeroVerifierRouter, riscZeroVerifierSelector);
+        bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
+
+        implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
     }
 }

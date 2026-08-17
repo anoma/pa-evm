@@ -17,7 +17,7 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
 
     address internal _owner;
     address internal _safe;
-    address internal _proxy;
+    address internal _productionProxy;
     address internal _stagingProxy;
 
     function setUp() public {
@@ -31,21 +31,23 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
 
-        (_proxy,) = deployScript.run({isProductionDeployment: true});
-        (_stagingProxy,) = deployScript.run({isProductionDeployment: false});
+        (_productionProxy,,,) = deployScript.run({isProduction: true});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false});
     }
 
     function test_run_updates_the_kind_table_commitment() public {
-        vm.expectEmit({checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _proxy});
+        vm.expectEmit({
+            checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _productionProxy
+        });
         emit IProtocolAdapter.KindTableCommitmentUpdated(_NEW_KIND_TABLE_COMMITMENT);
 
         new ProposeKindTableUpdate()
-            .run({proxy: _proxy, proposer: _owner, newKindTableCommitment: _NEW_KIND_TABLE_COMMITMENT});
+            .run({proxy: _productionProxy, proposer: _owner, newKindTableCommitment: _NEW_KIND_TABLE_COMMITMENT});
 
         assertEq(
-            ProtocolAdapter(_proxy).getKindTableCommitment(),
+            ProtocolAdapter(_productionProxy).getKindTableCommitment(),
             _NEW_KIND_TABLE_COMMITMENT,
-            "proxy should hold the new kind table commitment"
+            "kind table commitment differs"
         );
     }
 
@@ -61,6 +63,6 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
 
         // The protocol adapter rejects the zero commitment, so the simulated Safe execution fails.
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
-        script.run({proxy: _proxy, proposer: _owner, newKindTableCommitment: bytes32(0)});
+        script.run({proxy: _productionProxy, proposer: _owner, newKindTableCommitment: bytes32(0)});
     }
 }
