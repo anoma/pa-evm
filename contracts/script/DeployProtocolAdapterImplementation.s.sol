@@ -57,11 +57,20 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @return implementation The predicted implementation contract address.
     /// @return constructorData The constructor arguments the predicted address commits to.
     function predict() public view returns (address implementation, bytes memory constructorData) {
-        address riscZeroVerifierRouter = address(getRouterData().router);
-        bytes4 riscZeroVerifierSelector = RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR;
+        (implementation, constructorData) = predict(block.chainid);
+    }
+
+    /// @notice Predicts the deterministic address the implementation of this source version deploys to on a supported
+    /// network, which needs no fork of it — the router is the only per-chain constructor argument.
+    /// @param chainId The chain ID of the supported network.
+    /// @return implementation The predicted implementation contract address.
+    /// @return constructorData The constructor arguments the predicted address commits to.
+    function predict(uint256 chainId) public view returns (address implementation, bytes memory constructorData) {
+        Data memory data = _riscZeroVerifierRouters[_supportedNetworks[chainId]];
+        require(address(data.router) != address(0), UnsupportedNetwork({chainId: chainId}));
 
         bytes32 salt = IMPLEMENTATION_SALT;
-        constructorData = abi.encode(riscZeroVerifierRouter, riscZeroVerifierSelector);
+        constructorData = abi.encode(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
         bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
 
         implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});

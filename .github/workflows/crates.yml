@@ -2,7 +2,7 @@ name: Crates
 
 on:
   push:
-    branches: [main, next]
+    branches: [main, staging, next]
   pull_request:
   workflow_dispatch:
 
