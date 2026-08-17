@@ -53,6 +53,15 @@ pub fn alchemy_subdomain(chain: &NamedChain) -> AlchemyResult<&'static str> {
         //
         Tempo => Ok("tempo-mainnet"),
         TempoModerato => Ok("tempo-moderato"),
+        //
+        Monad => Ok("monad-mainnet"),
+        MonadTestnet => Ok("monad-testnet"),
+        //
+        StableMainnet => Ok("stable-mainnet"),
+        StableTestnet => Ok("stable-testnet"),
+        //
+        MegaEth => Ok("megaeth-mainnet"),
+        MegaEthTestnet => Ok("megaeth-testnet"),
 
         _ => Err(AlchemyError::SubdomainNotFound),
     }

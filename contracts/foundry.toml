@@ -107,5 +107,11 @@ bsc = "https://bnb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 bsc-testnet = "https://bnb-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 tempo = "https://tempo-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 tempo-moderato = "https://tempo-moderato.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+monad = "https://monad-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+monad-testnet = "https://monad-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+stable-mainnet = "https://stable-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+megaeth = "https://megaeth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+
+aurora = "https://aurora.nownodes.io/${NOWNODES_API_KEY}"
 
 localhost = "http://localhost:8545"
