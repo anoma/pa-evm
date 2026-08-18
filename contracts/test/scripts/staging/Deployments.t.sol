@@ -31,7 +31,7 @@ contract DeploymentsStagingTest is DeploymentsFixture {
             string memory context = _deploymentContext({isProduction: false, chainId: deployments[i].chainId});
 
             assertTrue(
-                _isReleaseOrCandidate(version),
+                _isRelease(version) || _isReleaseCandidate(version),
                 string.concat(context, ": version is neither a release nor a release candidate: ", version)
             );
         }
