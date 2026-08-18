@@ -17,19 +17,26 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
     /// @notice Executes the upgrade as the proxy owner, which the sender must be. Without `--broadcast`, the upgrade
     /// is simulated locally.
     /// @param proxy The staging environment protocol adapter proxy to upgrade.
-    /// @return implementation The deployed implementation contract the proxy was upgraded to.
-    function run(address proxy) public returns (address implementation) {
+    /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
+    /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
+    /// compares two independent derivations.
+    function run(address proxy, address newImplementation) public {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
-        (implementation,) = implementationScript.predict();
+        (address predictedImplementation,) = implementationScript.predict();
+
         require(
-            implementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
+            newImplementation == predictedImplementation,
+            DeployProtocolAdapterImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
+        );
+        require(
+            newImplementation.code.length != 0,
+            DeployProtocolAdapterImplementation.ImplementationNotDeployed(newImplementation)
         );
 
         _checkSenderAuthorization({proxy: proxy});
 
         vm.startBroadcast();
-        UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationScript.INITIALIZATION_DATA());
+        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }
 }

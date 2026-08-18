@@ -16,20 +16,26 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     /// @notice Proposes the upgrade to the Safe owning the proxy.
     /// @param proxy The production environment protocol adapter proxy to upgrade.
     /// @param proposer The Safe owner or delegate proposing the transaction.
-    /// @return implementation The deployed implementation contract the upgrade was proposed for.
-    function run(address proxy, address proposer) public returns (address implementation) {
+    /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
+    /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
+    /// compares two independent derivations.
+    function run(address proxy, address proposer, address newImplementation) public {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
-        (implementation,) = implementationScript.predict();
+        (address predictedImplementation,) = implementationScript.predict();
 
         require(
-            implementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
+            newImplementation == predictedImplementation,
+            DeployProtocolAdapterImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
+        );
+        require(
+            newImplementation.code.length != 0,
+            DeployProtocolAdapterImplementation.ImplementationNotDeployed(newImplementation)
         );
 
         _propose({
             proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (implementation, implementationScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationScript.INITIALIZATION_DATA())
             ),
             proposer: proposer
         });

@@ -27,6 +27,9 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
+    /// @notice Thrown if an implementation to upgrade to is not the one the current source version deploys to.
+    error UnexpectedImplementation(address expected, address actual);
+
     /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
     /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
     constructor() SupportedNetworks() {}
