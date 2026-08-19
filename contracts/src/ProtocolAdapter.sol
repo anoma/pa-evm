@@ -50,7 +50,7 @@ contract ProtocolAdapter is
         0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
 
     /// @inheritdoc IProtocolAdapter
-    string public constant override VERSION = "2.0.0-alpha.6";
+    string public constant override VERSION = "2.0.0-rc.0";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
