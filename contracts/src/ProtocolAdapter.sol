@@ -5,6 +5,8 @@ import {ERC1967Utils} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967U
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
+import {SlotDerivation} from "@openzeppelin-contracts-5.7.0/utils/SlotDerivation.sol";
+import {TransientSlot} from "@openzeppelin-contracts-5.7.0/utils/TransientSlot.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
 import {IForwarder} from "anoma-forwarder-bases-3.0.0/src/interfaces/IForwarder.sol";
@@ -38,6 +40,9 @@ contract ProtocolAdapter is
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
+    using SlotDerivation for bytes32;
+    using TransientSlot for bytes32;
+    using TransientSlot for TransientSlot.BooleanSlot;
 
     /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
     struct ProtocolAdapterStorage {
@@ -52,6 +57,11 @@ contract ProtocolAdapter is
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.ProtocolAdapter")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
         0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
+
+    /// @custom:storage-location erc7201:anoma.transient.executedTags
+    // keccak256(abi.encode(uint256(keccak256("anoma.transient.executedTags")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT =
+        0xbccb4bbf45432d45b62b97fb819d12e33a455a94a96eb5366402dbe8c8056c00;
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.0";
@@ -69,6 +79,8 @@ contract ProtocolAdapter is
     error ZeroKindTableCommitmentNotAllowed();
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
+    error MustRunAfter(bytes32 tag);
+    error MustRunBefore(bytes32 tag);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierStopped();
     error Simulated(uint256 gasUsed);
@@ -242,6 +254,7 @@ contract ProtocolAdapter is
 
             _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
             _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
+            _markExecuted(consumed.nullifier);
 
             nullifiers[i] = consumed.nullifier;
             consumedLogicRefs[i] = consumed.logicRef;
@@ -260,6 +273,7 @@ contract ProtocolAdapter is
 
             _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
             _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
+            _markExecuted(created.commitment);
 
             commitments[i] = created.commitment;
             createdLogicRefs[i] = created.logicRef;
@@ -293,8 +307,15 @@ contract ProtocolAdapter is
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
     /// the associated carrier resource logic.
     function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
-        (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
-            abi.decode(callBlob, (address, bytes, bytes));
+        (
+            address untrustedForwarder,
+            bytes memory input,
+            bytes memory expectedOutput,
+            bytes32[] memory afterTags,
+            bytes32[] memory beforeTags
+        ) = abi.decode(callBlob, (address, bytes, bytes, bytes32[], bytes32[]));
+
+        _checkOrdering({afterTags: afterTags, beforeTags: beforeTags});
 
         // slither-disable-next-line calls-loop
         bytes memory actualOutput =
@@ -308,6 +329,35 @@ contract ProtocolAdapter is
         // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
         // slither-disable-next-line reentrancy-events
         emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
+    }
+
+    /// @notice Checks the ordering constraints of a call against the resources whose calls have run already. The
+    /// adapter checks the order it receives; the sender arranges the resources and actions to satisfy it.
+    /// @param afterTags The tags whose calls must have run already.
+    /// @param beforeTags The tags whose calls must not have run yet.
+    function _checkOrdering(bytes32[] memory afterTags, bytes32[] memory beforeTags) internal view {
+        for (uint256 i = 0; i < afterTags.length; ++i) {
+            require(_hasExecuted(afterTags[i]), MustRunAfter(afterTags[i]));
+        }
+
+        // A tag that is absent from the transaction was never marked, so a `beforeTags` entry naming one passes.
+        for (uint256 i = 0; i < beforeTags.length; ++i) {
+            require(!_hasExecuted(beforeTags[i]), MustRunBefore(beforeTags[i]));
+        }
+    }
+
+    /// @notice Returns whether the calls of a tag have run in this transaction.
+    /// @param tag The tag of the resource.
+    /// @return executed Whether the calls of the resource have run.
+    function _hasExecuted(bytes32 tag) internal view returns (bool executed) {
+        executed = _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT.deriveMapping(tag).asBoolean().tload();
+    }
+
+    /// @notice Marks the calls of a tag as run. Every resource is marked, because a resource without calls is
+    /// still a valid reference for a constraint.
+    /// @param tag The tag of the resource.
+    function _markExecuted(bytes32 tag) internal {
+        _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT.deriveMapping(tag).asBoolean().tstore(true);
     }
 
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
