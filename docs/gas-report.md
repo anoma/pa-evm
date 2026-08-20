@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3298911 |           15510 |        |        |        |         |
+|                                          3414231 |           16046 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             313 |    313 |    313 |    313 |      10 |
@@ -11,10 +11,10 @@
 | VERSION                                          |            1063 |   1063 |   1063 |   1063 |       3 |
 | commitmentCount                                  |             705 |   1705 |   1705 |   2705 |      12 |
 | denyLogicRefs                                    |             703 |  31705 |  28853 |  52993 |      11 |
-| execute                                          |            2871 | 151227 | 169571 | 420098 |      41 |
+| execute                                          |            2871 | 157065 | 170980 | 421325 |      48 |
 | getImplementation                                |             623 |    789 |    623 |   2623 |      12 |
 | getKindTreeRoot                                  |            2837 |   2837 |   2837 |   2837 |       2 |
-| initialize                                       |            3035 | 150272 | 152888 | 152888 |     107 |
+| initialize                                       |            3035 | 150433 | 152888 | 152888 |     114 |
 | isLogicRefDenied                                 |            2429 |   2432 |   2432 |   2436 |      12 |
 | isNullifierContained                             |            2761 |   2761 |   2761 |   2761 |    2712 |
 | latestCommitmentTreeRoot                         |            6959 |  12350 |   9665 |  17736 |      15 |
