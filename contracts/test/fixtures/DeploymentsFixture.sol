@@ -21,7 +21,6 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     struct ProxyData {
         address addr;
         bytes creationCode;
-        address currentImplementation;
         address initialImplementation;
         bytes initializerData;
     }
@@ -67,8 +66,8 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
     }
 
     /// @notice Checks that every recorded proxy delegates to the implementation this source version predicts for its
-    /// chain. The record is tied to the source without a fork and to the chain with one, so the two together prove
-    /// the environment runs this source.
+    /// chain, which proves the environment runs this source. The record is not a term in the comparison — the chain
+    /// answers what it runs.
     /// @param isProduction Whether to check the production or the staging environment.
     function _expectSourceImplementations(bool isProduction) internal {
         Deployment[] memory deployments = _recordedDeployments(isProduction);
@@ -78,19 +77,15 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
             ProxyData memory proxy = deployments[i].proxy;
             string memory context = _deploymentContext({isProduction: isProduction, chainId: chainId});
 
+            // Predicted before the fork is selected, because selecting one discards the script deployed here.
             (address sourceImplementation,) = new DeployProtocolAdapterImplementation().predict(chainId);
-            assertEq(
-                proxy.currentImplementation,
-                sourceImplementation,
-                string.concat(context, ": recorded implementation differs from the source")
-            );
 
             _selectForkAt(chainId);
             assertGt(proxy.addr.code.length, 0, string.concat(context, ": deployment missing on-chain"));
             assertEq(
                 ProtocolAdapter(proxy.addr).implementation(),
-                proxy.currentImplementation,
-                string.concat(context, ": deployed implementation differs from the record")
+                sourceImplementation,
+                string.concat(context, ": does not run the source implementation")
             );
         }
     }
