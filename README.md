@@ -1,6 +1,6 @@
-[![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anoma--pa--evm-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/bindings/LICENSE)
+[![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anoma--pa--evm-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/contracts/LICENSE)
 
-[![Bindings Tests](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/bindings.yml) [![crates.io](https://img.shields.io/badge/crates.io-anoma--pa--evm--bindings-blue?logo=rust)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/bindings/LICENSE)
+[![Crates Tests](https://github.com/anoma/pa-evm/actions/workflows/crates.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/crates.yml) [![crates.io](https://img.shields.io/badge/crates.io-anoma--pa--evm--bindings-blue?logo=rust)](https://crates.io/crates/anoma-pa-evm-bindings) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/crates/bindings/LICENSE)
 
 # Anoma EVM Protocol Adapter
 
@@ -14,9 +14,10 @@ This monorepo is structured as follows:
 ```
 .
 ├── audits
-├── bindings
 ├── contracts
-├── example-tx-generation
+├── crates
+│   ├── bindings
+│   └── integration-test
 ├── Cargo.lock
 ├── Cargo.toml
 ├── README.md
@@ -25,10 +26,10 @@ This monorepo is structured as follows:
 
 The [contracts](./contracts/) folder contains the contracts written in [Solidity](https://soliditylang.org/) as well as [Foundry forge](https://book.getfoundry.sh/forge/) tests and deploy scripts.
 
-The [bindings](./bindings/) folder provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs)
-library.
+The [crates](./crates/) folder contains the Rust workspace:
 
-The [example-tx-generation](./example-tx-generation) folder contains a binary to generate example transactions with aggregated and non-aggregated proofs as `.bin` files for testing purposes, which can be used for testing purposes, e.g., in [./contracts/test/examples/transactions/](./contracts/test/examples/transactions/).
+- [bindings](./crates/bindings/) provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
+- [integration-test](./crates/integration-test/) contains the Rust integration and e2e test harness that deploys the protocol adapter to a local or forked chain and exercises it with risc0-proven transactions.
 
 ## Audits
 

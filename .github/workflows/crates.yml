@@ -1,0 +1,52 @@
+name: Crates
+
+on:
+  push:
+    branches: [main, staging, next]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Crates Tests
+    runs-on: macos-latest
+    env:
+      RISC0_SKIP_BUILD_KERNELS: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Show Rust version
+        run: rustc --version
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Foundry version
+        run: forge --version
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run rustfmt
+        run: just crates-fmt-check
+
+      - name: Build
+        run: just crates-build
+
+      - name: Lint
+        run: just crates-lint
+
+      - name: Run Tests
+        run: just crates-test
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}

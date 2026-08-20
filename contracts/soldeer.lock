@@ -1,9 +1,30 @@
 [[dependencies]]
 name = "@openzeppelin-contracts"
-version = "5.5.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_5_0_01-11-2025_09:56:40_contracts.zip"
-checksum = "2ee78837130cf06b456d9ef7ab70753685d9c1c9c2c5b70f24bd4c16695d0337"
-integrity = "da8336cf949f0e0667ae8360af849681e3a3e76d7e61e7a86b1a3414a158aeea"
+version = "5.7.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_7_0_29-07-2026_19:34:46_contracts.zip"
+checksum = "fe08a24bc34334b2976c6ad69a0d74bdfa63de8a5c8528579060f25a11fb5cd5"
+integrity = "3e13bc4d96bdef6e35f6b1e0dc0e455843a958edc597750dff20ca50295b767d"
+
+[[dependencies]]
+name = "@openzeppelin-contracts-upgradeable"
+version = "5.7.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts-upgradeable/5_7_0_29-07-2026_19:34:58_contracts-upgradeable.zip"
+checksum = "fba3ad8586bf64281bab2aecd2cf0eb31227ccc5976f962d400e8cc5898da413"
+integrity = "1a08068b2fe262d4f6ae80e0be44965480b1a532d40722c80634d8963337743d"
+
+[[dependencies]]
+name = "anoma-forwarder-bases"
+version = "2.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/2_0_0_07-08-2026_14:27:49_contracts.zip"
+checksum = "a083edecb6d62afe45d744afc87eecb896dc4c7ac6f5d8ee766283d9f8ec0a86"
+integrity = "f6be62d3e2b5703900cfb51d76f253023d23f725cc9ee0b97a730e7cd27df238"
+
+[[dependencies]]
+name = "anoma-risc0-deployments"
+version = "1.2.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_1_07-08-2026_12:38:36_contracts.zip"
+checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
+integrity = "ddede64660f8fe10b4cfb0c0a1de4c81308371c467f01ed92a36480361aa7b18"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -13,17 +34,30 @@ rev = "347547890840fd501809dfe0b855206407136ec0"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.14.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_14_0_05-01-2026_15:24:39_forge-std-1.14.zip"
-checksum = "d10079d1b7aac1a36dd2eeb4c5d042e8ed27b00f4ef89530b7f0a6ecd18cada3"
-integrity = "64133846def1b04b1726d2bf1292c19050a0e8cb832b60c6104c19595b9699f8"
+version = "1.16.2"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_16_2_03-07-2026_07:37:45_forge-std-1.16.zip"
+checksum = "405dccc9d60d753f6abc412b4adf0359f4390f65dbadbbb277a12b4946ed8969"
+integrity = "5fb4325b60d7d4194bd0481e2f94398cf1d9c6561dd12a66fb2748ef4a68205f"
+
+[[dependencies]]
+name = "openzeppelin-foundry-upgrades"
+version = "0.4.2"
+url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_2_05-08-2026_15:52:28_openzeppelin-foundry-upgrades.zip"
+checksum = "52618e6037df7c02671d94599647ef4caccbcad043ad8d663551275bc47f5a2e"
+integrity = "64c8d2d87ba2d2e3ee5946f3638d386e05d0f37b137b0588058b7bbdf7fb233d"
 
 [[dependencies]]
 name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "61de7a8dcf98b8c46725e820e94d915f5cebeb328671018968fe58b38f28f961"
+integrity = "6a44a4c9c9d8d643180a56097de75c3918c545f411cf7fdcf272d9778bccaefc"
+
+[[dependencies]]
+name = "safe-utils"
+version = "0.0.22"
+git = "https://github.com/Recon-Fuzz/safe-utils.git"
+rev = "273945a35ade03a78648a350140aace72707d5a7"
 
 [[dependencies]]
 name = "solady"

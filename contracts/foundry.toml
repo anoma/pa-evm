@@ -1,6 +1,6 @@
 # Full reference https://github.com/foundry-rs/foundry/tree/master/crates/config
 [profile.default]
-solc = "0.8.33"
+solc = "0.8.36"
 auto_detect_solc = false
 evm_version = "osaka"
 gas_reports = [
@@ -13,8 +13,24 @@ optimizer = true
 via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
+
+# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`) and the
+# recorded deployments. Setting `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [
+    { access = "read", path = "out" },
+    { access = "read", path = "../crates/bindings/deployments.json" },
+]
+
+# Settings required by `openzeppelin-foundry-upgrades` for upgrade-safety validation
+# (https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades#before-running).
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+
 # Deterministic deployment settings (https://book.getfoundry.sh/guides/deterministic-deployments-using-create2#configuring-your-foundrytoml)
-cbor_metadata = false
+# We intentionally omit `cbor_metadata = false` since the metadata helps verification. 
+# Instead we ensure that only the files required for the deploy script are built within the justfile.
 bytecode_hash = "none"
 
 
@@ -22,27 +38,47 @@ src = "src"
 test = "test"
 out = "out"
 script = "script"
-fs_permissions = [{ access = "read", path = "./" }]
 libs = ["dependencies"]
 auto_detect_remappings = false
 remappings = [
-    "@openzeppelin-contracts-5.5.0/=dependencies/@openzeppelin-contracts-5.5.0/",
+    "@openzeppelin-contracts-5.7.0/=dependencies/@openzeppelin-contracts-5.7.0/",
+    "@openzeppelin-contracts-upgradeable-5.7.0/=dependencies/@openzeppelin-contracts-upgradeable-5.7.0/",
+    "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.7.0/",
+    "anoma-forwarder-bases-2.0.0/=dependencies/anoma-forwarder-bases-2.0.0/",
+    "anoma-risc0-deployments-1.2.1/=dependencies/anoma-risc0-deployments-1.2.1/",
     "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
-    "forge-std-1.14.0/=dependencies/forge-std-1.14.0/",
+    "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
+    "forge-std/=dependencies/forge-std-1.16.2/src/",
+    "openzeppelin-foundry-upgrades-0.4.2/=dependencies/openzeppelin-foundry-upgrades-0.4.2/",
     "openzeppelin/contracts/=dependencies/risc0-risc0-ethereum-3.0.1/lib/openzeppelin-contracts/contracts/",
     "risc0-risc0-ethereum-3.0.1/=dependencies/risc0-risc0-ethereum-3.0.1/",
+    "safe-smart-account-1.5.0/=dependencies/safe-smart-account-1.5.0/",
+    "safe-smart-account/libraries/=dependencies/safe-smart-account-1.5.0/contracts/libraries/",              # Remap files that got moved after 1.4.1
+    "safe-smart-account/common/Enum.sol=dependencies/safe-smart-account-1.5.0/contracts/libraries/Enum.sol", # Remap files that got moved after 1.4.1
+    "safe-utils-0.0.22/=dependencies/safe-utils-0.0.22/",
     "solady-0.1.26/=dependencies/solady-0.1.26/",
+    "solidity-http/=dependencies/safe-utils-0.0.22/lib/solidity-http/src/",
 ]
 ignored_warnings_from = [
+    "dependencies/@openzeppelin-contracts-5.7.0/utils",      # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+    "dependencies/openzeppelin-foundry-upgrades-0.4.2/src",  # Warning 2018: Function state mutability can be restricted to pure
     "dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
+    "dependencies/safe-smart-account-1.5.0/contracts",       # Warning 6335: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+    "dependencies/safe-utils-0.0.22/lib/solidity-http/src/", # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
 [dependencies]
-"@openzeppelin-contracts" = "5.5.0"
-"forge-std" = "1.14.0"
+"@openzeppelin-contracts" = "5.7.0"
+"@openzeppelin-contracts-upgradeable" = "5.7.0"
+"anoma-forwarder-bases" = "2.0.0"
+"anoma-risc0-deployments" = "1.2.1"
+"forge-std" = "1.16.2"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
+"openzeppelin-foundry-upgrades" = "0.4.2"
 "risc0-risc0-ethereum" = "3.0.1"
+"safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
+"safe-utils" = { version = "0.0.22", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.22" }
 "solady" = "0.1.26"
 
 [soldeer]
@@ -69,6 +105,8 @@ optimism = "https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 optimism-sepolia = "https://opt-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 bsc = "https://bnb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 bsc-testnet = "https://bnb-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+tempo = "https://tempo-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
+tempo-moderato = "https://tempo-moderato.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 monad = "https://monad-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 monad-testnet = "https://monad-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 stable-mainnet = "https://stable-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"

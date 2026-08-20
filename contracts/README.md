@@ -1,4 +1,4 @@
-[![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anoma--pa--evm-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/bindings/LICENSE)
+[![Contracts Tests](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml/badge.svg)](https://github.com/anoma/pa-evm/actions/workflows/contracts.yml) [![soldeer.xyz](https://img.shields.io/badge/soldeer.xyz-anoma--pa--evm-blue?logo=ethereum)](https://soldeer.xyz/project/anoma-pa-evm) [![License](https://img.shields.io/badge/license-MIT-blue)](https://raw.githubusercontent.com/anoma/pa-evm/refs/heads/main/contracts/LICENSE)
 
 # Anoma EVM Protocol Adapter Contract
 
@@ -90,7 +90,7 @@ To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forg
 
 ```sh
 forge bind \
-  --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
+  --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
   --bindings-path ../bindings/src/generated/ \
   --module \
   --overwrite
@@ -109,8 +109,8 @@ forge doc
 To simulate deployment on sepolia, run
 
 ```sh
-forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-  --sig "run(bool,address)" <IS_TEST_DEPLOYMENT> <EMERGENCY_STOP_CALLER> \
+forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+  --sig "run(bool)" <IS_PRODUCTION> \
   --rpc-url sepolia
 ```
 

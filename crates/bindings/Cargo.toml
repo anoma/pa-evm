@@ -1,0 +1,21 @@
+[package]
+name = "anoma-pa-evm-bindings"
+version = "3.0.0-rc.4"
+description = "The Anoma EVM protocol adapter contract bindings and deployments."
+keywords.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+edition.workspace = true
+
+[dependencies]
+alloy = { workspace = true }
+alloy-chains = { workspace = true }
+anoma-rm-risc0 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+dotenvy = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
-import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentTree} from "../../src/state/CommitmentTree.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentTreeMock} from "../mocks/CommitmentTree.m.sol";
@@ -14,31 +14,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
     constructor() {
         _setupMockTree();
-        _cmAcc = new CommitmentTreeMock();
-    }
-
-    function test_constructor_stores_the_initial_root_being_the_empty_leaf_hash() public {
-        CommitmentTree newCmAcc = new CommitmentTree();
-        assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
-        assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
-    }
-
-    function test_constructor_initializes_the_tree_with_depth_0() public {
-        assertEq(new CommitmentTree().commitmentTreeDepth(), 0, "The initial tree depth should be 0.");
-    }
-
-    function test_constructor_initializes_the_tree_with_capacity_1() public {
-        assertEq(new CommitmentTree().commitmentTreeCapacity(), 1, "The initial tree capacity should be 1.");
-    }
-
-    function test_constructor_initializes_the_tree_with_0_leaves() public {
-        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0.");
-    }
-
-    function test_constructor_emits_the_CommitmentTreeRootAdded_event() public {
-        vm.expectEmit();
-        emit ICommitmentTree.CommitmentTreeRootAdded({root: SHA256.EMPTY_HASH});
-        new CommitmentTree();
+        _cmAcc = _deployCommitmentTreeMock();
     }
 
     function test_addCommitment_returns_correct_roots() public {
@@ -116,5 +92,15 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
         _cmAcc.addCommitment(cm);
         _cmAcc.addCommitment(cm);
+    }
+
+    /// @dev Deploys the mock behind an ERC-1967 proxy, initialized through the proxy constructor because the
+    /// implementation contract disables the initializers.
+    function _deployCommitmentTreeMock() internal returns (CommitmentTreeMock mock) {
+        mock = CommitmentTreeMock(
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
+        );
     }
 }
