@@ -49,3 +49,25 @@ spent nullifiers.
 **Forwarder**:
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA
 drives to enact EVM side effects on behalf of an action. Each lives in its own repo.
+
+**Environment**:
+One of the two protocol adapter deployments the repo maintains, each recorded per
+chain in the deployment record and tracking a branch. Say "environment" (not
+"network" or "deployment target") — a chain is where an environment lives, not
+which one it is.
+
+**Staging / Production**:
+The two environments. Staging is owned by the deployment wallet and upgraded
+directly; production is owned by a Safe multisig whose signers confirm and execute
+upgrades. The branches tracking them keep their own names, `staging` and `main`.
+
+**Promotion**:
+Moving a commit unchanged from `next` to `staging`, or from `staging` to `main`.
+The pull request opening one carries the gate proving the environment it targets
+runs that commit's source. Changes only ever flow this way.
+
+**Deployment record**:
+`crates/bindings/deployments.json` — the proxy address of each environment on each
+chain, plus the genesis fields pinning how that address was derived. Written once
+per chain at its first deploy and never edited; what an environment currently runs
+is read from the chain, not from here.
