@@ -31,7 +31,7 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
 
         vm.prank(_stagingOwner);
         vm.expectRevert(abi.encodeWithSelector(StagingScript.NotAStagingDeployment.selector, _productionProxy));
-        script.run({proxy: _productionProxy});
+        script.run({proxy: _productionProxy, newImplementation: _implementation});
     }
 
     function test_run_reverts_if_the_sender_is_not_the_proxy_owner() public {
@@ -40,7 +40,7 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
 
         vm.prank(outsider);
         vm.expectRevert(abi.encodeWithSelector(StagingScript.UnauthorizedSender.selector, outsider));
-        script.run({proxy: _stagingProxy});
+        script.run({proxy: _stagingProxy, newImplementation: _implementation});
     }
 
     function test_run_reverts_if_the_implementation_is_not_deployed() public {
@@ -53,6 +53,18 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
                 DeployProtocolAdapterImplementation.ImplementationNotDeployed.selector, _implementation
             )
         );
-        script.run({proxy: _stagingProxy});
+        script.run({proxy: _stagingProxy, newImplementation: _implementation});
+    }
+
+    function test_run_reverts_if_the_implementation_is_unexpected() public {
+        ExecuteProtocolAdapterUpgrade script = new ExecuteProtocolAdapterUpgrade();
+        address unexpected = makeAddr("unexpected implementation");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                DeployProtocolAdapterImplementation.UnexpectedImplementation.selector, _implementation, unexpected
+            )
+        );
+        script.run({proxy: _stagingProxy, newImplementation: unexpected});
     }
 }

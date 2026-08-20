@@ -44,9 +44,8 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
         });
         emit IERC1967.Upgraded(_implementation);
 
-        address implementation = script.run({proxy: _productionProxy, proposer: _owner});
+        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
 
-        assertEq(implementation, _implementation, "proposed implementation differs");
         assertEq(
             ProtocolAdapter(_productionProxy).implementation(), _implementation, "proxy runs a different implementation"
         );
@@ -56,7 +55,7 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
         ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner});
+        script.run({proxy: _stagingProxy, proposer: _owner, newImplementation: _implementation});
     }
 
     function test_run_reverts_if_the_implementation_is_not_deployed() public {
@@ -69,6 +68,18 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
                 DeployProtocolAdapterImplementation.ImplementationNotDeployed.selector, _implementation
             )
         );
-        script.run({proxy: _productionProxy, proposer: _owner});
+        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
+    }
+
+    function test_run_reverts_if_the_implementation_is_unexpected() public {
+        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
+        address unexpected = makeAddr("unexpected implementation");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                DeployProtocolAdapterImplementation.UnexpectedImplementation.selector, _implementation, unexpected
+            )
+        );
+        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: unexpected});
     }
 }
