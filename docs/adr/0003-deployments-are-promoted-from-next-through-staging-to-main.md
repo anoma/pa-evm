@@ -40,21 +40,24 @@ Environments are bound to branches, and changes flow one way:
   it requires every entry in the production section to run the source version,
   and that version to carry no prerelease suffix.
 
-A deploy happens after the change is reviewed and merged into `next`. The record
-update is then a pull request into `next`, and the promotion pull request is the
-gate that proves the deployment matches the source.
+A deploy happens after the change is reviewed and merged into `next`, and the
+promotion pull request is the gate that proves the deployment matches the source.
 
-Each entry gains a `currentImplementation` address next to the genesis fields,
-named to pair with `initialImplementation`. "Runs the source version" is asserted
-as two implementation-address comparisons rather than a version-string
-comparison, which makes it bytecode-sensitive:
+"Runs the source version" is asserted as an implementation-address comparison
+rather than a version-string comparison, which makes it bytecode-sensitive:
+`proxy.implementation()` equals the address the source predicts for that chain.
+The record is not a term in it. Storing the live implementation alongside the
+genesis fields would only interpose a middle term between two ends that already
+meet, and it would have to be written at a moment — a proxy owned by a Safe is
+upgraded when its signers execute, not when the upgrade is proposed — at which
+the record would state either an intention or a staleness rather than a fact.
 
-- `currentImplementation` equals the address the source predicts for that chain —
-  pure, no RPC.
-- `proxy.implementation()` equals `currentImplementation` — reads the chain.
+An entry therefore holds only what the chain cannot answer once the proxy is
+upgraded: the genesis fields pinning its address. It is written once, at the
+genesis deploy, and never edited.
 
-Both comparisons are the promotion gate, and run only on a pull request into the
-environment they describe, selected by `github.base_ref` and gated in the tests
+The comparison is the promotion gate, and runs only on a pull request into the
+environment it describes, selected by `github.base_ref` and gated in the tests
 with `vm.skip`. What survives on every pull request is what holds independently
 of any deployment: genesis CREATE2 reproducibility, which reads only the record,
 and the deploy scripts themselves against a fresh chain.
@@ -83,19 +86,22 @@ implementation staging validated.
   implementation is deployed to staging before promotion to `main`.
 - Pull requests into `next` no longer fork the recorded chains, so feature CI is
   faster and needs no `ALCHEMY_API_KEY`.
-- Record drift — a proxy upgraded out of band — surfaces at the promotion gate
-  rather than when it happens. Nothing reaches a consumer of the bindings in
-  between, because the bindings ship the record.
-- The record is the single source of truth for what is deployed, so every deploy
-  and every Safe-executed upgrade owes a pull request into `next`.
+- A proxy upgraded out of band surfaces at the promotion gate rather than when
+  it happens, because the gate reads the chain.
+- The record is the single source of truth for where each environment is
+  deployed, so a genesis deploy owes a pull request into `next`. An upgrade owes
+  none, and leaves no artifact in git: the promotion turning green is the
+  statement that the environment runs this source, on every chain in its section.
+  The per-chain upgrade history stays recoverable from the chain itself, which
+  emits `Upgraded(address indexed implementation)` on every upgrade.
 - `envs::e2e` resolves the proxy for `Environment::Staging`, which has to become
   configurable so a promotion into `main` exercises production instead. The
   chain it defaults to must be recorded in the section it targets.
-- The bindings crate deserializes only the proxy address and ignores the rest of
-  an entry, so recording `currentImplementation` costs it nothing. A staging deploy
-  changes the record without changing anything a consumer of the published
-  bindings sees, so it does not warrant a bindings release; a production one
-  does.
+- The bindings crate deserializes only an entry's chain ID and proxy address,
+  both written at the genesis deploy. An upgrade changes nothing a consumer of
+  the published bindings sees, in either environment; a deploy to a new chain
+  adds an address under the environment it belongs to, and `Environment::Staging`
+  is public API, so that too holds for both.
 - Branch names stay `next`, `staging` and `main`. Renaming `main` to
   `production` would match the record's section names but costs a default-branch
   change, branch-protection reconfiguration and four raw-content badge URLs that

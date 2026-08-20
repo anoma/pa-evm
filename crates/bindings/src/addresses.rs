@@ -5,6 +5,9 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 /// The deployment environment of a recorded protocol adapter proxy.
+///
+/// A release version of this crate describes both environments; a prerelease describes staging only, because
+/// production trails on the previous release until the release candidate cycle ends.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Environment {
     /// The staging environment, owned by the deployment wallet and running what the `staging` branch promoted.
