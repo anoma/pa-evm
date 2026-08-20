@@ -128,14 +128,21 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
         context = string.concat(_environmentName(isProduction), ", ", chainId.toString());
     }
 
-    /// @notice Returns whether a version is a release or a release candidate, i.e. carries no prerelease suffix or an
-    /// `-rc.<number>` one. Any other prerelease (`-alpha.1`, `-rc`, `-rc.x`) is neither.
-    /// @param version The version to classify.
-    /// @return isReleaseOrCandidate Whether the version is a release or a release candidate.
-    function _isReleaseOrCandidate(string memory version) internal pure returns (bool isReleaseOrCandidate) {
+    /// @notice Returns whether a version is a release, i.e. carries no prerelease suffix.
+    /// @param version The version to check.
+    /// @return isRelease Whether the version is a release.
+    function _isRelease(string memory version) internal pure returns (bool isRelease) {
+        isRelease = version.indexOf("-") == LibString.NOT_FOUND;
+    }
+
+    /// @notice Returns whether a version is a release candidate, i.e. carries an `-rc.<number>` prerelease suffix.
+    /// Any other prerelease (`-alpha.1`, `-rc`, `-rc.x`) is not one.
+    /// @param version The version to check.
+    /// @return isReleaseCandidate Whether the version is a release candidate.
+    function _isReleaseCandidate(string memory version) internal pure returns (bool isReleaseCandidate) {
         uint256 separator = version.indexOf("-");
         if (separator == LibString.NOT_FOUND) {
-            return true;
+            return false;
         }
 
         string memory suffix = version.slice(separator + 1);
@@ -143,17 +150,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
             return false;
         }
 
-        bytes memory number = bytes(suffix.slice(3));
-        if (number.length == 0) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < number.length; ++i) {
-            if (number[i] < "0" || number[i] > "9") {
-                return false;
-            }
-        }
-
-        isReleaseOrCandidate = true;
+        string memory number = suffix.slice(3);
+        isReleaseCandidate = bytes(number).length != 0 && number.is7BitASCII(LibString.DIGITS_7_BIT_ASCII);
     }
 }
