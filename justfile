@@ -213,9 +213,22 @@ contracts-verify-deployment implementation proxy chain: \
     (contracts-verify-impl implementation chain) \
     (contracts-verify-proxy proxy chain)
 
-# Publish contracts
-contracts-publish version *args:
-    cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
+# Publish contracts at the version `ProtocolAdapter` compiles to
+contracts-publish *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Cleaning contracts to ensure reproducible build..."
+    just contracts-clean
+    just contracts-build
+    cd contracts
+    version="$(forge script script/PrintProtocolAdapterVersion.s.sol:PrintProtocolAdapterVersion --sig 'run()(string)' --json \
+        | jq -ser '[.[] | select(has("returns")) | .returns.version.value] | if length == 1 then .[0] else error("expected one version, found \(length)") end')"
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+        printf '{{RED}}The protocol adapter reports "%s", which is not a version.{{NORMAL}}\n' "$version"
+        exit 1
+    fi
+    printf '{{GREEN}}Publishing anoma-pa-evm~%s{{NORMAL}}\n' "$version"
+    forge soldeer push "anoma-pa-evm~$version" {{ args }}
 
 # --- Bindings ---
 

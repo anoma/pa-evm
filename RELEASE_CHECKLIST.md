@@ -191,7 +191,7 @@ For each chain in the `staging` section of the record:
 - [ ] Publish the `contracts` package on https://soldeer.xyz/ with
 
   ```sh
-  just contracts-publish <X.Y.Z-rc.N> --dry-run
+  just contracts-publish --dry-run
   ```
 
   and check the resulting `contracts.zip` file. If everything is correct, remove the `--dry-run` flag and publish the package.
