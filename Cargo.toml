@@ -13,9 +13,9 @@ edition = "2024"
 [workspace.dependencies]
 alloy = { version = "2.3.0", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.36"
-anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "dea63446f83bb6d5454f69a707b1287951ee2f6f" }
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "8f3850beb5a2df9c5b940912ee748b0f6b4e5242" }
 anoma-risc0-verifier-bindings = "1.2.2"
-anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", rev = "acd7f75d1ad3a0ec56067e20e33645442290e276", features = [
+anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", tag = "v2.0.0-rc.4", features = [
   "abi_encoding",
   "bonsai",
   "aggregation",
