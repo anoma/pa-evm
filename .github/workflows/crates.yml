@@ -46,7 +46,11 @@ jobs:
       - name: Lint
         run: just crates-lint
 
+      # The deployment promotion gate runs on pull requests into an environment branch, where the recorded
+      # deployments and the source are meant to agree. Elsewhere the gated tests skip and no chain is forked.
       - name: Run Tests
         run: just crates-test
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          VERIFY_STAGING_DEPLOYMENTS: ${{ github.base_ref == 'staging' }}
+          VERIFY_PRODUCTION_DEPLOYMENTS: ${{ github.base_ref == 'main' }}

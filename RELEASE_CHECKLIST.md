@@ -32,6 +32,8 @@ Changes flow one way, `next` → `staging` → `main`, and the promotion pull re
 - **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
 - **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
 
+The flags gate the deployment tests in the contracts and the crates suites alike; unset, the gated tests skip and no chain is forked.
+
 Deploy or upgrade **every** chain of an environment before opening its promotion pull request — one chain left behind blocks the promotion for all of them.
 
 `VERSION` is a `string public constant`, so it is part of the creation code and every version is a different implementation at a different address. Bumping it is a redeploy, and stripping an `-rc.N` suffix is a redeploy too, which is why a release costs one extra staging deploy round.
@@ -171,6 +173,14 @@ For each chain in the `staging` section of the record:
   cast call $PROXY_ADDRESS "getImplementation()(address)" --rpc-url <CHAIN>
   ```
 
+- [ ] After the last chain, confirm the promotion gate locally by running
+
+  ```sh
+  VERIFY_STAGING_DEPLOYMENTS=true just contracts-test bindings-test
+  ```
+
+  the same checks the promotion pull request runs.
+
 > [!NOTE]
 > An upgrade adds nothing to `deployments.json` and owes no pull request. Only a genesis deploy writes to the record.
 
@@ -251,6 +261,14 @@ For each chain in the `production` section of the record:
   ```
 
   Signers execute chain by chain, so a rollout can span days. Nothing is recorded in the meantime, and the promotion below stays red until the last chain is done.
+
+- [ ] After the last chain, confirm the promotion gate locally by running
+
+  ```sh
+  VERIFY_PRODUCTION_DEPLOYMENTS=true just contracts-test bindings-test
+  ```
+
+  Green is the signal that the promotion below can open.
 
 ### 8. Promote `staging` into `main`
 
