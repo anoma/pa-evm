@@ -170,10 +170,6 @@ interface IProtocolAdapter {
     /// @return isStopped Whether the protocol adapter has been stopped or not.
     function isEmergencyStopped() external view returns (bool isStopped);
 
-    /// @notice Returns the current implementation contract the calls are delegated to.
-    /// @return current The current implementation contract.
-    function getImplementation() external view returns (address current);
-
     // solhint-disable func-name-mixedcase
 
     /// @notice The trusted RISC Zero verifier router associated with the protocol adapter.
@@ -183,10 +179,6 @@ interface IProtocolAdapter {
     /// @notice The RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
-
-    /// @notice The version of the protocol adapter implementation.
-    /// @return version The semantic version, short enough to fit into `bytes32` as a small string.
-    function VERSION() external view returns (string memory version);
 
     // solhint-enable func-name-mixedcase
 }
