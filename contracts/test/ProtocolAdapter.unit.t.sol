@@ -128,19 +128,19 @@ contract ProtocolAdapterTest is Test {
         assertEq(_pa.RISC_ZERO_VERIFIER_SELECTOR(), _verifierSelector, "verifier selector should match");
     }
 
-    function test_implementation_returns_the_implementation_behind_the_proxy() public view {
+    function test_getImplementation_returns_the_implementation_behind_the_proxy() public view {
         assertEq(
-            _pa.implementation(),
+            _pa.getImplementation(),
             Upgrades.getImplementationAddress(address(_pa)),
             "implementation should match the ERC-1967 slot"
         );
     }
 
     /// @dev Called on the implementation instead of through the proxy, the ERC-1967 slot is unset.
-    function test_implementation_returns_the_zero_address_off_the_proxy() public view {
+    function test_getImplementation_returns_the_zero_address_off_the_proxy() public view {
         address implementation = Upgrades.getImplementationAddress(address(_pa));
 
-        assertEq(ProtocolAdapter(implementation).implementation(), address(0), "implementation should be unset");
+        assertEq(ProtocolAdapter(implementation).getImplementation(), address(0), "implementation should be unset");
     }
 
     function test_check_that_the_current_version_is_a_not_a_major_release() public view {

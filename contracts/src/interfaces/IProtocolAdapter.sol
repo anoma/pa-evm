@@ -172,7 +172,7 @@ interface IProtocolAdapter {
 
     /// @notice Returns the current implementation contract the calls are delegated to.
     /// @return current The current implementation contract.
-    function implementation() external view returns (address current);
+    function getImplementation() external view returns (address current);
 
     // solhint-disable func-name-mixedcase
 

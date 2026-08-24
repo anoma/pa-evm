@@ -139,7 +139,7 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function implementation() external view override returns (address current) {
+    function getImplementation() external view override returns (address current) {
         current = ERC1967Utils.getImplementation();
     }
 

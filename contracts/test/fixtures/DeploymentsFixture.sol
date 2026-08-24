@@ -83,7 +83,7 @@ abstract contract DeploymentsFixture is SupportedNetworks, Test {
             _selectForkAt(chainId);
             assertGt(proxy.addr.code.length, 0, string.concat(context, ": deployment missing on-chain"));
             assertEq(
-                ProtocolAdapter(proxy.addr).implementation(),
+                ProtocolAdapter(proxy.addr).getImplementation(),
                 sourceImplementation,
                 string.concat(context, ": does not run the source implementation")
             );
