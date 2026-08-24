@@ -168,7 +168,7 @@ For each chain in the `staging` section of the record:
 - [ ] Confirm the proxy now delegates to the new implementation with
 
   ```sh
-  cast call $PROXY_ADDRESS "implementation()(address)" --rpc-url <CHAIN>
+  cast call $PROXY_ADDRESS "getImplementation()(address)" --rpc-url <CHAIN>
   ```
 
 > [!NOTE]
@@ -247,7 +247,7 @@ For each chain in the `production` section of the record:
 - [ ] Once executed, confirm the upgrade with
 
   ```sh
-  cast call $PROXY_ADDRESS "implementation()(address)" --rpc-url <CHAIN>
+  cast call $PROXY_ADDRESS "getImplementation()(address)" --rpc-url <CHAIN>
   ```
 
   Signers execute chain by chain, so a rollout can span days. Nothing is recorded in the meantime, and the promotion below stays red until the last chain is done.

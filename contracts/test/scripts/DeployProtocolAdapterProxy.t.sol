@@ -86,7 +86,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, DeploymentsFix
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));
         assertEq(
-            ProtocolAdapter(proxy).implementation(),
+            ProtocolAdapter(proxy).getImplementation(),
             implementation,
             string.concat(environment, ": proxy does not delegate to the implementation")
         );
