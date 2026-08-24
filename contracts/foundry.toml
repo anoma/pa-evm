@@ -46,6 +46,7 @@ remappings = [
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.7.0/",
     "anoma-forwarder-bases-3.0.0/=dependencies/anoma-forwarder-bases-3.0.0/",
     "anoma-risc0-deployments-1.2.1/=dependencies/anoma-risc0-deployments-1.2.1/",
+    "anoma-risc0-deployments-1.2.2/=dependencies/anoma-risc0-deployments-1.2.2/",
     "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
     "forge-std/=dependencies/forge-std-1.16.2/src/",
@@ -72,7 +73,7 @@ ignored_warnings_from = [
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"
 "anoma-forwarder-bases" = "3.0.0"
-"anoma-risc0-deployments" = "1.2.1"
+"anoma-risc0-deployments" = "1.2.2"
 "forge-std" = "1.16.2"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
 "openzeppelin-foundry-upgrades" = "0.4.2"
