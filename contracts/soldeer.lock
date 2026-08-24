@@ -14,17 +14,17 @@ integrity = "1a08068b2fe262d4f6ae80e0be44965480b1a532d40722c80634d8963337743d"
 
 [[dependencies]]
 name = "anoma-forwarder-bases"
-version = "2.0.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/2_0_0_07-08-2026_14:27:49_contracts.zip"
-checksum = "a083edecb6d62afe45d744afc87eecb896dc4c7ac6f5d8ee766283d9f8ec0a86"
-integrity = "f6be62d3e2b5703900cfb51d76f253023d23f725cc9ee0b97a730e7cd27df238"
+version = "3.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_0_0_24-08-2026_07:42:17_contracts.zip"
+checksum = "567f292892a2e2708ad8869b797492dd2d705f086e45ac5033f6e2a651422ef3"
+integrity = "0c8a4d6236e39045dc6140cf14ce9a3d4e3a9c8c9e0ce75ab9b0eb21d178c127"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
 version = "1.2.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_1_07-08-2026_12:38:36_contracts.zip"
 checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
-integrity = "ddede64660f8fe10b4cfb0c0a1de4c81308371c467f01ed92a36480361aa7b18"
+integrity = "840525c3fdf34cb2c9bb4a6bf28c1180d5140118480326b410929da9c25e423c"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -51,7 +51,13 @@ name = "risc0-risc0-ethereum"
 version = "3.0.1"
 url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
 checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "6a44a4c9c9d8d643180a56097de75c3918c545f411cf7fdcf272d9778bccaefc"
+integrity = "24e1614d44597063060de85e4db95460f263823daae30b1061bf7b7908ca996a"
+
+[[dependencies]]
+name = "safe-smart-account"
+version = "1.5.0"
+git = "https://github.com/safe-global/safe-smart-account.git"
+rev = "dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
 
 [[dependencies]]
 name = "safe-utils"

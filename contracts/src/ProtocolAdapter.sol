@@ -7,7 +7,9 @@ import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpg
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
-import {IForwarder} from "anoma-forwarder-bases-2.0.0/src/interfaces/IForwarder.sol";
+import {IForwarder} from "anoma-forwarder-bases-3.0.0/src/interfaces/IForwarder.sol";
+import {IImplementation} from "anoma-forwarder-bases-3.0.0/src/interfaces/IImplementation.sol";
+import {IVersion} from "anoma-forwarder-bases-3.0.0/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -23,6 +25,8 @@ import {NullifierSet} from "./state/NullifierSet.sol";
 /// @custom:security-contact security@anoma.foundation
 contract ProtocolAdapter is
     IProtocolAdapter,
+    IVersion,
+    IImplementation,
     Initializable,
     UUPSUpgradeable,
     ReentrancyGuardTransient,
@@ -49,8 +53,8 @@ contract ProtocolAdapter is
     bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
         0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
 
-    /// @inheritdoc IProtocolAdapter
-    string public constant override VERSION = "2.0.0-rc.0";
+    /// @inheritdoc IVersion
+    string public constant override VERSION = "2.0.0-rc.1";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -138,8 +142,8 @@ contract ProtocolAdapter is
         kindTableCommitment = _getProtocolAdapterStorage().kindTableCommitment;
     }
 
-    /// @inheritdoc IProtocolAdapter
-    function implementation() external view override returns (address current) {
+    /// @inheritdoc IImplementation
+    function getImplementation() external view override returns (address current) {
         current = ERC1967Utils.getImplementation();
     }
 

@@ -140,7 +140,7 @@ contract DeltaProofTest is Test {
     ) public {
         kind = bound(kind, 1, DeltaGen.SECP256K1_ORDER - 1);
         valueCommitmentRandomness = bound(valueCommitmentRandomness, 1, DeltaGen.SECP256K1_ORDER - 1);
-        vm.assume(verifyingKey1 != verifyingKey2);
+        vm.assume(uint256(verifyingKey1).modOrder() != uint256(verifyingKey2).modOrder());
 
         DeltaGen.InstanceInputs memory deltaInputs = DeltaGen.InstanceInputs({
             kind: kind, quantity: 0, consumed: consumed, valueCommitmentRandomness: valueCommitmentRandomness
