@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Time} from "@openzeppelin-contracts-5.7.0/utils/types/Time.sol";
 
-import {IForwarder} from "anoma-forwarder-bases-2.0.0/src/interfaces/IForwarder.sol";
+import {IForwarder} from "anoma-forwarder-bases-3.0.0/src/interfaces/IForwarder.sol";
 
 /// @title BlockTimeForwarder
 /// @author Anoma Foundation, 2025

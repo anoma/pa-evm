@@ -4,12 +4,12 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
-import {ForwarderExample} from "anoma-forwarder-bases-2.0.0/test/examples/ForwarderExample.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderExample.sol";
 import {
     ForwarderTargetExample,
     _encodedDefaultInput,
     EXPECTED_OUTPUT
-} from "anoma-forwarder-bases-2.0.0/test/examples/ForwarderTargetExample.sol";
+} from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderTargetExample.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.16.2/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
@@ -176,6 +176,124 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
 
         _mockPa.execute(txn);
+    }
+
+    function test_execute_runs_a_call_constrained_after_a_tag_that_already_ran() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        _constrain({data: created, afterTags: _tags(TxGen.nullifier(consumed[0].resource, 0)), beforeTags: _noTags()});
+
+        _expectCall();
+        _mockPa.execute(_transaction(consumed, created));
+    }
+
+    function test_execute_reverts_on_a_call_constrained_after_a_tag_that_runs_later() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        bytes32 commitment = TxGen.commitment(created[0].resource);
+        _constrain({data: consumed, afterTags: _tags(commitment), beforeTags: _noTags()});
+
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
+
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.MustRunAfter.selector, commitment));
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_reverts_on_a_call_constrained_after_an_absent_tag() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        bytes32 absent = keccak256("absent");
+        _constrain({data: created, afterTags: _tags(absent), beforeTags: _noTags()});
+
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
+
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.MustRunAfter.selector, absent));
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_runs_a_call_constrained_before_a_tag_that_runs_later() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        _constrain({data: consumed, afterTags: _noTags(), beforeTags: _tags(TxGen.commitment(created[0].resource))});
+
+        _expectCall();
+        _mockPa.execute(_transaction(consumed, created));
+    }
+
+    function test_execute_reverts_on_a_call_constrained_before_a_tag_that_already_ran() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        bytes32 nullifier = TxGen.nullifier(consumed[0].resource, 0);
+        _constrain({data: created, afterTags: _noTags(), beforeTags: _tags(nullifier)});
+
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
+
+        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.MustRunBefore.selector, nullifier));
+        _mockPa.execute(txn);
+    }
+
+    /// @dev A protection needs no counterpart: a resource outside the transaction cannot change what this call reads.
+    function test_execute_runs_a_call_constrained_before_an_absent_tag() public {
+        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) = _carrierPair();
+        _constrain({data: created, afterTags: _noTags(), beforeTags: _tags(keccak256("absent"))});
+
+        _expectCall();
+        _mockPa.execute(_transaction(consumed, created));
+    }
+
+    /// @dev Every resource is marked, so a resource that carries no calls is still a valid reference.
+    function test_execute_runs_a_call_constrained_after_a_resource_without_calls() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        _constrain({data: created, afterTags: _tags(TxGen.nullifier(consumed[0].resource, 0)), beforeTags: _noTags()});
+
+        _expectCall();
+        _mockPa.execute(_transaction(consumed, created));
+    }
+
+    /// @notice Builds a consumed and a created resource that each carry one forwarder call.
+    function _carrierPair()
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created)
+    {
+        consumed = _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
+        created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+    }
+
+    /// @notice Rewrites the first call blob to carry the constraints. This runs before the transaction is built,
+    /// because the aggregation journal covers the actions and therefore the app data.
+    function _constrain(TxGen.ResourceAndAppData[] memory data, bytes32[] memory afterTags, bytes32[] memory beforeTags)
+        private
+        view
+    {
+        data[0].appData.externalPayload[0].blob = _callBlob({
+            forwarder: address(_fwd),
+            input: _input,
+            output: EXPECTED_OUTPUT,
+            afterTags: afterTags,
+            beforeTags: beforeTags
+        });
+    }
+
+    function _transaction(TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created)
+        private
+        returns (IProtocolAdapter.Transaction memory txn)
+    {
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        txn = vm.transaction(_mockVerifier, resourceLists);
+    }
+
+    function _expectCall() private {
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: address(_fwd), input: _input, output: EXPECTED_OUTPUT
+        });
+    }
+
+    function _tags(bytes32 tag) private pure returns (bytes32[] memory tags) {
+        tags = new bytes32[](1);
+        tags[0] = tag;
+    }
+
+    function _noTags() private pure returns (bytes32[] memory tags) {
+        tags = new bytes32[](0);
     }
 
     /// @dev `TxGen.expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
@@ -407,7 +525,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
-        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, _input, fakeOutput);
+        created[0].appData.externalPayload[0].blob = _callBlob(address(_fwd), _input, fakeOutput);
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -643,10 +761,36 @@ contract ProtocolAdapterMockVerifierTest is Test {
         for (uint256 i = 0; i < nCalls; ++i) {
             externalBlobs[i] = IProtocolAdapter.ExpirableBlob({
                 deletionCriterion: IProtocolAdapter.DeletionCriterion.Never,
-                blob: abi.encode(address(fwdList[i]), _input, EXPECTED_OUTPUT)
+                blob: _callBlob(address(fwdList[i]), _input, EXPECTED_OUTPUT)
             });
         }
         data[0].appData.externalPayload = externalBlobs;
+    }
+
+    /// @notice Encodes an unconstrained forwarder call blob.
+    function _callBlob(address forwarder, bytes memory input, bytes memory output)
+        private
+        pure
+        returns (bytes memory blob)
+    {
+        blob = _callBlob({
+            forwarder: forwarder,
+            input: input,
+            output: output,
+            afterTags: new bytes32[](0),
+            beforeTags: new bytes32[](0)
+        });
+    }
+
+    /// @notice Encodes a forwarder call blob carrying ordering constraints.
+    function _callBlob(
+        address forwarder,
+        bytes memory input,
+        bytes memory output,
+        bytes32[] memory afterTags,
+        bytes32[] memory beforeTags
+    ) private pure returns (bytes memory blob) {
+        blob = abi.encode(forwarder, input, output, afterTags, beforeTags);
     }
 
     function _bindParameters(uint8 actionCount, uint8 resourcePairCount, uint8 actionIndex, uint8 resourceIndex)
