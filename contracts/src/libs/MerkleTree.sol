@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Arrays} from "@openzeppelin-contracts-5.7.0/utils/Arrays.sol";
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
+import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 
 import {SHA256} from "../libs/SHA256.sol";
 
@@ -13,6 +14,8 @@ import {SHA256} from "../libs/SHA256.sol";
 /// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/structs/MerkleTree.sol).
 /// @custom:security-contact security@anoma.foundation
 library MerkleTree {
+    using SafeCast for uint256;
+
     struct Tree {
         uint256 _nextLeafIndex;
         bytes32[] _sides;
@@ -158,8 +161,6 @@ library MerkleTree {
     /// @param leavesCount The number of leaves.
     /// @return treeDepth The minimal required tree depth.
     function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
-        // `leavesCount` is a memory array length, so its base-2 logarithm fits in a byte.
-        // forge-lint: disable-next-line(unsafe-typecast)
-        treeDepth = uint8(Math.log2({value: leavesCount, rounding: Math.Rounding.Ceil}));
+        treeDepth = Math.log2({value: leavesCount, rounding: Math.Rounding.Ceil}).toUint8();
     }
 }
