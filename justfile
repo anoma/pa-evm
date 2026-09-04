@@ -81,7 +81,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite

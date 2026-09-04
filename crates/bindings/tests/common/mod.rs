@@ -10,11 +10,54 @@ pub const ENVIRONMENTS: [Environment; 2] = [Environment::Staging, Environment::P
 /// The deterministic deployer every `CREATE2` deployment goes through, which `forge` predicts against.
 pub const CREATE2_DEPLOYER: Address = address!("4e59b44847b379578588920cA78FbF26c0B4956C");
 
-// The deploy scripts hold these as Solidity constants, which `forge bind` does not carry into the bindings, so
-// they are restated here; a mismatch surfaces as a failing genesis check rather than a wrong deployment.
-pub const PROXY_SALT_STAGING: &str = "ProtocolAdapterProxyStaging";
-pub const PROXY_SALT_PRODUCTION: &str = "ProtocolAdapterProxyProduction";
-pub const IMPLEMENTATION_SALT: &str = "ProtocolAdapterImpl";
+/// The deterministic deployment parameters, read from the `Parameters` library the deploy scripts use, so the
+/// salts are stated once in Solidity rather than restated here.
+pub struct Parameters {
+    pub proxy_salt_staging: B256,
+    pub proxy_salt_production: B256,
+    pub implementation_salt: B256,
+}
+
+impl Parameters {
+    /// The proxy salt of the environment.
+    pub fn proxy_salt(&self, environment: Environment) -> B256 {
+        match environment {
+            Environment::Staging => self.proxy_salt_staging,
+            Environment::Production => self.proxy_salt_production,
+        }
+    }
+}
+
+/// Deploys the getter contract on a throwaway chain and reads the parameters it exposes.
+pub async fn parameters() -> Parameters {
+    use alloy::providers::ProviderBuilder;
+    use anoma_pa_evm_bindings::generated::deployment_parameters::DeploymentParameters;
+
+    let provider = ProviderBuilder::new()
+        .connect_anvil_with_wallet_and_config(|anvil| anvil)
+        .expect("anvil");
+    let getters = DeploymentParameters::deploy(&provider)
+        .await
+        .expect("deploy DeploymentParameters");
+
+    Parameters {
+        proxy_salt_staging: getters
+            .PROXY_SALT_STAGING()
+            .call()
+            .await
+            .expect("staging salt"),
+        proxy_salt_production: getters
+            .PROXY_SALT_PRODUCTION()
+            .call()
+            .await
+            .expect("production salt"),
+        implementation_salt: getters
+            .IMPLEMENTATION_SALT()
+            .call()
+            .await
+            .expect("implementation salt"),
+    }
+}
 
 /// A protocol adapter proxy recorded in `deployments.json`. The genesis fields pin the first deployment: they
 /// determine the address together with the environment salt and cannot be recovered once the proxy is upgraded.
@@ -50,23 +93,6 @@ pub fn raw_entries(environment: Environment) -> Vec<RawEntry> {
         Environment::Staging => deployments.staging,
         Environment::Production => deployments.production,
     }
-}
-
-/// The proxy salt of the environment.
-pub fn proxy_salt(environment: Environment) -> B256 {
-    bytes32(match environment {
-        Environment::Staging => PROXY_SALT_STAGING,
-        Environment::Production => PROXY_SALT_PRODUCTION,
-    })
-}
-
-/// A Solidity `bytes32` string literal: the ASCII bytes, right-padded with zeros.
-pub fn bytes32(literal: &str) -> B256 {
-    assert!(literal.len() <= 32, "{literal}: too long for a bytes32");
-
-    let mut padded = [0u8; 32];
-    padded[..literal.len()].copy_from_slice(literal.as_bytes());
-    B256::from(padded)
 }
 
 /// The `<environment>, <chain ID>` prefix identifying a recorded deployment in assert messages.

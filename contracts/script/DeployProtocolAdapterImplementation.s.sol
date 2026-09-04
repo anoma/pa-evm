@@ -8,6 +8,7 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Parameters} from "./Parameters.sol";
 
 /// @title DeployProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
@@ -17,7 +18,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
-    bytes32 public constant IMPLEMENTATION_SALT = "ProtocolAdapterImpl";
+    bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
 
     /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
     /// empty because the current version requires no reinitialization.

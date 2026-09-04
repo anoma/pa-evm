@@ -13,10 +13,7 @@ use anoma_pa_evm_bindings::addresses::{Environment, protocol_adapter_deployments
 use anoma_pa_evm_bindings::contract::protocol_adapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
-use common::{
-    CREATE2_DEPLOYER, IMPLEMENTATION_SALT, bytes32, context, is_armed, is_release,
-    is_release_candidate,
-};
+use common::{CREATE2_DEPLOYER, context, is_armed, is_release, is_release_candidate, parameters};
 
 sol! {
     /// The owner set a Safe links through `1 <= threshold <= owners.length`, which identifies one.
@@ -80,6 +77,8 @@ async fn expect_source_implementations(environment: Environment) {
         return;
     }
 
+    let implementation_salt = parameters().await.implementation_salt;
+
     for (chain, adapter) in adapters(environment).await {
         let context = context(environment, chain as u64);
 
@@ -105,7 +104,7 @@ async fn expect_source_implementations(environment: Environment) {
         ]
         .concat();
         let source_implementation =
-            CREATE2_DEPLOYER.create2(bytes32(IMPLEMENTATION_SALT), keccak256(&init_code));
+            CREATE2_DEPLOYER.create2(implementation_salt, keccak256(&init_code));
 
         let deployed_implementation = adapter
             .getImplementation()

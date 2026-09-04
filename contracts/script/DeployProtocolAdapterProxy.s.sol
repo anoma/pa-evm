@@ -6,6 +6,7 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {Parameters} from "./Parameters.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -14,16 +15,16 @@ import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplem
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
-    bytes32 public constant PROXY_SALT_STAGING = "ProtocolAdapterProxyStaging";
+    bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
 
     /// @notice The CREATE2 salt for the production environment proxy deployment.
-    bytes32 public constant PROXY_SALT_PRODUCTION = "ProtocolAdapterProxyProduction";
+    bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
+    address public constant PROXY_OWNER_STAGING = Parameters.PROXY_OWNER_STAGING;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.PROXY_OWNER_PRODUCTION;
 
     /// @notice The deployments recorded per environment, relative to the Foundry root.
     string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";

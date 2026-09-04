@@ -10,8 +10,8 @@ use anoma_pa_evm_bindings::addresses::{
     protocol_adapter_address, protocol_adapter_deployments_map,
 };
 use common::{
-    CREATE2_DEPLOYER, ENVIRONMENTS, context, is_release, is_release_candidate, proxy_init_code,
-    proxy_salt, raw_entries,
+    CREATE2_DEPLOYER, ENVIRONMENTS, context, is_release, is_release_candidate, parameters,
+    proxy_init_code, raw_entries,
 };
 use std::collections::HashSet;
 
@@ -87,10 +87,12 @@ fn each_chain_is_individually_addressable() {
 
 /// Every recorded proxy sits at the address its genesis deployment determines under the environment salt — the
 /// check that the first deployment of an environment used the right salt.
-#[test]
-fn recorded_deployments_use_the_environment_salt() {
+#[tokio::test]
+async fn recorded_deployments_use_the_environment_salt() {
+    let parameters = parameters().await;
+
     for environment in ENVIRONMENTS {
-        let salt = proxy_salt(environment);
+        let salt = parameters.proxy_salt(environment);
 
         for entry in raw_entries(environment) {
             let context = context(environment, entry.chain_id);
