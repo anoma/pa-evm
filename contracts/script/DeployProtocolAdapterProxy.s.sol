@@ -7,6 +7,7 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 import {Parameters} from "./Parameters.sol";
+import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -25,9 +26,6 @@ contract DeployProtocolAdapterProxy is Script {
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
     address public constant PROXY_OWNER_PRODUCTION = Parameters.PROXY_OWNER_PRODUCTION;
-
-    /// @notice The deployments recorded per environment, relative to the Foundry root.
-    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
@@ -98,23 +96,10 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Checks that the environment has no deployment recorded for this chain yet.
     /// @param isProduction Whether to check the production or the staging environment.
     function _requireUnrecorded(bool isProduction) internal view {
-        // `fs_permissions` scopes the read to the recorded deployments.
-        // forge-lint: disable-next-line(unsafe-cheatcode)
-        string memory json = vm.readFile(_DEPLOYMENTS_PATH);
-        string memory environment = environmentName(isProduction);
-
-        for (uint256 i = 0;; ++i) {
-            // solhint-disable-next-line func-named-parameters
-            string memory entry = string.concat(".", environment, "[", vm.toString(i), "]");
-            if (!vm.keyExistsJson(json, entry)) {
-                return;
-            }
-
-            require(
-                vm.parseJsonUint(json, string.concat(entry, ".chainId")) != block.chainid,
-                DeploymentAlreadyRecorded(environment, block.chainid)
-            );
-        }
+        require(
+            !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+            DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+        );
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

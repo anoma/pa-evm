@@ -61,6 +61,9 @@ jobs:
       - name: Check that bindings are up-to-date
         run: just bindings-check
 
+      - name: Check that the recorded deployments library is up-to-date
+        run: just contracts-deployments-check
+
       - name: Run Forge tests
         run: just contracts-test
         env:
