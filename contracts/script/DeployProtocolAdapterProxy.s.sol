@@ -48,7 +48,7 @@ contract DeployProtocolAdapterProxy is Script {
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
-        DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
 
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
@@ -57,7 +57,7 @@ contract DeployProtocolAdapterProxy is Script {
             _requireUnrecorded(isProduction);
 
             // forge-lint: disable-next-line(unused-return)
-            (implementation,) = implementationScript.predict();
+            (implementation,) = implementationDeployScript.predict();
 
             (proxy, initializerData, creationCode) =
                 _predict({salt: salt, implementation: implementation, isProduction: isProduction});
@@ -67,7 +67,7 @@ contract DeployProtocolAdapterProxy is Script {
         // Deployment
         if (implementation.code.length == 0) {
             // forge-lint: disable-next-line(unused-return)
-            implementationScript.run();
+            implementationDeployScript.run();
         }
 
         vm.startBroadcast();

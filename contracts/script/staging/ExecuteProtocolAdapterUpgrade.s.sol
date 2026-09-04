@@ -21,9 +21,9 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
     /// compares two independent derivations.
     function run(address proxy, address newImplementation) public {
-        DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         // forge-lint: disable-next-line(unused-return)
-        (address predictedImplementation,) = implementationScript.predict();
+        (address predictedImplementation,) = implementationDeployScript.predict();
 
         require(
             newImplementation == predictedImplementation,
@@ -37,7 +37,7 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
         _checkSenderAuthorization({proxy: proxy});
 
         vm.startBroadcast();
-        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationScript.INITIALIZATION_DATA());
+        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationDeployScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }
 }

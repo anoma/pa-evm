@@ -20,9 +20,9 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
     /// compares two independent derivations.
     function run(address proxy, address proposer, address newImplementation) public {
-        DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         // forge-lint: disable-next-line(unused-return)
-        (address predictedImplementation,) = implementationScript.predict();
+        (address predictedImplementation,) = implementationDeployScript.predict();
 
         require(
             newImplementation == predictedImplementation,
@@ -36,7 +36,7 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
         _propose({
             proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationDeployScript.INITIALIZATION_DATA())
             ),
             proposer: proposer
         });
