@@ -97,6 +97,8 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Checks that the environment has no deployment recorded for this chain yet.
     /// @param isProduction Whether to check the production or the staging environment.
     function _requireUnrecorded(bool isProduction) internal view {
+        // `fs_permissions` scopes the read to the recorded deployments.
+        // forge-lint: disable-next-line(unsafe-cheatcode)
         string memory json = vm.readFile(_DEPLOYMENTS_PATH);
         string memory environment = environmentName(isProduction);
 
