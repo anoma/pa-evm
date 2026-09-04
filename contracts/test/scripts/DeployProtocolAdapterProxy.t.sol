@@ -63,6 +63,32 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, DeploymentsFix
         script.run({isProduction: false});
     }
 
+    function test_predict_matches_the_addresses_run_deploys() public {
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+
+        (address predictedProxy, address predictedImplementation) = script.predict({isProduction: false});
+        (address proxy, address implementation,,) = script.run({isProduction: false});
+
+        assertEq(proxy, predictedProxy, "staging: prediction differs from the deployed proxy");
+        assertEq(
+            implementation, predictedImplementation, "staging: prediction differs from the deployed implementation"
+        );
+
+        (address predictedProductionProxy,) = script.predict({isProduction: true});
+        (address productionProxy,,,) = script.run({isProduction: true});
+
+        assertEq(productionProxy, predictedProductionProxy, "production: prediction differs from the deployed proxy");
+    }
+
+    function test_environmentName_names_the_environments() public {
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+
+        assertEq(script.environmentName({isProduction: false}), "staging", "staging environment name differs");
+        assertEq(script.environmentName({isProduction: true}), "production", "production environment name differs");
+    }
+
     /// @notice Runs the deploy script for the environment and checks that the proxy lands at the predicted
     /// deterministic address, delegates to a deployed implementation, and is initialized with the environment owner.
     /// @param isProduction Whether to deploy the production or the staging environment proxy.
