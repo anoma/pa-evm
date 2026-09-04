@@ -74,6 +74,8 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
 
         bytes32 salt = IMPLEMENTATION_SALT;
         constructorData = abi.encode(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
         bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
 
         implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});

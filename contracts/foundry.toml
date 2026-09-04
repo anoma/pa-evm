@@ -68,6 +68,14 @@ ignored_warnings_from = [
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
+# `calls-loop` and `reentrancy-events` duplicate Slither detectors that run over the same sources in the
+# same CI job, where the reviewed exceptions already live inline as `slither-disable-next-line`; `calls-loop`
+# additionally misfires on memory allocation. Reverting inside a loop is the intended atomicity here: one
+# invalid action aborts the whole transaction. Tests are relaxed the way `.solhint.other.json` relaxes them.
+[lint]
+exclude_lints = ["calls-loop", "reentrancy-events", "require-revert-in-loop"]
+ignore = ["test/**/*.sol"]
+
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"

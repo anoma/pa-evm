@@ -21,6 +21,7 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     /// compares two independent derivations.
     function run(address proxy, address proposer, address newImplementation) public {
         DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
+        // forge-lint: disable-next-line(unused-return)
         (address predictedImplementation,) = implementationScript.predict();
 
         require(

@@ -56,6 +56,7 @@ contract DeployProtocolAdapterProxy is Script {
         {
             _requireUnrecorded(isProduction);
 
+            // forge-lint: disable-next-line(unused-return)
             (implementation,) = implementationScript.predict();
 
             (proxy, initializerData, creationCode) =
@@ -65,6 +66,7 @@ contract DeployProtocolAdapterProxy is Script {
 
         // Deployment
         if (implementation.code.length == 0) {
+            // forge-lint: disable-next-line(unused-return)
             implementationScript.run();
         }
 
@@ -131,6 +133,8 @@ contract DeployProtocolAdapterProxy is Script {
 
         bytes memory constructorArgs = abi.encode(implementation, initializerData);
 
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
         bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
 
         proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
