@@ -89,6 +89,8 @@ library MerkleTree {
     /// @param self The tree data structure.
     /// @return treeDepth The depth of the tree.
     function depth(Tree storage self) internal view returns (uint8 treeDepth) {
+        // The tree gains one level per capacity doubling, so the depth cannot reach 256.
+        // forge-lint: disable-next-line(unsafe-typecast)
         treeDepth = uint8(self._sides.length);
     }
 
@@ -156,6 +158,8 @@ library MerkleTree {
     /// @param leavesCount The number of leaves.
     /// @return treeDepth The minimal required tree depth.
     function computeMinimalTreeDepth(uint256 leavesCount) internal pure returns (uint8 treeDepth) {
+        // `leavesCount` is a memory array length, so its base-2 logarithm fits in a byte.
+        // forge-lint: disable-next-line(unsafe-typecast)
         treeDepth = uint8(Math.log2({value: leavesCount, rounding: Math.Rounding.Ceil}));
     }
 }

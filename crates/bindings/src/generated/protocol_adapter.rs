@@ -67,7 +67,7 @@ pub mod IProtocolAdapter {
         }
         impl DeletionCriterion {
             /// The Solidity type name.
-            pub const NAME: &'static str = stringify!(@ name);
+            pub const NAME: &'static str = stringify!(DeletionCriterion);
             /// Convert from the underlying value type.
             #[inline]
             pub const fn from_underlying(value: u8) -> Self {
@@ -3746,10 +3746,10 @@ error AddressEmptyCode(address target);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -3841,10 +3841,10 @@ error DeltaMismatch(address expected, address actual);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -3915,10 +3915,10 @@ error ECDSAInvalidSignature();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4000,10 +4000,10 @@ error ECDSAInvalidSignatureLength(uint256 length);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4081,10 +4081,10 @@ error ECDSAInvalidSignatureS(bytes32 s);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4164,10 +4164,10 @@ error ERC1967InvalidImplementation(address implementation);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4238,10 +4238,10 @@ error ERC1967NonPayable();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4314,10 +4314,10 @@ error EmptyTransactionNotAllowed();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4388,10 +4388,10 @@ error EnforcedPause();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4462,10 +4462,10 @@ error ExpectedPause();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4536,10 +4536,10 @@ error FailedCall();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4633,10 +4633,10 @@ error ForwarderCallOutputMismatch(bytes expected, bytes actual);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4707,10 +4707,10 @@ error InvalidInitialization();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4788,10 +4788,10 @@ error NonExistingRoot(bytes32 root);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4862,10 +4862,10 @@ error NotInitializing();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4943,10 +4943,10 @@ error OwnableInvalidOwner(address owner);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5026,10 +5026,10 @@ error OwnableUnauthorizedAccount(address account);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5109,10 +5109,10 @@ error PointNotOnCurve(IProtocolAdapter.Delta point);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5190,10 +5190,10 @@ error PreExistingNullifier(bytes32 nullifier);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5271,10 +5271,10 @@ error PreExistingRoot(bytes32 root);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5347,10 +5347,10 @@ error ReentrancyGuardReentrantCall();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5444,10 +5444,10 @@ error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5518,10 +5518,10 @@ error RiscZeroVerifierStopped();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5601,10 +5601,10 @@ error Simulated(uint256 gasUsed);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5677,10 +5677,10 @@ error UUPSUnauthorizedCallContext();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5760,10 +5760,10 @@ error UUPSUnsupportedProxiableUUID(bytes32 slot);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5836,10 +5836,10 @@ error ZeroKindTableCommitmentNotAllowed();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5912,10 +5912,10 @@ error ZeroRiscZeroVerifierRouterNotAllowed();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5988,10 +5988,10 @@ error ZeroRiscZeroVerifierSelectorNotAllowed();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                <Self::Parameters<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Self::new)
+                Self::abi_decode_raw_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -7863,16 +7863,29 @@ function RISC_ZERO_VERIFIER_ROUTER() external view returns (address);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_ROUTERReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8012,16 +8025,29 @@ function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_SELECTORReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8161,16 +8187,29 @@ function UPGRADE_INTERFACE_VERSION() external view returns (string memory);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: UPGRADE_INTERFACE_VERSIONReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8306,16 +8345,29 @@ function VERSION() external view returns (string memory);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: VERSIONReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8455,16 +8507,29 @@ function commitmentCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: commitmentCountReturn = r.into();
                         r.count
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8606,16 +8671,29 @@ function commitmentTreeCapacity() external view returns (uint256 capacity);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: commitmentTreeCapacityReturn = r.into();
                         r.capacity
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8755,16 +8833,29 @@ function commitmentTreeDepth() external view returns (uint8 depth);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: commitmentTreeDepthReturn = r.into();
                         r.depth
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -8913,16 +9004,29 @@ function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: commitmentTreeRootAtIndexReturn = r.into();
                         r.root
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9064,16 +9168,29 @@ function commitmentTreeRootCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: commitmentTreeRootCountReturn = r.into();
                         r.count
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9204,18 +9321,31 @@ function emergencyStop() external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
 ```solidity
 function execute(IProtocolAdapter.Transaction memory transaction) external;
@@ -9350,13 +9480,26 @@ function execute(IProtocolAdapter.Transaction memory transaction) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9496,16 +9639,29 @@ function getImplementation() external view returns (address current);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: getImplementationReturn = r.into();
                         r.current
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9647,16 +9803,29 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: getKindTableCommitmentReturn = r.into();
                         r.kindTableCommitment
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9794,13 +9963,26 @@ function initialize(address initialOwner) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -9947,16 +10129,29 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: isCommitmentTreeRootContainedReturn = r.into();
                         r.isContained
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10096,16 +10291,29 @@ function isEmergencyStopped() external view returns (bool isStopped);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: isEmergencyStoppedReturn = r.into();
                         r.isStopped
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10252,16 +10460,29 @@ function isNullifierContained(bytes32 nullifier) external view returns (bool isC
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: isNullifierContainedReturn = r.into();
                         r.isContained
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10401,16 +10622,29 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: latestCommitmentTreeRootReturn = r.into();
                         r.root
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10559,16 +10793,29 @@ function nullifierAtIndex(uint256 index) external view returns (bytes32 nullifie
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: nullifierAtIndexReturn = r.into();
                         r.nullifier
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10708,16 +10955,29 @@ function nullifierCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: nullifierCountReturn = r.into();
                         r.count
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10853,16 +11113,29 @@ function owner() external view returns (address);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: ownerReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -10998,16 +11271,29 @@ function paused() external view returns (bool);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: pausedReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -11143,16 +11429,29 @@ function proxiableUUID() external view returns (bytes32);
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: proxiableUUIDReturn = r.into();
                         r._0
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -11287,13 +11586,26 @@ function renounceOwnership() external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -11441,18 +11753,31 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)` and selector `0x87093eba`.
 ```solidity
 function simulateExecute(IProtocolAdapter.Transaction memory transaction, bool skipRiscZeroProofVerification) external;
@@ -11604,13 +11929,26 @@ function simulateExecute(IProtocolAdapter.Transaction memory transaction, bool s
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -11752,13 +12090,26 @@ function transferOwnership(address newOwner) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -11917,20 +12268,33 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
     ///Container for all the [`ProtocolAdapter`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum ProtocolAdapterCalls {
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_ROUTER(RISC_ZERO_VERIFIER_ROUTERCall),
@@ -12209,15 +12573,31 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::default(),
+            )
+        }
+        #[inline]
+        #[allow(non_snake_case)]
+        fn abi_decode_raw_with_config(
+            selector: [u8; 4],
+            data: &[u8],
+            config: alloy_sol_types::abi::AbiDecoderConfig,
+        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
+                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ProtocolAdapterCalls>] = &[
                 {
                     fn commitmentTreeRootAtIndex(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::commitmentTreeRootAtIndex)
                     }
@@ -12226,9 +12606,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn nullifierCount(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::nullifierCount)
                     }
@@ -12237,9 +12619,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn upgradeToAndCall(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <upgradeToAndCallCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <upgradeToAndCallCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::upgradeToAndCall)
                     }
@@ -12248,9 +12632,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn proxiableUUID(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <proxiableUUIDCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <proxiableUUIDCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::proxiableUUID)
                     }
@@ -12259,9 +12645,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn commitmentTreeRootCount(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::commitmentTreeRootCount)
                     }
@@ -12270,8 +12658,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn paused(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterCalls::paused)
                     }
                     paused
@@ -12279,9 +12671,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn emergencyStop(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <emergencyStopCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <emergencyStopCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::emergencyStop)
                     }
@@ -12290,9 +12684,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn RISC_ZERO_VERIFIER_ROUTER(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
                     }
@@ -12301,9 +12697,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn renounceOwnership(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <renounceOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <renounceOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::renounceOwnership)
                     }
@@ -12312,8 +12710,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn execute(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterCalls::execute)
                     }
                     execute
@@ -12321,9 +12723,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn simulateExecute(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::simulateExecute)
                     }
@@ -12332,8 +12736,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn owner(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <ownerCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                        <ownerCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterCalls::owner)
                     }
                     owner
@@ -12341,9 +12749,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn nullifierAtIndex(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::nullifierAtIndex)
                     }
@@ -12352,9 +12762,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn commitmentTreeDepth(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::commitmentTreeDepth)
                     }
@@ -12363,9 +12775,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn getImplementation(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <getImplementationCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <getImplementationCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::getImplementation)
                     }
@@ -12374,9 +12788,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn UPGRADE_INTERFACE_VERSION(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <UPGRADE_INTERFACE_VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <UPGRADE_INTERFACE_VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::UPGRADE_INTERFACE_VERSION)
                     }
@@ -12385,9 +12801,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn latestCommitmentTreeRoot(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::latestCommitmentTreeRoot)
                     }
@@ -12396,9 +12814,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn setKindTableCommitment(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::setKindTableCommitment)
                     }
@@ -12407,9 +12827,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn isNullifierContained(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::isNullifierContained)
                     }
@@ -12418,9 +12840,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn commitmentCount(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::commitmentCount)
                     }
@@ -12429,9 +12853,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn initialize(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <initializeCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <initializeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::initialize)
                     }
@@ -12440,9 +12866,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn isCommitmentTreeRootContained(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::isCommitmentTreeRootContained)
                     }
@@ -12451,9 +12879,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn RISC_ZERO_VERIFIER_SELECTOR(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
                     }
@@ -12462,9 +12892,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn transferOwnership(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <transferOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <transferOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::transferOwnership)
                     }
@@ -12473,9 +12905,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn isEmergencyStopped(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::isEmergencyStopped)
                     }
@@ -12484,9 +12918,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn commitmentTreeCapacity(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::commitmentTreeCapacity)
                     }
@@ -12495,8 +12931,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn VERSION(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                        <VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterCalls::VERSION)
                     }
                     VERSION
@@ -12504,9 +12944,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn getKindTableCommitment(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterCalls::getKindTableCommitment)
                     }
@@ -12521,7 +12963,7 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data)
+            DECODE_SHIMS[idx](data, config)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -12529,327 +12971,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            static DECODE_VALIDATE_SHIMS: &[fn(
-                &[u8],
-            ) -> alloy_sol_types::Result<ProtocolAdapterCalls>] = &[
-                {
-                    fn commitmentTreeRootAtIndex(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::commitmentTreeRootAtIndex)
-                    }
-                    commitmentTreeRootAtIndex
-                },
-                {
-                    fn nullifierCount(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::nullifierCount)
-                    }
-                    nullifierCount
-                },
-                {
-                    fn upgradeToAndCall(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <upgradeToAndCallCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::upgradeToAndCall)
-                    }
-                    upgradeToAndCall
-                },
-                {
-                    fn proxiableUUID(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <proxiableUUIDCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::proxiableUUID)
-                    }
-                    proxiableUUID
-                },
-                {
-                    fn commitmentTreeRootCount(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::commitmentTreeRootCount)
-                    }
-                    commitmentTreeRootCount
-                },
-                {
-                    fn paused(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::paused)
-                    }
-                    paused
-                },
-                {
-                    fn emergencyStop(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <emergencyStopCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::emergencyStop)
-                    }
-                    emergencyStop
-                },
-                {
-                    fn RISC_ZERO_VERIFIER_ROUTER(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
-                    }
-                    RISC_ZERO_VERIFIER_ROUTER
-                },
-                {
-                    fn renounceOwnership(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <renounceOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::renounceOwnership)
-                    }
-                    renounceOwnership
-                },
-                {
-                    fn execute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::execute)
-                    }
-                    execute
-                },
-                {
-                    fn simulateExecute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::simulateExecute)
-                    }
-                    simulateExecute
-                },
-                {
-                    fn owner(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <ownerCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::owner)
-                    }
-                    owner
-                },
-                {
-                    fn nullifierAtIndex(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::nullifierAtIndex)
-                    }
-                    nullifierAtIndex
-                },
-                {
-                    fn commitmentTreeDepth(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::commitmentTreeDepth)
-                    }
-                    commitmentTreeDepth
-                },
-                {
-                    fn getImplementation(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <getImplementationCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::getImplementation)
-                    }
-                    getImplementation
-                },
-                {
-                    fn UPGRADE_INTERFACE_VERSION(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <UPGRADE_INTERFACE_VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::UPGRADE_INTERFACE_VERSION)
-                    }
-                    UPGRADE_INTERFACE_VERSION
-                },
-                {
-                    fn latestCommitmentTreeRoot(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::latestCommitmentTreeRoot)
-                    }
-                    latestCommitmentTreeRoot
-                },
-                {
-                    fn setKindTableCommitment(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::setKindTableCommitment)
-                    }
-                    setKindTableCommitment
-                },
-                {
-                    fn isNullifierContained(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::isNullifierContained)
-                    }
-                    isNullifierContained
-                },
-                {
-                    fn commitmentCount(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::commitmentCount)
-                    }
-                    commitmentCount
-                },
-                {
-                    fn initialize(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <initializeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::initialize)
-                    }
-                    initialize
-                },
-                {
-                    fn isCommitmentTreeRootContained(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::isCommitmentTreeRootContained)
-                    }
-                    isCommitmentTreeRootContained
-                },
-                {
-                    fn RISC_ZERO_VERIFIER_SELECTOR(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
-                    }
-                    RISC_ZERO_VERIFIER_SELECTOR
-                },
-                {
-                    fn transferOwnership(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <transferOwnershipCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::transferOwnership)
-                    }
-                    transferOwnership
-                },
-                {
-                    fn isEmergencyStopped(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::isEmergencyStopped)
-                    }
-                    isEmergencyStopped
-                },
-                {
-                    fn commitmentTreeCapacity(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::commitmentTreeCapacity)
-                    }
-                    commitmentTreeCapacity
-                },
-                {
-                    fn VERSION(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <VERSIONCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::VERSION)
-                    }
-                    VERSION
-                },
-                {
-                    fn getKindTableCommitment(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterCalls::getKindTableCommitment)
-                    }
-                    getKindTableCommitment
-                },
-            ];
-            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
-                return Err(
-                    alloy_sol_types::Error::unknown_selector(
-                        <Self as alloy_sol_types::SolInterface>::NAME,
-                        selector,
-                    ),
-                );
-            };
-            DECODE_VALIDATE_SHIMS[idx](data)
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+            )
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -13444,15 +13570,31 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::default(),
+            )
+        }
+        #[inline]
+        #[allow(non_snake_case)]
+        fn abi_decode_raw_with_config(
+            selector: [u8; 4],
+            data: &[u8],
+            config: alloy_sol_types::abi::AbiDecoderConfig,
+        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
+                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ProtocolAdapterErrors>] = &[
                 {
                     fn RiscZeroVerifierStopped(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <RiscZeroVerifierStopped as alloy_sol_types::SolError>::abi_decode_raw(
+                        <RiscZeroVerifierStopped as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::RiscZeroVerifierStopped)
                     }
@@ -13461,9 +13603,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn OwnableUnauthorizedAccount(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <OwnableUnauthorizedAccount as alloy_sol_types::SolError>::abi_decode_raw(
+                        <OwnableUnauthorizedAccount as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::OwnableUnauthorizedAccount)
                     }
@@ -13472,9 +13616,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn OwnableInvalidOwner(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <OwnableInvalidOwner as alloy_sol_types::SolError>::abi_decode_raw(
+                        <OwnableInvalidOwner as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::OwnableInvalidOwner)
                     }
@@ -13483,9 +13629,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn PreExistingNullifier(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PreExistingNullifier as alloy_sol_types::SolError>::abi_decode_raw(
+                        <PreExistingNullifier as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::PreExistingNullifier)
                     }
@@ -13494,9 +13642,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ReentrancyGuardReentrantCall(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ReentrancyGuardReentrantCall as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ReentrancyGuardReentrantCall as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ReentrancyGuardReentrantCall)
                     }
@@ -13505,9 +13655,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ERC1967InvalidImplementation(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ERC1967InvalidImplementation)
                     }
@@ -13516,8 +13668,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn Simulated(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <Simulated as alloy_sol_types::SolError>::abi_decode_raw(data)
+                        <Simulated as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterErrors::Simulated)
                     }
                     Simulated
@@ -13525,9 +13681,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ZeroKindTableCommitmentNotAllowed(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroKindTableCommitmentNotAllowed as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ZeroKindTableCommitmentNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(
                                 ProtocolAdapterErrors::ZeroKindTableCommitmentNotAllowed,
@@ -13538,9 +13696,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn RiscZeroVerifierSelectorMismatch(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <RiscZeroVerifierSelectorMismatch as alloy_sol_types::SolError>::abi_decode_raw(
+                        <RiscZeroVerifierSelectorMismatch as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::RiscZeroVerifierSelectorMismatch)
                     }
@@ -13549,9 +13709,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ExpectedPause(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ExpectedPause as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ExpectedPause as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ExpectedPause)
                     }
@@ -13560,9 +13722,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn AddressEmptyCode(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw(
+                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::AddressEmptyCode)
                     }
@@ -13571,9 +13735,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ZeroRiscZeroVerifierRouterNotAllowed(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroRiscZeroVerifierRouterNotAllowed as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ZeroRiscZeroVerifierRouterNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(
                                 ProtocolAdapterErrors::ZeroRiscZeroVerifierRouterNotAllowed,
@@ -13584,9 +13750,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn UUPSUnsupportedProxiableUUID(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <UUPSUnsupportedProxiableUUID as alloy_sol_types::SolError>::abi_decode_raw(
+                        <UUPSUnsupportedProxiableUUID as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::UUPSUnsupportedProxiableUUID)
                     }
@@ -13595,9 +13763,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ZeroRiscZeroVerifierSelectorNotAllowed(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroRiscZeroVerifierSelectorNotAllowed as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ZeroRiscZeroVerifierSelectorNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(
                                 ProtocolAdapterErrors::ZeroRiscZeroVerifierSelectorNotAllowed,
@@ -13608,9 +13778,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ERC1967NonPayable(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ERC1967NonPayable)
                     }
@@ -13619,9 +13791,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn PointNotOnCurve(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PointNotOnCurve as alloy_sol_types::SolError>::abi_decode_raw(
+                        <PointNotOnCurve as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::PointNotOnCurve)
                     }
@@ -13630,9 +13804,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ForwarderCallOutputMismatch(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ForwarderCallOutputMismatch as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ForwarderCallOutputMismatch as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ForwarderCallOutputMismatch)
                     }
@@ -13641,9 +13817,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn EmptyTransactionNotAllowed(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <EmptyTransactionNotAllowed as alloy_sol_types::SolError>::abi_decode_raw(
+                        <EmptyTransactionNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::EmptyTransactionNotAllowed)
                     }
@@ -13652,8 +13830,12 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn FailedCall(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw(data)
+                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(ProtocolAdapterErrors::FailedCall)
                     }
                     FailedCall
@@ -13661,9 +13843,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ECDSAInvalidSignatureS(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignatureS as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ECDSAInvalidSignatureS as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ECDSAInvalidSignatureS)
                     }
@@ -13672,9 +13856,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn NotInitializing(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <NotInitializing as alloy_sol_types::SolError>::abi_decode_raw(
+                        <NotInitializing as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::NotInitializing)
                     }
@@ -13683,9 +13869,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn EnforcedPause(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <EnforcedPause as alloy_sol_types::SolError>::abi_decode_raw(
+                        <EnforcedPause as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::EnforcedPause)
                     }
@@ -13694,9 +13882,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn PreExistingRoot(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PreExistingRoot as alloy_sol_types::SolError>::abi_decode_raw(
+                        <PreExistingRoot as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::PreExistingRoot)
                     }
@@ -13705,9 +13895,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn UUPSUnauthorizedCallContext(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <UUPSUnauthorizedCallContext as alloy_sol_types::SolError>::abi_decode_raw(
+                        <UUPSUnauthorizedCallContext as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::UUPSUnauthorizedCallContext)
                     }
@@ -13716,9 +13908,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn DeltaMismatch(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <DeltaMismatch as alloy_sol_types::SolError>::abi_decode_raw(
+                        <DeltaMismatch as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::DeltaMismatch)
                     }
@@ -13727,9 +13921,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ECDSAInvalidSignature(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignature as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ECDSAInvalidSignature as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ECDSAInvalidSignature)
                     }
@@ -13738,9 +13934,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn InvalidInitialization(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <InvalidInitialization as alloy_sol_types::SolError>::abi_decode_raw(
+                        <InvalidInitialization as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::InvalidInitialization)
                     }
@@ -13749,9 +13947,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn NonExistingRoot(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <NonExistingRoot as alloy_sol_types::SolError>::abi_decode_raw(
+                        <NonExistingRoot as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::NonExistingRoot)
                     }
@@ -13760,9 +13960,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                 {
                     fn ECDSAInvalidSignatureLength(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignatureLength as alloy_sol_types::SolError>::abi_decode_raw(
+                        <ECDSAInvalidSignatureLength as alloy_sol_types::SolError>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(ProtocolAdapterErrors::ECDSAInvalidSignatureLength)
                     }
@@ -13777,7 +13979,7 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data)
+            DECODE_SHIMS[idx](data, config)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -13785,344 +13987,11 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            static DECODE_VALIDATE_SHIMS: &[fn(
-                &[u8],
-            ) -> alloy_sol_types::Result<ProtocolAdapterErrors>] = &[
-                {
-                    fn RiscZeroVerifierStopped(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <RiscZeroVerifierStopped as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::RiscZeroVerifierStopped)
-                    }
-                    RiscZeroVerifierStopped
-                },
-                {
-                    fn OwnableUnauthorizedAccount(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <OwnableUnauthorizedAccount as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::OwnableUnauthorizedAccount)
-                    }
-                    OwnableUnauthorizedAccount
-                },
-                {
-                    fn OwnableInvalidOwner(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <OwnableInvalidOwner as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::OwnableInvalidOwner)
-                    }
-                    OwnableInvalidOwner
-                },
-                {
-                    fn PreExistingNullifier(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PreExistingNullifier as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::PreExistingNullifier)
-                    }
-                    PreExistingNullifier
-                },
-                {
-                    fn ReentrancyGuardReentrantCall(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ReentrancyGuardReentrantCall as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ReentrancyGuardReentrantCall)
-                    }
-                    ReentrancyGuardReentrantCall
-                },
-                {
-                    fn ERC1967InvalidImplementation(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ERC1967InvalidImplementation)
-                    }
-                    ERC1967InvalidImplementation
-                },
-                {
-                    fn Simulated(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <Simulated as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::Simulated)
-                    }
-                    Simulated
-                },
-                {
-                    fn ZeroKindTableCommitmentNotAllowed(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroKindTableCommitmentNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(
-                                ProtocolAdapterErrors::ZeroKindTableCommitmentNotAllowed,
-                            )
-                    }
-                    ZeroKindTableCommitmentNotAllowed
-                },
-                {
-                    fn RiscZeroVerifierSelectorMismatch(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <RiscZeroVerifierSelectorMismatch as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::RiscZeroVerifierSelectorMismatch)
-                    }
-                    RiscZeroVerifierSelectorMismatch
-                },
-                {
-                    fn ExpectedPause(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ExpectedPause as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ExpectedPause)
-                    }
-                    ExpectedPause
-                },
-                {
-                    fn AddressEmptyCode(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::AddressEmptyCode)
-                    }
-                    AddressEmptyCode
-                },
-                {
-                    fn ZeroRiscZeroVerifierRouterNotAllowed(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroRiscZeroVerifierRouterNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(
-                                ProtocolAdapterErrors::ZeroRiscZeroVerifierRouterNotAllowed,
-                            )
-                    }
-                    ZeroRiscZeroVerifierRouterNotAllowed
-                },
-                {
-                    fn UUPSUnsupportedProxiableUUID(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <UUPSUnsupportedProxiableUUID as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::UUPSUnsupportedProxiableUUID)
-                    }
-                    UUPSUnsupportedProxiableUUID
-                },
-                {
-                    fn ZeroRiscZeroVerifierSelectorNotAllowed(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ZeroRiscZeroVerifierSelectorNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(
-                                ProtocolAdapterErrors::ZeroRiscZeroVerifierSelectorNotAllowed,
-                            )
-                    }
-                    ZeroRiscZeroVerifierSelectorNotAllowed
-                },
-                {
-                    fn ERC1967NonPayable(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ERC1967NonPayable)
-                    }
-                    ERC1967NonPayable
-                },
-                {
-                    fn PointNotOnCurve(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PointNotOnCurve as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::PointNotOnCurve)
-                    }
-                    PointNotOnCurve
-                },
-                {
-                    fn ForwarderCallOutputMismatch(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ForwarderCallOutputMismatch as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ForwarderCallOutputMismatch)
-                    }
-                    ForwarderCallOutputMismatch
-                },
-                {
-                    fn EmptyTransactionNotAllowed(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <EmptyTransactionNotAllowed as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::EmptyTransactionNotAllowed)
-                    }
-                    EmptyTransactionNotAllowed
-                },
-                {
-                    fn FailedCall(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::FailedCall)
-                    }
-                    FailedCall
-                },
-                {
-                    fn ECDSAInvalidSignatureS(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignatureS as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ECDSAInvalidSignatureS)
-                    }
-                    ECDSAInvalidSignatureS
-                },
-                {
-                    fn NotInitializing(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <NotInitializing as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::NotInitializing)
-                    }
-                    NotInitializing
-                },
-                {
-                    fn EnforcedPause(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <EnforcedPause as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::EnforcedPause)
-                    }
-                    EnforcedPause
-                },
-                {
-                    fn PreExistingRoot(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <PreExistingRoot as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::PreExistingRoot)
-                    }
-                    PreExistingRoot
-                },
-                {
-                    fn UUPSUnauthorizedCallContext(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <UUPSUnauthorizedCallContext as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::UUPSUnauthorizedCallContext)
-                    }
-                    UUPSUnauthorizedCallContext
-                },
-                {
-                    fn DeltaMismatch(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <DeltaMismatch as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::DeltaMismatch)
-                    }
-                    DeltaMismatch
-                },
-                {
-                    fn ECDSAInvalidSignature(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignature as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ECDSAInvalidSignature)
-                    }
-                    ECDSAInvalidSignature
-                },
-                {
-                    fn InvalidInitialization(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <InvalidInitialization as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::InvalidInitialization)
-                    }
-                    InvalidInitialization
-                },
-                {
-                    fn NonExistingRoot(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <NonExistingRoot as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::NonExistingRoot)
-                    }
-                    NonExistingRoot
-                },
-                {
-                    fn ECDSAInvalidSignatureLength(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<ProtocolAdapterErrors> {
-                        <ECDSAInvalidSignatureLength as alloy_sol_types::SolError>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(ProtocolAdapterErrors::ECDSAInvalidSignatureLength)
-                    }
-                    ECDSAInvalidSignatureLength
-                },
-            ];
-            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
-                return Err(
-                    alloy_sol_types::Error::unknown_selector(
-                        <Self as alloy_sol_types::SolInterface>::NAME,
-                        selector,
-                    ),
-                );
-            };
-            DECODE_VALIDATE_SHIMS[idx](data)
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+            )
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -14436,6 +14305,324 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                     )
                 }
             }
+        }
+    }
+    #[automatically_derived]
+    impl ProtocolAdapterErrors {
+        /**Creates a [`AddressEmptyCode`] error.
+
+```solidity
+error AddressEmptyCode(address)
+```*/
+        #[inline]
+        pub fn address_empty_code(target: alloy::sol_types::private::Address) -> Self {
+            Self::AddressEmptyCode(AddressEmptyCode { target: target })
+        }
+        /**Creates a [`DeltaMismatch`] error.
+
+```solidity
+error DeltaMismatch(address,address)
+```*/
+        #[inline]
+        pub fn delta_mismatch(
+            expected: alloy::sol_types::private::Address,
+            actual: alloy::sol_types::private::Address,
+        ) -> Self {
+            Self::DeltaMismatch(DeltaMismatch {
+                expected: expected,
+                actual: actual,
+            })
+        }
+        /**Creates a [`ECDSAInvalidSignature`] error.
+
+```solidity
+error ECDSAInvalidSignature()
+```*/
+        #[inline]
+        pub fn ecdsa_invalid_signature() -> Self {
+            Self::ECDSAInvalidSignature(ECDSAInvalidSignature)
+        }
+        /**Creates a [`ECDSAInvalidSignatureLength`] error.
+
+```solidity
+error ECDSAInvalidSignatureLength(uint256)
+```*/
+        #[inline]
+        pub fn ecdsa_invalid_signature_length(
+            length: alloy::sol_types::private::primitives::aliases::U256,
+        ) -> Self {
+            Self::ECDSAInvalidSignatureLength(ECDSAInvalidSignatureLength {
+                length: length,
+            })
+        }
+        /**Creates a [`ECDSAInvalidSignatureS`] error.
+
+```solidity
+error ECDSAInvalidSignatureS(bytes32)
+```*/
+        #[inline]
+        pub fn ecdsa_invalid_signature_s(
+            s: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::ECDSAInvalidSignatureS(ECDSAInvalidSignatureS { s: s })
+        }
+        /**Creates a [`ERC1967InvalidImplementation`] error.
+
+```solidity
+error ERC1967InvalidImplementation(address)
+```*/
+        #[inline]
+        pub fn erc_1967_invalid_implementation(
+            implementation: alloy::sol_types::private::Address,
+        ) -> Self {
+            Self::ERC1967InvalidImplementation(ERC1967InvalidImplementation {
+                implementation: implementation,
+            })
+        }
+        /**Creates a [`ERC1967NonPayable`] error.
+
+```solidity
+error ERC1967NonPayable()
+```*/
+        #[inline]
+        pub fn erc_1967_non_payable() -> Self {
+            Self::ERC1967NonPayable(ERC1967NonPayable)
+        }
+        /**Creates a [`EmptyTransactionNotAllowed`] error.
+
+```solidity
+error EmptyTransactionNotAllowed()
+```*/
+        #[inline]
+        pub fn empty_transaction_not_allowed() -> Self {
+            Self::EmptyTransactionNotAllowed(EmptyTransactionNotAllowed)
+        }
+        /**Creates a [`EnforcedPause`] error.
+
+```solidity
+error EnforcedPause()
+```*/
+        #[inline]
+        pub fn enforced_pause() -> Self {
+            Self::EnforcedPause(EnforcedPause)
+        }
+        /**Creates a [`ExpectedPause`] error.
+
+```solidity
+error ExpectedPause()
+```*/
+        #[inline]
+        pub fn expected_pause() -> Self {
+            Self::ExpectedPause(ExpectedPause)
+        }
+        /**Creates a [`FailedCall`] error.
+
+```solidity
+error FailedCall()
+```*/
+        #[inline]
+        pub fn failed_call() -> Self {
+            Self::FailedCall(FailedCall)
+        }
+        /**Creates a [`ForwarderCallOutputMismatch`] error.
+
+```solidity
+error ForwarderCallOutputMismatch(bytes,bytes)
+```*/
+        #[inline]
+        pub fn forwarder_call_output_mismatch(
+            expected: alloy::sol_types::private::Bytes,
+            actual: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ForwarderCallOutputMismatch(ForwarderCallOutputMismatch {
+                expected: expected,
+                actual: actual,
+            })
+        }
+        /**Creates a [`InvalidInitialization`] error.
+
+```solidity
+error InvalidInitialization()
+```*/
+        #[inline]
+        pub fn invalid_initialization() -> Self {
+            Self::InvalidInitialization(InvalidInitialization)
+        }
+        /**Creates a [`NonExistingRoot`] error.
+
+```solidity
+error NonExistingRoot(bytes32)
+```*/
+        #[inline]
+        pub fn non_existing_root(
+            root: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::NonExistingRoot(NonExistingRoot { root: root })
+        }
+        /**Creates a [`NotInitializing`] error.
+
+```solidity
+error NotInitializing()
+```*/
+        #[inline]
+        pub fn not_initializing() -> Self {
+            Self::NotInitializing(NotInitializing)
+        }
+        /**Creates a [`OwnableInvalidOwner`] error.
+
+```solidity
+error OwnableInvalidOwner(address)
+```*/
+        #[inline]
+        pub fn ownable_invalid_owner(owner: alloy::sol_types::private::Address) -> Self {
+            Self::OwnableInvalidOwner(OwnableInvalidOwner {
+                owner: owner,
+            })
+        }
+        /**Creates a [`OwnableUnauthorizedAccount`] error.
+
+```solidity
+error OwnableUnauthorizedAccount(address)
+```*/
+        #[inline]
+        pub fn ownable_unauthorized_account(
+            account: alloy::sol_types::private::Address,
+        ) -> Self {
+            Self::OwnableUnauthorizedAccount(OwnableUnauthorizedAccount {
+                account: account,
+            })
+        }
+        /**Creates a [`PointNotOnCurve`] error.
+
+```solidity
+error PointNotOnCurve((uint256,uint256))
+```*/
+        #[inline]
+        pub fn point_not_on_curve(
+            point: <IProtocolAdapter::Delta as alloy::sol_types::SolType>::RustType,
+        ) -> Self {
+            Self::PointNotOnCurve(PointNotOnCurve { point: point })
+        }
+        /**Creates a [`PreExistingNullifier`] error.
+
+```solidity
+error PreExistingNullifier(bytes32)
+```*/
+        #[inline]
+        pub fn pre_existing_nullifier(
+            nullifier: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::PreExistingNullifier(PreExistingNullifier {
+                nullifier: nullifier,
+            })
+        }
+        /**Creates a [`PreExistingRoot`] error.
+
+```solidity
+error PreExistingRoot(bytes32)
+```*/
+        #[inline]
+        pub fn pre_existing_root(
+            root: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::PreExistingRoot(PreExistingRoot { root: root })
+        }
+        /**Creates a [`ReentrancyGuardReentrantCall`] error.
+
+```solidity
+error ReentrancyGuardReentrantCall()
+```*/
+        #[inline]
+        pub fn reentrancy_guard_reentrant_call() -> Self {
+            Self::ReentrancyGuardReentrantCall(ReentrancyGuardReentrantCall)
+        }
+        /**Creates a [`RiscZeroVerifierSelectorMismatch`] error.
+
+```solidity
+error RiscZeroVerifierSelectorMismatch(bytes4,bytes4)
+```*/
+        #[inline]
+        pub fn risc_zero_verifier_selector_mismatch(
+            expected: alloy::sol_types::private::FixedBytes<4>,
+            actual: alloy::sol_types::private::FixedBytes<4>,
+        ) -> Self {
+            Self::RiscZeroVerifierSelectorMismatch(RiscZeroVerifierSelectorMismatch {
+                expected: expected,
+                actual: actual,
+            })
+        }
+        /**Creates a [`RiscZeroVerifierStopped`] error.
+
+```solidity
+error RiscZeroVerifierStopped()
+```*/
+        #[inline]
+        pub fn risc_zero_verifier_stopped() -> Self {
+            Self::RiscZeroVerifierStopped(RiscZeroVerifierStopped)
+        }
+        /**Creates a [`Simulated`] error.
+
+```solidity
+error Simulated(uint256)
+```*/
+        #[inline]
+        pub fn simulated(
+            gas_used: alloy::sol_types::private::primitives::aliases::U256,
+        ) -> Self {
+            Self::Simulated(Simulated { gasUsed: gas_used })
+        }
+        /**Creates a [`UUPSUnauthorizedCallContext`] error.
+
+```solidity
+error UUPSUnauthorizedCallContext()
+```*/
+        #[inline]
+        pub fn uups_unauthorized_call_context() -> Self {
+            Self::UUPSUnauthorizedCallContext(UUPSUnauthorizedCallContext)
+        }
+        /**Creates a [`UUPSUnsupportedProxiableUUID`] error.
+
+```solidity
+error UUPSUnsupportedProxiableUUID(bytes32)
+```*/
+        #[inline]
+        pub fn uups_unsupported_proxiable_uuid(
+            slot: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::UUPSUnsupportedProxiableUUID(UUPSUnsupportedProxiableUUID {
+                slot: slot,
+            })
+        }
+        /**Creates a [`ZeroKindTableCommitmentNotAllowed`] error.
+
+```solidity
+error ZeroKindTableCommitmentNotAllowed()
+```*/
+        #[inline]
+        pub fn zero_kind_table_commitment_not_allowed() -> Self {
+            Self::ZeroKindTableCommitmentNotAllowed(ZeroKindTableCommitmentNotAllowed)
+        }
+        /**Creates a [`ZeroRiscZeroVerifierRouterNotAllowed`] error.
+
+```solidity
+error ZeroRiscZeroVerifierRouterNotAllowed()
+```*/
+        #[inline]
+        pub fn zero_risc_zero_verifier_router_not_allowed() -> Self {
+            Self::ZeroRiscZeroVerifierRouterNotAllowed(
+                ZeroRiscZeroVerifierRouterNotAllowed,
+            )
+        }
+        /**Creates a [`ZeroRiscZeroVerifierSelectorNotAllowed`] error.
+
+```solidity
+error ZeroRiscZeroVerifierSelectorNotAllowed()
+```*/
+        #[inline]
+        pub fn zero_risc_zero_verifier_selector_not_allowed() -> Self {
+            Self::ZeroRiscZeroVerifierSelectorNotAllowed(
+                ZeroRiscZeroVerifierSelectorNotAllowed,
+            )
         }
     }
     ///Container for all the [`ProtocolAdapter`](self) events.
@@ -14823,6 +15010,215 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
             }
+        }
+    }
+    #[automatically_derived]
+    impl ProtocolAdapterEvents {
+        /**Creates a [`ActionExecuted`] event.
+
+```solidity
+event ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])
+```*/
+        #[inline]
+        pub fn action_executed(
+            action_tree_root: alloy::sol_types::private::FixedBytes<32>,
+            nullifiers: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            consumed_logic_refs: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            commitments: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            created_logic_refs: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+        ) -> Self {
+            Self::ActionExecuted(ActionExecuted {
+                actionTreeRoot: action_tree_root,
+                nullifiers: nullifiers,
+                consumedLogicRefs: consumed_logic_refs,
+                commitments: commitments,
+                createdLogicRefs: created_logic_refs,
+            })
+        }
+        /**Creates a [`ApplicationPayload`] event.
+
+```solidity
+event ApplicationPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn application_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ApplicationPayload(ApplicationPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`CommitmentTreeRootAdded`] event.
+
+```solidity
+event CommitmentTreeRootAdded(bytes32)
+```*/
+        #[inline]
+        pub fn commitment_tree_root_added(
+            root: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::CommitmentTreeRootAdded(CommitmentTreeRootAdded {
+                root: root,
+            })
+        }
+        /**Creates a [`DiscoveryPayload`] event.
+
+```solidity
+event DiscoveryPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn discovery_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::DiscoveryPayload(DiscoveryPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`ExternalPayload`] event.
+
+```solidity
+event ExternalPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn external_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ExternalPayload(ExternalPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`ForwarderCallExecuted`] event.
+
+```solidity
+event ForwarderCallExecuted(address,bytes,bytes)
+```*/
+        #[inline]
+        pub fn forwarder_call_executed(
+            untrusted_forwarder: alloy::sol_types::private::Address,
+            input: alloy::sol_types::private::Bytes,
+            output: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ForwarderCallExecuted(ForwarderCallExecuted {
+                untrustedForwarder: untrusted_forwarder,
+                input: input,
+                output: output,
+            })
+        }
+        /**Creates a [`Initialized`] event.
+
+```solidity
+event Initialized(uint64)
+```*/
+        #[inline]
+        pub fn initialized(version: u64) -> Self {
+            Self::Initialized(Initialized { version: version })
+        }
+        /**Creates a [`KindTableCommitmentUpdated`] event.
+
+```solidity
+event KindTableCommitmentUpdated(bytes32)
+```*/
+        #[inline]
+        pub fn kind_table_commitment_updated(
+            kind_table_commitment: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::KindTableCommitmentUpdated(KindTableCommitmentUpdated {
+                kindTableCommitment: kind_table_commitment,
+            })
+        }
+        /**Creates a [`OwnershipTransferred`] event.
+
+```solidity
+event OwnershipTransferred(address,address)
+```*/
+        #[inline]
+        pub fn ownership_transferred(
+            previous_owner: alloy::sol_types::private::Address,
+            new_owner: alloy::sol_types::private::Address,
+        ) -> Self {
+            Self::OwnershipTransferred(OwnershipTransferred {
+                previousOwner: previous_owner,
+                newOwner: new_owner,
+            })
+        }
+        /**Creates a [`Paused`] event.
+
+```solidity
+event Paused(address)
+```*/
+        #[inline]
+        pub fn paused(account: alloy::sol_types::private::Address) -> Self {
+            Self::Paused(Paused { account: account })
+        }
+        /**Creates a [`ResourcePayload`] event.
+
+```solidity
+event ResourcePayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn resource_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ResourcePayload(ResourcePayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`TransactionExecuted`] event.
+
+```solidity
+event TransactionExecuted(bytes32)
+```*/
+        #[inline]
+        pub fn transaction_executed(
+            transaction_id: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::TransactionExecuted(TransactionExecuted {
+                transactionId: transaction_id,
+            })
+        }
+        /**Creates a [`Unpaused`] event.
+
+```solidity
+event Unpaused(address)
+```*/
+        #[inline]
+        pub fn unpaused(account: alloy::sol_types::private::Address) -> Self {
+            Self::Unpaused(Unpaused { account: account })
+        }
+        /**Creates a [`Upgraded`] event.
+
+```solidity
+event Upgraded(address)
+```*/
+        #[inline]
+        pub fn upgraded(implementation: alloy::sol_types::private::Address) -> Self {
+            Self::Upgraded(Upgraded {
+                implementation: implementation,
+            })
         }
     }
     use alloy::contract as alloy_contract;

@@ -48,7 +48,7 @@ contract DeployProtocolAdapterProxy is Script {
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
-        DeployProtocolAdapterImplementation implementationScript = new DeployProtocolAdapterImplementation();
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
 
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
@@ -56,7 +56,8 @@ contract DeployProtocolAdapterProxy is Script {
         {
             _requireUnrecorded(isProduction);
 
-            (implementation,) = implementationScript.predict();
+            // forge-lint: disable-next-line(unused-return)
+            (implementation,) = implementationDeployScript.predict();
 
             (proxy, initializerData, creationCode) =
                 _predict({salt: salt, implementation: implementation, isProduction: isProduction});
@@ -65,7 +66,8 @@ contract DeployProtocolAdapterProxy is Script {
 
         // Deployment
         if (implementation.code.length == 0) {
-            implementationScript.run();
+            // forge-lint: disable-next-line(unused-return)
+            implementationDeployScript.run();
         }
 
         vm.startBroadcast();
@@ -95,6 +97,8 @@ contract DeployProtocolAdapterProxy is Script {
     /// @notice Checks that the environment has no deployment recorded for this chain yet.
     /// @param isProduction Whether to check the production or the staging environment.
     function _requireUnrecorded(bool isProduction) internal view {
+        // `fs_permissions` scopes the read to the recorded deployments.
+        // forge-lint: disable-next-line(unsafe-cheatcode)
         string memory json = vm.readFile(_DEPLOYMENTS_PATH);
         string memory environment = environmentName(isProduction);
 
@@ -131,6 +135,8 @@ contract DeployProtocolAdapterProxy is Script {
 
         bytes memory constructorArgs = abi.encode(implementation, initializerData);
 
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
         bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
 
         proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});

@@ -68,6 +68,17 @@ ignored_warnings_from = [
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
+[lint]
+exclude_lints = [
+    "calls-loop",                  # Duplicates the Slither run in the same CI job, and misfires on memory allocation.
+    "inline-assembly",             # Only the ERC-7201 storage accessors, which solhint gates per site.
+    "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
+    "mixed-case-function",         # Only the OpenZeppelin `__X_init` initializers, which solhint gates per site.
+    "reentrancy-events",           # Duplicates Slither, where the reviewed sites carry `slither-disable-next-line`.
+    "require-revert-in-loop",      # One invalid action must abort the whole transaction.
+]
+ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
+
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"

@@ -12,6 +12,8 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 /// @title DeployProtocolAdapterImplementation
 /// @author Anoma Foundation, 2025
 /// @notice A script to deploy the protocol adapter implementation on supported networks.
+/// @dev `SupportedNetworks` supplies the networks and their RISC Zero verifier router addresses
+/// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
@@ -29,10 +31,6 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
 
     /// @notice Thrown if an implementation to upgrade to is not the one the current source version deploys to.
     error UnexpectedImplementation(address expected, address actual);
-
-    /// @notice Initializes the supported networks and associated RISC Zero verifier router addresses
-    /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
-    constructor() SupportedNetworks() {}
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
@@ -74,6 +72,8 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
 
         bytes32 salt = IMPLEMENTATION_SALT;
         constructorData = abi.encode(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
         bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
 
         implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
