@@ -75,6 +75,26 @@ interface INullifierSet {
 pub mod INullifierSet {
     use super::*;
     use alloy::sol_types as alloy_sol_types;
+    /// The creation / init bytecode of the contract.
+    ///
+    /// ```text
+    ///0x
+    /// ```
+    #[rustfmt::skip]
+    #[allow(clippy::all)]
+    pub static BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
+        b"",
+    );
+    /// The runtime bytecode of the contract, as deployed on the network.
+    ///
+    /// ```text
+    ///0x
+    /// ```
+    #[rustfmt::skip]
+    #[allow(clippy::all)]
+    pub static DEPLOYED_BYTECODE: alloy_sol_types::private::Bytes = alloy_sol_types::private::Bytes::from_static(
+        b"",
+    );
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `isNullifierContained(bytes32)` and selector `0xc1b0bed7`.
@@ -804,6 +824,34 @@ See the [wrapper's documentation](`INullifierSetInstance`) for more details.*/
     ) -> INullifierSetInstance<P, N> {
         INullifierSetInstance::<P, N>::new(address, __provider)
     }
+    /**Deploys this contract using the given `provider` and constructor arguments, if any.
+
+Returns a new instance of the contract, if the deployment was successful.
+
+For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
+    #[inline]
+    pub fn deploy<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    >(
+        __provider: P,
+    ) -> impl ::core::future::Future<
+        Output = alloy_contract::Result<INullifierSetInstance<P, N>>,
+    > {
+        INullifierSetInstance::<P, N>::deploy(__provider)
+    }
+    /**Creates a `RawCallBuilder` for deploying this contract using the given `provider`
+and constructor arguments, if any.
+
+This is a simple wrapper around creating a `RawCallBuilder` with the data set to
+the bytecode concatenated with the constructor's ABI-encoded arguments.*/
+    #[inline]
+    pub fn deploy_builder<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    >(__provider: P) -> alloy_contract::RawCallBuilder<P, N> {
+        INullifierSetInstance::<P, N>::deploy_builder(__provider)
+    }
     /**A [`INullifierSet`](self) instance.
 
 Contains type-safe methods for interacting with an on-chain instance of the
@@ -846,6 +894,31 @@ See the [wrapper's documentation](`INullifierSetInstance`) for more details.*/
                 provider: __provider,
                 _network: ::core::marker::PhantomData,
             }
+        }
+        /**Deploys this contract using the given `provider` and constructor arguments, if any.
+
+Returns a new instance of the contract, if the deployment was successful.
+
+For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
+        #[inline]
+        pub async fn deploy(
+            __provider: P,
+        ) -> alloy_contract::Result<INullifierSetInstance<P, N>> {
+            let call_builder = Self::deploy_builder(__provider);
+            let contract_address = call_builder.deploy().await?;
+            Ok(Self::new(contract_address, call_builder.provider))
+        }
+        /**Creates a `RawCallBuilder` for deploying this contract using the given `provider`
+and constructor arguments, if any.
+
+This is a simple wrapper around creating a `RawCallBuilder` with the data set to
+the bytecode concatenated with the constructor's ABI-encoded arguments.*/
+        #[inline]
+        pub fn deploy_builder(__provider: P) -> alloy_contract::RawCallBuilder<P, N> {
+            alloy_contract::RawCallBuilder::new_raw_deploy(
+                __provider,
+                ::core::clone::Clone::clone(&BYTECODE),
+            )
         }
         /// Returns a reference to the address.
         #[inline]

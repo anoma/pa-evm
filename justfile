@@ -77,8 +77,10 @@ contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    cd contracts && forge clean && forge bind \
-        --skip test \
+    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
+    # build first and let it read those artifacts.
+    cd contracts && forge clean && forge build --skip test && forge bind \
+        --skip-build \
         --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
