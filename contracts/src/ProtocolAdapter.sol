@@ -151,7 +151,8 @@ contract ProtocolAdapter is
     function isEmergencyStopped() public view override returns (bool isStopped) {
         bool risc0Paused = PausableUpgradeable(
                 address(RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).getVerifier(RISC_ZERO_VERIFIER_SELECTOR))
-            ).paused();
+            )
+            .paused();
 
         isStopped = risc0Paused || paused();
     }
@@ -412,8 +413,9 @@ contract ProtocolAdapter is
 
         if (!skipVerification) {
             // slither-disable-next-line calls-loop
-            RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER)
-                .verify({seal: proof, imageId: verifyingKey, journalDigest: instance});
+            RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
+                seal: proof, imageId: verifyingKey, journalDigest: instance
+            });
         }
     }
 
