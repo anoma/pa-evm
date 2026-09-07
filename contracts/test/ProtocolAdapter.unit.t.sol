@@ -69,6 +69,57 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(_emptyTx);
     }
 
+    function test_pause_stops_execution() public {
+        vm.prank(_pa.owner());
+        _pa.pause();
+
+        assertTrue(_pa.paused(), "the protocol adapter should be paused");
+        vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
+        _pa.execute(_emptyTx);
+    }
+
+    function test_unpause_lets_execution_resume() public {
+        vm.startPrank(_pa.owner());
+        _pa.pause();
+        _pa.unpause();
+        vm.stopPrank();
+
+        assertFalse(_pa.paused(), "the protocol adapter should be unpaused");
+        // The empty transaction is rejected on its own account, not by the pause.
+        vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
+        _pa.execute(_emptyTx);
+    }
+
+    function test_unpause_lifts_an_emergency_stop() public {
+        vm.startPrank(_pa.owner());
+        _pa.emergencyStop();
+        assertTrue(_pa.paused(), "the emergency stop should pause the protocol adapter");
+
+        _pa.unpause();
+        vm.stopPrank();
+
+        assertFalse(_pa.paused(), "the owner should be able to lift an emergency stop");
+    }
+
+    function test_pause_reverts_for_an_unauthorized_caller() public {
+        vm.prank(_UNAUTHORIZED_CALLER);
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
+        );
+        _pa.pause();
+    }
+
+    function test_unpause_reverts_for_an_unauthorized_caller() public {
+        vm.prank(_pa.owner());
+        _pa.pause();
+
+        vm.prank(_UNAUTHORIZED_CALLER);
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
+        );
+        _pa.unpause();
+    }
+
     function test_execute_reverts_if_the_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
         (IProtocolAdapter.Transaction memory txnWithMockProof,) = vm.transaction({
             mockVerifier: _mockVerifier,

@@ -88,26 +88,16 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter contract.
-    /// @param initialOwner The account receiving ownership, and with it the authority to stop the protocol adapter in
-    /// case of a vulnerability, to authorize upgrades, and to set the kind table commitment.
+    /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
+    /// to authorize upgrades, and to set the kind table commitment.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
         external
+        virtual
         initializer
     {
-        __Ownable_init(initialOwner);
-        __Pausable_init();
-
-        __CommitmentTree_init();
-        __NullifierSet_init();
-
-        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
-        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
-        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
-
-        // Sanity check that the verifier has not been stopped already.
-        require(!isEmergencyStopped(), RiscZeroVerifierStopped());
+        __ProtocolAdapter_init(initialOwner);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -127,6 +117,16 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function emergencyStop() external override onlyOwner whenNotPaused {
         _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function pause() external override onlyOwner {
+        _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function unpause() external override onlyOwner {
+        _unpause();
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -354,6 +354,24 @@ contract ProtocolAdapter is
                 emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
+    }
+
+    /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set
+    /// and the empty kind table.
+    /// @param initialOwner The account receiving ownership.
+    // solhint-disable-next-line func-name-mixedcase
+    function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
+        __Ownable_init(initialOwner);
+        __Pausable_init();
+        __CommitmentTree_init();
+        __NullifierSet_init();
+
+        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
+        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
+        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
+
+        // Sanity check that the verifier has not been stopped already.
+        require(!isEmergencyStopped(), RiscZeroVerifierStopped());
     }
 
     /// @inheritdoc UUPSUpgradeable

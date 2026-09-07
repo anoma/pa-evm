@@ -152,8 +152,14 @@ interface IProtocolAdapter {
     /// @dev This transaction will always revert.
     function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
 
-    /// @notice Stops the protocol adapter permanently in case of an emergency.
+    /// @notice Stops the protocol adapter in case of an emergency. The owner can lift the stop with `unpause`.
     function emergencyStop() external;
+
+    /// @notice Pauses the protocol adapter, so that no transaction executes until `unpause`.
+    function pause() external;
+
+    /// @notice Lifts the pause.
+    function unpause() external;
 
     /// @notice Sets the kind table commitment that transactions must be proven against.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
