@@ -10,7 +10,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 /// @title DeployProtocolAdapterImplementation
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script to deploy the protocol adapter implementation on supported networks.
 /// @dev `SupportedNetworks` supplies the networks and their RISC Zero verifier router addresses
 /// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).

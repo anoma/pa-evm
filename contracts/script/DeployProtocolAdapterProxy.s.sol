@@ -8,7 +8,7 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 
 /// @title DeployProtocolAdapterProxy
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script to deploy the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported
 /// networks.
 /// @custom:security-contact security@anoma.foundation
