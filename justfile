@@ -40,7 +40,7 @@ contracts-lint:
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (contract-free files).
-contracts-storage-check *skip='Types':
+contracts-storage-check *skip='':
     #!/usr/bin/env bash
     set -euo pipefail
     cd contracts
