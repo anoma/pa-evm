@@ -115,11 +115,6 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function emergencyStop() external override onlyOwner whenNotPaused {
-        _pause();
-    }
-
-    /// @inheritdoc IProtocolAdapter
     function pause() external override onlyOwner {
         _pause();
     }
@@ -161,7 +156,7 @@ contract ProtocolAdapter is
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
+    /// @dev This function reverts while the protocol adapter is paused.
     // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
     // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
     function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)

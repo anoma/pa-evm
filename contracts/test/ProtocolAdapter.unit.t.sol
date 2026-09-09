@@ -61,14 +61,6 @@ contract ProtocolAdapterTest is Test {
         );
     }
 
-    function test_execute_reverts_if_the_pa_has_been_stopped() public {
-        vm.prank(_pa.owner());
-        _pa.emergencyStop();
-
-        vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
-        _pa.execute(_emptyTx);
-    }
-
     function test_pause_stops_execution() public {
         vm.prank(_pa.owner());
         _pa.pause();
@@ -76,6 +68,14 @@ contract ProtocolAdapterTest is Test {
         assertTrue(_pa.paused(), "the protocol adapter should be paused");
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
         _pa.execute(_emptyTx);
+    }
+
+    function test_pause_emits_the_Paused_event() public {
+        vm.prank(_OWNER);
+
+        vm.expectEmit(address(_pa));
+        emit Pausable.Paused(_OWNER);
+        _pa.pause();
     }
 
     function test_unpause_lets_execution_resume() public {
@@ -90,15 +90,14 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(_emptyTx);
     }
 
-    function test_unpause_lifts_an_emergency_stop() public {
-        vm.startPrank(_pa.owner());
-        _pa.emergencyStop();
-        assertTrue(_pa.paused(), "the emergency stop should pause the protocol adapter");
+    function test_unpause_emits_the_Unpaused_event() public {
+        vm.startPrank(_OWNER);
+        _pa.pause();
 
+        vm.expectEmit(address(_pa));
+        emit Pausable.Unpaused(_OWNER);
         _pa.unpause();
         vm.stopPrank();
-
-        assertFalse(_pa.paused(), "the owner should be able to lift an emergency stop");
     }
 
     function test_pause_reverts_for_an_unauthorized_caller() public {
@@ -144,31 +143,6 @@ contract ProtocolAdapterTest is Test {
     function test_simulateExecute_reverts_on_the_empty_transaction() public {
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
         _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
-    }
-
-    function test_emergencyStop_reverts_if_the_caller_is_not_the_owner() public {
-        vm.prank(_UNAUTHORIZED_CALLER);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
-        );
-        _pa.emergencyStop();
-    }
-
-    function test_emergencyStop_pauses_the_protocol_adapter() public {
-        assertEq(_pa.paused(), false, "PA should not be paused initially");
-
-        vm.prank(_OWNER);
-        _pa.emergencyStop();
-
-        assertEq(_pa.paused(), true, "PA should be paused after emergency stop");
-    }
-
-    function test_emergencyStop_emits_the_Paused_event() public {
-        vm.prank(_OWNER);
-
-        vm.expectEmit(address(_pa));
-        emit Pausable.Paused(_OWNER);
-        _pa.emergencyStop();
     }
 
     function test_RISC_ZERO_VERIFIER_ROUTER_returns_the_router_address() public view {
