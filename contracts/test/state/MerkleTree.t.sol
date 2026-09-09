@@ -6,10 +6,11 @@ import {Test} from "forge-std-1.16.2/src/Test.sol";
 import {MerkleTree} from "./../../src/libs/MerkleTree.sol";
 import {SHA256} from "./../../src/libs/SHA256.sol";
 import {MerkleTreeExample} from "./../examples/MerkleTree.e.sol";
+import {MerkleTreeReference} from "./../libs/MerkleTreeReference.sol";
 
 contract MerkleTreeTest is Test, MerkleTreeExample {
     using MerkleTree for MerkleTree.Tree;
-    using MerkleTree for bytes32[];
+    using MerkleTreeReference for bytes32[];
     using OzMerkleTree for OzMerkleTree.Bytes32PushTree;
 
     MerkleTree.Tree internal _merkleTree;
@@ -114,10 +115,10 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     function test_compare_le() public pure {
         assertEq(
             _computeMinimalTreeDepthNaive(0),
-            MerkleTree.computeMinimalTreeDepth(0),
+            MerkleTreeReference.computeMinimalTreeDepth(0),
             "naive and optimized should match for 0 leaves"
         );
-        assertEq(MerkleTree.computeMinimalTreeDepth(0), 0, "minimal tree depth for 0 leaves should be 0");
+        assertEq(MerkleTreeReference.computeMinimalTreeDepth(0), 0, "minimal tree depth for 0 leaves should be 0");
     }
 
     function test_computeMinimalTreeDepth_computes_the_right_tree_depths() public pure {
@@ -126,7 +127,9 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
 
         for (uint256 i = 0; i < depths.length; ++i) {
             assertEq(
-                MerkleTree.computeMinimalTreeDepth({leavesCount: i}), depths[i], "tree depth should match expected"
+                MerkleTreeReference.computeMinimalTreeDepth({leavesCount: i}),
+                depths[i],
+                "tree depth should match expected"
             );
         }
     }
@@ -137,7 +140,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         for (uint256 i = 0; i < maxLeafCount; ++i) {
             assertEq(
                 _computeMinimalTreeDepthNaive({leavesCount: i}),
-                MerkleTree.computeMinimalTreeDepth({leavesCount: i}),
+                MerkleTreeReference.computeMinimalTreeDepth({leavesCount: i}),
                 "naive and optimized implementations should match"
             );
         }
@@ -152,21 +155,21 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
 
             assertEq(
                 _computeMinimalTreeDepthNaive(powerOfTwo - 1),
-                MerkleTree.computeMinimalTreeDepth(powerOfTwo - 1),
+                MerkleTreeReference.computeMinimalTreeDepth(powerOfTwo - 1),
                 "should match for power of 2 minus 1"
             );
 
             // Test power of 2
             assertEq(
                 _computeMinimalTreeDepthNaive(powerOfTwo),
-                MerkleTree.computeMinimalTreeDepth(powerOfTwo),
+                MerkleTreeReference.computeMinimalTreeDepth(powerOfTwo),
                 "should match for power of 2"
             );
 
             // Test power of 2 + 1
             assertEq(
                 _computeMinimalTreeDepthNaive(powerOfTwo + 1),
-                MerkleTree.computeMinimalTreeDepth(powerOfTwo + 1),
+                MerkleTreeReference.computeMinimalTreeDepth(powerOfTwo + 1),
                 "should match for power of 2 plus 1"
             );
         }
@@ -179,7 +182,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         for (uint256 i = 0; i < testCases.length; i++) {
             assertEq(
                 _computeMinimalTreeDepthNaive(testCases[i]),
-                MerkleTree.computeMinimalTreeDepth(testCases[i]),
+                MerkleTreeReference.computeMinimalTreeDepth(testCases[i]),
                 "should match for large values"
             );
         }
@@ -190,7 +193,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         leavesCount = bound(leavesCount, 0, type(uint128).max);
 
         uint8 original = _computeMinimalTreeDepthNaive(leavesCount);
-        uint8 optimized = MerkleTree.computeMinimalTreeDepth(leavesCount);
+        uint8 optimized = MerkleTreeReference.computeMinimalTreeDepth(leavesCount);
 
         assertEq(original, optimized, "Implementations must match");
     }
@@ -200,7 +203,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         leavesCount = bound(leavesCount, 0, 1000);
 
         uint8 original = _computeMinimalTreeDepthNaive(leavesCount);
-        uint8 optimized = MerkleTree.computeMinimalTreeDepth(leavesCount);
+        uint8 optimized = MerkleTreeReference.computeMinimalTreeDepth(leavesCount);
 
         assertEq(original, optimized, "Implementations must match");
     }
@@ -210,7 +213,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         leavesCount = bound(leavesCount, 1000, 1000000);
 
         uint8 original = _computeMinimalTreeDepthNaive(leavesCount);
-        uint8 optimized = MerkleTree.computeMinimalTreeDepth(leavesCount);
+        uint8 optimized = MerkleTreeReference.computeMinimalTreeDepth(leavesCount);
 
         assertEq(original, optimized, "Implementations must match");
     }
@@ -223,7 +226,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     /// @notice Fuzz test - Optimized implementation only (to measure gas)
     function testFuzz_gas_optimized(uint256 leavesCount) public pure {
         leavesCount = bound(leavesCount, 0, 1000000);
-        MerkleTree.computeMinimalTreeDepth(leavesCount);
+        MerkleTreeReference.computeMinimalTreeDepth(leavesCount);
     }
 
     /// @notice Hashes two `bytes32` values.
