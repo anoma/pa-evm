@@ -58,7 +58,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
 
-        assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the verifier emergency stop");
+        assertTrue(_pa.riscZeroVerifierPaused(), "the verifier of the PA should be paused");
 
         // A fresh transaction proven against the stopped verifier reverts on proof verification. A fresh
         // transaction is needed because the state transition — rejecting the replayed nullifiers of `oldTxn` —
@@ -88,7 +88,7 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // The new selector is in place and the protocol adapter is operational again.
         assertEq(_pa.RISC_ZERO_VERIFIER_SELECTOR(), _NEW_VERIFIER_SELECTOR, "the new selector should be in place");
-        assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
+        assertFalse(_pa.riscZeroVerifierPaused(), "the new verifier should not be paused");
 
         // The protocol adapter state survived the upgrade.
         assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforeUpgrade, "the latest root should survive the upgrade");
@@ -131,7 +131,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         vm.prank(_OWNER);
         _pa.pause();
 
-        assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the pause");
+        assertTrue(_pa.paused(), "PA should be paused");
 
         // Execution is halted. The `whenNotPaused` modifier rejects the transaction before it touches any state, so
         // this very transaction can be replayed once the pause is lifted.
@@ -159,7 +159,6 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // The protocol adapter is operational again.
         assertFalse(_pa.paused(), "PA should be unpaused after the upgrade");
-        assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
 
         // The protocol adapter state survived the upgrade.
         assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforePause, "the latest root should survive the upgrade");

@@ -167,11 +167,15 @@ interface IProtocolAdapter {
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
 
-    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
-    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
-    /// 2. The protocol adapter itself was stopped by the owner.
-    /// @return isStopped Whether the protocol adapter has been stopped or not.
-    function isEmergencyStopped() external view returns (bool isStopped);
+    /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
+    /// executes no transaction.
+    /// @return isPaused Whether the protocol adapter is paused or not.
+    function paused() external view returns (bool isPaused);
+
+    /// @notice Returns whether the RISC Zero verifier associated with the protocol adapter is paused or not.
+    /// A paused verifier rejects every proof, so the protocol adapter executes no transaction either.
+    /// @return isPaused Whether the verifier is paused or not.
+    function riscZeroVerifierPaused() external view returns (bool isPaused);
 
     // solhint-disable func-name-mixedcase
 

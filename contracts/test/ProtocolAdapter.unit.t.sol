@@ -100,6 +100,22 @@ contract ProtocolAdapterTest is Test {
         vm.stopPrank();
     }
 
+    function test_riscZeroVerifierPaused_reports_the_paused_verifier() public {
+        assertFalse(_pa.riscZeroVerifierPaused(), "the verifier should not be paused initially");
+
+        vm.prank(_emergencyStop.owner());
+        _emergencyStop.estop();
+
+        assertTrue(_pa.riscZeroVerifierPaused(), "the verifier should be paused");
+    }
+
+    function test_riscZeroVerifierPaused_ignores_the_protocol_adapter_pause() public {
+        vm.prank(_OWNER);
+        _pa.pause();
+
+        assertFalse(_pa.riscZeroVerifierPaused(), "the pause should leave the verifier untouched");
+    }
+
     function test_pause_reverts_for_an_unauthorized_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
