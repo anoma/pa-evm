@@ -70,7 +70,7 @@ contract ProtocolAdapter is
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
-    error RiscZeroVerifierStopped();
+    error RiscZeroVerifierPaused();
     error Simulated(uint256 gasUsed);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
@@ -88,26 +88,16 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter contract.
-    /// @param initialOwner The account receiving ownership, and with it the authority to stop the protocol adapter in
-    /// case of a vulnerability, to authorize upgrades, and to set the kind table commitment.
+    /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
+    /// to authorize upgrades, and to set the kind table commitment.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
         external
+        virtual
         initializer
     {
-        __Ownable_init(initialOwner);
-        __Pausable_init();
-
-        __CommitmentTree_init();
-        __NullifierSet_init();
-
-        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
-        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
-        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
-
-        // Sanity check that the verifier has not been stopped already.
-        require(!isEmergencyStopped(), RiscZeroVerifierStopped());
+        __ProtocolAdapter_init(initialOwner);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -125,8 +115,13 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function emergencyStop() external override onlyOwner whenNotPaused {
+    function pause() external override onlyOwner {
         _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function unpause() external override onlyOwner {
+        _unpause();
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -148,20 +143,23 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
-    function isEmergencyStopped() public view override returns (bool isStopped) {
-        bool risc0Paused = PausableUpgradeable(
+    function paused() public view override(IProtocolAdapter, PausableUpgradeable) returns (bool isPaused) {
+        isPaused = super.paused();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function riscZeroVerifierPaused() public view override returns (bool isPaused) {
+        isPaused = PausableUpgradeable(
                 address(RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).getVerifier(RISC_ZERO_VERIFIER_SELECTOR))
             )
             .paused();
-
-        isStopped = risc0Paused || paused();
     }
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively.
     /// @param transaction The transaction to execute.
     /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @dev This function cannot be called anymore once `emergencyStop()` has been called.
+    /// @dev This function reverts while the protocol adapter is paused.
     // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
     // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
     function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)
@@ -354,6 +352,24 @@ contract ProtocolAdapter is
                 emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
+    }
+
+    /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set
+    /// and the empty kind table.
+    /// @param initialOwner The account receiving ownership.
+    // solhint-disable-next-line func-name-mixedcase
+    function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
+        __Ownable_init(initialOwner);
+        __Pausable_init();
+        __CommitmentTree_init();
+        __NullifierSet_init();
+
+        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
+        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
+        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
+
+        // Sanity check that the verifier is not paused already.
+        require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
     }
 
     /// @inheritdoc UUPSUpgradeable
