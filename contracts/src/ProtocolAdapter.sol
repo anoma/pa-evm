@@ -70,7 +70,7 @@ contract ProtocolAdapter is
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
-    error RiscZeroVerifierStopped();
+    error RiscZeroVerifierPaused();
     error Simulated(uint256 gasUsed);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
@@ -368,8 +368,8 @@ contract ProtocolAdapter is
         _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
         emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
 
-        // Sanity check that the verifier has not been stopped already.
-        require(!riscZeroVerifierPaused(), RiscZeroVerifierStopped());
+        // Sanity check that the verifier is not paused already.
+        require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
     }
 
     /// @inheritdoc UUPSUpgradeable
