@@ -3,14 +3,14 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
+import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {DeploymentsFixture} from "../fixtures/DeploymentsFixture.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 
-/// @notice Checks the proxy deploy script against a fresh chain. The deployments it records are checked in
-/// `Deployments.t.sol` and its promotion gates instead.
-contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, DeploymentsFixture {
+/// @notice Checks the proxy deploy script against a fresh chain. The deployments it records are checked against the
+/// chains in the bindings crate, which owns the record.
+contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_succeeds_for_a_staging_deployment() public {
         _deployRiscZeroRouter();
 
@@ -35,18 +35,19 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, DeploymentsFix
     }
 
     function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        Deployment[] memory deployments = _recordedDeployments({isProduction: false});
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.staging();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
-            vm.chainId(deployments[i].chainId);
+            uint256 chainId = deployments[i].chainId;
+            vm.chainId(chainId);
 
             DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
 
             vm.expectRevert(
                 abi.encodeWithSelector(
                     DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
-                    _environmentName({isProduction: false}),
-                    deployments[i].chainId
+                    script.environmentName({isProduction: false}),
+                    chainId
                 )
             );
             script.run({isProduction: false});
@@ -107,7 +108,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture, DeploymentsFix
             )
         );
 
-        string memory environment = _environmentName(isProduction);
+        string memory environment = script.environmentName(isProduction);
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));

@@ -4,8 +4,10 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
+import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {Parameters} from "./Parameters.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -14,19 +16,16 @@ import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplem
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
-    bytes32 public constant PROXY_SALT_STAGING = "ProtocolAdapterProxyStaging";
+    bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
 
     /// @notice The CREATE2 salt for the production environment proxy deployment.
-    bytes32 public constant PROXY_SALT_PRODUCTION = "ProtocolAdapterProxyProduction";
+    bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address public constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
+    address public constant PROXY_OWNER_STAGING = Parameters.PROXY_OWNER_STAGING;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
-
-    /// @notice The deployments recorded per environment, relative to the Foundry root.
-    string internal constant _DEPLOYMENTS_PATH = "../crates/bindings/deployments.json";
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.PROXY_OWNER_PRODUCTION;
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);
@@ -54,7 +53,10 @@ contract DeployProtocolAdapterProxy is Script {
 
         // Checks
         {
-            _requireUnrecorded(isProduction);
+            require(
+                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+            );
 
             // forge-lint: disable-next-line(unused-return)
             (implementation,) = implementationDeployScript.predict();
@@ -92,28 +94,6 @@ contract DeployProtocolAdapterProxy is Script {
     /// @return name The environment name.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
-    }
-
-    /// @notice Checks that the environment has no deployment recorded for this chain yet.
-    /// @param isProduction Whether to check the production or the staging environment.
-    function _requireUnrecorded(bool isProduction) internal view {
-        // `fs_permissions` scopes the read to the recorded deployments.
-        // forge-lint: disable-next-line(unsafe-cheatcode)
-        string memory json = vm.readFile(_DEPLOYMENTS_PATH);
-        string memory environment = environmentName(isProduction);
-
-        for (uint256 i = 0;; ++i) {
-            // solhint-disable-next-line func-named-parameters
-            string memory entry = string.concat(".", environment, "[", vm.toString(i), "]");
-            if (!vm.keyExistsJson(json, entry)) {
-                return;
-            }
-
-            require(
-                vm.parseJsonUint(json, string.concat(entry, ".chainId")) != block.chainid,
-                DeploymentAlreadyRecorded(environment, block.chainid)
-            );
-        }
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

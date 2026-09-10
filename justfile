@@ -37,6 +37,7 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (contract-free files).
@@ -72,6 +73,10 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
+# Regenerate the recorded deployments library from the deployment records
+contracts-gen-deployments:
+    ./scripts/generate-recorded-deployments.sh
+
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
@@ -81,7 +86,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -250,6 +255,10 @@ bindings-test *args:
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
 
+# Check the recorded deployments library is up-to-date
+contracts-deployments-check: contracts-gen-deployments
+    git diff --exit-code contracts/generated/RecordedDeployments.sol
+
 # Publish bindings
 bindings-publish *args:
     cd crates/bindings && cargo publish {{ args }}
@@ -343,3 +352,5 @@ all-check:
     @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the recorded deployments library is up-to-date..."
+    @just contracts-deployments-check
