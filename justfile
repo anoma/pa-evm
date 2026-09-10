@@ -407,3 +407,5 @@ all-check:
     @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the recorded deployments library is up-to-date..."
+    @just contracts-deployments-check
