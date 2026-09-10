@@ -365,7 +365,7 @@ For **both**:
   just contracts-gen-deployments
   ```
 
-  and commit it alongside the record. The contracts package ships without `deployments.json`, so the chain IDs reach `_requireUnrecorded` through the generated [`./contracts/script/RecordedDeployments.sol`](./contracts/script/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+  and commit it alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 

@@ -4,10 +4,10 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
+import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 import {Parameters} from "./Parameters.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -53,7 +53,10 @@ contract DeployProtocolAdapterProxy is Script {
 
         // Checks
         {
-            _requireUnrecorded(isProduction);
+            require(
+                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+            );
 
             // forge-lint: disable-next-line(unused-return)
             (implementation,) = implementationDeployScript.predict();
@@ -91,15 +94,6 @@ contract DeployProtocolAdapterProxy is Script {
     /// @return name The environment name.
     function environmentName(bool isProduction) public pure returns (string memory name) {
         name = isProduction ? "production" : "staging";
-    }
-
-    /// @notice Checks that the environment has no deployment recorded for this chain yet.
-    /// @param isProduction Whether to check the production or the staging environment.
-    function _requireUnrecorded(bool isProduction) internal view {
-        require(
-            !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-            DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
-        );
     }
 
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.

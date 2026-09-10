@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
+import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 
@@ -35,10 +35,11 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     }
 
     function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        uint256[] memory chainIds = RecordedDeployments.stagingChainIds();
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.staging();
 
-        for (uint256 i = 0; i < chainIds.length; ++i) {
-            vm.chainId(chainIds[i]);
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            uint256 chainId = deployments[i].chainId;
+            vm.chainId(chainId);
 
             DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
 
@@ -46,7 +47,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
                 abi.encodeWithSelector(
                     DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
                     script.environmentName({isProduction: false}),
-                    chainIds[i]
+                    chainId
                 )
             );
             script.run({isProduction: false});
