@@ -76,7 +76,7 @@ is read from the chain, not from here.
 The protocol adapter deployed before the v2 release: one immutable contract per chain, with no kind table. A chain that ran it moves its state into v2 through the transitional implementation.
 
 **Transitional implementation**:
-`TransitionalProtocolAdapter`, the implementation the proxy of a chain that ran v1 starts on. It is a protocol adapter that begins paused and accepts the v1 state.
+`TransitionalProtocolAdapter`, the implementation the proxy of a chain that ran v1 starts on. It is a protocol adapter that begins paused and accepts the v1 state. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
 _Avoid_: transition implementation, migration contract
 
 **Plain implementation**:

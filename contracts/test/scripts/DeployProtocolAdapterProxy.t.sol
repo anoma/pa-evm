@@ -42,6 +42,19 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         _expectDeployment({isProduction: true, isTransitional: true});
     }
 
+    function test_run_gives_the_transitional_proxy_the_staging_owner_in_both_environments() public {
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        (address stagingProxy,,,) = script.run({isProduction: false, isTransitional: true});
+        (address productionProxy,,,) = script.run({isProduction: true, isTransitional: true});
+
+        assertEq(ProtocolAdapter(stagingProxy).owner(), script.PROXY_OWNER_STAGING(), "staging proxy owner differs");
+        assertEq(
+            ProtocolAdapter(productionProxy).owner(), script.PROXY_OWNER_STAGING(), "production proxy owner differs"
+        );
+    }
+
     function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
         _deployRiscZeroRouter();
 
@@ -135,12 +148,23 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
             script.run({isProduction: false, isTransitional: true});
 
         assertEq(
-            transitionalProxy, predictedTransitionalProxy, "transitional: prediction differs from the deployed proxy"
+            transitionalProxy,
+            predictedTransitionalProxy,
+            "staging transitional: prediction differs from the deployed proxy"
         );
         assertEq(
             transitionalImplementation,
             predictedTransitionalImplementation,
-            "transitional: prediction differs from the deployed implementation"
+            "staging transitional: prediction differs from the deployed implementation"
+        );
+
+        (address predictedProductionTransitionalProxy,) = script.predict({isProduction: true, isTransitional: true});
+        (address productionTransitionalProxy,,,) = script.run({isProduction: true, isTransitional: true});
+
+        assertEq(
+            productionTransitionalProxy,
+            predictedProductionTransitionalProxy,
+            "production transitional: prediction differs from the deployed proxy"
         );
     }
 
@@ -152,8 +176,8 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     }
 
     /// @notice Runs the deploy script and checks that the proxy lands at the predicted deterministic address,
-    /// delegates to a deployed implementation, is initialized with the environment owner, and starts paused on the
-    /// chain's v1 protocol adapter exactly when it is transitional.
+    /// delegates to a deployed implementation, is owned by the environment owner or, if it is transitional, by the
+    /// staging proxy owner, and starts paused on the chain's v1 protocol adapter exactly when it is transitional.
     /// @param isProduction Whether to deploy the production or the staging environment proxy.
     /// @param isTransitional Whether to deploy the proxy on the transitional implementation.
     function _expectDeployment(bool isProduction, bool isTransitional) private {
@@ -161,7 +185,8 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         (address proxy, address implementation,,) =
             script.run({isProduction: isProduction, isTransitional: isTransitional});
 
-        address owner = isProduction ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
+        address owner =
+            (isProduction && !isTransitional) ? script.PROXY_OWNER_PRODUCTION() : script.PROXY_OWNER_STAGING();
         address predicted = vm.computeCreate2Address(
             isProduction ? script.PROXY_SALT_PRODUCTION() : script.PROXY_SALT_STAGING(),
             keccak256(
