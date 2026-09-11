@@ -6,7 +6,15 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwnerManager.sol";
 import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
-import {IProtocolAdapterV1} from "../../src/interfaces/IProtocolAdapterV1.sol";
+/// @title IProtocolAdapterV1
+/// @author Anoma Foundation, 2026
+/// @notice The part of the v1 protocol adapter interface that the migration calls and that no v2 interface carries.
+/// @custom:security-contact security@anoma.foundation
+interface IProtocolAdapterV1 {
+    /// @notice Stops the protocol adapter permanently: it executes no transaction afterwards, and no function lifts
+    /// the stop. Only the owner can call it, and only once.
+    function emergencyStop() external;
+}
 
 /// @title ProposeProtocolAdapterV1Stop
 /// @author Anoma Foundation, 2026
