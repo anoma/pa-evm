@@ -215,6 +215,36 @@ contracts-propose-production-pause deployer proxy proposer chain *args:
         --sig "run(address,address)" {{proxy}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# Simulate the v1 stop proposal (dry-run): simulates the Safe that owns v1 executing the stop
+contracts-simulate-v1-stop-proposal protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the v1 stop to the Safe that owns v1 (proposer = unlocked deployer); the stop cannot be undone
+contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the state migration of one chain (dry-run): copy-in, unpause and upgrade (sender = the proxy owner)
+contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Run the state migration of one chain as the proxy owner, one transaction at a time
+contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check a migrated proxy against the stopped v1 protocol adapter, reading both from the chain
+contracts-check-migration protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "verify(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --rpc-url {{chain}} {{ args }}
+
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
 contracts-verify-sourcify address contract chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \
