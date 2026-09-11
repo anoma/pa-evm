@@ -442,3 +442,37 @@ For **production**:
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
+
+## Pausing the Protocol Adapter
+
+Not a release. A paused protocol adapter executes no transaction until its owner calls `unpause`. Lifting the pause takes one more owner transaction, which in production is one more Safe transaction.
+
+For **staging**:
+
+- [ ] **Simulate** the pause, with the staging proxy owner as the sender, by running
+
+  ```sh
+  just contracts-simulate-staging-pause 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **execute** it by running
+
+  ```sh
+  just contracts-execute-staging-pause deployer <PROXY> <CHAIN>
+  ```
+
+For **production**:
+
+- [ ] **Simulate** the proposal, which simulates the Safe executing the pause, by running
+
+  ```sh
+  just contracts-simulate-production-pause-proposal <PROXY> <PROPOSER> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **propose** it to the owning Safe by running
+
+  ```sh
+  just contracts-propose-production-pause deployer <PROXY> <PROPOSER> <CHAIN>
+  ```
+
+- [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
