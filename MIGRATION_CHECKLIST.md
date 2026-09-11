@@ -32,7 +32,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-deploy-proxy deployer <CHAIN>
   ```
 
-  The proxy gets the environment's owner. The migration run sends its transactions from that owner, so it works as written for staging, whose owner is the deployment wallet. The production owner is a Safe, and the run's calls would have to be proposed there instead.
+  The proxy gets the staging proxy owner, the deployment wallet, in both environments, because the migration run sends its calls from the owner. A production proxy moves to the production proxy owner in step 9. Until then, the staging recipes act on it too, because they check the owner and not the environment.
 
 ## Per chain
 
@@ -73,4 +73,14 @@ Steps 2 to 7 leave users unable to transact, so prepare every transaction before
 
 7. [ ] Confirm through `getImplementation` that the proxy runs the plain implementation.
 
-8. [ ] Move the ERC20 forwarder balances, install the chain's kind table commitment, and transfer ownership, as the plan sets out.
+8. [ ] Move the ERC20 forwarder balances and install the chain's kind table commitment, as the plan sets out.
+
+9. [ ] For production, transfer the proxy to the production proxy owner, the Safe `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`. Do this only after step 7 shows the plain implementation: after the transfer, every call of the run would have to go through the Safe.
+
+   ```sh
+   cast send <PROXY> "transferOwnership(address)" 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10 --account deployer --rpc-url <CHAIN>
+   ```
+
+   The transfer takes effect at once. Only a Safe transaction can move ownership back.
+
+10. [ ] Record the proxy in `deployments.json`, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). Record it only now: the bindings tests require a recorded proxy to run the plain implementation this source predicts, and a recorded production proxy to be owned by a Safe.
