@@ -8,11 +8,11 @@ import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
 import {Parameters} from "../Parameters.sol";
 
-/// @title IProtocolAdapterV1
+/// @title IProtocolAdapterV1EmergencyStop
 /// @author Anoma Foundation, 2026
-/// @notice The part of the v1 protocol adapter interface that the migration calls and that no v2 interface carries.
+/// @notice The emergency stop of the v1 protocol adapter, which no v2 interface declares.
 /// @custom:security-contact security@anoma.foundation
-interface IProtocolAdapterV1 {
+interface IProtocolAdapterV1EmergencyStop {
     /// @notice Stops the protocol adapter permanently: it executes no transaction afterwards, and no function lifts
     /// the stop. Only the owner can call it, and only once.
     function emergencyStop() external;
@@ -47,7 +47,7 @@ contract ProposeProtocolAdapterV1Stop is Script {
 
         _safe.initialize(safe);
 
-        bytes memory callData = abi.encodeCall(IProtocolAdapterV1.emergencyStop, ());
+        bytes memory callData = abi.encodeCall(IProtocolAdapterV1EmergencyStop.emergencyStop, ());
         if (Safe.isBroadcastMode()) {
             _safe.proposeTransaction(protocolAdapterV1, callData, proposer);
         } else {
