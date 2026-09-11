@@ -4,11 +4,12 @@ pragma solidity ^0.8.30;
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
 import {ProposeProtocolAdapterV1Stop} from "../../../script/migration/ProposeProtocolAdapterV1Stop.s.sol";
+import {Parameters} from "../../../script/Parameters.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 import {ProtocolAdapterV1Mock} from "../../mocks/ProtocolAdapterV1.m.sol";
 
 /// @notice Checks the v1 stop proposal script against a stand-in for the v1 protocol adapter, owned by a Safe at the
-/// address of the v1 owner. Outside broadcast mode, the script simulates the Safe executing the stop, so v1 must end
+/// address of the production owner. Outside broadcast mode, the script simulates the Safe executing the stop, so v1 must end
 /// up stopped.
 contract ProposeProtocolAdapterV1StopTest is SafeFixture {
     address internal _owner;
@@ -23,7 +24,7 @@ contract ProposeProtocolAdapterV1StopTest is SafeFixture {
         _script = new ProposeProtocolAdapterV1Stop();
 
         _owner = makeAddr("safe owner");
-        _safe = _deploySafeAt(_owner, _script.PROTOCOL_ADAPTER_V1_OWNER());
+        _safe = _deploySafeAt(_owner, Parameters.PROXY_OWNER_PRODUCTION);
 
         _v1 = new ProtocolAdapterV1Mock(_safe);
     }
