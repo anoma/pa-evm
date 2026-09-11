@@ -13,6 +13,8 @@ import {IVersion} from "anoma-forwarder-bases-3.0.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
+import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
+import {INullifierSet} from "./interfaces/INullifierSet.sol";
 import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
@@ -42,6 +44,8 @@ contract ProtocolAdapter is
     /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
     struct ProtocolAdapterStorage {
         bytes32 kindTableCommitment;
+        address legacyProtocolAdapter;
+        bytes32 legacyCommitmentTreeRoot;
     }
 
     /// @notice The commitment of the empty kind table (the SHA-256 hash of zero bytes of table content), under
@@ -67,6 +71,12 @@ contract ProtocolAdapter is
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
     error ZeroKindTableCommitmentNotAllowed();
+    error ZeroLegacyProtocolAdapterNotAllowed();
+    error LegacyProtocolAdapterAlreadyConfigured();
+    error LegacyProtocolAdapterNotFrozen(address legacyProtocolAdapter);
+    error ProtocolAdapterStateNotEmpty();
+    error LegacyCommitmentTreeRootMatchesV2Root(bytes32 root);
+    error LegacyNullifierAlreadySpent(bytes32 nullifier);
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
@@ -133,8 +143,46 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
+    function configureLegacyProtocolAdapter(address legacyProtocolAdapter_) external override onlyOwner {
+        ProtocolAdapterStorage storage $ = _getProtocolAdapterStorage();
+
+        require(legacyProtocolAdapter_ != address(0), ZeroLegacyProtocolAdapterNotAllowed());
+        require($.legacyProtocolAdapter == address(0), LegacyProtocolAdapterAlreadyConfigured());
+        require(
+            ICommitmentTree(address(this)).commitmentCount() == 0 && INullifierSet(address(this)).nullifierCount() == 0,
+            ProtocolAdapterStateNotEmpty()
+        );
+        require(
+            IProtocolAdapter(legacyProtocolAdapter_).riscZeroVerifierPaused(),
+            LegacyProtocolAdapterNotFrozen(legacyProtocolAdapter_)
+        );
+
+        bytes32 legacyRoot = ICommitmentTree(legacyProtocolAdapter_).latestCommitmentTreeRoot();
+        require(
+            legacyRoot != ICommitmentTree(address(this)).latestCommitmentTreeRoot(),
+            LegacyCommitmentTreeRootMatchesV2Root(legacyRoot)
+        );
+
+        $.legacyProtocolAdapter = legacyProtocolAdapter_;
+        $.legacyCommitmentTreeRoot = legacyRoot;
+        emit LegacyProtocolAdapterConfigured({
+            legacyProtocolAdapter: legacyProtocolAdapter_, legacyCommitmentTreeRoot: legacyRoot
+        });
+    }
+
+    /// @inheritdoc IProtocolAdapter
     function getKindTableCommitment() external view override returns (bytes32 kindTableCommitment) {
         kindTableCommitment = _getProtocolAdapterStorage().kindTableCommitment;
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function legacyProtocolAdapter() external view override returns (address legacyProtocolAdapter_) {
+        legacyProtocolAdapter_ = _getProtocolAdapterStorage().legacyProtocolAdapter;
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function legacyCommitmentTreeRoot() external view override returns (bytes32 legacyCommitmentTreeRoot_) {
+        legacyCommitmentTreeRoot_ = _getProtocolAdapterStorage().legacyCommitmentTreeRoot;
     }
 
     /// @inheritdoc IImplementation
@@ -230,11 +278,19 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
-            // Check that the referenced commitment tree root is part of the historical roots.
-            require(
-                _isCommitmentTreeRootContained(consumed.commitmentTreeRoot),
-                NonExistingRoot(consumed.commitmentTreeRoot)
-            );
+            ProtocolAdapterStorage storage $ = _getProtocolAdapterStorage();
+            if ($.legacyProtocolAdapter != address(0) && consumed.commitmentTreeRoot == $.legacyCommitmentTreeRoot) {
+                require(
+                    !INullifierSet($.legacyProtocolAdapter).isNullifierContained(consumed.nullifier),
+                    LegacyNullifierAlreadySpent(consumed.nullifier)
+                );
+            } else {
+                // Check that the referenced commitment tree root is part of the v2 historical roots.
+                require(
+                    _isCommitmentTreeRootContained(consumed.commitmentTreeRoot),
+                    NonExistingRoot(consumed.commitmentTreeRoot)
+                );
+            }
 
             // The function reverts if a repeating nullifier is added to the set.
             _addNullifier(consumed.nullifier);

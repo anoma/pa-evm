@@ -47,13 +47,17 @@ interface IProtocolAdapter {
     event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
     event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
+    event LegacyProtocolAdapterConfigured(address indexed legacyProtocolAdapter, bytes32 indexed legacyCommitmentTreeRoot);
     event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
     event TransactionExecuted(bytes32 indexed transactionId);
 
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
+    function configureLegacyProtocolAdapter(address legacyProtocolAdapter) external;
     function execute(Transaction memory transaction) external;
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+    function legacyCommitmentTreeRoot() external view returns (bytes32 legacyCommitmentTreeRoot);
+    function legacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
     function pause() external;
     function paused() external view returns (bool isPaused);
     function riscZeroVerifierPaused() external view returns (bool isPaused);
@@ -91,6 +95,19 @@ interface IProtocolAdapter {
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "configureLegacyProtocolAdapter",
+    "inputs": [
+      {
+        "name": "legacyProtocolAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -344,6 +361,32 @@ interface IProtocolAdapter {
         "name": "kindTableCommitment",
         "type": "bytes32",
         "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "legacyCommitmentTreeRoot",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "legacyCommitmentTreeRoot",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "legacyProtocolAdapter",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "legacyProtocolAdapter",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -801,6 +844,25 @@ interface IProtocolAdapter {
   },
   {
     "type": "event",
+    "name": "LegacyProtocolAdapterConfigured",
+    "inputs": [
+      {
+        "name": "legacyProtocolAdapter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "legacyCommitmentTreeRoot",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "ResourcePayload",
     "inputs": [
       {
@@ -913,7 +975,7 @@ pub mod IProtocolAdapter {
         }
         impl DeletionCriterion {
             /// The Solidity type name.
-            pub const NAME: &'static str = stringify!(DeletionCriterion);
+            pub const NAME: &'static str = stringify!(@ name);
             /// Convert from the underlying value type.
             #[inline]
             pub const fn from_underlying(value: u8) -> Self {
@@ -3611,6 +3673,131 @@ event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Event with signature `LegacyProtocolAdapterConfigured(address,bytes32)` and selector `0xac6cdafaf4cdf240aa908e2492fa805d02e1935277b544ab14697104e077b865`.
+```solidity
+event LegacyProtocolAdapterConfigured(address indexed legacyProtocolAdapter, bytes32 indexed legacyCommitmentTreeRoot);
+```*/
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    #[derive(Clone)]
+    pub struct LegacyProtocolAdapterConfigured {
+        #[allow(missing_docs)]
+        pub legacyProtocolAdapter: alloy::sol_types::private::Address,
+        #[allow(missing_docs)]
+        pub legacyCommitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[automatically_derived]
+        impl alloy_sol_types::SolEvent for LegacyProtocolAdapterConfigured {
+            type DataTuple<'a> = ();
+            type DataToken<'a> = <Self::DataTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type TopicList = (
+                alloy_sol_types::sol_data::FixedBytes<32>,
+                alloy::sol_types::sol_data::Address,
+                alloy::sol_types::sol_data::FixedBytes<32>,
+            );
+            const SIGNATURE: &'static str = "LegacyProtocolAdapterConfigured(address,bytes32)";
+            const SIGNATURE_HASH: alloy_sol_types::private::B256 = alloy_sol_types::private::B256::new([
+                172u8, 108u8, 218u8, 250u8, 244u8, 205u8, 242u8, 64u8, 170u8, 144u8,
+                142u8, 36u8, 146u8, 250u8, 128u8, 93u8, 2u8, 225u8, 147u8, 82u8, 119u8,
+                181u8, 68u8, 171u8, 20u8, 105u8, 113u8, 4u8, 224u8, 119u8, 184u8, 101u8,
+            ]);
+            const ANONYMOUS: bool = false;
+            #[allow(unused_variables)]
+            #[inline]
+            fn new(
+                topics: <Self::TopicList as alloy_sol_types::SolType>::RustType,
+                data: <Self::DataTuple<'_> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                Self {
+                    legacyProtocolAdapter: topics.1,
+                    legacyCommitmentTreeRoot: topics.2,
+                }
+            }
+            #[inline]
+            fn check_signature(
+                topics: &<Self::TopicList as alloy_sol_types::SolType>::RustType,
+            ) -> alloy_sol_types::Result<()> {
+                if topics.0 != Self::SIGNATURE_HASH {
+                    return Err(
+                        alloy_sol_types::Error::invalid_event_signature_hash(
+                            Self::SIGNATURE,
+                            topics.0,
+                            Self::SIGNATURE_HASH,
+                        ),
+                    );
+                }
+                Ok(())
+            }
+            #[inline]
+            fn tokenize_body(&self) -> Self::DataToken<'_> {
+                ()
+            }
+            #[inline]
+            fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
+                (
+                    Self::SIGNATURE_HASH.into(),
+                    self.legacyProtocolAdapter.clone(),
+                    self.legacyCommitmentTreeRoot.clone(),
+                )
+            }
+            #[inline]
+            fn encode_topics_raw(
+                &self,
+                out: &mut [alloy_sol_types::abi::token::WordToken],
+            ) -> alloy_sol_types::Result<()> {
+                if out.len() < <Self::TopicList as alloy_sol_types::TopicList>::COUNT {
+                    return Err(alloy_sol_types::Error::Overrun);
+                }
+                out[0usize] = alloy_sol_types::abi::token::WordToken(
+                    Self::SIGNATURE_HASH,
+                );
+                out[1usize] = <alloy::sol_types::sol_data::Address as alloy_sol_types::EventTopic>::encode_topic(
+                    &self.legacyProtocolAdapter,
+                );
+                out[2usize] = <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic(
+                    &self.legacyCommitmentTreeRoot,
+                );
+                Ok(())
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::IntoLogData for LegacyProtocolAdapterConfigured {
+            fn to_log_data(&self) -> alloy_sol_types::private::LogData {
+                From::from(self)
+            }
+            fn into_log_data(self) -> alloy_sol_types::private::LogData {
+                From::from(&self)
+            }
+        }
+        #[automatically_derived]
+        impl From<&LegacyProtocolAdapterConfigured>
+        for alloy_sol_types::private::LogData {
+            #[inline]
+            fn from(
+                this: &LegacyProtocolAdapterConfigured,
+            ) -> alloy_sol_types::private::LogData {
+                alloy_sol_types::SolEvent::encode_log_data(this)
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Event with signature `ResourcePayload(bytes32,uint256,bytes)` and selector `0x3a134d01c07803003c63301717ddc4612e6c47ae408eeea3222cded532d02ae6`.
 ```solidity
 event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
@@ -3977,29 +4164,16 @@ function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRout
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_ROUTERReturn = r.into();
                         r.verifierRouter
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -4139,29 +4313,168 @@ function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSel
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_SELECTORReturn = r.into();
                         r.verifierSelector
                     })
             }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `configureLegacyProtocolAdapter(address)` and selector `0x5d88bbb1`.
+```solidity
+function configureLegacyProtocolAdapter(address legacyProtocolAdapter) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct configureLegacyProtocolAdapterCall {
+        #[allow(missing_docs)]
+        pub legacyProtocolAdapter: alloy::sol_types::private::Address,
+    }
+    ///Container type for the return parameters of the [`configureLegacyProtocolAdapter(address)`](configureLegacyProtocolAdapterCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct configureLegacyProtocolAdapterReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Address,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::Address,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<configureLegacyProtocolAdapterCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: configureLegacyProtocolAdapterCall) -> Self {
+                    (value.legacyProtocolAdapter,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for configureLegacyProtocolAdapterCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        legacyProtocolAdapter: tuple.0,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<configureLegacyProtocolAdapterReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: configureLegacyProtocolAdapterReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for configureLegacyProtocolAdapterReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl configureLegacyProtocolAdapterReturn {
+            fn _tokenize(
+                &self,
+            ) -> <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::ReturnToken<
+                '_,
+            > {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for configureLegacyProtocolAdapterCall {
+            type Parameters<'a> = (alloy::sol_types::sol_data::Address,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = configureLegacyProtocolAdapterReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "configureLegacyProtocolAdapter(address)";
+            const SELECTOR: [u8; 4] = [93u8, 136u8, 187u8, 177u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        &self.legacyProtocolAdapter,
+                    ),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                configureLegacyProtocolAdapterReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
             #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
@@ -4297,26 +4610,13 @@ function execute(Transaction memory transaction) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
@@ -4458,29 +4758,318 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: getKindTableCommitmentReturn = r.into();
                         r.kindTableCommitment
+                    })
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `legacyCommitmentTreeRoot()` and selector `0xba2bb546`.
+```solidity
+function legacyCommitmentTreeRoot() external view returns (bytes32 legacyCommitmentTreeRoot);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct legacyCommitmentTreeRootCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`legacyCommitmentTreeRoot()`](legacyCommitmentTreeRootCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct legacyCommitmentTreeRootReturn {
+        #[allow(missing_docs)]
+        pub legacyCommitmentTreeRoot: alloy::sol_types::private::FixedBytes<32>,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<legacyCommitmentTreeRootCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: legacyCommitmentTreeRootCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for legacyCommitmentTreeRootCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<legacyCommitmentTreeRootReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: legacyCommitmentTreeRootReturn) -> Self {
+                    (value.legacyCommitmentTreeRoot,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for legacyCommitmentTreeRootReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        legacyCommitmentTreeRoot: tuple.0,
+                    }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for legacyCommitmentTreeRootCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = alloy::sol_types::private::FixedBytes<32>;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "legacyCommitmentTreeRoot()";
+            const SELECTOR: [u8; 4] = [186u8, 43u8, 181u8, 70u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(ret),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(|r| {
+                        let r: legacyCommitmentTreeRootReturn = r.into();
+                        r.legacyCommitmentTreeRoot
                     })
             }
             #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(|r| {
+                        let r: legacyCommitmentTreeRootReturn = r.into();
+                        r.legacyCommitmentTreeRoot
+                    })
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `legacyProtocolAdapter()` and selector `0x125815b0`.
+```solidity
+function legacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct legacyProtocolAdapterCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`legacyProtocolAdapter()`](legacyProtocolAdapterCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct legacyProtocolAdapterReturn {
+        #[allow(missing_docs)]
+        pub legacyProtocolAdapter: alloy::sol_types::private::Address,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<legacyProtocolAdapterCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: legacyProtocolAdapterCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for legacyProtocolAdapterCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Address,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::Address,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<legacyProtocolAdapterReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: legacyProtocolAdapterReturn) -> Self {
+                    (value.legacyProtocolAdapter,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for legacyProtocolAdapterReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        legacyProtocolAdapter: tuple.0,
+                    }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for legacyProtocolAdapterCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = alloy::sol_types::private::Address;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::Address,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "legacyProtocolAdapter()";
+            const SELECTOR: [u8; 4] = [18u8, 88u8, 21u8, 176u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::Address as alloy_sol_types::SolType>::tokenize(
+                        ret,
+                    ),
                 )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(|r| {
+                        let r: legacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(|r| {
+                        let r: legacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
+                    })
             }
         }
     };
@@ -4611,26 +5200,13 @@ function pause() external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
@@ -4766,29 +5342,16 @@ function paused() external view returns (bool isPaused);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: pausedReturn = r.into();
                         r.isPaused
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -4928,29 +5491,16 @@ function riscZeroVerifierPaused() external view returns (bool isPaused);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: riscZeroVerifierPausedReturn = r.into();
                         r.isPaused
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -5098,26 +5648,13 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
@@ -5271,26 +5808,13 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
@@ -5421,42 +5945,35 @@ function unpause() external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Into::into)
             }
         }
     };
     ///Container for all the [`IProtocolAdapter`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[derive()]
     pub enum IProtocolAdapterCalls {
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_ROUTER(RISC_ZERO_VERIFIER_ROUTERCall),
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_SELECTOR(RISC_ZERO_VERIFIER_SELECTORCall),
         #[allow(missing_docs)]
+        configureLegacyProtocolAdapter(configureLegacyProtocolAdapterCall),
+        #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
         getKindTableCommitment(getKindTableCommitmentCall),
+        #[allow(missing_docs)]
+        legacyCommitmentTreeRoot(legacyCommitmentTreeRootCall),
+        #[allow(missing_docs)]
+        legacyProtocolAdapter(legacyProtocolAdapterCall),
         #[allow(missing_docs)]
         pause(pauseCall),
         #[allow(missing_docs)]
@@ -5478,39 +5995,48 @@ function unpause() external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [18u8, 88u8, 21u8, 176u8],
             [63u8, 75u8, 168u8, 58u8],
             [92u8, 151u8, 90u8, 187u8],
+            [93u8, 136u8, 187u8, 177u8],
             [103u8, 53u8, 49u8, 34u8],
             [107u8, 240u8, 160u8, 75u8],
             [115u8, 171u8, 153u8, 22u8],
             [132u8, 86u8, 203u8, 89u8],
             [135u8, 9u8, 62u8, 186u8],
+            [186u8, 43u8, 181u8, 70u8],
             [192u8, 37u8, 48u8, 35u8],
             [227u8, 90u8, 93u8, 47u8],
             [255u8, 195u8, 63u8, 114u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
+            ::core::stringify!(legacyProtocolAdapter),
             ::core::stringify!(unpause),
             ::core::stringify!(paused),
+            ::core::stringify!(configureLegacyProtocolAdapter),
             ::core::stringify!(riscZeroVerifierPaused),
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
             ::core::stringify!(execute),
             ::core::stringify!(pause),
             ::core::stringify!(simulateExecute),
+            ::core::stringify!(legacyCommitmentTreeRoot),
             ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(RISC_ZERO_VERIFIER_SELECTOR),
             ::core::stringify!(getKindTableCommitment),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
+            <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <unpauseCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
             <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pauseCall as alloy_sol_types::SolCall>::SIGNATURE,
             <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5540,7 +6066,7 @@ function unpause() external;
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 10usize;
+        const COUNT: usize = 13usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5550,9 +6076,18 @@ function unpause() external;
                 Self::RISC_ZERO_VERIFIER_SELECTOR(_) => {
                     <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SELECTOR
                 }
+                Self::configureLegacyProtocolAdapter(_) => {
+                    <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SELECTOR
+                }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::getKindTableCommitment(_) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::legacyCommitmentTreeRoot(_) => {
+                    <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::legacyProtocolAdapter(_) => {
+                    <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::pause(_) => <pauseCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::paused(_) => <pausedCall as alloy_sol_types::SolCall>::SELECTOR,
@@ -5582,32 +6117,25 @@ function unpause() external;
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::default(),
-            )
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_with_config(
-            selector: [u8; 4],
-            data: &[u8],
-            config: alloy_sol_types::abi::AbiDecoderConfig,
-        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
-                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
+                {
+                    fn legacyProtocolAdapter(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::legacyProtocolAdapter)
+                    }
+                    legacyProtocolAdapter
+                },
                 {
                     fn unpause(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <unpauseCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
+                        <unpauseCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
                             .map(IProtocolAdapterCalls::unpause)
                     }
                     unpause
@@ -5615,24 +6143,29 @@ function unpause() external;
                 {
                     fn paused(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
+                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
                             .map(IProtocolAdapterCalls::paused)
                     }
                     paused
                 },
                 {
+                    fn configureLegacyProtocolAdapter(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::configureLegacyProtocolAdapter)
+                    }
+                    configureLegacyProtocolAdapter
+                },
+                {
                     fn riscZeroVerifierPaused(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::riscZeroVerifierPaused)
                     }
@@ -5641,11 +6174,9 @@ function unpause() external;
                 {
                     fn RISC_ZERO_VERIFIER_ROUTER(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
                     }
@@ -5654,12 +6185,8 @@ function unpause() external;
                 {
                     fn execute(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
                             .map(IProtocolAdapterCalls::execute)
                     }
                     execute
@@ -5667,12 +6194,8 @@ function unpause() external;
                 {
                     fn pause(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <pauseCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
+                        <pauseCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
                             .map(IProtocolAdapterCalls::pause)
                     }
                     pause
@@ -5680,24 +6203,31 @@ function unpause() external;
                 {
                     fn simulateExecute(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::simulateExecute)
                     }
                     simulateExecute
                 },
                 {
+                    fn legacyCommitmentTreeRoot(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::legacyCommitmentTreeRoot)
+                    }
+                    legacyCommitmentTreeRoot
+                },
+                {
                     fn setKindTableCommitment(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::setKindTableCommitment)
                     }
@@ -5706,11 +6236,9 @@ function unpause() external;
                 {
                     fn RISC_ZERO_VERIFIER_SELECTOR(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
                     }
@@ -5719,11 +6247,9 @@ function unpause() external;
                 {
                     fn getKindTableCommitment(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(IProtocolAdapterCalls::getKindTableCommitment)
                     }
@@ -5738,7 +6264,7 @@ function unpause() external;
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data, config)
+            DECODE_SHIMS[idx](data)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -5746,11 +6272,162 @@ function unpause() external;
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-            )
+            static DECODE_VALIDATE_SHIMS: &[fn(
+                &[u8],
+            ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
+                {
+                    fn legacyProtocolAdapter(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::legacyProtocolAdapter)
+                    }
+                    legacyProtocolAdapter
+                },
+                {
+                    fn unpause(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <unpauseCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::unpause)
+                    }
+                    unpause
+                },
+                {
+                    fn paused(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::paused)
+                    }
+                    paused
+                },
+                {
+                    fn configureLegacyProtocolAdapter(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::configureLegacyProtocolAdapter)
+                    }
+                    configureLegacyProtocolAdapter
+                },
+                {
+                    fn riscZeroVerifierPaused(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::riscZeroVerifierPaused)
+                    }
+                    riscZeroVerifierPaused
+                },
+                {
+                    fn RISC_ZERO_VERIFIER_ROUTER(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
+                    }
+                    RISC_ZERO_VERIFIER_ROUTER
+                },
+                {
+                    fn execute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::execute)
+                    }
+                    execute
+                },
+                {
+                    fn pause(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <pauseCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::pause)
+                    }
+                    pause
+                },
+                {
+                    fn simulateExecute(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::simulateExecute)
+                    }
+                    simulateExecute
+                },
+                {
+                    fn legacyCommitmentTreeRoot(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::legacyCommitmentTreeRoot)
+                    }
+                    legacyCommitmentTreeRoot
+                },
+                {
+                    fn setKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::setKindTableCommitment)
+                    }
+                    setKindTableCommitment
+                },
+                {
+                    fn RISC_ZERO_VERIFIER_SELECTOR(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
+                    }
+                    RISC_ZERO_VERIFIER_SELECTOR
+                },
+                {
+                    fn getKindTableCommitment(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(IProtocolAdapterCalls::getKindTableCommitment)
+                    }
+                    getKindTableCommitment
+                },
+            ];
+            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
+                return Err(
+                    alloy_sol_types::Error::unknown_selector(
+                        <Self as alloy_sol_types::SolInterface>::NAME,
+                        selector,
+                    ),
+                );
+            };
+            DECODE_VALIDATE_SHIMS[idx](data)
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -5765,11 +6442,26 @@ function unpause() external;
                         inner,
                     )
                 }
+                Self::configureLegacyProtocolAdapter(inner) => {
+                    <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
                 Self::getKindTableCommitment(inner) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
+                Self::legacyCommitmentTreeRoot(inner) => {
+                    <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
+                Self::legacyProtocolAdapter(inner) => {
+                    <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -5814,11 +6506,29 @@ function unpause() external;
                         out,
                     )
                 }
+                Self::configureLegacyProtocolAdapter(inner) => {
+                    <configureLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
                 Self::getKindTableCommitment(inner) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::legacyCommitmentTreeRoot(inner) => {
+                    <legacyCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::legacyProtocolAdapter(inner) => {
+                    <legacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -5871,6 +6581,8 @@ function unpause() external;
         #[allow(missing_docs)]
         KindTableCommitmentUpdated(KindTableCommitmentUpdated),
         #[allow(missing_docs)]
+        LegacyProtocolAdapterConfigured(LegacyProtocolAdapterConfigured),
+        #[allow(missing_docs)]
         ResourcePayload(ResourcePayload),
         #[allow(missing_docs)]
         TransactionExecuted(TransactionExecuted),
@@ -5919,6 +6631,11 @@ function unpause() external;
                 223u8, 82u8, 168u8, 96u8, 223u8, 7u8, 33u8, 159u8, 140u8,
             ],
             [
+                172u8, 108u8, 218u8, 250u8, 244u8, 205u8, 242u8, 64u8, 170u8, 144u8,
+                142u8, 36u8, 146u8, 250u8, 128u8, 93u8, 2u8, 225u8, 147u8, 82u8, 119u8,
+                181u8, 68u8, 171u8, 20u8, 105u8, 113u8, 4u8, 224u8, 119u8, 184u8, 101u8,
+            ],
+            [
                 205u8, 219u8, 50u8, 122u8, 219u8, 49u8, 254u8, 84u8, 55u8, 223u8, 42u8,
                 140u8, 104u8, 48u8, 27u8, 177u8, 58u8, 107u8, 170u8, 228u8, 50u8, 168u8,
                 4u8, 131u8, 140u8, 170u8, 246u8, 130u8, 80u8, 106u8, 173u8, 241u8,
@@ -5933,6 +6650,7 @@ function unpause() external;
             ::core::stringify!(KindTableCommitmentUpdated),
             ::core::stringify!(ExternalPayload),
             ::core::stringify!(ApplicationPayload),
+            ::core::stringify!(LegacyProtocolAdapterConfigured),
             ::core::stringify!(ForwarderCallExecuted),
         ];
         /// The signatures in the same order as `SELECTORS`.
@@ -5944,6 +6662,7 @@ function unpause() external;
             <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::SIGNATURE,
             <ExternalPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ApplicationPayload as alloy_sol_types::SolEvent>::SIGNATURE,
+            <LegacyProtocolAdapterConfigured as alloy_sol_types::SolEvent>::SIGNATURE,
             <ForwarderCallExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -5970,7 +6689,7 @@ function unpause() external;
     #[automatically_derived]
     impl alloy_sol_types::SolEventInterface for IProtocolAdapterEvents {
         const NAME: &'static str = "IProtocolAdapterEvents";
-        const COUNT: usize = 8usize;
+        const COUNT: usize = 9usize;
         fn decode_raw_log(
             topics: &[alloy_sol_types::Word],
             data: &[u8],
@@ -6024,6 +6743,15 @@ function unpause() external;
                         )
                         .map(Self::KindTableCommitmentUpdated)
                 }
+                Some(
+                    <LegacyProtocolAdapterConfigured as alloy_sol_types::SolEvent>::SIGNATURE_HASH,
+                ) => {
+                    <LegacyProtocolAdapterConfigured as alloy_sol_types::SolEvent>::decode_raw_log(
+                            topics,
+                            data,
+                        )
+                        .map(Self::LegacyProtocolAdapterConfigured)
+                }
                 Some(<ResourcePayload as alloy_sol_types::SolEvent>::SIGNATURE_HASH) => {
                     <ResourcePayload as alloy_sol_types::SolEvent>::decode_raw_log(
                             topics,
@@ -6076,6 +6804,9 @@ function unpause() external;
                 Self::KindTableCommitmentUpdated(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
+                Self::LegacyProtocolAdapterConfigured(inner) => {
+                    alloy_sol_types::private::IntoLogData::to_log_data(inner)
+                }
                 Self::ResourcePayload(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
@@ -6104,6 +6835,9 @@ function unpause() external;
                 Self::KindTableCommitmentUpdated(inner) => {
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
+                Self::LegacyProtocolAdapterConfigured(inner) => {
+                    alloy_sol_types::private::IntoLogData::into_log_data(inner)
+                }
                 Self::ResourcePayload(inner) => {
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
@@ -6111,149 +6845,6 @@ function unpause() external;
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
             }
-        }
-    }
-    #[automatically_derived]
-    impl IProtocolAdapterEvents {
-        /**Creates a [`ActionExecuted`] event.
-
-```solidity
-event ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])
-```*/
-        #[inline]
-        pub fn action_executed(
-            action_tree_root: alloy::sol_types::private::FixedBytes<32>,
-            nullifiers: alloy::sol_types::private::Vec<
-                alloy::sol_types::private::FixedBytes<32>,
-            >,
-            consumed_logic_refs: alloy::sol_types::private::Vec<
-                alloy::sol_types::private::FixedBytes<32>,
-            >,
-            commitments: alloy::sol_types::private::Vec<
-                alloy::sol_types::private::FixedBytes<32>,
-            >,
-            created_logic_refs: alloy::sol_types::private::Vec<
-                alloy::sol_types::private::FixedBytes<32>,
-            >,
-        ) -> Self {
-            Self::ActionExecuted(ActionExecuted {
-                actionTreeRoot: action_tree_root,
-                nullifiers: nullifiers,
-                consumedLogicRefs: consumed_logic_refs,
-                commitments: commitments,
-                createdLogicRefs: created_logic_refs,
-            })
-        }
-        /**Creates a [`ApplicationPayload`] event.
-
-```solidity
-event ApplicationPayload(bytes32,uint256,bytes)
-```*/
-        #[inline]
-        pub fn application_payload(
-            tag: alloy::sol_types::private::FixedBytes<32>,
-            index: alloy::sol_types::private::primitives::aliases::U256,
-            blob: alloy::sol_types::private::Bytes,
-        ) -> Self {
-            Self::ApplicationPayload(ApplicationPayload {
-                tag: tag,
-                index: index,
-                blob: blob,
-            })
-        }
-        /**Creates a [`DiscoveryPayload`] event.
-
-```solidity
-event DiscoveryPayload(bytes32,uint256,bytes)
-```*/
-        #[inline]
-        pub fn discovery_payload(
-            tag: alloy::sol_types::private::FixedBytes<32>,
-            index: alloy::sol_types::private::primitives::aliases::U256,
-            blob: alloy::sol_types::private::Bytes,
-        ) -> Self {
-            Self::DiscoveryPayload(DiscoveryPayload {
-                tag: tag,
-                index: index,
-                blob: blob,
-            })
-        }
-        /**Creates a [`ExternalPayload`] event.
-
-```solidity
-event ExternalPayload(bytes32,uint256,bytes)
-```*/
-        #[inline]
-        pub fn external_payload(
-            tag: alloy::sol_types::private::FixedBytes<32>,
-            index: alloy::sol_types::private::primitives::aliases::U256,
-            blob: alloy::sol_types::private::Bytes,
-        ) -> Self {
-            Self::ExternalPayload(ExternalPayload {
-                tag: tag,
-                index: index,
-                blob: blob,
-            })
-        }
-        /**Creates a [`ForwarderCallExecuted`] event.
-
-```solidity
-event ForwarderCallExecuted(address,bytes,bytes)
-```*/
-        #[inline]
-        pub fn forwarder_call_executed(
-            untrusted_forwarder: alloy::sol_types::private::Address,
-            input: alloy::sol_types::private::Bytes,
-            output: alloy::sol_types::private::Bytes,
-        ) -> Self {
-            Self::ForwarderCallExecuted(ForwarderCallExecuted {
-                untrustedForwarder: untrusted_forwarder,
-                input: input,
-                output: output,
-            })
-        }
-        /**Creates a [`KindTableCommitmentUpdated`] event.
-
-```solidity
-event KindTableCommitmentUpdated(bytes32)
-```*/
-        #[inline]
-        pub fn kind_table_commitment_updated(
-            kind_table_commitment: alloy::sol_types::private::FixedBytes<32>,
-        ) -> Self {
-            Self::KindTableCommitmentUpdated(KindTableCommitmentUpdated {
-                kindTableCommitment: kind_table_commitment,
-            })
-        }
-        /**Creates a [`ResourcePayload`] event.
-
-```solidity
-event ResourcePayload(bytes32,uint256,bytes)
-```*/
-        #[inline]
-        pub fn resource_payload(
-            tag: alloy::sol_types::private::FixedBytes<32>,
-            index: alloy::sol_types::private::primitives::aliases::U256,
-            blob: alloy::sol_types::private::Bytes,
-        ) -> Self {
-            Self::ResourcePayload(ResourcePayload {
-                tag: tag,
-                index: index,
-                blob: blob,
-            })
-        }
-        /**Creates a [`TransactionExecuted`] event.
-
-```solidity
-event TransactionExecuted(bytes32)
-```*/
-        #[inline]
-        pub fn transaction_executed(
-            transaction_id: alloy::sol_types::private::FixedBytes<32>,
-        ) -> Self {
-            Self::TransactionExecuted(TransactionExecuted {
-                transactionId: transaction_id,
-            })
         }
     }
     use alloy::contract as alloy_contract;
@@ -6425,6 +7016,17 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, RISC_ZERO_VERIFIER_SELECTORCall, N> {
             self.call_builder(&RISC_ZERO_VERIFIER_SELECTORCall)
         }
+        ///Creates a new call builder for the [`configureLegacyProtocolAdapter`] function.
+        pub fn configureLegacyProtocolAdapter(
+            &self,
+            legacyProtocolAdapter: alloy::sol_types::private::Address,
+        ) -> alloy_contract::SolCallBuilder<&P, configureLegacyProtocolAdapterCall, N> {
+            self.call_builder(
+                &configureLegacyProtocolAdapterCall {
+                    legacyProtocolAdapter,
+                },
+            )
+        }
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
             &self,
@@ -6437,6 +7039,18 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::SolCallBuilder<&P, getKindTableCommitmentCall, N> {
             self.call_builder(&getKindTableCommitmentCall)
+        }
+        ///Creates a new call builder for the [`legacyCommitmentTreeRoot`] function.
+        pub fn legacyCommitmentTreeRoot(
+            &self,
+        ) -> alloy_contract::SolCallBuilder<&P, legacyCommitmentTreeRootCall, N> {
+            self.call_builder(&legacyCommitmentTreeRootCall)
+        }
+        ///Creates a new call builder for the [`legacyProtocolAdapter`] function.
+        pub fn legacyProtocolAdapter(
+            &self,
+        ) -> alloy_contract::SolCallBuilder<&P, legacyProtocolAdapterCall, N> {
+            self.call_builder(&legacyProtocolAdapterCall)
         }
         ///Creates a new call builder for the [`pause`] function.
         pub fn pause(&self) -> alloy_contract::SolCallBuilder<&P, pauseCall, N> {
@@ -6530,6 +7144,12 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::Event<&P, KindTableCommitmentUpdated, N> {
             self.event_filter::<KindTableCommitmentUpdated>()
+        }
+        ///Creates a new event filter for the [`LegacyProtocolAdapterConfigured`] event.
+        pub fn LegacyProtocolAdapterConfigured_filter(
+            &self,
+        ) -> alloy_contract::Event<&P, LegacyProtocolAdapterConfigured, N> {
+            self.event_filter::<LegacyProtocolAdapterConfigured>()
         }
         ///Creates a new event filter for the [`ResourcePayload`] event.
         pub fn ResourcePayload_filter(

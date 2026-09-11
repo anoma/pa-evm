@@ -247,29 +247,16 @@ function IMPLEMENTATION_SALT() external pure returns (bytes32 salt);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: IMPLEMENTATION_SALTReturn = r.into();
                         r.salt
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -409,29 +396,16 @@ function PROXY_OWNER_PRODUCTION() external pure returns (address owner);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: PROXY_OWNER_PRODUCTIONReturn = r.into();
                         r.owner
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -571,29 +545,16 @@ function PROXY_OWNER_STAGING() external pure returns (address owner);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: PROXY_OWNER_STAGINGReturn = r.into();
                         r.owner
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -733,29 +694,16 @@ function PROXY_SALT_PRODUCTION() external pure returns (bytes32 salt);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: PROXY_SALT_PRODUCTIONReturn = r.into();
                         r.salt
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -895,36 +843,23 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: PROXY_SALT_STAGINGReturn = r.into();
                         r.salt
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
     ///Container for all the [`DeploymentParameters`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[derive()]
     pub enum DeploymentParametersCalls {
         #[allow(missing_docs)]
         IMPLEMENTATION_SALT(IMPLEMENTATION_SALTCall),
@@ -1027,31 +962,15 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::default(),
-            )
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_with_config(
-            selector: [u8; 4],
-            data: &[u8],
-            config: alloy_sol_types::abi::AbiDecoderConfig,
-        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
-                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<DeploymentParametersCalls>] = &[
                 {
                     fn IMPLEMENTATION_SALT(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
-                        <IMPLEMENTATION_SALTCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <IMPLEMENTATION_SALTCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(DeploymentParametersCalls::IMPLEMENTATION_SALT)
                     }
@@ -1060,11 +979,9 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                 {
                     fn PROXY_OWNER_STAGING(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
-                        <PROXY_OWNER_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <PROXY_OWNER_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(DeploymentParametersCalls::PROXY_OWNER_STAGING)
                     }
@@ -1073,11 +990,9 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                 {
                     fn PROXY_OWNER_PRODUCTION(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
-                        <PROXY_OWNER_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <PROXY_OWNER_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(DeploymentParametersCalls::PROXY_OWNER_PRODUCTION)
                     }
@@ -1086,11 +1001,9 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                 {
                     fn PROXY_SALT_STAGING(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
-                        <PROXY_SALT_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <PROXY_SALT_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(DeploymentParametersCalls::PROXY_SALT_STAGING)
                     }
@@ -1099,11 +1012,9 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                 {
                     fn PROXY_SALT_PRODUCTION(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
-                        <PROXY_SALT_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <PROXY_SALT_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(DeploymentParametersCalls::PROXY_SALT_PRODUCTION)
                     }
@@ -1118,7 +1029,7 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data, config)
+            DECODE_SHIMS[idx](data)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -1126,11 +1037,74 @@ function PROXY_SALT_STAGING() external pure returns (bytes32 salt);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-            )
+            static DECODE_VALIDATE_SHIMS: &[fn(
+                &[u8],
+            ) -> alloy_sol_types::Result<DeploymentParametersCalls>] = &[
+                {
+                    fn IMPLEMENTATION_SALT(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
+                        <IMPLEMENTATION_SALTCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(DeploymentParametersCalls::IMPLEMENTATION_SALT)
+                    }
+                    IMPLEMENTATION_SALT
+                },
+                {
+                    fn PROXY_OWNER_STAGING(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
+                        <PROXY_OWNER_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(DeploymentParametersCalls::PROXY_OWNER_STAGING)
+                    }
+                    PROXY_OWNER_STAGING
+                },
+                {
+                    fn PROXY_OWNER_PRODUCTION(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
+                        <PROXY_OWNER_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(DeploymentParametersCalls::PROXY_OWNER_PRODUCTION)
+                    }
+                    PROXY_OWNER_PRODUCTION
+                },
+                {
+                    fn PROXY_SALT_STAGING(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
+                        <PROXY_SALT_STAGINGCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(DeploymentParametersCalls::PROXY_SALT_STAGING)
+                    }
+                    PROXY_SALT_STAGING
+                },
+                {
+                    fn PROXY_SALT_PRODUCTION(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<DeploymentParametersCalls> {
+                        <PROXY_SALT_PRODUCTIONCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(DeploymentParametersCalls::PROXY_SALT_PRODUCTION)
+                    }
+                    PROXY_SALT_PRODUCTION
+                },
+            ];
+            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
+                return Err(
+                    alloy_sol_types::Error::unknown_selector(
+                        <Self as alloy_sol_types::SolInterface>::NAME,
+                        selector,
+                    ),
+                );
+            };
+            DECODE_VALIDATE_SHIMS[idx](data)
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {

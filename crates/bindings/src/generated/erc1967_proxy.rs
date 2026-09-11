@@ -196,10 +196,10 @@ error AddressEmptyCode(address target);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                Self::abi_decode_raw_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::Parameters<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Self::new)
             }
         }
     };
@@ -279,10 +279,10 @@ error ERC1967InvalidImplementation(address implementation);
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                Self::abi_decode_raw_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::Parameters<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Self::new)
             }
         }
     };
@@ -353,10 +353,10 @@ error ERC1967NonPayable();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                Self::abi_decode_raw_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::Parameters<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Self::new)
             }
         }
     };
@@ -429,10 +429,10 @@ error ERC1967ProxyUninitialized();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                Self::abi_decode_raw_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::Parameters<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Self::new)
             }
         }
     };
@@ -503,10 +503,10 @@ error FailedCall();
             }
             #[inline]
             fn abi_decode_raw_validate(data: &[u8]) -> alloy_sol_types::Result<Self> {
-                Self::abi_decode_raw_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
+                <Self::Parameters<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                    .map(Self::new)
             }
         }
     };
@@ -806,31 +806,15 @@ constructor(address implementation, bytes _data) payable;
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::default(),
-            )
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_with_config(
-            selector: [u8; 4],
-            data: &[u8],
-            config: alloy_sol_types::abi::AbiDecoderConfig,
-        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
-                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ERC1967ProxyErrors>] = &[
                 {
                     fn ERC1967InvalidImplementation(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967InvalidImplementation)
                     }
@@ -839,11 +823,9 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn AddressEmptyCode(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ERC1967ProxyErrors::AddressEmptyCode)
                     }
@@ -852,11 +834,9 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn ERC1967NonPayable(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967NonPayable)
                     }
@@ -865,11 +845,9 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn ERC1967ProxyUninitialized(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ERC1967ProxyErrors::ERC1967ProxyUninitialized)
                     }
@@ -878,11 +856,82 @@ constructor(address implementation, bytes _data) payable;
                 {
                     fn FailedCall(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
-                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_with_config(
+                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw(data)
+                            .map(ERC1967ProxyErrors::FailedCall)
+                    }
+                    FailedCall
+                },
+            ];
+            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
+                return Err(
+                    alloy_sol_types::Error::unknown_selector(
+                        <Self as alloy_sol_types::SolInterface>::NAME,
+                        selector,
+                    ),
+                );
+            };
+            DECODE_SHIMS[idx](data)
+        }
+        #[inline]
+        #[allow(non_snake_case)]
+        fn abi_decode_raw_validate(
+            selector: [u8; 4],
+            data: &[u8],
+        ) -> alloy_sol_types::Result<Self> {
+            static DECODE_VALIDATE_SHIMS: &[fn(
+                &[u8],
+            ) -> alloy_sol_types::Result<ERC1967ProxyErrors>] = &[
+                {
+                    fn ERC1967InvalidImplementation(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
+                        <ERC1967InvalidImplementation as alloy_sol_types::SolError>::abi_decode_raw_validate(
                                 data,
-                                config,
+                            )
+                            .map(ERC1967ProxyErrors::ERC1967InvalidImplementation)
+                    }
+                    ERC1967InvalidImplementation
+                },
+                {
+                    fn AddressEmptyCode(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
+                        <AddressEmptyCode as alloy_sol_types::SolError>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ERC1967ProxyErrors::AddressEmptyCode)
+                    }
+                    AddressEmptyCode
+                },
+                {
+                    fn ERC1967NonPayable(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
+                        <ERC1967NonPayable as alloy_sol_types::SolError>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ERC1967ProxyErrors::ERC1967NonPayable)
+                    }
+                    ERC1967NonPayable
+                },
+                {
+                    fn ERC1967ProxyUninitialized(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
+                        <ERC1967ProxyUninitialized as alloy_sol_types::SolError>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ERC1967ProxyErrors::ERC1967ProxyUninitialized)
+                    }
+                    ERC1967ProxyUninitialized
+                },
+                {
+                    fn FailedCall(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ERC1967ProxyErrors> {
+                        <FailedCall as alloy_sol_types::SolError>::abi_decode_raw_validate(
+                                data,
                             )
                             .map(ERC1967ProxyErrors::FailedCall)
                     }
@@ -897,19 +946,7 @@ constructor(address implementation, bytes _data) payable;
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data, config)
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_validate(
-            selector: [u8; 4],
-            data: &[u8],
-        ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-            )
+            DECODE_VALIDATE_SHIMS[idx](data)
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -970,58 +1007,6 @@ constructor(address implementation, bytes _data) payable;
                     <FailedCall as alloy_sol_types::SolError>::abi_encode_raw(inner, out)
                 }
             }
-        }
-    }
-    #[automatically_derived]
-    impl ERC1967ProxyErrors {
-        /**Creates a [`AddressEmptyCode`] error.
-
-```solidity
-error AddressEmptyCode(address)
-```*/
-        #[inline]
-        pub fn address_empty_code(target: alloy::sol_types::private::Address) -> Self {
-            Self::AddressEmptyCode(AddressEmptyCode { target: target })
-        }
-        /**Creates a [`ERC1967InvalidImplementation`] error.
-
-```solidity
-error ERC1967InvalidImplementation(address)
-```*/
-        #[inline]
-        pub fn erc_1967_invalid_implementation(
-            implementation: alloy::sol_types::private::Address,
-        ) -> Self {
-            Self::ERC1967InvalidImplementation(ERC1967InvalidImplementation {
-                implementation: implementation,
-            })
-        }
-        /**Creates a [`ERC1967NonPayable`] error.
-
-```solidity
-error ERC1967NonPayable()
-```*/
-        #[inline]
-        pub fn erc_1967_non_payable() -> Self {
-            Self::ERC1967NonPayable(ERC1967NonPayable)
-        }
-        /**Creates a [`ERC1967ProxyUninitialized`] error.
-
-```solidity
-error ERC1967ProxyUninitialized()
-```*/
-        #[inline]
-        pub fn erc_1967_proxy_uninitialized() -> Self {
-            Self::ERC1967ProxyUninitialized(ERC1967ProxyUninitialized)
-        }
-        /**Creates a [`FailedCall`] error.
-
-```solidity
-error FailedCall()
-```*/
-        #[inline]
-        pub fn failed_call() -> Self {
-            Self::FailedCall(FailedCall)
         }
     }
     ///Container for all the [`ERC1967Proxy`](self) events.
@@ -1117,20 +1102,6 @@ error FailedCall()
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
             }
-        }
-    }
-    #[automatically_derived]
-    impl ERC1967ProxyEvents {
-        /**Creates a [`Upgraded`] event.
-
-```solidity
-event Upgraded(address)
-```*/
-        #[inline]
-        pub fn upgraded(implementation: alloy::sol_types::private::Address) -> Self {
-            Self::Upgraded(Upgraded {
-                implementation: implementation,
-            })
         }
     }
     use alloy::contract as alloy_contract;

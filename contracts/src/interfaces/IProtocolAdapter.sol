@@ -111,6 +111,13 @@ interface IProtocolAdapter {
     /// against.
     event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
 
+    /// @notice Emitted when the frozen v1 adapter used for legacy nullifier checks is configured.
+    /// @param legacyProtocolAdapter The frozen v1 protocol adapter.
+    /// @param legacyCommitmentTreeRoot The final v1 commitment tree root.
+    event LegacyProtocolAdapterConfigured(
+        address indexed legacyProtocolAdapter, bytes32 indexed legacyCommitmentTreeRoot
+    );
+
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
     /// @param input The input data for the forwarded call.
@@ -163,9 +170,22 @@ interface IProtocolAdapter {
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 
+    /// @notice Configures the frozen v1 protocol adapter used to validate legacy inputs.
+    /// @param legacyProtocolAdapter The permanently stopped v1 protocol adapter.
+    /// @dev Can only be configured once while this adapter has an empty commitment tree and nullifier set.
+    function configureLegacyProtocolAdapter(address legacyProtocolAdapter) external;
+
     /// @notice Returns the kind table commitment that transactions must be proven against.
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+
+    /// @notice Returns the frozen v1 protocol adapter used for legacy nullifier checks.
+    /// @return legacyProtocolAdapter The configured v1 protocol adapter, or zero before configuration.
+    function legacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
+
+    /// @notice Returns the final v1 commitment tree root accepted for legacy inputs.
+    /// @return legacyCommitmentTreeRoot The configured v1 root, or zero before configuration.
+    function legacyCommitmentTreeRoot() external view returns (bytes32 legacyCommitmentTreeRoot);
 
     /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
     /// executes no transaction.

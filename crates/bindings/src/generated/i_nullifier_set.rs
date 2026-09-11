@@ -238,29 +238,16 @@ function isNullifierContained(bytes32 nullifier) external view returns (bool isC
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: isNullifierContainedReturn = r.into();
                         r.isContained
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -409,29 +396,16 @@ function nullifierAtIndex(uint256 index) external view returns (bytes32 nullifie
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: nullifierAtIndexReturn = r.into();
                         r.nullifier
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -571,36 +545,23 @@ function nullifierCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: nullifierCountReturn = r.into();
                         r.count
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
     ///Container for all the [`INullifierSet`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[derive()]
     pub enum INullifierSetCalls {
         #[allow(missing_docs)]
         isNullifierContained(isNullifierContainedCall),
@@ -687,31 +648,15 @@ function nullifierCount() external view returns (uint256 count);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::default(),
-            )
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_with_config(
-            selector: [u8; 4],
-            data: &[u8],
-            config: alloy_sol_types::abi::AbiDecoderConfig,
-        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
-                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<INullifierSetCalls>] = &[
                 {
                     fn nullifierCount(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<INullifierSetCalls> {
-                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(INullifierSetCalls::nullifierCount)
                     }
@@ -720,11 +665,9 @@ function nullifierCount() external view returns (uint256 count);
                 {
                     fn nullifierAtIndex(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<INullifierSetCalls> {
-                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(INullifierSetCalls::nullifierAtIndex)
                     }
@@ -733,11 +676,9 @@ function nullifierCount() external view returns (uint256 count);
                 {
                     fn isNullifierContained(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<INullifierSetCalls> {
-                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(INullifierSetCalls::isNullifierContained)
                     }
@@ -752,7 +693,7 @@ function nullifierCount() external view returns (uint256 count);
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data, config)
+            DECODE_SHIMS[idx](data)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -760,11 +701,52 @@ function nullifierCount() external view returns (uint256 count);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-            )
+            static DECODE_VALIDATE_SHIMS: &[fn(
+                &[u8],
+            ) -> alloy_sol_types::Result<INullifierSetCalls>] = &[
+                {
+                    fn nullifierCount(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<INullifierSetCalls> {
+                        <nullifierCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(INullifierSetCalls::nullifierCount)
+                    }
+                    nullifierCount
+                },
+                {
+                    fn nullifierAtIndex(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<INullifierSetCalls> {
+                        <nullifierAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(INullifierSetCalls::nullifierAtIndex)
+                    }
+                    nullifierAtIndex
+                },
+                {
+                    fn isNullifierContained(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<INullifierSetCalls> {
+                        <isNullifierContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(INullifierSetCalls::isNullifierContained)
+                    }
+                    isNullifierContained
+                },
+            ];
+            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
+                return Err(
+                    alloy_sol_types::Error::unknown_selector(
+                        <Self as alloy_sol_types::SolInterface>::NAME,
+                        selector,
+                    ),
+                );
+            };
+            DECODE_VALIDATE_SHIMS[idx](data)
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {

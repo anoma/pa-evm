@@ -409,29 +409,16 @@ function commitmentCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: commitmentCountReturn = r.into();
                         r.count
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -573,29 +560,16 @@ function commitmentTreeCapacity() external view returns (uint256 capacity);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: commitmentTreeCapacityReturn = r.into();
                         r.capacity
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -735,29 +709,16 @@ function commitmentTreeDepth() external view returns (uint8 depth);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: commitmentTreeDepthReturn = r.into();
                         r.depth
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -906,29 +867,16 @@ function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: commitmentTreeRootAtIndexReturn = r.into();
                         r.root
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -1070,29 +1018,16 @@ function commitmentTreeRootCount() external view returns (uint256 count);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: commitmentTreeRootCountReturn = r.into();
                         r.count
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -1239,29 +1174,16 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: isCommitmentTreeRootContainedReturn = r.into();
                         r.isContained
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
@@ -1401,36 +1323,23 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     })
             }
             #[inline]
-            fn abi_decode_returns_with_config(
+            fn abi_decode_returns_validate(
                 data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
+                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
                     .map(|r| {
                         let r: latestCommitmentTreeRootReturn = r.into();
                         r.root
                     })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
             }
         }
     };
     ///Container for all the [`ICommitmentTree`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Debug, PartialEq, Eq, Hash)]
+    #[derive()]
     pub enum ICommitmentTreeCalls {
         #[allow(missing_docs)]
         commitmentCount(commitmentCountCall),
@@ -1549,31 +1458,15 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::default(),
-            )
-        }
-        #[inline]
-        #[allow(non_snake_case)]
-        fn abi_decode_raw_with_config(
-            selector: [u8; 4],
-            data: &[u8],
-            config: alloy_sol_types::abi::AbiDecoderConfig,
-        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
-                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ICommitmentTreeCalls>] = &[
                 {
                     fn commitmentTreeRootAtIndex(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::commitmentTreeRootAtIndex)
                     }
@@ -1582,11 +1475,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn commitmentTreeRootCount(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::commitmentTreeRootCount)
                     }
@@ -1595,11 +1486,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn commitmentTreeDepth(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::commitmentTreeDepth)
                     }
@@ -1608,11 +1497,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn latestCommitmentTreeRoot(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::latestCommitmentTreeRoot)
                     }
@@ -1621,11 +1508,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn commitmentCount(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::commitmentCount)
                     }
@@ -1634,11 +1519,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn isCommitmentTreeRootContained(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::isCommitmentTreeRootContained)
                     }
@@ -1647,11 +1530,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 {
                     fn commitmentTreeCapacity(
                         data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw(
                                 data,
-                                config,
                             )
                             .map(ICommitmentTreeCalls::commitmentTreeCapacity)
                     }
@@ -1666,7 +1547,7 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data, config)
+            DECODE_SHIMS[idx](data)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -1674,11 +1555,96 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            Self::abi_decode_raw_with_config(
-                selector,
-                data,
-                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-            )
+            static DECODE_VALIDATE_SHIMS: &[fn(
+                &[u8],
+            ) -> alloy_sol_types::Result<ICommitmentTreeCalls>] = &[
+                {
+                    fn commitmentTreeRootAtIndex(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <commitmentTreeRootAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::commitmentTreeRootAtIndex)
+                    }
+                    commitmentTreeRootAtIndex
+                },
+                {
+                    fn commitmentTreeRootCount(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <commitmentTreeRootCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::commitmentTreeRootCount)
+                    }
+                    commitmentTreeRootCount
+                },
+                {
+                    fn commitmentTreeDepth(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <commitmentTreeDepthCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::commitmentTreeDepth)
+                    }
+                    commitmentTreeDepth
+                },
+                {
+                    fn latestCommitmentTreeRoot(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::latestCommitmentTreeRoot)
+                    }
+                    latestCommitmentTreeRoot
+                },
+                {
+                    fn commitmentCount(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <commitmentCountCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::commitmentCount)
+                    }
+                    commitmentCount
+                },
+                {
+                    fn isCommitmentTreeRootContained(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::isCommitmentTreeRootContained)
+                    }
+                    isCommitmentTreeRootContained
+                },
+                {
+                    fn commitmentTreeCapacity(
+                        data: &[u8],
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
+                                data,
+                            )
+                            .map(ICommitmentTreeCalls::commitmentTreeCapacity)
+                    }
+                    commitmentTreeCapacity
+                },
+            ];
+            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
+                return Err(
+                    alloy_sol_types::Error::unknown_selector(
+                        <Self as alloy_sol_types::SolInterface>::NAME,
+                        selector,
+                    ),
+                );
+            };
+            DECODE_VALIDATE_SHIMS[idx](data)
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -1866,22 +1832,6 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
             }
-        }
-    }
-    #[automatically_derived]
-    impl ICommitmentTreeEvents {
-        /**Creates a [`CommitmentTreeRootAdded`] event.
-
-```solidity
-event CommitmentTreeRootAdded(bytes32)
-```*/
-        #[inline]
-        pub fn commitment_tree_root_added(
-            root: alloy::sol_types::private::FixedBytes<32>,
-        ) -> Self {
-            Self::CommitmentTreeRootAdded(CommitmentTreeRootAdded {
-                root: root,
-            })
         }
     }
     use alloy::contract as alloy_contract;
