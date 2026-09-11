@@ -118,6 +118,7 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
 
         uint256 start = nullifiers.length();
         uint256 available = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount() - start;
+        // solhint-disable-next-line gas-strict-inequalities
         require(count <= available, NullifierBatchOutOfRange({available: available, requested: count}));
 
         for (uint256 i = 0; i < count; ++i) {

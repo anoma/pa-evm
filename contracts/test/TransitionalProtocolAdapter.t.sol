@@ -52,13 +52,6 @@ contract TransitionalProtocolAdapterTest is Test {
         _pa = _deployTransitionalProxy(address(_v1));
     }
 
-    function test_initialize_starts_paused_and_records_the_v1_protocol_adapter() public view {
-        assertTrue(_pa.paused(), "the transitional adapter should start paused");
-        assertEq(_pa.getProtocolAdapterV1(), address(_v1), "the recorded v1 protocol adapter differs");
-        assertEq(_pa.owner(), _OWNER, "owner differs");
-        assertEq(_pa.commitmentCount(), 0, "the tree should start empty");
-    }
-
     function test_constructor_reverts_on_a_zero_v1_protocol_adapter() public {
         vm.expectRevert(TransitionalProtocolAdapter.ZeroProtocolAdapterV1NotAllowed.selector);
         new TransitionalProtocolAdapter(address(_router), _verifier.SELECTOR(), address(0));
@@ -334,6 +327,13 @@ contract TransitionalProtocolAdapterTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert();
         _pa.seedNullifierSet(1);
+    }
+
+    function test_initialize_starts_paused_and_records_the_v1_protocol_adapter() public view {
+        assertTrue(_pa.paused(), "the transitional adapter should start paused");
+        assertEq(_pa.getProtocolAdapterV1(), address(_v1), "the recorded v1 protocol adapter differs");
+        assertEq(_pa.owner(), _OWNER, "owner differs");
+        assertEq(_pa.commitmentCount(), 0, "the tree should start empty");
     }
 
     /// @notice Deploys a stand-in for the v1 protocol adapter and fills it.
