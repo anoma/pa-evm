@@ -8,13 +8,13 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
-import {ProtocolAdapterTransition} from "../../src/ProtocolAdapterTransition.sol";
+import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
 /// @notice A script to move one chain's state from the stopped v1 protocol adapter into a v2 proxy running
-/// `ProtocolAdapterTransition`, and to leave that proxy on the plain `ProtocolAdapter` implementation. It copies the
+/// `TransitionalProtocolAdapter`, and to leave that proxy on the plain `ProtocolAdapter` implementation. It copies the
 /// commitment tree and the nullifier set, unpauses, and upgrades — in that order, in one run. The unpause compares
 /// the copied state against v1 and reverts on a difference, so no run reaches the upgrade with the wrong state. The
 /// copy-in is only removed by the upgrade, so a run that stops early must be repeated until it reaches the end.
@@ -38,7 +38,7 @@ contract MigrateProtocolAdapterState is Script {
     /// a 30 million block. A chain holding 8000 nullifiers therefore takes 40 transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
 
-    /// @notice Thrown if the proxy is not paused, i.e. if it is not a freshly initialized transition deployment.
+    /// @notice Thrown if the proxy is not paused, i.e. if it is not a freshly initialized transitional deployment.
     error ProxyNotPaused(address proxy);
 
     /// @notice Thrown if a v1 storage slot does not hold what its public getter reports, i.e. if v1's storage layout
@@ -64,7 +64,7 @@ contract MigrateProtocolAdapterState is Script {
     /// behind it. The proxy refuses to unpause until it holds v1's commitment tree and nullifier set, so the run
     /// cannot reach the upgrade with the wrong state; run `verify` afterwards to assert the same against the chain.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
-    /// @param proxy The v2 protocol adapter proxy, running `ProtocolAdapterTransition` and still paused.
+    /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter` and still paused.
     function run(address protocolAdapterV1, address proxy) public {
         require(Pausable(proxy).paused(), ProxyNotPaused(proxy));
 
@@ -81,7 +81,7 @@ contract MigrateProtocolAdapterState is Script {
         _seedNullifierSet({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
 
         vm.startBroadcast();
-        ProtocolAdapterTransition(proxy).unpause();
+        TransitionalProtocolAdapter(proxy).unpause();
         UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationDeployScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }
@@ -113,7 +113,7 @@ contract MigrateProtocolAdapterState is Script {
         }
 
         vm.broadcast();
-        ProtocolAdapterTransition(proxy).seedCommitmentTree(sides);
+        TransitionalProtocolAdapter(proxy).seedCommitmentTree(sides);
     }
 
     /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction. The proxy reads each
@@ -128,7 +128,7 @@ contract MigrateProtocolAdapterState is Script {
             uint256 size = Math.min(NULLIFIERS_PER_BATCH, total - seeded);
 
             vm.broadcast();
-            ProtocolAdapterTransition(proxy).seedNullifierSet(size);
+            TransitionalProtocolAdapter(proxy).seedNullifierSet(size);
         }
     }
 
