@@ -7,13 +7,13 @@ import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/Enumera
 
 import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "./interfaces/INullifierSet.sol";
-import {IProtocolAdapterTransition} from "./interfaces/IProtocolAdapterTransition.sol";
+import {ITransitional} from "./interfaces/ITransitional.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {SeededTree} from "./libs/SeededTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
 import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 
-/// @title ProtocolAdapterTransition
+/// @title TransitionalProtocolAdapter
 /// @author Anoma Foundation, 2026
 /// @notice The protocol adapter for a chain that moves from v1 to v2. It starts paused and copies the v1 state in —
 /// the commitment tree and the nullifier set — reading every value from the v1 protocol adapter itself. It refuses to
@@ -22,7 +22,7 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 /// chain deployed fresh uses `ProtocolAdapter` from the start.
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
-contract ProtocolAdapterTransition is IProtocolAdapterTransition, ProtocolAdapter {
+contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
     using SeededTree for MerkleTree.Tree;
@@ -79,7 +79,7 @@ contract ProtocolAdapterTransition is IProtocolAdapterTransition, ProtocolAdapte
         _pause();
     }
 
-    /// @inheritdoc IProtocolAdapterTransition
+    /// @inheritdoc ITransitional
     function seedCommitmentTree(bytes32[] calldata sides)
         external
         override
@@ -112,7 +112,7 @@ contract ProtocolAdapterTransition is IProtocolAdapterTransition, ProtocolAdapte
         emit CommitmentTreeSeeded({root: root, leafCount: leafCount});
     }
 
-    /// @inheritdoc IProtocolAdapterTransition
+    /// @inheritdoc ITransitional
     function seedNullifierSet(uint256 count) external override onlyOwner whenPaused whenProtocolAdapterV1Stopped {
         EnumerableSet.Bytes32Set storage nullifiers = _getNullifierSetStorage()._nullifierSet;
 
@@ -136,7 +136,7 @@ contract ProtocolAdapterTransition is IProtocolAdapterTransition, ProtocolAdapte
         emit NullifierSetSeeded({start: start, count: count});
     }
 
-    /// @inheritdoc IProtocolAdapterTransition
+    /// @inheritdoc ITransitional
     function getProtocolAdapterV1() external view override returns (address protocolAdapterV1) {
         protocolAdapterV1 = _PROTOCOL_ADAPTER_V1;
     }

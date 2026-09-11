@@ -15,16 +15,16 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
-import {IProtocolAdapterTransition} from "../src/interfaces/IProtocolAdapterTransition.sol";
+import {ITransitional} from "../src/interfaces/ITransitional.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {ProtocolAdapterTransition} from "../src/ProtocolAdapterTransition.sol";
+import {TransitionalProtocolAdapter} from "../src/TransitionalProtocolAdapter.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {ProtocolAdapterV1Mock} from "./mocks/ProtocolAdapterV1.m.sol";
 
-/// @dev The v1 protocol adapter is a stand-in holding its state in v1's storage layout. The transition adapter reads
-/// every value from it, so the test fills it, stops it, and then checks what the transition adapter copies in.
-contract ProtocolAdapterTransitionTest is Test {
+/// @dev The v1 protocol adapter is a stand-in holding its state in v1's storage layout. The transitional adapter reads
+/// every value from it, so the test fills it, stops it, and then checks what the transitional adapter copies in.
+contract TransitionalProtocolAdapterTest is Test {
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -41,7 +41,7 @@ contract ProtocolAdapterTransitionTest is Test {
     RiscZeroMockVerifier internal _verifier;
 
     ProtocolAdapterV1Mock internal _v1;
-    ProtocolAdapterTransition internal _pa;
+    TransitionalProtocolAdapter internal _pa;
 
     function setUp() public {
         (_router, _emergencyStop, _verifier) = new DeployRiscZeroContractsMock().run();
@@ -49,19 +49,19 @@ contract ProtocolAdapterTransitionTest is Test {
         _v1 = _deployProtocolAdapterV1({commitments: _COMMITMENT_COUNT, nullifiers: _NULLIFIER_COUNT});
         _v1.emergencyStop();
 
-        _pa = _deployTransitionProxy(address(_v1));
+        _pa = _deployTransitionalProxy(address(_v1));
     }
 
     function test_initialize_starts_paused_and_records_the_v1_protocol_adapter() public view {
-        assertTrue(_pa.paused(), "the transition adapter should start paused");
+        assertTrue(_pa.paused(), "the transitional adapter should start paused");
         assertEq(_pa.getProtocolAdapterV1(), address(_v1), "the recorded v1 protocol adapter differs");
         assertEq(_pa.owner(), _OWNER, "owner differs");
         assertEq(_pa.commitmentCount(), 0, "the tree should start empty");
     }
 
     function test_constructor_reverts_on_a_zero_v1_protocol_adapter() public {
-        vm.expectRevert(ProtocolAdapterTransition.ZeroProtocolAdapterV1NotAllowed.selector);
-        new ProtocolAdapterTransition(address(_router), _verifier.SELECTOR(), address(0));
+        vm.expectRevert(TransitionalProtocolAdapter.ZeroProtocolAdapterV1NotAllowed.selector);
+        new TransitionalProtocolAdapter(address(_router), _verifier.SELECTOR(), address(0));
     }
 
     function test_execute_reverts_while_paused() public {
@@ -77,9 +77,7 @@ contract ProtocolAdapterTransitionTest is Test {
 
     function test_seedCommitmentTree_reproduces_the_v1_tree() public {
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapterTransition.CommitmentTreeSeeded({
-            root: _v1.latestCommitmentTreeRoot(), leafCount: _COMMITMENT_COUNT
-        });
+        emit ITransitional.CommitmentTreeSeeded({root: _v1.latestCommitmentTreeRoot(), leafCount: _COMMITMENT_COUNT});
         _seedCommitmentTree();
 
         assertEq(_pa.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "latest root differs from v1");
@@ -105,7 +103,7 @@ contract ProtocolAdapterTransitionTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterTransition.HistoricalRootMismatch.selector, 0, SHA256.EMPTY_HASH, wrong
+                TransitionalProtocolAdapter.HistoricalRootMismatch.selector, 0, SHA256.EMPTY_HASH, wrong
             )
         );
         _pa.unpause();
@@ -120,7 +118,7 @@ contract ProtocolAdapterTransitionTest is Test {
 
         vm.prank(_OWNER);
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapterTransition.HistoricalRootMismatch.selector, 1, expected, wrong)
+            abi.encodeWithSelector(TransitionalProtocolAdapter.HistoricalRootMismatch.selector, 1, expected, wrong)
         );
         _pa.unpause();
     }
@@ -165,19 +163,19 @@ contract ProtocolAdapterTransitionTest is Test {
         bytes32[] memory sides = _v1.commitmentTreeSides();
 
         vm.prank(_OWNER);
-        vm.expectRevert(ProtocolAdapterTransition.CommitmentTreeNotEmpty.selector);
+        vm.expectRevert(TransitionalProtocolAdapter.CommitmentTreeNotEmpty.selector);
         _pa.seedCommitmentTree(sides);
     }
 
     function test_seedCommitmentTree_reverts_on_an_empty_v1_tree() public {
         ProtocolAdapterV1Mock empty = _deployProtocolAdapterV1({commitments: 0, nullifiers: 0});
         empty.emergencyStop();
-        ProtocolAdapterTransition pa = _deployTransitionProxy(address(empty));
+        TransitionalProtocolAdapter pa = _deployTransitionalProxy(address(empty));
 
         bytes32[] memory sides = empty.commitmentTreeSides();
 
         vm.prank(_OWNER);
-        vm.expectRevert(ProtocolAdapterTransition.EmptyCommitmentTreeNotAllowed.selector);
+        vm.expectRevert(TransitionalProtocolAdapter.EmptyCommitmentTreeNotAllowed.selector);
         pa.seedCommitmentTree(sides);
     }
 
@@ -192,7 +190,7 @@ contract ProtocolAdapterTransitionTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterTransition.LeafCountExceedsCapacity.selector, _COMMITMENT_COUNT, capacity
+                TransitionalProtocolAdapter.LeafCountExceedsCapacity.selector, _COMMITMENT_COUNT, capacity
             )
         );
         _pa.seedCommitmentTree(tooFew);
@@ -200,13 +198,13 @@ contract ProtocolAdapterTransitionTest is Test {
 
     function test_seedCommitmentTree_reverts_while_the_v1_protocol_adapter_runs() public {
         ProtocolAdapterV1Mock running = _deployProtocolAdapterV1({commitments: 1, nullifiers: 0});
-        ProtocolAdapterTransition pa = _deployTransitionProxy(address(running));
+        TransitionalProtocolAdapter pa = _deployTransitionalProxy(address(running));
 
         bytes32[] memory sides = running.commitmentTreeSides();
 
         vm.prank(_OWNER);
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapterTransition.ProtocolAdapterV1NotStopped.selector, address(running))
+            abi.encodeWithSelector(TransitionalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
         );
         pa.seedCommitmentTree(sides);
     }
@@ -222,11 +220,11 @@ contract ProtocolAdapterTransitionTest is Test {
     function test_seedNullifierSet_copies_the_batches_at_the_v1_indices() public {
         vm.startPrank(_OWNER);
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapterTransition.NullifierSetSeeded({start: 0, count: 3});
+        emit ITransitional.NullifierSetSeeded({start: 0, count: 3});
         _pa.seedNullifierSet(3);
 
         vm.expectEmit(address(_pa));
-        emit IProtocolAdapterTransition.NullifierSetSeeded({start: 3, count: _NULLIFIER_COUNT - 3});
+        emit ITransitional.NullifierSetSeeded({start: 3, count: _NULLIFIER_COUNT - 3});
         _pa.seedNullifierSet(_NULLIFIER_COUNT - 3);
         vm.stopPrank();
 
@@ -240,7 +238,7 @@ contract ProtocolAdapterTransitionTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterTransition.NullifierBatchOutOfRange.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT + 1
+                TransitionalProtocolAdapter.NullifierBatchOutOfRange.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT + 1
             )
         );
         _pa.seedNullifierSet(_NULLIFIER_COUNT + 1);
@@ -256,7 +254,7 @@ contract ProtocolAdapterTransitionTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterTransition.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
+                TransitionalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
             )
         );
         _pa.unpause();
@@ -269,7 +267,7 @@ contract ProtocolAdapterTransitionTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProtocolAdapterTransition.NullifierCountMismatch.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT - 1
+                TransitionalProtocolAdapter.NullifierCountMismatch.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT - 1
             )
         );
         _pa.unpause();
@@ -322,7 +320,7 @@ contract ProtocolAdapterTransitionTest is Test {
 
         Options memory opts;
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
-        opts.referenceContract = "ProtocolAdapterTransition.sol";
+        opts.referenceContract = "TransitionalProtocolAdapter.sol";
         Upgrades.upgradeProxy({
             proxy: address(_pa), contractName: "ProtocolAdapter.sol", data: "", opts: opts, tryCaller: _OWNER
         });
@@ -352,16 +350,18 @@ contract ProtocolAdapterTransitionTest is Test {
         }
     }
 
-    /// @notice Deploys a paused transition proxy bound to the given v1 protocol adapter.
-    function _deployTransitionProxy(address protocolAdapterV1)
+    /// @notice Deploys a paused transitional proxy bound to the given v1 protocol adapter.
+    function _deployTransitionalProxy(address protocolAdapterV1)
         internal
-        returns (ProtocolAdapterTransition transitionProxy)
+        returns (TransitionalProtocolAdapter transitionalProxy)
     {
         Options memory opts;
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR(), protocolAdapterV1);
-        transitionProxy = ProtocolAdapterTransition(
+        transitionalProxy = TransitionalProtocolAdapter(
             Upgrades.deployUUPSProxy(
-                "ProtocolAdapterTransition.sol", abi.encodeCall(ProtocolAdapterTransition.initialize, (_OWNER)), opts
+                "TransitionalProtocolAdapter.sol",
+                abi.encodeCall(TransitionalProtocolAdapter.initialize, (_OWNER)),
+                opts
             )
         );
     }

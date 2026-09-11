@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/// @title IProtocolAdapterTransition
+/// @title ITransitional
 /// @author Anoma Foundation, 2026
 /// @notice The interface of the protocol adapter variant that takes over the state of a stopped v1 protocol adapter.
 /// @custom:security-contact security@anoma.foundation
-interface IProtocolAdapterTransition {
+interface ITransitional {
     /// @notice Emitted when the commitment tree state has been copied in.
     /// @param root The root of the copied tree, now the latest historical root.
     /// @param leafCount The number of commitments in the copied tree.

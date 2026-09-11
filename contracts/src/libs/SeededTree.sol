@@ -9,8 +9,8 @@ import {SHA256} from "./SHA256.sol";
 /// @title SeededTree
 /// @author Anoma Foundation, 2026
 /// @notice Reads a commitment tree that was written directly instead of grown by `MerkleTree.push`. The protocol
-/// adapter never does that, so `MerkleTree` carries neither function; both live here, with the transition that needs
-/// them.
+/// adapter never does that, so `MerkleTree` carries neither function; both live here, and only
+/// `TransitionalProtocolAdapter` uses them.
 /// @custom:security-contact security@anoma.foundation
 library SeededTree {
     /// @notice Computes the root of the tree in its current state, without adding a leaf.

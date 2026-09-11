@@ -8,7 +8,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
 import {MigrateProtocolAdapterState} from "../../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
-import {ProtocolAdapterTransition} from "../../../src/ProtocolAdapterTransition.sol";
+import {TransitionalProtocolAdapter} from "../../../src/TransitionalProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {ProtocolAdapterV1Mock} from "../../mocks/ProtocolAdapterV1.m.sol";
 
@@ -39,7 +39,7 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         vm.prank(DEFAULT_SENDER);
         _v1.emergencyStop();
 
-        _proxy = _deployTransitionProxy(address(_v1));
+        _proxy = _deployTransitionalProxy(address(_v1));
 
         _script = new MigrateProtocolAdapterState();
     }
@@ -64,16 +64,16 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         // The copy-in is gone with the implementation that carried it.
         vm.prank(DEFAULT_SENDER);
         vm.expectRevert();
-        ProtocolAdapterTransition(_proxy).seedNullifierSet(1);
+        TransitionalProtocolAdapter(_proxy).seedNullifierSet(1);
     }
 
     function test_run_reverts_if_the_v1_protocol_adapter_is_still_running() public {
         ProtocolAdapterV1Mock running = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
         running.addCommitment(keccak256("commitment"));
-        address proxy = _deployTransitionProxy(address(running));
+        address proxy = _deployTransitionalProxy(address(running));
 
         vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapterTransition.ProtocolAdapterV1NotStopped.selector, address(running))
+            abi.encodeWithSelector(TransitionalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
         );
         _script.run({protocolAdapterV1: address(running), proxy: proxy});
     }
@@ -100,19 +100,19 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         bytes32[] memory sides = _v1.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
-        ProtocolAdapterTransition(_proxy).seedCommitmentTree(sides);
-        ProtocolAdapterTransition(_proxy).seedNullifierSet(_NULLIFIER_COUNT);
-        ProtocolAdapterTransition(_proxy).unpause();
+        TransitionalProtocolAdapter(_proxy).seedCommitmentTree(sides);
+        TransitionalProtocolAdapter(_proxy).seedNullifierSet(_NULLIFIER_COUNT);
+        TransitionalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
 
         vm.expectRevert(abi.encodeWithSelector(MigrateProtocolAdapterState.ProxyNotPaused.selector, _proxy));
         _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
     }
 
-    /// @notice Deploys a paused transition proxy bound to the given v1 protocol adapter.
+    /// @notice Deploys a paused transitional proxy bound to the given v1 protocol adapter.
     /// @param protocolAdapterV1 The v1 protocol adapter the proxy copies its state from.
     /// @return proxy The proxy address.
-    function _deployTransitionProxy(address protocolAdapterV1) internal returns (address proxy) {
+    function _deployTransitionalProxy(address protocolAdapterV1) internal returns (address proxy) {
         // forge-lint: disable-next-line(unused-return)
         (, bytes memory implementationData) = new DeployProtocolAdapterImplementation().predict();
         (address router, bytes4 selector) = abi.decode(implementationData, (address, bytes4));
@@ -120,8 +120,8 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         Options memory opts;
         opts.constructorData = abi.encode(router, selector, protocolAdapterV1);
         proxy = Upgrades.deployUUPSProxy(
-            "ProtocolAdapterTransition.sol",
-            abi.encodeCall(ProtocolAdapterTransition.initialize, (DEFAULT_SENDER)),
+            "TransitionalProtocolAdapter.sol",
+            abi.encodeCall(TransitionalProtocolAdapter.initialize, (DEFAULT_SENDER)),
             opts
         );
     }
