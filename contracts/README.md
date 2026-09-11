@@ -114,7 +114,7 @@ forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy 
   --rpc-url sepolia
 ```
 
-`<IS_TRANSITIONAL>` is `true` only for a chain that ran v1: its proxy then starts on the transitional implementation, which copies the v1 state in.
+`<IS_TRANSITIONAL>` is `true` only for a chain that ran v1: its proxy then starts on the transitional implementation, which copies the v1 state in. See [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md).
 
 Append the
 

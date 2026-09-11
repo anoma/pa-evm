@@ -71,3 +71,23 @@ runs that commit's source. Changes only ever flow this way.
 chain, plus the genesis fields pinning how that address was derived. Written once
 per chain at its first deploy and never edited; what an environment currently runs
 is read from the chain, not from here.
+
+**v1**:
+The protocol adapter deployed before the v2 release: one immutable contract per chain, with no kind table. A chain that ran it moves its state into v2 through the transitional implementation.
+
+**Transitional implementation**:
+`TransitionalProtocolAdapter`, the implementation the proxy of a chain that ran v1 starts on. It is a protocol adapter that begins paused and accepts the v1 state.
+_Avoid_: transition implementation, migration contract
+
+**Plain implementation**:
+`ProtocolAdapter`, the implementation every chain ends on. Its address is deterministic per chain.
+
+**Copy-in**:
+Writing the v1 state into the proxy: `seedCommitmentTree` once, then `seedNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
+_Avoid_: seeding (the function names say it; the act has its own word), import
+
+**Migration run**:
+One execution of `MigrateProtocolAdapterState` for one chain: the copy-in, the unpause, which checks the result against v1, and the upgrade. A run that stops early has to be repeated until it reaches the upgrade.
+
+**Sides**:
+The stored left-sibling hashes of the v1 commitment tree, one per level. v1 exposes no getter for them, so the script reads them from v1's storage and the transitional implementation proves they reproduce v1's root.
