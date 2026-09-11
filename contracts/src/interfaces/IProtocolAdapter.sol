@@ -152,8 +152,11 @@ interface IProtocolAdapter {
     /// @dev This transaction will always revert.
     function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
 
-    /// @notice Stops the protocol adapter permanently in case of an emergency.
-    function emergencyStop() external;
+    /// @notice Pauses the protocol adapter, so that no transaction executes until `unpause`.
+    function pause() external;
+
+    /// @notice Lifts the pause.
+    function unpause() external;
 
     /// @notice Sets the kind table commitment that transactions must be proven against.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
@@ -164,11 +167,15 @@ interface IProtocolAdapter {
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
 
-    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
-    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
-    /// 2. The protocol adapter itself was stopped by the owner.
-    /// @return isStopped Whether the protocol adapter has been stopped or not.
-    function isEmergencyStopped() external view returns (bool isStopped);
+    /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
+    /// executes no transaction.
+    /// @return isPaused Whether the protocol adapter is paused or not.
+    function paused() external view returns (bool isPaused);
+
+    /// @notice Returns whether the RISC Zero verifier associated with the protocol adapter is paused or not.
+    /// A paused verifier rejects every proof, so the protocol adapter executes no transaction either.
+    /// @return isPaused Whether the verifier is paused or not.
+    function riscZeroVerifierPaused() external view returns (bool isPaused);
 
     // solhint-disable func-name-mixedcase
 

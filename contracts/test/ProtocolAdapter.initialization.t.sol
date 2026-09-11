@@ -52,7 +52,7 @@ contract ProtocolAdapterInitializationTest is Test {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
 
-        vm.expectRevert(ProtocolAdapter.RiscZeroVerifierStopped.selector);
+        vm.expectRevert(ProtocolAdapter.RiscZeroVerifierPaused.selector);
         new ERC1967Proxy(address(implementation), abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)));
     }
 

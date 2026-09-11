@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
+import {MerkleTreeReference} from "../libs/MerkleTreeReference.sol";
 
 contract MerkleTreeExample {
-    using MerkleTree for bytes32[];
+    using MerkleTreeReference for bytes32[];
 
     uint256 internal constant _N_LEAVES = 7;
     uint256 internal constant _N_ROOTS = 8;
@@ -104,7 +104,7 @@ contract MerkleTreeExample {
 
             _heightTwoNodes[3] = _calculateNextLevel(_heightOneNodes[3]);
 
-            _roots[3] = MerkleTree.computeRoot(_leaves[3]);
+            _roots[3] = MerkleTreeReference.computeRoot(_leaves[3]);
 
             _siblings[3] = new bytes32[][](3);
 

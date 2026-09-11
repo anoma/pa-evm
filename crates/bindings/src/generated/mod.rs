@@ -7,4 +7,5 @@ pub mod erc1967_proxy;
 pub mod i_commitment_tree;
 pub mod i_nullifier_set;
 pub mod i_protocol_adapter;
+pub mod deployment_parameters;
 pub mod protocol_adapter;

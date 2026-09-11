@@ -32,7 +32,7 @@ Changes flow one way, `next` → `staging` → `main`, and the promotion pull re
 - **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
 - **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
 
-The flags gate the deployment tests in the contracts and the crates suites alike; unset, the gated tests skip and no chain is forked.
+The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.
 
 Deploy or upgrade **every** chain of an environment before opening its promotion pull request — one chain left behind blocks the promotion for all of them.
 
@@ -176,7 +176,7 @@ For each chain in the `staging` section of the record:
 - [ ] After the last chain, confirm the promotion gate locally by running
 
   ```sh
-  VERIFY_STAGING_DEPLOYMENTS=true just contracts-test bindings-test
+  VERIFY_STAGING_DEPLOYMENTS=true just bindings-test
   ```
 
   the same checks the promotion pull request runs.
@@ -359,6 +359,14 @@ For **both**:
 
   The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited.
 
+- [ ] Regenerate the library the deploy script reads the record through with
+
+  ```sh
+  just contracts-gen-deployments
+  ```
+
+  and commit it alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
 - [ ] Run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change, then run the tests with `just bindings-test`.
@@ -431,6 +439,40 @@ For **production**:
 
   ```sh
   just contracts-propose-production-kind-table-update deployer <PROXY> <PROPOSER> <COMMITMENT> <CHAIN>
+  ```
+
+- [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
+
+## Pausing the Protocol Adapter
+
+Not a release. A paused protocol adapter executes no transaction until its owner calls `unpause`. Lifting the pause takes one more owner transaction, which in production is one more Safe transaction.
+
+For **staging**:
+
+- [ ] **Simulate** the pause, with the staging proxy owner as the sender, by running
+
+  ```sh
+  just contracts-simulate-staging-pause 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **execute** it by running
+
+  ```sh
+  just contracts-execute-staging-pause deployer <PROXY> <CHAIN>
+  ```
+
+For **production**:
+
+- [ ] **Simulate** the proposal, which simulates the Safe executing the pause, by running
+
+  ```sh
+  just contracts-simulate-production-pause-proposal <PROXY> <PROPOSER> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **propose** it to the owning Safe by running
+
+  ```sh
+  just contracts-propose-production-pause deployer <PROXY> <PROPOSER> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

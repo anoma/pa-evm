@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 /// @title VerifyingKeys
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A library containing the verifying keys (RISC Zero image IDs) of the circuits the protocol adapter
 /// accepts proofs from, pinned to the `anoma-rm-risc0` circuit binaries.
 /// @custom:security-contact security@anoma.foundation

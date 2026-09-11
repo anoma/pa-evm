@@ -58,7 +58,7 @@ contract ProtocolAdapterUpgradeTest is Test {
         vm.prank(_emergencyStop.owner());
         _emergencyStop.estop();
 
-        assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the verifier emergency stop");
+        assertTrue(_pa.riscZeroVerifierPaused(), "the verifier of the PA should be paused");
 
         // A fresh transaction proven against the stopped verifier reverts on proof verification. A fresh
         // transaction is needed because the state transition — rejecting the replayed nullifiers of `oldTxn` —
@@ -88,7 +88,7 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // The new selector is in place and the protocol adapter is operational again.
         assertEq(_pa.RISC_ZERO_VERIFIER_SELECTOR(), _NEW_VERIFIER_SELECTOR, "the new selector should be in place");
-        assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
+        assertFalse(_pa.riscZeroVerifierPaused(), "the new verifier should not be paused");
 
         // The protocol adapter state survived the upgrade.
         assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforeUpgrade, "the latest root should survive the upgrade");
@@ -113,46 +113,39 @@ contract ProtocolAdapterUpgradeTest is Test {
         _pa.execute(secondOldTxn);
     }
 
-    /// @dev `emergencyStop` has no counterpart in the current implementation, so lifting the pause it sets takes an
-    /// upgrade to an implementation carrying a recovery path.
-    function test_upgrade_allows_lifting_the_pause_set_by_an_emergency_stop() public {
+    /// @dev The upgrade and the reinitializer run in one transaction, so no block passes in which the new
+    /// implementation is live but still paused.
+    function test_upgrade_lifts_the_pause_in_the_same_transaction() public {
         // Execute a transaction while the protocol adapter is operational.
-        (IProtocolAdapter.Transaction memory txnBeforeStop, bytes32 nonce) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txnBeforePause, bytes32 nonce) = vm.transaction({
             mockVerifier: _verifier,
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
-        _pa.execute(txnBeforeStop);
+        _pa.execute(txnBeforePause);
 
-        bytes32 latestRootBeforeStop = _pa.latestCommitmentTreeRoot();
-        uint256 commitmentCountBeforeStop = _pa.commitmentCount();
+        bytes32 latestRootBeforePause = _pa.latestCommitmentTreeRoot();
+        uint256 commitmentCountBeforePause = _pa.commitmentCount();
 
-        // The owner stops the protocol adapter.
+        // The owner pauses the protocol adapter.
         vm.prank(_OWNER);
-        _pa.emergencyStop();
+        _pa.pause();
 
-        assertTrue(_pa.isEmergencyStopped(), "PA should be stopped after the emergency stop");
+        assertTrue(_pa.paused(), "PA should be paused");
 
         // Execution is halted. The `whenNotPaused` modifier rejects the transaction before it touches any state, so
         // this very transaction can be replayed once the pause is lifted.
-        (IProtocolAdapter.Transaction memory txnAfterStop,) = vm.transaction({
+        (IProtocolAdapter.Transaction memory txnAfterPause,) = vm.transaction({
             mockVerifier: _verifier,
             nonce: nonce,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
-        _pa.execute(txnAfterStop);
+        _pa.execute(txnAfterPause);
 
-        // There is no way out while the deployed implementation is in place — its ABI carries no recovery function,
-        // so the proxy finds nothing to delegate to and reverts without data.
-        vm.prank(_OWNER);
-        vm.expectRevert();
-        ProtocolAdapterResumableMock(address(_pa)).reinitialize();
-
-        // Upgrade to an implementation carrying a recovery path, lifting the pause in the same transaction. Passing
-        // the reinitializer as the upgrade call data leaves no block in which the new implementation is live but
-        // still paused.
+        // Upgrade to a new implementation and lift the pause in the same transaction, by passing the reinitializer
+        // as the upgrade call data.
         Options memory opts;
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
 
@@ -166,16 +159,15 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // The protocol adapter is operational again.
         assertFalse(_pa.paused(), "PA should be unpaused after the upgrade");
-        assertFalse(_pa.isEmergencyStopped(), "PA should be operational again after the upgrade");
 
         // The protocol adapter state survived the upgrade.
-        assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforeStop, "the latest root should survive the upgrade");
-        assertEq(_pa.commitmentCount(), commitmentCountBeforeStop, "the commitment count should survive the upgrade");
+        assertEq(_pa.latestCommitmentTreeRoot(), latestRootBeforePause, "the latest root should survive the upgrade");
+        assertEq(_pa.commitmentCount(), commitmentCountBeforePause, "the commitment count should survive the upgrade");
 
         // The transaction that was rejected while paused now settles.
-        _pa.execute(txnAfterStop);
+        _pa.execute(txnAfterPause);
 
-        assertEq(_pa.commitmentCount(), commitmentCountBeforeStop + 1, "the replayed transaction should settle");
+        assertEq(_pa.commitmentCount(), commitmentCountBeforePause + 1, "the replayed transaction should settle");
     }
 
     function test_upgrade_reverts_if_the_caller_is_not_the_owner() public {

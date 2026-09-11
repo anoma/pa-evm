@@ -16,15 +16,15 @@ abstract contract SafeFixture is Test {
         safe = address(new SafeProxy(address(new SafeSmartAccount())));
         SafeSmartAccount(payable(safe))
             .setup({
-            _owners: owners,
-            _threshold: 1,
-            to: address(0),
-            data: "",
-            fallbackHandler: address(0),
-            paymentToken: address(0),
-            payment: 0,
-            paymentReceiver: payable(address(0))
-        });
+                _owners: owners,
+                _threshold: 1,
+                to: address(0),
+                data: "",
+                fallbackHandler: address(0),
+                paymentToken: address(0),
+                payment: 0,
+                paymentReceiver: payable(address(0))
+            });
     }
 
     /// @notice Deploys a Safe with a single owner and a threshold of one, and installs it at the target address.

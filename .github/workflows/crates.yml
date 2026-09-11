@@ -52,5 +52,7 @@ jobs:
         run: just crates-test
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          QUEUE_BASE_URL: ${{ secrets.QUEUE_BASE_URL }}
+          QUEUE_AUTH_TOKEN: ${{ secrets.QUEUE_AUTH_TOKEN }}
           VERIFY_STAGING_DEPLOYMENTS: ${{ github.base_ref == 'staging' }}
           VERIFY_PRODUCTION_DEPLOYMENTS: ${{ github.base_ref == 'main' }}

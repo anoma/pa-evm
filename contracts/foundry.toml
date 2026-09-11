@@ -14,12 +14,9 @@ via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
 
-# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`) and the
-# recorded deployments. Setting `fs_permissions` replaces the implicit artifact access.
-fs_permissions = [
-    { access = "read", path = "out" },
-    { access = "read", path = "../crates/bindings/deployments.json" },
-]
+# Let tests read build artifacts, which `openzeppelin-foundry-upgrades` needs. Setting
+# `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [{ access = "read", path = "out" }]
 
 # Settings required by `openzeppelin-foundry-upgrades` for upgrade-safety validation
 # (https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades#before-running).
@@ -67,6 +64,17 @@ ignored_warnings_from = [
     "dependencies/safe-utils-0.0.22/lib/solidity-http/src/", # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
+
+[lint]
+exclude_lints = [
+    "calls-loop",                  # Duplicates the Slither run in the same CI job, and misfires on memory allocation.
+    "inline-assembly",             # Only the ERC-7201 storage accessors, which solhint gates per site.
+    "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
+    "mixed-case-function",         # Only the OpenZeppelin `__X_init` initializers, which solhint gates per site.
+    "reentrancy-events",           # Duplicates Slither, where the reviewed sites carry `slither-disable-next-line`.
+    "require-revert-in-loop",      # One invalid action must abort the whole transaction.
+]
+ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"

@@ -1,39 +1,19 @@
-use alloy::primitives::Address;
+//! Checks of the deployment records themselves. They need no chain access and hold everywhere, so they run on
+//! every push: a record that does not parse, or a proxy that does not sit at the address its genesis deployment
+//! determines, is wrong regardless of what any chain currently runs.
+
+mod common;
+
+use alloy::primitives::{Address, keccak256};
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::{
-    Environment, protocol_adapter_address, protocol_adapter_deployments_map,
+    protocol_adapter_address, protocol_adapter_deployments_map,
+};
+use common::{
+    CREATE2_DEPLOYER, ENVIRONMENTS, context, is_release, is_release_candidate, parameters,
+    proxy_init_code, raw_entries,
 };
 use std::collections::HashSet;
-
-const ENVIRONMENTS: [Environment; 2] = [Environment::Staging, Environment::Production];
-
-#[derive(serde::Deserialize)]
-struct RawProxy {
-    address: String,
-}
-
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct RawEntry {
-    chain_id: u64,
-    proxy: RawProxy,
-}
-
-#[derive(serde::Deserialize)]
-struct RawDeployments {
-    staging: Vec<RawEntry>,
-    production: Vec<RawEntry>,
-}
-
-fn raw_entries(environment: Environment) -> Vec<RawEntry> {
-    let deployments: RawDeployments = serde_json::from_str(include_str!("../deployments.json"))
-        .expect("deployments.json: invalid JSON");
-
-    match environment {
-        Environment::Staging => deployments.staging,
-        Environment::Production => deployments.production,
-    }
-}
 
 #[test]
 fn all_entries_have_valid_chain_ids() {
@@ -103,4 +83,62 @@ fn each_chain_is_individually_addressable() {
             );
         }
     }
+}
+
+/// Every recorded proxy sits at the address its genesis deployment determines under the environment salt — the
+/// check that the first deployment of an environment used the right salt.
+#[tokio::test]
+async fn recorded_deployments_use_the_environment_salt() {
+    let parameters = parameters().await;
+
+    for environment in ENVIRONMENTS {
+        let salt = parameters.proxy_salt(environment);
+
+        for entry in raw_entries(environment) {
+            let context = context(environment, entry.chain_id);
+            let init_code = proxy_init_code(&entry.proxy, &context);
+            let expected = CREATE2_DEPLOYER.create2(salt, keccak256(&init_code));
+
+            assert_eq!(
+                expected.to_string().to_lowercase(),
+                entry.proxy.address.to_lowercase(),
+                "{context}: recorded proxy address differs"
+            );
+        }
+    }
+}
+
+#[test]
+fn is_release_accepts_a_version_without_a_suffix() {
+    assert!(is_release("2.0.0"));
+}
+
+#[test]
+fn is_release_rejects_a_prerelease() {
+    assert!(!is_release("2.0.0-rc.1"));
+    assert!(!is_release("2.0.0-alpha.6"));
+}
+
+#[test]
+fn is_release_candidate_accepts_a_numbered_candidate() {
+    assert!(is_release_candidate("2.0.0-rc.0"));
+    assert!(is_release_candidate("2.0.0-rc.12"));
+}
+
+#[test]
+fn is_release_candidate_rejects_another_prerelease() {
+    assert!(!is_release_candidate("2.0.0-alpha.6"));
+    assert!(!is_release_candidate("2.0.0-beta.1"));
+}
+
+#[test]
+fn is_release_candidate_rejects_a_candidate_without_a_number() {
+    assert!(!is_release_candidate("2.0.0-rc"));
+    assert!(!is_release_candidate("2.0.0-rc."));
+    assert!(!is_release_candidate("2.0.0-rc.x"));
+}
+
+#[test]
+fn is_release_candidate_rejects_a_version_without_a_suffix() {
+    assert!(!is_release_candidate("2.0.0"));
 }

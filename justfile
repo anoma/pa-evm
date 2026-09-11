@@ -37,10 +37,11 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (contract-free files).
-contracts-storage-check *skip='Types':
+contracts-storage-check *skip='':
     #!/usr/bin/env bash
     set -euo pipefail
     cd contracts
@@ -72,14 +73,20 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
+# Regenerate the recorded deployments library from the deployment records
+contracts-gen-deployments:
+    ./scripts/generate-recorded-deployments.sh
+
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    cd contracts && forge clean && forge bind \
-        --skip test \
-        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
+    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
+    # build first and let it read those artifacts.
+    cd contracts && forge clean && forge build --skip test && forge bind \
+        --skip-build \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -181,6 +188,32 @@ contracts-propose-production-kind-table-update deployer proxy proposer commitmen
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
+# A pause deploys no bytecode, so the pause recipes skip the clean rebuild. In an emergency, that saves time.
+
+# Simulate the staging pause (dry-run): impersonates the owner (sender = the staging proxy owner)
+contracts-simulate-staging-pause sender proxy chain *args:
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(address)" {{proxy}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Execute the staging pause as the proxy owner
+contracts-execute-staging-pause deployer proxy chain *args:
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(address)" {{proxy}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production pause proposal (dry-run): simulates the Safe executing the pause
+contracts-simulate-production-pause-proposal proxy proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose pausing the production proxy to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-pause deployer proxy proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
 contracts-verify-sourcify address contract chain *args:
     cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \
@@ -247,6 +280,10 @@ bindings-test *args:
 # Check bindings are up-to-date
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
+
+# Check the recorded deployments library is up-to-date
+contracts-deployments-check: contracts-gen-deployments
+    git diff --exit-code contracts/generated/RecordedDeployments.sol
 
 # Publish bindings
 bindings-publish *args:
@@ -341,3 +378,5 @@ all-check:
     @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the recorded deployments library is up-to-date..."
+    @just contracts-deployments-check
