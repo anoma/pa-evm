@@ -20,6 +20,7 @@ This monorepo is structured as follows:
 │   └── integration-test
 ├── Cargo.lock
 ├── Cargo.toml
+├── MIGRATION_CHECKLIST.md
 ├── README.md
 └── RELEASE_CHECKLIST.md
 ```

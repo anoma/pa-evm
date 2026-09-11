@@ -88,13 +88,14 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment. It picks the CREATE2 salt and the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol), and is deliberately kept out of `contracts/.env` so that it is a conscious choice per session.
+- [ ] Select the environment and the implementation the proxy starts on. `IS_PRODUCTION` picks the CREATE2 salt and, for a plain proxy, the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol). `IS_TRANSITIONAL` starts the proxy on the transitional implementation instead of the plain one, owned by the staging proxy owner in both environments; set it to `true` only for a chain that ran v1, as [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md) describes. Both are deliberately kept out of `contracts/.env` so that they are a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false
+  export IS_TRANSITIONAL=false
   ```
 
-  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read it; every other recipe takes its addresses as arguments.
+  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read them; every other recipe takes its addresses as arguments.
 
 ## Releasing a new Protocol Adapter Version
 
@@ -296,6 +297,7 @@ For **staging**:
 
   ```sh
   export IS_PRODUCTION=false
+  export IS_TRANSITIONAL=false
   ```
 
 For **production**:
@@ -306,6 +308,7 @@ For **production**:
 
   ```sh
   export IS_PRODUCTION=true
+  export IS_TRANSITIONAL=false
   ```
 
   The proxy is owned by the Safe from its constructor, so there is no ownership transfer. This is the only production step that needs no signer action.

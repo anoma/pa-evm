@@ -7,12 +7,16 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {
+    DeployTransitionalProtocolAdapterImplementation
+} from "./migration/DeployTransitionalProtocolAdapterImplementation.s.sol";
 import {Parameters} from "./Parameters.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported
-/// networks.
+/// networks. A chain that ran v1 starts its proxy on the transitional implementation instead, which copies the v1
+/// state in.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
@@ -37,18 +41,20 @@ contract DeployProtocolAdapterProxy is Script {
     /// implementation is validated for upgrade safety and deployed first, unless the other environment deployed it
     /// already.
     /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
-    /// salt and the owner receiving the authority to stop the protocol adapter in an emergency and to authorize
+    /// salt and, for a plain proxy, the owner receiving the authority to pause the protocol adapter and to authorize
     /// upgrades.
+    /// @param isTransitional Whether the proxy starts on the transitional implementation, which begins paused and
+    /// copies in the state of the chain's v1 protocol adapter, instead of the plain implementation. The proxy address
+    /// commits to the implementation, so the two land at different addresses. A transitional proxy is owned by the
+    /// staging proxy owner in both environments.
     /// @return proxy The protocol adapter proxy contract to interact with.
     /// @return implementation The protocol adapter implementation contract the proxy delegates to.
     /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
     /// @return creationCode The ERC-1967 proxy creation code, to record in `deployments.json`.
-    function run(bool isProduction)
+    function run(bool isProduction, bool isTransitional)
         public
         returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
     {
-        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
         // Checks
@@ -58,18 +64,19 @@ contract DeployProtocolAdapterProxy is Script {
                 DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
             );
 
-            // forge-lint: disable-next-line(unused-return)
-            (implementation,) = implementationDeployScript.predict();
+            implementation = _predictImplementation(isTransitional);
 
-            (proxy, initializerData, creationCode) =
-                _predict({salt: salt, implementation: implementation, isProduction: isProduction});
+            (proxy, initializerData, creationCode) = _predict({
+                salt: salt,
+                implementation: implementation,
+                owner: _proxyOwner({isProduction: isProduction, isTransitional: isTransitional})
+            });
             require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
         }
 
         // Deployment
         if (implementation.code.length == 0) {
-            // forge-lint: disable-next-line(unused-return)
-            implementationDeployScript.run();
+            _deployImplementation(isTransitional);
         }
 
         vm.startBroadcast();
@@ -79,14 +86,19 @@ contract DeployProtocolAdapterProxy is Script {
 
     /// @notice Predicts the deterministic address the proxy of this source version deploys to.
     /// @param isProduction Whether to predict the production or the staging environment proxy.
+    /// @param isTransitional Whether the proxy starts on the transitional or the plain implementation.
     /// @return proxy The predicted protocol adapter proxy contract address.
     /// @return implementation The predicted implementation contract address the proxy commits to.
-    function predict(bool isProduction) public returns (address proxy, address implementation) {
+    function predict(bool isProduction, bool isTransitional) public returns (address proxy, address implementation) {
         bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
 
-        (implementation,) = new DeployProtocolAdapterImplementation().predict();
+        implementation = _predictImplementation(isTransitional);
 
-        (proxy,,) = _predict({salt: salt, implementation: implementation, isProduction: isProduction});
+        (proxy,,) = _predict({
+            salt: salt,
+            implementation: implementation,
+            owner: _proxyOwner({isProduction: isProduction, isTransitional: isTransitional})
+        });
     }
 
     /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
@@ -96,21 +108,55 @@ contract DeployProtocolAdapterProxy is Script {
         name = isProduction ? "production" : "staging";
     }
 
+    /// @notice Predicts the implementation the proxy starts on.
+    /// @param isTransitional Whether to predict the transitional or the plain implementation.
+    /// @return implementation The predicted implementation contract address.
+    function _predictImplementation(bool isTransitional) internal returns (address implementation) {
+        if (isTransitional) {
+            // forge-lint: disable-next-line(unused-return)
+            (implementation,) = new DeployTransitionalProtocolAdapterImplementation().predict();
+        } else {
+            // forge-lint: disable-next-line(unused-return)
+            (implementation,) = new DeployProtocolAdapterImplementation().predict();
+        }
+    }
+
+    /// @notice Deploys the implementation the proxy starts on.
+    /// @param isTransitional Whether to deploy the transitional or the plain implementation.
+    function _deployImplementation(bool isTransitional) internal {
+        if (isTransitional) {
+            // forge-lint: disable-next-line(unused-return)
+            new DeployTransitionalProtocolAdapterImplementation().run();
+        } else {
+            // forge-lint: disable-next-line(unused-return)
+            new DeployProtocolAdapterImplementation().run();
+        }
+    }
+
+    /// @notice Returns the owner a proxy is initialized with. A transitional proxy gets the staging proxy owner in both
+    /// environments, because the migration run sends its calls from the owner. A production proxy moves to the
+    /// production proxy owner after the upgrade to the plain implementation.
+    /// @param isProduction Whether the proxy belongs to the production or the staging environment.
+    /// @param isTransitional Whether the proxy starts on the transitional implementation.
+    /// @return owner The account the proxy is initialized with as its owner.
+    function _proxyOwner(bool isProduction, bool isTransitional) internal pure returns (address owner) {
+        owner = (isProduction && !isTransitional) ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING;
+    }
+
     /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
     /// @param salt The CREATE2 salt of the environment.
     /// @param implementation The implementation contract the proxy delegates to.
-    /// @param isProduction Whether to derive the production or the staging environment proxy, selecting the owner.
+    /// @param owner The account the proxy is initialized with as its owner.
     /// @return proxy The deterministic protocol adapter proxy contract address.
     /// @return initializerData The proxy constructor's initializer data.
     /// @return creationCode The ERC-1967 proxy creation code.
-    function _predict(bytes32 salt, address implementation, bool isProduction)
+    function _predict(bytes32 salt, address implementation, address owner)
         internal
         pure
         returns (address proxy, bytes memory initializerData, bytes memory creationCode)
     {
-        initializerData = abi.encodeCall(
-            ProtocolAdapter.initialize, (isProduction ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING)
-        );
+        // The transitional implementation overrides `initialize` with the same signature, so the data serves both.
+        initializerData = abi.encodeCall(ProtocolAdapter.initialize, (owner));
         creationCode = type(ERC1967Proxy).creationCode;
 
         bytes memory constructorArgs = abi.encode(implementation, initializerData);

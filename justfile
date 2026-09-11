@@ -4,8 +4,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
 # forge does not load this file itself. The file is absent in CI, where the
 # values come from secrets instead, so loading it stays optional.
-# `IS_PRODUCTION` is deliberately not kept here — see the release
-# checklist, which exports it once per deployment session.
+# `IS_PRODUCTION` and `IS_TRANSITIONAL` are deliberately not kept here — see the
+# release checklist, which exports them once per deployment session.
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
@@ -110,10 +110,11 @@ contracts-deploy-impl deployer chain *args:
 # Simulate the implementation and proxy deployment (dry-run)
 contracts-simulate-proxy chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "IS_TRANSITIONAL: $IS_TRANSITIONAL"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool)" $IS_PRODUCTION \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the protocol adapter implementation and proxy
@@ -121,7 +122,7 @@ contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool)" $IS_PRODUCTION \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
@@ -213,6 +214,36 @@ contracts-propose-production-pause deployer proxy proposer chain *args:
     cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
         --sig "run(address,address)" {{proxy}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the v1 stop proposal (dry-run): simulates the Safe that owns v1 executing the stop
+contracts-simulate-v1-stop-proposal protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the v1 stop to the Safe that owns v1 (proposer = unlocked deployer); the stop cannot be undone
+contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the state migration of one chain (dry-run): copy-in, unpause and upgrade (sender = the proxy owner)
+contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Run the state migration of one chain as the proxy owner, one transaction at a time
+contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check a migrated proxy against the stopped v1 protocol adapter, reading both from the chain
+contracts-check-migration protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "verify(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
 contracts-verify-sourcify address contract chain *args:
