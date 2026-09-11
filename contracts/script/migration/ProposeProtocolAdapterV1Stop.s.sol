@@ -8,16 +8,6 @@ import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
 import {Parameters} from "../Parameters.sol";
 
-/// @title IProtocolAdapterV1EmergencyStop
-/// @author Anoma Foundation, 2026
-/// @notice The emergency stop of the v1 protocol adapter, which no v2 interface declares.
-/// @custom:security-contact security@anoma.foundation
-interface IProtocolAdapterV1EmergencyStop {
-    /// @notice Stops the protocol adapter permanently: it executes no transaction afterwards, and no function lifts
-    /// the stop. Only the owner can call it, and only once.
-    function emergencyStop() external;
-}
-
 /// @title ProposeProtocolAdapterV1Stop
 /// @author Anoma Foundation, 2026
 /// @notice A script to propose stopping one chain's v1 protocol adapter to the Safe multisig that owns it. The Safe
@@ -47,7 +37,9 @@ contract ProposeProtocolAdapterV1Stop is Script {
 
         _safe.initialize(safe);
 
-        bytes memory callData = abi.encodeCall(IProtocolAdapterV1EmergencyStop.emergencyStop, ());
+        // No v2 interface declares the v1 stop, so the call is encoded from its signature.
+
+        bytes memory callData = abi.encodeWithSignature("emergencyStop()");
         if (Safe.isBroadcastMode()) {
             _safe.proposeTransaction(protocolAdapterV1, callData, proposer);
         } else {
