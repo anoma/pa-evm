@@ -6,6 +6,8 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwnerManager.sol";
 import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
 
+import {Parameters} from "../Parameters.sol";
+
 /// @title IProtocolAdapterV1
 /// @author Anoma Foundation, 2026
 /// @notice The part of the v1 protocol adapter interface that the migration calls and that no v2 interface carries.
@@ -21,17 +23,15 @@ interface IProtocolAdapterV1 {
 /// @notice A script to propose stopping one chain's v1 protocol adapter to the Safe multisig that owns it. The Safe
 /// owners confirm and execute the proposed stop in the Safe app. The stop cannot be undone: v1 has no function that
 /// lifts it.
-/// @dev The same Safe owns v1 on every chain, so no account can stop v1 directly.
+/// @dev The production Safe, `Parameters.PROXY_OWNER_PRODUCTION`, owns v1 on every chain, so no account can stop v1
+/// directly.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeProtocolAdapterV1Stop is Script {
     using Safe for *;
 
-    /// @notice The Safe multisig that owns the v1 protocol adapter on every chain.
-    address public constant PROTOCOL_ADAPTER_V1_OWNER = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
-
     Safe.Client internal _safe;
 
-    /// @notice Thrown if the protocol adapter is not a v1 deployment, i.e. not owned by `PROTOCOL_ADAPTER_V1_OWNER`.
+    /// @notice Thrown if the protocol adapter is not a v1 deployment, i.e. not owned by the production Safe.
     error NotAV1Deployment(address protocolAdapterV1);
 
     /// @notice Thrown if the simulated Safe execution of the stop fails during a dry run.
@@ -43,7 +43,7 @@ contract ProposeProtocolAdapterV1Stop is Script {
     /// @param proposer The Safe owner or delegate proposing the transaction.
     function run(address protocolAdapterV1, address proposer) public {
         address safe = Ownable(protocolAdapterV1).owner();
-        require(safe == PROTOCOL_ADAPTER_V1_OWNER, NotAV1Deployment(protocolAdapterV1));
+        require(safe == Parameters.PROXY_OWNER_PRODUCTION, NotAV1Deployment(protocolAdapterV1));
 
         _safe.initialize(safe);
 
