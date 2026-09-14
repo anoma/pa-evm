@@ -9,7 +9,6 @@ import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "./interfaces/INullifierSet.sol";
 import {ITransitional} from "./interfaces/ITransitional.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
-import {SeededTree} from "./libs/SeededTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
 import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 
@@ -98,7 +97,7 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
 
         $._merkleTree._nextLeafIndex = leafCount;
         $._merkleTree._sides = sides;
-        $._merkleTree._zeros = SeededTree.zeroHashes(treeDepth);
+        $._merkleTree._zeros = _zeroHashes(treeDepth);
 
         // The sides are the only value a caller supplies, and this is what binds them to v1.
         bytes32 expectedRoot = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
@@ -186,5 +185,19 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
     /// @notice Reverts unless the v1 protocol adapter is stopped.
     function _requireProtocolAdapterV1Stopped() internal view {
         require(Pausable(_PROTOCOL_ADAPTER_V1).paused(), ProtocolAdapterV1NotStopped(_PROTOCOL_ADAPTER_V1));
+    }
+
+    /// @notice Returns the roots of the empty subtrees, one per level, for a tree of the given depth.
+    /// @param treeDepth The depth of the tree.
+    /// @return hashes The empty-subtree roots, from level 0 up to `treeDepth`.
+    /// @dev `MerkleTree.setup` stores the first and `MerkleTree.push` appends one per level it adds, so this
+    /// reproduces what a tree of that depth holds.
+    function _zeroHashes(uint8 treeDepth) internal pure returns (bytes32[] memory hashes) {
+        hashes = new bytes32[](uint256(treeDepth) + 1);
+        hashes[0] = SHA256.EMPTY_HASH;
+
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            hashes[i + 1] = SHA256.hash(hashes[i], hashes[i]);
+        }
     }
 }

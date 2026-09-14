@@ -16,15 +16,18 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ITransitional} from "../src/interfaces/ITransitional.sol";
+import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {TransitionalProtocolAdapter} from "../src/TransitionalProtocolAdapter.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {ProtocolAdapterV1Mock} from "./mocks/ProtocolAdapterV1.m.sol";
+import {TransitionalProtocolAdapterZeroHashesMock} from "./mocks/TransitionalProtocolAdapterZeroHashes.m.sol";
 
 /// @dev The v1 protocol adapter is a stand-in holding its state in v1's storage layout. The transitional adapter reads
 /// every value from it, so the test fills it, stops it, and then checks what the transitional adapter copies in.
 contract TransitionalProtocolAdapterTest is Test {
+    using MerkleTree for MerkleTree.Tree;
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -43,6 +46,8 @@ contract TransitionalProtocolAdapterTest is Test {
     ProtocolAdapterV1Mock internal _v1;
     TransitionalProtocolAdapter internal _pa;
 
+    MerkleTree.Tree internal _grownTree;
+
     function setUp() public {
         (_router, _emergencyStop, _verifier) = new DeployRiscZeroContractsMock().run();
 
@@ -50,6 +55,23 @@ contract TransitionalProtocolAdapterTest is Test {
         _v1.emergencyStop();
 
         _pa = _deployTransitionalProxy(address(_v1));
+    }
+
+    function test_zeroHashes_match_the_zeros_a_grown_tree_stores() public {
+        TransitionalProtocolAdapterZeroHashesMock mock =
+            new TransitionalProtocolAdapterZeroHashesMock(address(_router), _verifier.SELECTOR(), address(_v1));
+
+        _grownTree.setup();
+        for (uint256 i = 0; i < 20; ++i) {
+            _grownTree.push(keccak256(abi.encode("leaf", i)));
+        }
+
+        bytes32[] memory hashes = mock.zeroHashes(_grownTree.depth());
+
+        assertEq(hashes.length, _grownTree._zeros.length, "zero hash count differs");
+        for (uint256 i = 0; i < hashes.length; ++i) {
+            assertEq(hashes[i], _grownTree._zeros[i], "a zero hash differs");
+        }
     }
 
     function test_constructor_reverts_on_a_zero_v1_protocol_adapter() public {
