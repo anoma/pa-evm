@@ -14,11 +14,9 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 
 /// @title TransitionalProtocolAdapter
 /// @author Anoma Foundation, 2026
-/// @notice The protocol adapter for a chain that moves from v1 to v2. It starts paused and copies the v1 state in —
-/// the commitment tree and the nullifier set — reading every value from the v1 protocol adapter itself. It refuses to
-/// unpause until its commitment tree and its nullifier set hold what v1 holds. The migration script copies the state,
-/// unpauses and upgrades the proxy to `ProtocolAdapter` in one run, which is what removes these functions again. A
-/// chain deployed fresh uses `ProtocolAdapter` from the start.
+/// @notice The protocol adapter implementation used to migrate Anoma Galileo v1 to v2. It starts paused and copies the
+/// v1 state in — the commitment tree and the nullifier set — reading every value from the v1 protocol adapter itself.
+/// It refuses to unpause until its commitment tree and its nullifier set hold what v1 holds.
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
 contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
