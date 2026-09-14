@@ -23,7 +23,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-deploy-impl deployer <CHAIN>
   ```
 
-- [ ] Deploy the proxy on the transitional implementation. It starts paused, and it reads the chain's v1 protocol adapter from the table in [`DeployTransitionalProtocolAdapterImplementation`](./contracts/script/migration/DeployTransitionalProtocolAdapterImplementation.s.sol).
+- [ ] Deploy the proxy on the transitional implementation. It starts paused. It reads the chain's v1 protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `v1` entries in [`deployments.json`](./crates/bindings/deployments.json).
 
   ```sh
   export IS_PRODUCTION=false

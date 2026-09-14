@@ -7,6 +7,7 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
+import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {Parameters} from "../Parameters.sol";
 
@@ -19,25 +20,11 @@ contract DeployTransitionalProtocolAdapterImplementation is SupportedNetworks, S
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
 
-    /// @notice The v1 protocol adapter of each chain that runs one, as the v1 bindings (`bindings/v2.1.2`) record them.
-    mapping(uint256 chainId => address protocolAdapterV1) internal _protocolAdaptersV1;
-
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
     /// @notice Thrown if the chain runs no v1 protocol adapter to copy the state from.
     error NoProtocolAdapterV1(uint256 chainId);
-
-    /// @notice Records the v1 protocol adapter of each chain that runs one.
-    constructor() {
-        _protocolAdaptersV1[1] = 0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF; // mainnet
-        _protocolAdaptersV1[10] = 0x094FCC095323080e71a037b2B1e3519c07dd84F8; // optimism
-        _protocolAdaptersV1[56] = 0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68; // bsc
-        _protocolAdaptersV1[8453] = 0x094FCC095323080e71a037b2B1e3519c07dd84F8; // base
-        _protocolAdaptersV1[42161] = 0x094FCC095323080e71a037b2B1e3519c07dd84F8; // arbitrum
-        _protocolAdaptersV1[84532] = 0x094FCC095323080e71a037b2B1e3519c07dd84F8; // base-sepolia
-        _protocolAdaptersV1[11155111] = 0xf152BBA809d6cba122579cee997A54B8F3FBa417; // sepolia
-    }
 
     /// @notice Validates the transitional implementation for upgrade safety and deploys it on a supported network
     /// that runs a v1 protocol adapter.
@@ -89,11 +76,11 @@ contract DeployTransitionalProtocolAdapterImplementation is SupportedNetworks, S
         implementation = vm.computeCreate2Address({salt: IMPLEMENTATION_SALT, initCodeHash: keccak256(initCode)});
     }
 
-    /// @notice Returns the v1 protocol adapter of a chain.
+    /// @notice Returns the v1 protocol adapter of a chain, as `RecordedDeployments` records it.
     /// @param chainId The chain ID of the network.
     /// @return protocolAdapterV1 The v1 protocol adapter the transitional implementation copies the state from.
-    function getProtocolAdapterV1(uint256 chainId) public view returns (address protocolAdapterV1) {
-        protocolAdapterV1 = _protocolAdaptersV1[chainId];
+    function getProtocolAdapterV1(uint256 chainId) public pure returns (address protocolAdapterV1) {
+        protocolAdapterV1 = RecordedDeployments.protocolAdapterV1(chainId);
         require(protocolAdapterV1 != address(0), NoProtocolAdapterV1({chainId: chainId}));
     }
 }

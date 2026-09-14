@@ -1,4 +1,50 @@
 {
   "production": [],
-  "staging": []
+  "staging": [],
+  "v1": [
+    {
+      "chainId": 11155111,
+      "protocolAdapter": "0xf152BBA809d6cba122579cee997A54B8F3FBa417"
+    },
+    {
+      "chainId": 1,
+      "protocolAdapter": "0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF"
+    },
+    {
+      "chainId": 84532,
+      "protocolAdapter": "0x094FCC095323080e71a037b2B1e3519c07dd84F8"
+    },
+    {
+      "chainId": 8453,
+      "protocolAdapter": "0x094FCC095323080e71a037b2B1e3519c07dd84F8"
+    },
+    {
+      "chainId": 10,
+      "protocolAdapter": "0x094FCC095323080e71a037b2B1e3519c07dd84F8"
+    },
+    {
+      "chainId": 42161,
+      "protocolAdapter": "0x094FCC095323080e71a037b2B1e3519c07dd84F8"
+    },
+    {
+      "chainId": 56,
+      "protocolAdapter": "0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68"
+    },
+    {
+      "chainId": 143,
+      "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
+    },
+    {
+      "chainId": 988,
+      "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
+    },
+    {
+      "chainId": 4326,
+      "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
+    },
+    {
+      "chainId": 1313161554,
+      "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
+    }
+  ]
 }

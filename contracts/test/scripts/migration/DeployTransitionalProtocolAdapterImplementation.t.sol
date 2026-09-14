@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-1.2.2/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-1.2.2/src/SupportedNetworks.sol";
 
+import {RecordedDeployments} from "../../../generated/RecordedDeployments.sol";
 import {
     DeployTransitionalProtocolAdapterImplementation
 } from "../../../script/migration/DeployTransitionalProtocolAdapterImplementation.s.sol";
@@ -84,5 +85,19 @@ contract DeployTransitionalProtocolAdapterImplementationTest is RiscZeroRouterFi
             )
         );
         script.predict(_CHAIN_ID_WITHOUT_V1);
+    }
+
+    function test_getProtocolAdapterV1_returns_the_recorded_protocol_adapter_of_every_v1_chain() public {
+        DeployTransitionalProtocolAdapterImplementation script = new DeployTransitionalProtocolAdapterImplementation();
+        RecordedDeployments.DeploymentV1[] memory deployments = RecordedDeployments.v1();
+        assertGt(deployments.length, 0, "no v1 protocol adapter is recorded");
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            assertEq(
+                script.getProtocolAdapterV1(deployments[i].chainId),
+                deployments[i].protocolAdapter,
+                "the v1 protocol adapter differs from the record"
+            );
+        }
     }
 }
