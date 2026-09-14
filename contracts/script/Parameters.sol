@@ -17,11 +17,11 @@ library Parameters {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
     bytes32 internal constant IMPLEMENTATION_SALT = "ProtocolAdapterImpl";
 
-    /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address internal constant PROXY_OWNER_STAGING = 0x61462bE56782568376f9cB069382EFa72764a407;
+    /// @notice The deployment wallet, which owns the staging proxies and upgrades them instantly.
+    address internal constant DEPLOYMENT_WALLET = 0x61462bE56782568376f9cB069382EFa72764a407;
 
-    /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address internal constant PROXY_OWNER_PRODUCTION = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
+    /// @notice The protocol adapter multisig, a Safe that owns the production proxies and v1 on every chain.
+    address internal constant PA_MULTISIG = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
 }
 
 /// @title DeploymentParameters
@@ -48,15 +48,15 @@ contract DeploymentParameters {
         salt = Parameters.IMPLEMENTATION_SALT;
     }
 
-    /// @notice Returns the staging environment proxy owner.
-    /// @return owner The deployment wallet upgrading the staging proxies.
-    function PROXY_OWNER_STAGING() external pure returns (address owner) {
-        owner = Parameters.PROXY_OWNER_STAGING;
+    /// @notice Returns the deployment wallet.
+    /// @return wallet The deployment wallet, which owns the staging proxies.
+    function DEPLOYMENT_WALLET() external pure returns (address wallet) {
+        wallet = Parameters.DEPLOYMENT_WALLET;
     }
 
-    /// @notice Returns the production environment proxy owner.
-    /// @return owner The Safe multisig queueing production upgrades.
-    function PROXY_OWNER_PRODUCTION() external pure returns (address owner) {
-        owner = Parameters.PROXY_OWNER_PRODUCTION;
+    /// @notice Returns the protocol adapter multisig.
+    /// @return multisig The Safe that owns the production proxies and v1.
+    function PA_MULTISIG() external pure returns (address multisig) {
+        multisig = Parameters.PA_MULTISIG;
     }
 }

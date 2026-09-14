@@ -26,10 +26,10 @@ contract DeployProtocolAdapterProxy is Script {
     bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
 
     /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
-    address public constant PROXY_OWNER_STAGING = Parameters.PROXY_OWNER_STAGING;
+    address public constant PROXY_OWNER_STAGING = Parameters.DEPLOYMENT_WALLET;
 
     /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
-    address public constant PROXY_OWNER_PRODUCTION = Parameters.PROXY_OWNER_PRODUCTION;
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.PA_MULTISIG;
 
     /// @notice Thrown if the environment already has a deployment recorded for this chain.
     error DeploymentAlreadyRecorded(string environment, uint256 chainId);

@@ -13,7 +13,7 @@ import {Parameters} from "../Parameters.sol";
 /// @notice A script to propose stopping one chain's v1 protocol adapter to the Safe multisig that owns it. The Safe
 /// owners confirm and execute the proposed stop in the Safe app. The stop cannot be undone: v1 has no function that
 /// lifts it.
-/// @dev The production Safe, `Parameters.PROXY_OWNER_PRODUCTION`, owns v1 on every chain, so no account can stop v1
+/// @dev The production Safe, `Parameters.PA_MULTISIG`, owns v1 on every chain, so no account can stop v1
 /// directly.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeProtocolAdapterV1Stop is Script {
@@ -33,7 +33,7 @@ contract ProposeProtocolAdapterV1Stop is Script {
     /// @param proposer The Safe owner or delegate proposing the transaction.
     function run(address protocolAdapterV1, address proposer) public {
         address safe = Ownable(protocolAdapterV1).owner();
-        require(safe == Parameters.PROXY_OWNER_PRODUCTION, NotAV1Deployment(protocolAdapterV1));
+        require(safe == Parameters.PA_MULTISIG, NotAV1Deployment(protocolAdapterV1));
 
         _safe.initialize(safe);
 

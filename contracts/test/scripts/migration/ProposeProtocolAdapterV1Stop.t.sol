@@ -24,7 +24,7 @@ contract ProposeProtocolAdapterV1StopTest is SafeFixture {
         _script = new ProposeProtocolAdapterV1Stop();
 
         _owner = makeAddr("safe owner");
-        _safe = _deploySafeAt(_owner, Parameters.PROXY_OWNER_PRODUCTION);
+        _safe = _deploySafeAt(_owner, Parameters.PA_MULTISIG);
 
         _v1 = new ProtocolAdapterV1Mock(_safe);
     }
