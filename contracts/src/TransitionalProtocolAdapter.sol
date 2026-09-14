@@ -46,7 +46,7 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
 
     /// @notice Reverts unless the v1 protocol adapter is stopped, so that its state cannot change while it is read.
     modifier whenProtocolAdapterV1Stopped() {
-        require(Pausable(_PROTOCOL_ADAPTER_V1).paused(), ProtocolAdapterV1NotStopped(_PROTOCOL_ADAPTER_V1));
+        _requireProtocolAdapterV1Stopped();
         _;
     }
 
@@ -181,5 +181,10 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
         );
 
         super._unpause();
+    }
+
+    /// @notice Reverts unless the v1 protocol adapter is stopped.
+    function _requireProtocolAdapterV1Stopped() internal view {
+        require(Pausable(_PROTOCOL_ADAPTER_V1).paused(), ProtocolAdapterV1NotStopped(_PROTOCOL_ADAPTER_V1));
     }
 }
