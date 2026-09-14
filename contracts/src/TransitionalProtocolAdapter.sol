@@ -138,11 +138,16 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
         protocolAdapterV1 = _PROTOCOL_ADAPTER_V1;
     }
 
-    /// @notice Lifts the pause, once this protocol adapter holds the commitment tree and the nullifier set of the v1
-    /// protocol adapter. The historical roots are the one difference that stays: v1 keeps every root it ever had, this
-    /// contract keeps two — the empty-tree root at index 0, and the latest root of the stopped v1 protocol adapter at
-    /// index 1.
+    /// @notice Lifts the pause, once the copy-in is complete.
     function _unpause() internal override {
+        _checkStateMigrationIsComplete();
+        super._unpause();
+    }
+
+    /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the v1 protocol
+    /// adapter. The historical roots are the one difference that stays: v1 keeps every root it ever had, this contract
+    /// keeps two — the empty-tree root at index 0, and the latest root of the stopped v1 protocol adapter at index 1.
+    function _checkStateMigrationIsComplete() internal view {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
         uint256 expectedCommitments = ICommitmentTree(_PROTOCOL_ADAPTER_V1).commitmentCount();
@@ -176,8 +181,6 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
             actualNullifiers == expectedNullifiers,
             NullifierCountMismatch({expected: expectedNullifiers, actual: actualNullifiers})
         );
-
-        super._unpause();
     }
 
     /// @notice Reverts unless the v1 protocol adapter is stopped.
