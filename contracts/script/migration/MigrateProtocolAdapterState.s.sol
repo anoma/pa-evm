@@ -9,14 +9,16 @@ import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
+import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
 /// @notice A script to move one chain's state from the stopped v1 protocol adapter into a v2 proxy running
-/// `TransitionalProtocolAdapter`, and to leave that proxy on the plain `ProtocolAdapter` implementation. It copies the
-/// commitment tree and the nullifier set, unpauses, and upgrades — in that order, in one run. The unpause compares
-/// the copied state against v1 and reverts on a difference, so no run reaches the upgrade with the wrong state. Every
-/// step skips once it is done, so a run that stops early is repeated until it reaches the end.
+/// `TransitionalProtocolAdapter`, and to leave that proxy on the plain `ProtocolAdapter` implementation. In one run, it
+/// copies the commitment tree and the nullifier set, unpauses, upgrades and, in production, transfers the proxy to the
+/// production proxy owner. The unpause compares the copied state against v1 and reverts on a difference, so no run
+/// reaches the upgrade with the wrong state. Every step skips once it is done, so a run that stops early is repeated
+/// until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
@@ -56,8 +58,18 @@ contract MigrateProtocolAdapterState is Script {
     /// @notice Thrown if a nullifier of v1 is absent from the copied set.
     error MissingNullifier(bytes32 nullifier);
 
-    /// @notice Copies v1's state into the proxy, unpauses, and upgrades to the plain implementation. The unpause is
-    /// what checks the copied state against v1. Without `--broadcast` the whole run is simulated locally.
+    /// @notice Thrown if the proxy does not run the plain implementation.
+    error ImplementationMismatch(address expected, address actual);
+
+    /// @notice Thrown if the proxy is still paused.
+    error ProxyPaused(address proxy);
+
+    /// @notice Thrown if the proxy has another owner than the expected one.
+    error OwnerMismatch(address expected, address actual);
+
+    /// @notice Migrates one chain. It copies v1's state into the proxy, unpauses, upgrades to the plain implementation
+    /// and, in production, transfers the proxy to the production proxy owner. The unpause is what checks the copied state
+    /// against v1. Without `--broadcast` the whole run is simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run `verify` afterwards to assert the
@@ -65,7 +77,8 @@ contract MigrateProtocolAdapterState is Script {
     /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
     /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter` or, after the upgrade,
     /// `ProtocolAdapter`.
-    function run(address protocolAdapterV1, address proxy) public {
+    /// @param isProduction Whether the proxy belongs to the production environment, whose proxy owner receives it.
+    function run(address protocolAdapterV1, address proxy, bool isProduction) public {
         // The implementation the proxy ends on must already be deployed, by `DeployProtocolAdapterImplementation`.
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         // forge-lint: disable-next-line(unused-return)
@@ -98,14 +111,25 @@ contract MigrateProtocolAdapterState is Script {
             vm.broadcast();
             protocolAdapter.upgradeToAndCall(implementation, initializationData);
         }
+
+        if (isProduction) {
+            address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            if (protocolAdapter.owner() != productionOwner) {
+                vm.broadcast();
+                protocolAdapter.transferOwnership(productionOwner);
+            }
+        }
     }
 
-    /// @notice Checks a migrated proxy against the stopped v1 protocol adapter, reading both from the chain. Run it
-    /// after `run` has broadcast, because `run` itself only ever sees the simulated state.
+    /// @notice Checks a migrated proxy against the stopped v1 protocol adapter and against the end state of the run,
+    /// reading both from the chain. Run it after `run` has broadcast, because `run` itself only ever sees the simulated
+    /// state.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The migrated v2 protocol adapter proxy.
-    function verify(address protocolAdapterV1, address proxy) public view {
+    /// @param isProduction Whether the production proxy owner must own the proxy.
+    function verify(address protocolAdapterV1, address proxy, bool isProduction) public {
         _check({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+        _checkEndState({proxy: proxy, isProduction: isProduction});
     }
 
     /// @notice Copies v1's commitment tree into the proxy, unless an earlier run did. The tree's sides come from v1's
@@ -148,6 +172,30 @@ contract MigrateProtocolAdapterState is Script {
 
             vm.broadcast();
             TransitionalProtocolAdapter(proxy).seedNullifierSet(size);
+        }
+    }
+
+    /// @notice Checks what the run leaves besides the copied state: the plain implementation, the lifted pause and, in
+    /// production, the production proxy owner. Reverts on the first difference.
+    /// @param proxy The migrated v2 protocol adapter proxy.
+    /// @param isProduction Whether the production proxy owner must own the proxy.
+    function _checkEndState(address proxy, bool isProduction) internal {
+        ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
+
+        // forge-lint: disable-next-line(unused-return)
+        (address expectedImplementation,) = new DeployProtocolAdapterImplementation().predict();
+        address actualImplementation = protocolAdapter.getImplementation();
+        require(
+            actualImplementation == expectedImplementation,
+            ImplementationMismatch({expected: expectedImplementation, actual: actualImplementation})
+        );
+
+        require(!protocolAdapter.paused(), ProxyPaused(proxy));
+
+        if (isProduction) {
+            address expectedOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            address actualOwner = protocolAdapter.owner();
+            require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
         }
     }
 

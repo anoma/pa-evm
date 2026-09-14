@@ -227,22 +227,23 @@ contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
         --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the state migration of one chain (dry-run): copy-in, unpause and upgrade (sender = the proxy owner)
+# Simulate the state migration of one chain (dry-run): copy-in, unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
 contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
 # Run the state migration of one chain as the proxy owner, one transaction at a time
 contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check a migrated proxy against the stopped v1 protocol adapter, reading both from the chain
+# Check a migrated proxy against the stopped v1 protocol adapter and the end state of the run, reading both from the chain
 contracts-check-migration protocol_adapter_v1 proxy chain *args:
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "verify(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "verify(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
