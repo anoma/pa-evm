@@ -41,10 +41,6 @@
     {
       "chainId": 4326,
       "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
-    },
-    {
-      "chainId": 1313161554,
-      "protocolAdapter": "0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"
     }
   ]
 }

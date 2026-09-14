@@ -80,7 +80,7 @@ These apply to all three cases and are done once per session.
   export ALCHEMY_API_KEY=<KEY>
   ```
 
-  Deploying to `aurora` needs `NOWNODES_API_KEY` instead. Both can live in `contracts/.env`, which `just` loads.
+  The key can live in `contracts/.env`, which `just` loads.
 
 - [ ] Set the Etherscan key
 

@@ -74,10 +74,11 @@ library RecordedDeployments {
         deployments = new Deployment[](0);
     }
 
-    /// @notice Returns the v1 protocol adapters, as `anoma-pa-evm-bindings` 2.3.0 records them in `addresses.rs`.
+    /// @notice Returns the v1 protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in `addresses.rs`, except
+    /// Aurora, which is deprecated.
     /// @return deployments The recorded v1 deployments.
     function v1() internal pure returns (DeploymentV1[] memory deployments) {
-        deployments = new DeploymentV1[](11);
+        deployments = new DeploymentV1[](10);
         deployments[0] = DeploymentV1({chainId: 11155111, protocolAdapter: 0xf152BBA809d6cba122579cee997A54B8F3FBa417});
         deployments[1] = DeploymentV1({chainId: 1, protocolAdapter: 0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF});
         deployments[2] = DeploymentV1({chainId: 84532, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
@@ -88,7 +89,5 @@ library RecordedDeployments {
         deployments[7] = DeploymentV1({chainId: 143, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
         deployments[8] = DeploymentV1({chainId: 988, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
         deployments[9] = DeploymentV1({chainId: 4326, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
-        deployments[10] =
-            DeploymentV1({chainId: 1313161554, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
     }
 }

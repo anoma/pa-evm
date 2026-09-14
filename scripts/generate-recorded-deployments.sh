@@ -137,7 +137,8 @@ SOLIDITY
     cat <<'SOLIDITY'
     }
 
-    /// @notice Returns the v1 protocol adapters, as `anoma-pa-evm-bindings` 2.3.0 records them in `addresses.rs`.
+    /// @notice Returns the v1 protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in `addresses.rs`, except
+    /// Aurora, which is deprecated.
     /// @return deployments The recorded v1 deployments.
     function v1() internal pure returns (DeploymentV1[] memory deployments) {
 SOLIDITY
