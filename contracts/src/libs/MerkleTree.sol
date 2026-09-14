@@ -84,6 +84,26 @@ library MerkleTree {
         newRoot = currentLevelHash;
     }
 
+    /// @notice Computes the root of the tree in its current state, without adding a leaf.
+    /// @param self The tree data structure.
+    /// @return treeRoot The root of the tree.
+    /// @dev Every leaf at or after the next leaf index is empty, so the stored sides and the zeros give the root.
+    function currentRoot(Tree storage self) internal view returns (bytes32 treeRoot) {
+        uint256 treeDepth = depth(self);
+        uint256 index = self._nextLeafIndex;
+
+        treeRoot = Arrays.unsafeAccess(self._zeros, 0).value;
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            if (isLeftChild(index)) {
+                treeRoot = SHA256.hash(treeRoot, Arrays.unsafeAccess(self._zeros, i).value);
+            } else {
+                treeRoot = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, treeRoot);
+            }
+
+            index >>= 1;
+        }
+    }
+
     /// @notice Returns the tree depth.
     /// @param self The tree data structure.
     /// @return treeDepth The depth of the tree.

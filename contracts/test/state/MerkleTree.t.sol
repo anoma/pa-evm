@@ -59,6 +59,15 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH, "initial root should be the empty hash");
     }
 
+    function test_currentRoot_matches_the_root_returned_by_every_push() public {
+        assertEq(_merkleTree.setup(), _merkleTree.currentRoot(), "the empty tree's root differs");
+
+        for (uint256 i = 0; i < 20; ++i) {
+            (, bytes32 pushed) = _merkleTree.push(keccak256(abi.encode(i)));
+            assertEq(_merkleTree.currentRoot(), pushed, "the recomputed root differs after a push");
+        }
+    }
+
     function testFuzz_push_returns_the_same_roots(bytes32[] memory leaves) public {
         // First compute what tree depth is required to store leaves
         uint8 treeDepth = 0;

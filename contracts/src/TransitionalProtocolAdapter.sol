@@ -25,7 +25,6 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
-    using SeededTree for MerkleTree.Tree;
     using SafeCast for uint256;
 
     /// @notice The v1 protocol adapter this contract copies its state from.
