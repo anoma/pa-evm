@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
-import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
+import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 
@@ -16,8 +15,8 @@ import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImple
 /// @notice A script to move one chain's state from the stopped v1 protocol adapter into a v2 proxy running
 /// `TransitionalProtocolAdapter`, and to leave that proxy on the plain `ProtocolAdapter` implementation. It copies the
 /// commitment tree and the nullifier set, unpauses, and upgrades — in that order, in one run. The unpause compares
-/// the copied state against v1 and reverts on a difference, so no run reaches the upgrade with the wrong state. The
-/// copy-in is only removed by the upgrade, so a run that stops early must be repeated until it reaches the end.
+/// the copied state against v1 and reverts on a difference, so no run reaches the upgrade with the wrong state. Every
+/// step skips once it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
@@ -38,8 +37,8 @@ contract MigrateProtocolAdapterState is Script {
     /// a 30 million block. A chain holding 8000 nullifiers therefore takes 40 transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
 
-    /// @notice Thrown if the proxy is not paused, i.e. if it is not a freshly initialized transitional deployment.
-    error ProxyNotPaused(address proxy);
+    /// @notice Thrown if the transitional proxy copies its state from another v1 protocol adapter than the given one.
+    error ProtocolAdapterV1Mismatch(address expected, address actual);
 
     /// @notice Thrown if a v1 storage slot does not hold what its public getter reports, i.e. if v1's storage layout
     /// is not the one this script reads.
@@ -60,14 +59,13 @@ contract MigrateProtocolAdapterState is Script {
     /// @notice Copies v1's state into the proxy, unpauses, and upgrades to the plain implementation. The unpause is
     /// what checks the copied state against v1. Without `--broadcast` the whole run is simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
-    /// transaction goes out at once, and a batch that reverts on chain does not stop the unpause and the upgrade
-    /// behind it. The proxy refuses to unpause until it holds v1's commitment tree and nullifier set, so the run
-    /// cannot reach the upgrade with the wrong state; run `verify` afterwards to assert the same against the chain.
+    /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
+    /// step skips once it is done, so a run that stops early can be repeated. Run `verify` afterwards to assert the
+    /// result against the chain.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
-    /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter` and still paused.
+    /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter` or, after the upgrade,
+    /// `ProtocolAdapter`.
     function run(address protocolAdapterV1, address proxy) public {
-        require(Pausable(proxy).paused(), ProxyNotPaused(proxy));
-
         // The implementation the proxy ends on must already be deployed, by `DeployProtocolAdapterImplementation`.
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         // forge-lint: disable-next-line(unused-return)
@@ -77,13 +75,29 @@ contract MigrateProtocolAdapterState is Script {
             DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
         );
 
-        _seedCommitmentTree({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
-        _seedNullifierSet({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+        ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
 
-        vm.startBroadcast();
-        TransitionalProtocolAdapter(proxy).unpause();
-        UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationDeployScript.INITIALIZATION_DATA());
-        vm.stopBroadcast();
+        if (protocolAdapter.getImplementation() != implementation) {
+            // Only the transitional implementation has this getter, so the call also rejects any other proxy.
+            address copiedFrom = TransitionalProtocolAdapter(proxy).getProtocolAdapterV1();
+            require(
+                copiedFrom == protocolAdapterV1,
+                ProtocolAdapterV1Mismatch({expected: protocolAdapterV1, actual: copiedFrom})
+            );
+
+            if (protocolAdapter.paused()) {
+                _seedCommitmentTree({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+                _seedNullifierSet({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+
+                vm.broadcast();
+                protocolAdapter.unpause();
+            }
+
+            // Read before the broadcast: `vm.broadcast` arms only the next call, and a view call would take it.
+            bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();
+            vm.broadcast();
+            protocolAdapter.upgradeToAndCall(implementation, initializationData);
+        }
     }
 
     /// @notice Checks a migrated proxy against the stopped v1 protocol adapter, reading both from the chain. Run it
@@ -94,12 +108,17 @@ contract MigrateProtocolAdapterState is Script {
         _check({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
     }
 
-    /// @notice Copies v1's commitment tree into the proxy. The tree's sides come from v1's storage, since v1 exposes
-    /// no getter for them; the slot is checked against v1's own getters first, and the proxy rejects sides that do
-    /// not reproduce the root.
+    /// @notice Copies v1's commitment tree into the proxy, unless an earlier run did. The tree's sides come from v1's
+    /// storage, since v1 exposes no getter for them; the slot is checked against v1's own getters first, and the proxy
+    /// rejects sides that do not reproduce the root.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The v2 protocol adapter proxy.
     function _seedCommitmentTree(address protocolAdapterV1, address proxy) internal {
+        // The proxy refuses to write a tree twice.
+        if (ICommitmentTree(proxy).commitmentCount() != 0) {
+            return;
+        }
+
         uint256 leafCount = ICommitmentTree(protocolAdapterV1).commitmentCount();
         uint8 treeDepth = ICommitmentTree(protocolAdapterV1).commitmentTreeDepth();
 

@@ -78,6 +78,15 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         _script.run({protocolAdapterV1: address(running), proxy: proxy});
     }
 
+    function test_run_reverts_for_a_proxy_that_copies_from_another_v1_protocol_adapter() public {
+        address other = makeAddr("other v1 protocol adapter");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MigrateProtocolAdapterState.ProtocolAdapterV1Mismatch.selector, other, address(_v1))
+        );
+        _script.run({protocolAdapterV1: other, proxy: _proxy});
+    }
+
     function test_run_sends_one_transaction_per_nullifier_batch() public {
         uint256 perBatch = _script.NULLIFIERS_PER_BATCH();
         uint256 expectedBatches = (_NULLIFIER_COUNT + perBatch - 1) / perBatch;
@@ -96,7 +105,17 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         assertEq(batches, expectedBatches, "one seeding transaction per batch");
     }
 
-    function test_run_reverts_if_the_proxy_is_not_paused() public {
+    function test_run_resumes_a_run_that_stopped_after_the_commitment_tree() public {
+        bytes32[] memory sides = _v1.commitmentTreeSides();
+        vm.prank(DEFAULT_SENDER);
+        TransitionalProtocolAdapter(_proxy).seedCommitmentTree(sides);
+
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+
+        _script.verify({protocolAdapterV1: address(_v1), proxy: _proxy});
+    }
+
+    function test_run_resumes_a_run_that_stopped_after_the_unpause() public {
         bytes32[] memory sides = _v1.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
@@ -105,8 +124,11 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         TransitionalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
 
-        vm.expectRevert(abi.encodeWithSelector(MigrateProtocolAdapterState.ProxyNotPaused.selector, _proxy));
         _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+
+        _script.verify({protocolAdapterV1: address(_v1), proxy: _proxy});
+        (address implementation,) = new DeployProtocolAdapterImplementation().predict();
+        assertEq(ProtocolAdapter(_proxy).getImplementation(), implementation, "the repeat should upgrade the proxy");
     }
 
     /// @notice Deploys a paused transitional proxy bound to the given v1 protocol adapter.
