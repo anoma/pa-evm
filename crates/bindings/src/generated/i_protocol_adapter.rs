@@ -52,12 +52,14 @@ interface IProtocolAdapter {
 
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
-    function emergencyStop() external;
     function execute(Transaction memory transaction) external;
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
-    function isEmergencyStopped() external view returns (bool isStopped);
+    function pause() external;
+    function paused() external view returns (bool isPaused);
+    function riscZeroVerifierPaused() external view returns (bool isPaused);
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
     function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
+    function unpause() external;
 }
 ```
 
@@ -89,13 +91,6 @@ interface IProtocolAdapter {
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "emergencyStop",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -355,11 +350,31 @@ interface IProtocolAdapter {
   },
   {
     "type": "function",
-    "name": "isEmergencyStopped",
+    "name": "pause",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "paused",
     "inputs": [],
     "outputs": [
       {
-        "name": "isStopped",
+        "name": "isPaused",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "riscZeroVerifierPaused",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "isPaused",
         "type": "bool",
         "internalType": "bool"
       }
@@ -628,6 +643,13 @@ interface IProtocolAdapter {
     "stateMutability": "nonpayable"
   },
   {
+    "type": "function",
+    "name": "unpause",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "event",
     "name": "ActionExecuted",
     "inputs": [
@@ -891,7 +913,7 @@ pub mod IProtocolAdapter {
         }
         impl DeletionCriterion {
             /// The Solidity type name.
-            pub const NAME: &'static str = stringify!(@ name);
+            pub const NAME: &'static str = stringify!(DeletionCriterion);
             /// Convert from the underlying value type.
             #[inline]
             pub const fn from_underlying(value: u8) -> Self {
@@ -3955,16 +3977,29 @@ function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRout
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_ROUTERReturn = r.into();
                         r.verifierRouter
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4104,153 +4139,29 @@ function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSel
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: RISC_ZERO_VERIFIER_SELECTORReturn = r.into();
                         r.verifierSelector
                     })
             }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `emergencyStop()` and selector `0x63a599a4`.
-```solidity
-function emergencyStop() external;
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct emergencyStopCall;
-    ///Container type for the return parameters of the [`emergencyStop()`](emergencyStopCall) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct emergencyStopReturn {}
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<emergencyStopCall> for UnderlyingRustTuple<'_> {
-                fn from(value: emergencyStopCall) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for emergencyStopCall {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<emergencyStopReturn> for UnderlyingRustTuple<'_> {
-                fn from(value: emergencyStopReturn) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for emergencyStopReturn {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        impl emergencyStopReturn {
-            fn _tokenize(
-                &self,
-            ) -> <emergencyStopCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
-                ()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for emergencyStopCall {
-            type Parameters<'a> = ();
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = emergencyStopReturn;
-            type ReturnTuple<'a> = ();
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "emergencyStop()";
-            const SELECTOR: [u8; 4] = [99u8, 165u8, 153u8, 164u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                ()
-            }
-            #[inline]
-            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                emergencyStopReturn::_tokenize(ret)
-            }
-            #[inline]
-            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
-                    .map(Into::into)
-            }
             #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
-                    .map(Into::into)
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4386,13 +4297,26 @@ function execute(Transaction memory transaction) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4534,36 +4458,199 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                     })
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(|r| {
                         let r: getKindTableCommitmentReturn = r.into();
                         r.kindTableCommitment
                     })
             }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
         }
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `isEmergencyStopped()` and selector `0xfddd4837`.
+    /**Function with signature `pause()` and selector `0x8456cb59`.
 ```solidity
-function isEmergencyStopped() external view returns (bool isStopped);
+function pause() external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct isEmergencyStoppedCall;
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`isEmergencyStopped()`](isEmergencyStoppedCall) function.
+    pub struct pauseCall;
+    ///Container type for the return parameters of the [`pause()`](pauseCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct isEmergencyStoppedReturn {
+    pub struct pauseReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<pauseCall> for UnderlyingRustTuple<'_> {
+                fn from(value: pauseCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for pauseCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<pauseReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: pauseReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for pauseReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl pauseReturn {
+            fn _tokenize(
+                &self,
+            ) -> <pauseCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for pauseCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = pauseReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "pause()";
+            const SELECTOR: [u8; 4] = [132u8, 86u8, 203u8, 89u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                pauseReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `paused()` and selector `0x5c975abb`.
+```solidity
+function paused() external view returns (bool isPaused);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct pausedCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`paused()`](pausedCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct pausedReturn {
         #[allow(missing_docs)]
-        pub isStopped: bool,
+        pub isPaused: bool,
     }
     #[allow(
         non_camel_case_types,
@@ -4592,16 +4679,14 @@ function isEmergencyStopped() external view returns (bool isStopped);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<isEmergencyStoppedCall>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: isEmergencyStoppedCall) -> Self {
+            impl ::core::convert::From<pausedCall> for UnderlyingRustTuple<'_> {
+                fn from(value: pausedCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for isEmergencyStoppedCall {
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for pausedCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -4626,23 +4711,21 @@ function isEmergencyStopped() external view returns (bool isStopped);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<isEmergencyStoppedReturn>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: isEmergencyStoppedReturn) -> Self {
-                    (value.isStopped,)
+            impl ::core::convert::From<pausedReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: pausedReturn) -> Self {
+                    (value.isPaused,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for isEmergencyStoppedReturn {
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for pausedReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { isStopped: tuple.0 }
+                    Self { isPaused: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for isEmergencyStoppedCall {
+        impl alloy_sol_types::SolCall for pausedCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -4652,8 +4735,8 @@ function isEmergencyStopped() external view returns (bool isStopped);
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "isEmergencyStopped()";
-            const SELECTOR: [u8; 4] = [253u8, 221u8, 72u8, 55u8];
+            const SIGNATURE: &'static str = "paused()";
+            const SELECTOR: [u8; 4] = [92u8, 151u8, 90u8, 187u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -4678,21 +4761,196 @@ function isEmergencyStopped() external view returns (bool isStopped);
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: isEmergencyStoppedReturn = r.into();
-                        r.isStopped
+                        let r: pausedReturn = r.into();
+                        r.isPaused
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(|r| {
+                        let r: pausedReturn = r.into();
+                        r.isPaused
                     })
             }
             #[inline]
             fn abi_decode_returns_validate(
                 data: &[u8],
             ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `riscZeroVerifierPaused()` and selector `0x67353122`.
+```solidity
+function riscZeroVerifierPaused() external view returns (bool isPaused);
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct riscZeroVerifierPausedCall;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    ///Container type for the return parameters of the [`riscZeroVerifierPaused()`](riscZeroVerifierPausedCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct riscZeroVerifierPausedReturn {
+        #[allow(missing_docs)]
+        pub isPaused: bool,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<riscZeroVerifierPausedCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: riscZeroVerifierPausedCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for riscZeroVerifierPausedCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Bool,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (bool,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<riscZeroVerifierPausedReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: riscZeroVerifierPausedReturn) -> Self {
+                    (value.isPaused,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for riscZeroVerifierPausedReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { isPaused: tuple.0 }
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for riscZeroVerifierPausedCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = bool;
+            type ReturnTuple<'a> = (alloy::sol_types::sol_data::Bool,);
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "riscZeroVerifierPaused()";
+            const SELECTOR: [u8; 4] = [103u8, 53u8, 49u8, 34u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                (
+                    <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
+                        ret,
+                    ),
+                )
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: isEmergencyStoppedReturn = r.into();
-                        r.isStopped
+                        let r: riscZeroVerifierPausedReturn = r.into();
+                        r.isPaused
                     })
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(|r| {
+                        let r: riscZeroVerifierPausedReturn = r.into();
+                        r.isPaused
+                    })
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -4840,13 +5098,26 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
@@ -5000,37 +5271,204 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     .map(Into::into)
             }
             #[inline]
-            fn abi_decode_returns_validate(
+            fn abi_decode_returns_with_config(
                 data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<Self::Return> {
                 <Self::ReturnTuple<
                     '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_validate(data)
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
                     .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `unpause()` and selector `0x3f4ba83a`.
+```solidity
+function unpause() external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct unpauseCall;
+    ///Container type for the return parameters of the [`unpause()`](unpauseCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct unpauseReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<unpauseCall> for UnderlyingRustTuple<'_> {
+                fn from(value: unpauseCall) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for unpauseCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<unpauseReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: unpauseReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for unpauseReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl unpauseReturn {
+            fn _tokenize(
+                &self,
+            ) -> <unpauseCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for unpauseCall {
+            type Parameters<'a> = ();
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = unpauseReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "unpause()";
+            const SELECTOR: [u8; 4] = [63u8, 75u8, 168u8, 58u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                ()
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                unpauseReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
             }
         }
     };
     ///Container for all the [`IProtocolAdapter`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive()]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum IProtocolAdapterCalls {
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_ROUTER(RISC_ZERO_VERIFIER_ROUTERCall),
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_SELECTOR(RISC_ZERO_VERIFIER_SELECTORCall),
         #[allow(missing_docs)]
-        emergencyStop(emergencyStopCall),
-        #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
         getKindTableCommitment(getKindTableCommitmentCall),
         #[allow(missing_docs)]
-        isEmergencyStopped(isEmergencyStoppedCall),
+        pause(pauseCall),
+        #[allow(missing_docs)]
+        paused(pausedCall),
+        #[allow(missing_docs)]
+        riscZeroVerifierPaused(riscZeroVerifierPausedCall),
         #[allow(missing_docs)]
         setKindTableCommitment(setKindTableCommitmentCall),
         #[allow(missing_docs)]
         simulateExecute(simulateExecuteCall),
+        #[allow(missing_docs)]
+        unpause(unpauseCall),
     }
     impl IProtocolAdapterCalls {
         /// All the selectors of this enum.
@@ -5040,35 +5478,41 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [99u8, 165u8, 153u8, 164u8],
+            [63u8, 75u8, 168u8, 58u8],
+            [92u8, 151u8, 90u8, 187u8],
+            [103u8, 53u8, 49u8, 34u8],
             [107u8, 240u8, 160u8, 75u8],
             [115u8, 171u8, 153u8, 22u8],
+            [132u8, 86u8, 203u8, 89u8],
             [135u8, 9u8, 62u8, 186u8],
             [192u8, 37u8, 48u8, 35u8],
             [227u8, 90u8, 93u8, 47u8],
-            [253u8, 221u8, 72u8, 55u8],
             [255u8, 195u8, 63u8, 114u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(emergencyStop),
+            ::core::stringify!(unpause),
+            ::core::stringify!(paused),
+            ::core::stringify!(riscZeroVerifierPaused),
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
             ::core::stringify!(execute),
+            ::core::stringify!(pause),
             ::core::stringify!(simulateExecute),
             ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(RISC_ZERO_VERIFIER_SELECTOR),
-            ::core::stringify!(isEmergencyStopped),
             ::core::stringify!(getKindTableCommitment),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <emergencyStopCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <unpauseCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
             <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <pauseCall as alloy_sol_types::SolCall>::SIGNATURE,
             <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -5096,7 +5540,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 8usize;
+        const COUNT: usize = 10usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5106,15 +5550,14 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::RISC_ZERO_VERIFIER_SELECTOR(_) => {
                     <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::emergencyStop(_) => {
-                    <emergencyStopCall as alloy_sol_types::SolCall>::SELECTOR
-                }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::getKindTableCommitment(_) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::isEmergencyStopped(_) => {
-                    <isEmergencyStoppedCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::pause(_) => <pauseCall as alloy_sol_types::SolCall>::SELECTOR,
+                Self::paused(_) => <pausedCall as alloy_sol_types::SolCall>::SELECTOR,
+                Self::riscZeroVerifierPaused(_) => {
+                    <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::setKindTableCommitment(_) => {
                     <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
@@ -5122,6 +5565,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 Self::simulateExecute(_) => {
                     <simulateExecuteCall as alloy_sol_types::SolCall>::SELECTOR
                 }
+                Self::unpause(_) => <unpauseCall as alloy_sol_types::SolCall>::SELECTOR,
             }
         }
         #[inline]
@@ -5138,26 +5582,70 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::default(),
+            )
+        }
+        #[inline]
+        #[allow(non_snake_case)]
+        fn abi_decode_raw_with_config(
+            selector: [u8; 4],
+            data: &[u8],
+            config: alloy_sol_types::abi::AbiDecoderConfig,
+        ) -> alloy_sol_types::Result<Self> {
             static DECODE_SHIMS: &[fn(
                 &[u8],
+                alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
                 {
-                    fn emergencyStop(
+                    fn unpause(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <emergencyStopCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <unpauseCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
-                            .map(IProtocolAdapterCalls::emergencyStop)
+                            .map(IProtocolAdapterCalls::unpause)
                     }
-                    emergencyStop
+                    unpause
+                },
+                {
+                    fn paused(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <pausedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::paused)
+                    }
+                    paused
+                },
+                {
+                    fn riscZeroVerifierPaused(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::riscZeroVerifierPaused)
+                    }
+                    riscZeroVerifierPaused
                 },
                 {
                     fn RISC_ZERO_VERIFIER_ROUTER(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
                     }
@@ -5166,18 +5654,37 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 {
                     fn execute(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw(data)
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
                             .map(IProtocolAdapterCalls::execute)
                     }
                     execute
                 },
                 {
+                    fn pause(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <pauseCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::pause)
+                    }
+                    pause
+                },
+                {
                     fn simulateExecute(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(IProtocolAdapterCalls::simulateExecute)
                     }
@@ -5186,9 +5693,11 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 {
                     fn setKindTableCommitment(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(IProtocolAdapterCalls::setKindTableCommitment)
                     }
@@ -5197,31 +5706,24 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                 {
                     fn RISC_ZERO_VERIFIER_SELECTOR(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
                     }
                     RISC_ZERO_VERIFIER_SELECTOR
                 },
                 {
-                    fn isEmergencyStopped(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::isEmergencyStopped)
-                    }
-                    isEmergencyStopped
-                },
-                {
                     fn getKindTableCommitment(
                         data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw(
+                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
+                                config,
                             )
                             .map(IProtocolAdapterCalls::getKindTableCommitment)
                     }
@@ -5236,7 +5738,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     ),
                 );
             };
-            DECODE_SHIMS[idx](data)
+            DECODE_SHIMS[idx](data, config)
         }
         #[inline]
         #[allow(non_snake_case)]
@@ -5244,107 +5746,11 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             selector: [u8; 4],
             data: &[u8],
         ) -> alloy_sol_types::Result<Self> {
-            static DECODE_VALIDATE_SHIMS: &[fn(
-                &[u8],
-            ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
-                {
-                    fn emergencyStop(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <emergencyStopCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::emergencyStop)
-                    }
-                    emergencyStop
-                },
-                {
-                    fn RISC_ZERO_VERIFIER_ROUTER(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_ROUTER)
-                    }
-                    RISC_ZERO_VERIFIER_ROUTER
-                },
-                {
-                    fn execute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::execute)
-                    }
-                    execute
-                },
-                {
-                    fn simulateExecute(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::simulateExecute)
-                    }
-                    simulateExecute
-                },
-                {
-                    fn setKindTableCommitment(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::setKindTableCommitment)
-                    }
-                    setKindTableCommitment
-                },
-                {
-                    fn RISC_ZERO_VERIFIER_SELECTOR(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::RISC_ZERO_VERIFIER_SELECTOR)
-                    }
-                    RISC_ZERO_VERIFIER_SELECTOR
-                },
-                {
-                    fn isEmergencyStopped(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::isEmergencyStopped)
-                    }
-                    isEmergencyStopped
-                },
-                {
-                    fn getKindTableCommitment(
-                        data: &[u8],
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_validate(
-                                data,
-                            )
-                            .map(IProtocolAdapterCalls::getKindTableCommitment)
-                    }
-                    getKindTableCommitment
-                },
-            ];
-            let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
-                return Err(
-                    alloy_sol_types::Error::unknown_selector(
-                        <Self as alloy_sol_types::SolInterface>::NAME,
-                        selector,
-                    ),
-                );
-            };
-            DECODE_VALIDATE_SHIMS[idx](data)
+            Self::abi_decode_raw_with_config(
+                selector,
+                data,
+                alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+            )
         }
         #[inline]
         fn abi_encoded_size(&self) -> usize {
@@ -5359,11 +5765,6 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                         inner,
                     )
                 }
-                Self::emergencyStop(inner) => {
-                    <emergencyStopCall as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
@@ -5372,8 +5773,14 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                         inner,
                     )
                 }
-                Self::isEmergencyStopped(inner) => {
-                    <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::pause(inner) => {
+                    <pauseCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
+                }
+                Self::paused(inner) => {
+                    <pausedCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
+                }
+                Self::riscZeroVerifierPaused(inner) => {
+                    <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -5386,6 +5793,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                     <simulateExecuteCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
+                }
+                Self::unpause(inner) => {
+                    <unpauseCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
             }
         }
@@ -5404,12 +5814,6 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                         out,
                     )
                 }
-                Self::emergencyStop(inner) => {
-                    <emergencyStopCall as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
@@ -5419,8 +5823,14 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                         out,
                     )
                 }
-                Self::isEmergencyStopped(inner) => {
-                    <isEmergencyStoppedCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::pause(inner) => {
+                    <pauseCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
+                }
+                Self::paused(inner) => {
+                    <pausedCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
+                }
+                Self::riscZeroVerifierPaused(inner) => {
+                    <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -5436,6 +5846,9 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
                         inner,
                         out,
                     )
+                }
+                Self::unpause(inner) => {
+                    <unpauseCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
             }
         }
@@ -5700,6 +6113,149 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             }
         }
     }
+    #[automatically_derived]
+    impl IProtocolAdapterEvents {
+        /**Creates a [`ActionExecuted`] event.
+
+```solidity
+event ActionExecuted(bytes32,bytes32[],bytes32[],bytes32[],bytes32[])
+```*/
+        #[inline]
+        pub fn action_executed(
+            action_tree_root: alloy::sol_types::private::FixedBytes<32>,
+            nullifiers: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            consumed_logic_refs: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            commitments: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+            created_logic_refs: alloy::sol_types::private::Vec<
+                alloy::sol_types::private::FixedBytes<32>,
+            >,
+        ) -> Self {
+            Self::ActionExecuted(ActionExecuted {
+                actionTreeRoot: action_tree_root,
+                nullifiers: nullifiers,
+                consumedLogicRefs: consumed_logic_refs,
+                commitments: commitments,
+                createdLogicRefs: created_logic_refs,
+            })
+        }
+        /**Creates a [`ApplicationPayload`] event.
+
+```solidity
+event ApplicationPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn application_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ApplicationPayload(ApplicationPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`DiscoveryPayload`] event.
+
+```solidity
+event DiscoveryPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn discovery_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::DiscoveryPayload(DiscoveryPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`ExternalPayload`] event.
+
+```solidity
+event ExternalPayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn external_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ExternalPayload(ExternalPayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`ForwarderCallExecuted`] event.
+
+```solidity
+event ForwarderCallExecuted(address,bytes,bytes)
+```*/
+        #[inline]
+        pub fn forwarder_call_executed(
+            untrusted_forwarder: alloy::sol_types::private::Address,
+            input: alloy::sol_types::private::Bytes,
+            output: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ForwarderCallExecuted(ForwarderCallExecuted {
+                untrustedForwarder: untrusted_forwarder,
+                input: input,
+                output: output,
+            })
+        }
+        /**Creates a [`KindTableCommitmentUpdated`] event.
+
+```solidity
+event KindTableCommitmentUpdated(bytes32)
+```*/
+        #[inline]
+        pub fn kind_table_commitment_updated(
+            kind_table_commitment: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::KindTableCommitmentUpdated(KindTableCommitmentUpdated {
+                kindTableCommitment: kind_table_commitment,
+            })
+        }
+        /**Creates a [`ResourcePayload`] event.
+
+```solidity
+event ResourcePayload(bytes32,uint256,bytes)
+```*/
+        #[inline]
+        pub fn resource_payload(
+            tag: alloy::sol_types::private::FixedBytes<32>,
+            index: alloy::sol_types::private::primitives::aliases::U256,
+            blob: alloy::sol_types::private::Bytes,
+        ) -> Self {
+            Self::ResourcePayload(ResourcePayload {
+                tag: tag,
+                index: index,
+                blob: blob,
+            })
+        }
+        /**Creates a [`TransactionExecuted`] event.
+
+```solidity
+event TransactionExecuted(bytes32)
+```*/
+        #[inline]
+        pub fn transaction_executed(
+            transaction_id: alloy::sol_types::private::FixedBytes<32>,
+        ) -> Self {
+            Self::TransactionExecuted(TransactionExecuted {
+                transactionId: transaction_id,
+            })
+        }
+    }
     use alloy::contract as alloy_contract;
     /**Creates a new wrapper around an on-chain [`IProtocolAdapter`](self) contract instance.
 
@@ -5869,12 +6425,6 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, RISC_ZERO_VERIFIER_SELECTORCall, N> {
             self.call_builder(&RISC_ZERO_VERIFIER_SELECTORCall)
         }
-        ///Creates a new call builder for the [`emergencyStop`] function.
-        pub fn emergencyStop(
-            &self,
-        ) -> alloy_contract::SolCallBuilder<&P, emergencyStopCall, N> {
-            self.call_builder(&emergencyStopCall)
-        }
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
             &self,
@@ -5888,11 +6438,19 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, getKindTableCommitmentCall, N> {
             self.call_builder(&getKindTableCommitmentCall)
         }
-        ///Creates a new call builder for the [`isEmergencyStopped`] function.
-        pub fn isEmergencyStopped(
+        ///Creates a new call builder for the [`pause`] function.
+        pub fn pause(&self) -> alloy_contract::SolCallBuilder<&P, pauseCall, N> {
+            self.call_builder(&pauseCall)
+        }
+        ///Creates a new call builder for the [`paused`] function.
+        pub fn paused(&self) -> alloy_contract::SolCallBuilder<&P, pausedCall, N> {
+            self.call_builder(&pausedCall)
+        }
+        ///Creates a new call builder for the [`riscZeroVerifierPaused`] function.
+        pub fn riscZeroVerifierPaused(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, isEmergencyStoppedCall, N> {
-            self.call_builder(&isEmergencyStoppedCall)
+        ) -> alloy_contract::SolCallBuilder<&P, riscZeroVerifierPausedCall, N> {
+            self.call_builder(&riscZeroVerifierPausedCall)
         }
         ///Creates a new call builder for the [`setKindTableCommitment`] function.
         pub fn setKindTableCommitment(
@@ -5917,6 +6475,10 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
                     skipRiscZeroProofVerification,
                 },
             )
+        }
+        ///Creates a new call builder for the [`unpause`] function.
+        pub fn unpause(&self) -> alloy_contract::SolCallBuilder<&P, unpauseCall, N> {
+            self.call_builder(&unpauseCall)
         }
     }
     /// Event filters.

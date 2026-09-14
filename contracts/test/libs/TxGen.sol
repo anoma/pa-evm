@@ -6,13 +6,13 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
 import {DeltaProof} from "../../src/libs/DeltaProof.sol";
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
 import {VerifyingKeys} from "../../src/libs/VerifyingKeys.sol";
 import {DeltaGen} from "./DeltaGen.sol";
+import {MerkleTreeReference} from "./MerkleTreeReference.sol";
 
 library TxGen {
-    using MerkleTree for bytes32[];
+    using MerkleTreeReference for bytes32[];
 
     /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
     /// @param  logicRef The hash of the resource logic function.

@@ -110,9 +110,11 @@ To simulate deployment on sepolia, run
 
 ```sh
 forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-  --sig "run(bool)" <IS_PRODUCTION> \
+  --sig "run(bool,bool)" <IS_PRODUCTION> <IS_TRANSITIONAL> \
   --rpc-url sepolia
 ```
+
+`<IS_TRANSITIONAL>` is `true` only for a chain that ran v1: its proxy then starts on the transitional implementation, which copies the v1 state in. See [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md).
 
 Append the
 

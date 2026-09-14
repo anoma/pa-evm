@@ -1,6 +1,6 @@
 [package]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.6"
+version = "3.0.0-rc.7"
 description = "The Anoma EVM protocol adapter contract bindings and deployments."
 keywords.workspace = true
 authors.workspace = true

@@ -6,7 +6,7 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 
 /// @title PrintProtocolAdapterVersion
-/// @author Anoma Foundation, 2025
+/// @author Anoma Foundation, 2026
 /// @notice A script returning the version the protocol adapter source compiles to. The release flow reads it to label
 /// the published package, so that the label always describes the source it ships.
 /// @custom:security-contact security@anoma.foundation

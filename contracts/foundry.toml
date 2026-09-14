@@ -14,12 +14,9 @@ via_ir = true
 optimizer_runs = 10_000
 allow_internal_expect_revert = true
 
-# Let tests read build artifacts (needed by `openzeppelin-foundry-upgrades`) and the
-# recorded deployments. Setting `fs_permissions` replaces the implicit artifact access.
-fs_permissions = [
-    { access = "read", path = "out" },
-    { access = "read", path = "../crates/bindings/deployments.json" },
-]
+# Let tests read build artifacts, which `openzeppelin-foundry-upgrades` needs. Setting
+# `fs_permissions` replaces the implicit artifact access.
+fs_permissions = [{ access = "read", path = "out" }]
 
 # Settings required by `openzeppelin-foundry-upgrades` for upgrade-safety validation
 # (https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades#before-running).
@@ -45,7 +42,7 @@ remappings = [
     "@openzeppelin-contracts-upgradeable-5.7.0/=dependencies/@openzeppelin-contracts-upgradeable-5.7.0/",
     "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-5.7.0/",
     "anoma-forwarder-bases-3.0.0/=dependencies/anoma-forwarder-bases-3.0.0/",
-    "anoma-risc0-deployments-1.2.1/=dependencies/anoma-risc0-deployments-1.2.1/",
+    "anoma-risc0-deployments-1.2.2/=dependencies/anoma-risc0-deployments-1.2.2/",
     "elliptic-curve-solidity-0.2.5/=dependencies/elliptic-curve-solidity-0.2.5/",
     "forge-std-1.16.2/=dependencies/forge-std-1.16.2/",
     "forge-std/=dependencies/forge-std-1.16.2/src/",
@@ -68,11 +65,22 @@ ignored_warnings_from = [
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
+[lint]
+exclude_lints = [
+    "calls-loop",                  # Duplicates the Slither run in the same CI job, and misfires on memory allocation.
+    "inline-assembly",             # Only the ERC-7201 storage accessors, which solhint gates per site.
+    "internal-function-used-once", # Unreliable while `ignore` hides the call sites in the tests.
+    "mixed-case-function",         # Only the OpenZeppelin `__X_init` initializers, which solhint gates per site.
+    "reentrancy-events",           # Duplicates Slither, where the reviewed sites carry `slither-disable-next-line`.
+    "require-revert-in-loop",      # One invalid action must abort the whole transaction.
+]
+ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
+
 [dependencies]
 "@openzeppelin-contracts" = "5.7.0"
 "@openzeppelin-contracts-upgradeable" = "5.7.0"
 "anoma-forwarder-bases" = "3.0.0"
-"anoma-risc0-deployments" = "1.2.1"
+"anoma-risc0-deployments" = "1.2.2"
 "forge-std" = "1.16.2"
 "elliptic-curve-solidity" = { version = "0.2.5", git = "https://github.com/witnet/elliptic-curve-solidity", rev = "347547890840fd501809dfe0b855206407136ec0" }
 "openzeppelin-foundry-upgrades" = "0.4.2"
@@ -111,7 +119,5 @@ monad = "https://monad-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 monad-testnet = "https://monad-testnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 stable-mainnet = "https://stable-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
 megaeth = "https://megaeth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"
-
-aurora = "https://aurora.nownodes.io/${NOWNODES_API_KEY}"
 
 localhost = "http://localhost:8545"

@@ -4,8 +4,8 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
 # forge does not load this file itself. The file is absent in CI, where the
 # values come from secrets instead, so loading it stays optional.
-# `IS_PRODUCTION` is deliberately not kept here — see the release
-# checklist, which exports it once per deployment session.
+# `IS_PRODUCTION` and `IS_TRANSITIONAL` are deliberately not kept here — see the
+# release checklist, which exports them once per deployment session.
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
@@ -37,10 +37,11 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (contract-free files).
-contracts-storage-check *skip='Types':
+contracts-storage-check *skip='':
     #!/usr/bin/env bash
     set -euo pipefail
     cd contracts
@@ -72,14 +73,20 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
+# Regenerate the recorded deployments library from the deployment records
+contracts-gen-deployments:
+    ./scripts/generate-recorded-deployments.sh
+
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
     # enters the compilation graph through `DeployProtocolAdapterProxy.s.sol`;
     # `--select` keeps the script contracts themselves out of the bindings.
-    cd contracts && forge clean && forge bind \
-        --skip test \
-        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy)$' \
+    # `forge bind` builds without bytecode, which drops the `deploy` helpers, so
+    # build first and let it read those artifacts.
+    cd contracts && forge clean && forge build --skip test && forge bind \
+        --skip-build \
+        --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -103,10 +110,11 @@ contracts-deploy-impl deployer chain *args:
 # Simulate the implementation and proxy deployment (dry-run)
 contracts-simulate-proxy chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "IS_TRANSITIONAL: $IS_TRANSITIONAL"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool)" $IS_PRODUCTION \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the protocol adapter implementation and proxy
@@ -114,7 +122,7 @@ contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool)" $IS_PRODUCTION \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
@@ -180,6 +188,63 @@ contracts-propose-production-kind-table-update deployer proxy proposer commitmen
     cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# A pause deploys no bytecode, so the pause recipes skip the clean rebuild. In an emergency, that saves time.
+
+# Simulate the staging pause (dry-run): impersonates the owner (sender = the staging proxy owner)
+contracts-simulate-staging-pause sender proxy chain *args:
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(address)" {{proxy}} \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Execute the staging pause as the proxy owner
+contracts-execute-staging-pause deployer proxy chain *args:
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(address)" {{proxy}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production pause proposal (dry-run): simulates the Safe executing the pause
+contracts-simulate-production-pause-proposal proxy proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose pausing the production proxy to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-pause deployer proxy proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the v1 stop proposal (dry-run): simulates the Safe that owns v1 executing the stop
+contracts-simulate-v1-stop-proposal protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the v1 stop to the Safe that owns v1 (proposer = unlocked deployer); the stop cannot be undone
+contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+        --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the state migration of one chain (dry-run): copy-in, unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
+contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+
+# Run the state migration of one chain as the proxy owner, one transaction at a time
+contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check a migrated proxy against the stopped v1 protocol adapter and the end state of the run, reading both from the chain
+contracts-check-migration protocol_adapter_v1 proxy chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "verify(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
 contracts-verify-sourcify address contract chain *args:
@@ -247,6 +312,10 @@ bindings-test *args:
 # Check bindings are up-to-date
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
+
+# Check the recorded deployments library is up-to-date
+contracts-deployments-check: contracts-gen-deployments
+    git diff --exit-code contracts/generated/RecordedDeployments.sol
 
 # Publish bindings
 bindings-publish *args:
@@ -341,3 +410,5 @@ all-check:
     @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the recorded deployments library is up-to-date..."
+    @just contracts-deployments-check
