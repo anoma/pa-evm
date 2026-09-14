@@ -53,8 +53,8 @@ impl RpcProvider {
 /// Returns the RPC provider and subdomain configured for the given chain.
 ///
 /// This is the single place that maps chains to providers; extend it when a new
-/// chain is added or moved between providers. Chains served by Alchemy and those
-/// served by NowNodes are matched side by side here.
+/// chain is added or moved between providers. No chain uses NowNodes any more;
+/// [`RpcProvider::NowNodes`] stays so that existing callers keep compiling.
 pub fn rpc_provider(chain: &NamedChain) -> RpcUrlResult<(RpcProvider, &'static str)> {
     use NamedChain::*;
     use RpcProvider::*;
@@ -87,9 +87,6 @@ pub fn rpc_provider(chain: &NamedChain) -> RpcUrlResult<(RpcProvider, &'static s
         //
         MegaEth => (Alchemy, "megaeth-mainnet"),
         MegaEthTestnet => (Alchemy, "megaeth-testnet"),
-
-        // NowNodes
-        Aurora => (NowNodes, "aurora"),
 
         _ => return Err(RpcUrlError::SubdomainNotFound),
     })

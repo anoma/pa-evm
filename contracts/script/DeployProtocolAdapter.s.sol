@@ -76,10 +76,6 @@ contract DeployProtocolAdapter is Script {
         _supportNetwork({
             name: "megaeth", chainId: 4326, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
         });
-
-        _supportNetwork({
-            name: "aurora", chainId: 1313161554, riscZeroVerifierRouter: 0x8cFdF6D8D1b141897D542aa07Afd27e37694dF7f
-        });
     }
 
     /// @notice Deploys the protocol adapter contract on supported networks and allows for test deployments.

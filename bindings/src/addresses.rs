@@ -45,10 +45,6 @@ pub fn protocol_adapter_deployments_map() -> HashMap<NamedChain, Address> {
             NamedChain::MegaEth,
             address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
         ),
-        (
-            NamedChain::Aurora,
-            address!("0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2"), // NOTE: Non-deterministic deployment
-        ),
     ])
 }
 
