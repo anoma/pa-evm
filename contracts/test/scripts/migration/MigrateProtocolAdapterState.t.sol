@@ -48,11 +48,12 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         _script = new MigrateProtocolAdapterState();
     }
 
-    function test_run_copies_the_state_and_leaves_the_proxy_on_the_plain_implementation() public {
+    function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
         bytes32 kindTableCommitment = pa.getKindTableCommitment();
+        address transitionalImplementation = pa.getImplementation();
 
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
 
         assertEq(pa.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "the root differs from v1");
         assertEq(pa.commitmentCount(), _COMMITMENT_COUNT, "the commitment count differs from v1");
@@ -62,10 +63,23 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
             assertTrue(pa.isNullifierContained(_v1.nullifierAtIndex(i)), "a nullifier of v1 is missing");
         }
 
-        assertFalse(pa.paused(), "the proxy should be unpaused");
+        assertTrue(pa.paused(), "the proxy should stay paused");
+        assertEq(
+            pa.getImplementation(), transitionalImplementation, "the proxy should keep the transitional implementation"
+        );
         assertEq(
             pa.getKindTableCommitment(), kindTableCommitment, "the run should not change the kind table commitment"
         );
+        assertEq(pa.owner(), DEFAULT_SENDER, "the run should not change the owner");
+    }
+
+    function test_complete_unpauses_and_leaves_the_proxy_on_the_plain_implementation() public {
+        ProtocolAdapter pa = ProtocolAdapter(_proxy);
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+
+        assertFalse(pa.paused(), "the proxy should be unpaused");
         assertEq(pa.owner(), DEFAULT_SENDER, "a staging proxy should keep its owner");
         (address implementation,) = new DeployProtocolAdapterImplementation().predict();
         assertEq(pa.getImplementation(), implementation, "the proxy should run the plain implementation");
@@ -77,8 +91,10 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         TransitionalProtocolAdapter(_proxy).seedNullifierSet(1);
     }
 
-    function test_run_transfers_a_production_proxy_to_the_production_proxy_owner() public {
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
+    function test_complete_transfers_a_production_proxy_to_the_production_proxy_owner() public {
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
 
         assertEq(
             ProtocolAdapter(_proxy).owner(),
@@ -88,9 +104,11 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         _script.verify({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
     }
 
-    function test_run_unpauses_before_it_upgrades_and_transfers() public {
+    function test_complete_unpauses_before_it_upgrades_and_transfers() public {
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+
         vm.recordLogs();
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
 
         bytes32[3] memory order =
             [Pausable.Unpaused.selector, IERC1967.Upgraded.selector, Ownable.OwnershipTransferred.selector];
@@ -101,7 +119,16 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
             if (logs[i].emitter == _proxy && logs[i].topics[0] == order[found]) ++found;
         }
 
-        assertEq(found, order.length, "the run should unpause, upgrade and transfer in that order");
+        assertEq(found, order.length, "the completion should unpause, upgrade and transfer in that order");
+    }
+
+    function test_complete_reverts_before_the_state_is_copied() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TransitionalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
+            )
+        );
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
     }
 
     function test_run_reverts_if_the_v1_protocol_adapter_is_still_running() public {
@@ -112,7 +139,7 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         vm.expectRevert(
             abi.encodeWithSelector(TransitionalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
         );
-        _script.run({protocolAdapterV1: address(running), proxy: proxy, isProduction: false});
+        _script.run({protocolAdapterV1: address(running), proxy: proxy});
     }
 
     function test_run_reverts_for_a_proxy_that_copies_from_another_v1_protocol_adapter() public {
@@ -121,7 +148,16 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         vm.expectRevert(
             abi.encodeWithSelector(MigrateProtocolAdapterState.ProtocolAdapterV1Mismatch.selector, other, address(_v1))
         );
-        _script.run({protocolAdapterV1: other, proxy: _proxy, isProduction: false});
+        _script.run({protocolAdapterV1: other, proxy: _proxy});
+    }
+
+    function test_complete_reverts_for_a_proxy_that_copies_from_another_v1_protocol_adapter() public {
+        address other = makeAddr("other v1 protocol adapter");
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MigrateProtocolAdapterState.ProtocolAdapterV1Mismatch.selector, other, address(_v1))
+        );
+        _script.complete({protocolAdapterV1: other, proxy: _proxy, isProduction: false});
     }
 
     function test_run_sends_one_transaction_per_nullifier_batch() public {
@@ -130,7 +166,7 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         assertGt(expectedBatches, 1, "the fixture should need more than one batch");
 
         vm.recordLogs();
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
 
         uint256 batches;
         bytes32 topic = keccak256("NullifierSetSeeded(uint256,uint256)");
@@ -147,12 +183,13 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         vm.prank(DEFAULT_SENDER);
         TransitionalProtocolAdapter(_proxy).seedCommitmentTree(sides);
 
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
 
         _script.verify({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
     }
 
-    function test_run_resumes_a_run_that_stopped_after_the_unpause() public {
+    function test_complete_resumes_a_completion_that_stopped_after_the_unpause() public {
         bytes32[] memory sides = _v1.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
@@ -161,13 +198,14 @@ contract MigrateProtocolAdapterStateTest is RiscZeroRouterFixture {
         TransitionalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
 
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
 
         _script.verify({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
     }
 
     function test_verify_reverts_if_a_production_proxy_was_not_transferred() public {
-        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _script.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+        _script.complete({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
         address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
 
         vm.expectRevert(

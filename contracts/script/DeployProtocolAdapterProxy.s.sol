@@ -134,8 +134,8 @@ contract DeployProtocolAdapterProxy is Script {
     }
 
     /// @notice Returns the owner a proxy is initialized with. A transitional proxy gets the staging proxy owner in both
-    /// environments, because the migration run sends its calls from the owner. A production proxy moves to the
-    /// production proxy owner after the upgrade to the plain implementation.
+    /// environments, because the migration and completion runs send their calls from the owner. A production proxy
+    /// moves to the production proxy owner after the upgrade to the plain implementation.
     /// @param isProduction Whether the proxy belongs to the production or the staging environment.
     /// @param isTransitional Whether the proxy starts on the transitional implementation.
     /// @return owner The account the proxy is initialized with as its owner.
