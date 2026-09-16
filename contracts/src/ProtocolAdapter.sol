@@ -373,8 +373,11 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc UUPSUpgradeable
-    // solhint-disable-next-line no-empty-blocks
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    /* solhint-disable no-empty-blocks */
+    // slither-disable-next-line dead-code
+    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+    /* solhint-enable no-empty-blocks */
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,

@@ -11,8 +11,8 @@ import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterP
 import {
     FinalizeProtocolAdapterStateMigration
 } from "../../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
+import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
-import {TransitionalProtocolAdapter} from "../../../src/TransitionalProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 
 /// @notice Checks the completion run against a stand-in for the v1 protocol adapter, after the migration run copied the
@@ -33,7 +33,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         // The copy-in is gone with the implementation that carried it.
         vm.prank(DEFAULT_SENDER);
         vm.expectRevert();
-        TransitionalProtocolAdapter(_proxy).seedNullifierSet(1);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet(1);
     }
 
     function test_run_transfers_a_production_proxy_to_the_production_proxy_owner() public {
@@ -70,7 +70,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
     function test_run_reverts_before_the_state_is_copied() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                TransitionalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
+                MigrationalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
             )
         );
         _finalizationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
@@ -91,9 +91,9 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         bytes32[] memory sides = _v1.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
-        TransitionalProtocolAdapter(_proxy).seedCommitmentTree(sides);
-        TransitionalProtocolAdapter(_proxy).seedNullifierSet(_NULLIFIER_COUNT);
-        TransitionalProtocolAdapter(_proxy).unpause();
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet(_NULLIFIER_COUNT);
+        MigrationalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
 
         _finalizationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});

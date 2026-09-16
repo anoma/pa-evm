@@ -84,7 +84,7 @@ library RecordedDeployments {
         Proxy proxy;
     }
 
-    /// @notice A v1 protocol adapter, which a transitional proxy on the same chain copies the state from.
+    /// @notice A v1 protocol adapter, which a migrational proxy on the same chain copies the state from.
     struct DeploymentV1 {
         uint256 chainId;
         address protocolAdapter;

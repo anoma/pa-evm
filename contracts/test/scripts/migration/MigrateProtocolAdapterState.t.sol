@@ -5,8 +5,8 @@ import {Vm} from "forge-std-1.16.2/src/Vm.sol";
 
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {MigrateProtocolAdapterState} from "../../../script/migration/MigrateProtocolAdapterState.s.sol";
+import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
-import {TransitionalProtocolAdapter} from "../../../src/TransitionalProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ProtocolAdapterV1Mock} from "../../mocks/ProtocolAdapterV1.m.sol";
 
@@ -16,7 +16,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
         bytes32 kindTableCommitment = pa.getKindTableCommitment();
-        address transitionalImplementation = pa.getImplementation();
+        address migrationalImplementation = pa.getImplementation();
 
         _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
 
@@ -30,7 +30,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
 
         assertTrue(pa.paused(), "the proxy should stay paused");
         assertEq(
-            pa.getImplementation(), transitionalImplementation, "the proxy should keep the transitional implementation"
+            pa.getImplementation(), migrationalImplementation, "the proxy should keep the migrational implementation"
         );
         assertEq(
             pa.getKindTableCommitment(), kindTableCommitment, "the run should not change the kind table commitment"
@@ -41,10 +41,10 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_reverts_if_the_v1_protocol_adapter_is_still_running() public {
         ProtocolAdapterV1Mock running = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
         running.addCommitment(keccak256("commitment"));
-        address proxy = _deployTransitionalProxy(address(running));
+        address proxy = _deployMigrationalProxy(address(running));
 
         vm.expectRevert(
-            abi.encodeWithSelector(TransitionalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
+            abi.encodeWithSelector(MigrationalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
         );
         _migrationScript.run({protocolAdapterV1: address(running), proxy: proxy});
     }
@@ -67,7 +67,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
 
         uint256 batches;
-        bytes32 topic = keccak256("NullifierSetSeeded(uint256,uint256)");
+        bytes32 topic = keccak256("NullifierBatchMigrated(uint256,uint256)");
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; ++i) {
             if (logs[i].emitter == _proxy && logs[i].topics[0] == topic) ++batches;
@@ -79,7 +79,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_resumes_a_run_that_stopped_after_the_commitment_tree() public {
         bytes32[] memory sides = _v1.commitmentTreeSides();
         vm.prank(DEFAULT_SENDER);
-        TransitionalProtocolAdapter(_proxy).seedCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
 
         _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
         _finalizationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});

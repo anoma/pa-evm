@@ -20,8 +20,8 @@ contract ExecuteProtocolAdapterPauseTest is RiscZeroRouterFixture {
         DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
         _stagingOwner = deployScript.PROXY_OWNER_STAGING();
 
-        (_stagingProxy,,,) = deployScript.run({isProduction: false, isTransitional: false});
-        (_productionProxy,,,) = deployScript.run({isProduction: true, isTransitional: false});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false, isMigrational: false});
+        (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {

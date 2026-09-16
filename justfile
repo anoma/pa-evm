@@ -4,7 +4,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 # Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
 # forge does not load this file itself. The file is absent in CI, where the
 # values come from secrets instead, so loading it stays optional.
-# `IS_PRODUCTION` and `IS_TRANSITIONAL` are deliberately not kept here — see the
+# `IS_PRODUCTION` and `IS_MIGRATIONAL` are deliberately not kept here — see the
 # release checklist, which exports them once per deployment session.
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
@@ -110,11 +110,11 @@ contracts-deploy-impl deployer chain *args:
 # Simulate the implementation and proxy deployment (dry-run)
 contracts-simulate-proxy chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
-    @echo "IS_TRANSITIONAL: $IS_TRANSITIONAL"
+    @echo "IS_MIGRATIONAL: $IS_MIGRATIONAL"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_MIGRATIONAL \
         --rpc-url {{chain}} {{ args }}
 
 # Deploy the protocol adapter implementation and proxy
@@ -122,7 +122,7 @@ contracts-deploy-proxy deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-        --sig "run(bool,bool)" $IS_PRODUCTION $IS_TRANSITIONAL \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_MIGRATIONAL \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)

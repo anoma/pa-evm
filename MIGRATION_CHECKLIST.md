@@ -4,14 +4,14 @@ How to move a chain that ran v1 onto v2 and keep its commitment tree and nullifi
 
 ## How it works
 
-A chain that ran v1 cannot start v2 empty. Its proxy starts on [`TransitionalProtocolAdapter`](./contracts/src/TransitionalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the v1 state in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) unpauses, upgrades the proxy to `ProtocolAdapter` and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
+A chain that ran v1 cannot start v2 empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the v1 state in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) unpauses, upgrades the proxy to `ProtocolAdapter` and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
 
 The ERC20 forwarder balances move between the two runs. The kind table on the proxy carries V1 members, which let a V1 resource unwrap from the V2 ERC20 forwarder. A paused proxy executes nothing, so no V1 resource can unwrap before the V2 forwarder holds the V1 tokens.
 
-The transitional implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the v1 protocol adapter is stopped.
+The migrational implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the v1 protocol adapter is stopped.
 
-- `seedCommitmentTree` writes the tree in one call. The caller supplies the stored sides, the one part of the tree v1 exposes through no getter. The leaf count and the root come from v1, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces v1's root, so a wrong set of sides cannot reach storage.
-- `seedNullifierSet` copies the next batch of nullifiers. It reads each one from v1 at the index it takes here and reverts unless it lands at that index. A batch starts where the last one stopped, so no batch can be skipped or repeated.
+- `migrateCommitmentTree` writes the tree in one call. The caller supplies the stored sides, the one part of the tree v1 exposes through no getter. The leaf count and the root come from v1, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces v1's root, so a wrong set of sides cannot reach storage.
+- `migrateNullifierSet` copies the next batch of nullifiers. It reads each one from v1 at the index it takes here and reverts unless it lands at that index. A batch starts where the last one stopped, so no batch can be skipped or repeated.
 
 `unpause` proceeds only once the adapter holds what the stopped v1 adapter holds: the same commitment count, the same latest root, and the same nullifier count. The historical roots are the one difference that stays. v1 keeps every root it had. This adapter keeps two: the empty-tree root, which a resource created and consumed in one transaction proves membership against, and v1's latest root.
 
@@ -25,11 +25,11 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-deploy-impl deployer <CHAIN>
   ```
 
-- [ ] Deploy the proxy on the transitional implementation. It starts paused. It reads the chain's v1 protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `v1` entries in [`deployments.json`](./crates/bindings/deployments.json).
+- [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's v1 protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `v1` entries in [`deployments.json`](./crates/bindings/deployments.json).
 
   ```sh
   export IS_PRODUCTION=<true|false>
-  export IS_TRANSITIONAL=true
+  export IS_MIGRATIONAL=true
   just contracts-simulate-proxy <CHAIN>
   just contracts-deploy-proxy deployer <CHAIN>
   ```

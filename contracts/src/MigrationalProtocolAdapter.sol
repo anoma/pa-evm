@@ -6,20 +6,20 @@ import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 
 import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
+import {IMigrational} from "./interfaces/IMigrational.sol";
 import {INullifierSet} from "./interfaces/INullifierSet.sol";
-import {ITransitional} from "./interfaces/ITransitional.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
 import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 
-/// @title TransitionalProtocolAdapter
+/// @title MigrationalProtocolAdapter
 /// @author Anoma Foundation, 2026
 /// @notice The protocol adapter implementation used to migrate Anoma Galileo v1 to v2. It starts paused and copies the
 /// v1 state in — the commitment tree and the nullifier set — reading every value from the v1 protocol adapter itself.
 /// It refuses to unpause until its commitment tree and its nullifier set hold what v1 holds.
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
-contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
+contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
     using SafeCast for uint256;
@@ -75,8 +75,8 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
         _pause();
     }
 
-    /// @inheritdoc ITransitional
-    function seedCommitmentTree(bytes32[] calldata sides)
+    /// @inheritdoc IMigrational
+    function migrateCommitmentTree(bytes32[] calldata sides)
         external
         override
         onlyOwner
@@ -105,11 +105,11 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
         // The empty-tree root stays. A transaction that consumes an ephemeral resource proves membership against it.
         _addCommitmentTreeRoot(root);
 
-        emit CommitmentTreeSeeded({root: root, leafCount: leafCount});
+        emit CommitmentTreeMigrated({root: root, leafCount: leafCount});
     }
 
-    /// @inheritdoc ITransitional
-    function seedNullifierSet(uint256 count) external override onlyOwner whenPaused whenProtocolAdapterV1Stopped {
+    /// @inheritdoc IMigrational
+    function migrateNullifierSet(uint256 count) external override onlyOwner whenPaused whenProtocolAdapterV1Stopped {
         EnumerableSet.Bytes32Set storage nullifiers = _getNullifierSetStorage()._nullifierSet;
 
         uint256 start = nullifiers.length();
@@ -130,10 +130,10 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
             require(stored == nullifier, NullifierIndexMismatch({index: index, expected: nullifier, actual: stored}));
         }
 
-        emit NullifierSetSeeded({start: start, count: count});
+        emit NullifierBatchMigrated({start: start, count: count});
     }
 
-    /// @inheritdoc ITransitional
+    /// @inheritdoc IMigrational
     function getProtocolAdapterV1() external view override returns (address protocolAdapterV1) {
         protocolAdapterV1 = _PROTOCOL_ADAPTER_V1;
     }
@@ -142,6 +142,13 @@ contract TransitionalProtocolAdapter is ITransitional, ProtocolAdapter {
     function _unpause() internal override {
         _checkStateMigrationIsComplete();
         super._unpause();
+    }
+
+    /// @notice Authorizes an upgrade of the proxy and reports the migration as finished.
+    /// @dev The upgrade away from this implementation is the last step of the migration, so it is what the event
+    /// marks. The base authorizes the same way and emits nothing.
+    function _authorizeUpgrade(address) internal override onlyOwner {
+        emit MigrationFinalized();
     }
 
     /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the v1 protocol
