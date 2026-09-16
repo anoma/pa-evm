@@ -6,15 +6,15 @@ import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
+import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
 /// @notice A script to copy one chain's state from the stopped v1 protocol adapter into a v2 proxy running
-/// `TransitionalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
+/// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
 /// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
 /// unpauses, upgrades the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
 /// production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips once it is done, so a
@@ -39,7 +39,7 @@ contract MigrateProtocolAdapterState is Script {
     /// a 30 million block. A chain holding 8000 nullifiers therefore takes 40 transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
 
-    /// @notice Thrown if the transitional proxy copies its state from another v1 protocol adapter than the given one.
+    /// @notice Thrown if the migrational proxy copies its state from another v1 protocol adapter than the given one.
     error ProtocolAdapterV1Mismatch(address expected, address actual);
 
     /// @notice Thrown if a v1 storage slot does not hold what its public getter reports, i.e. if v1's storage layout
@@ -74,7 +74,7 @@ contract MigrateProtocolAdapterState is Script {
     /// step skips once it is done, so a run that stops early can be repeated. Run
     /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
-    /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter`.
+    /// @param proxy The v2 protocol adapter proxy, running `MigrationalProtocolAdapter`.
     function run(address protocolAdapterV1, address proxy) public {
         address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
@@ -83,8 +83,8 @@ contract MigrateProtocolAdapterState is Script {
             _requireProtocolAdapterV1({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
 
             if (protocolAdapter.paused()) {
-                _seedCommitmentTree({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
-                _seedNullifierSet({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+                _migrateCommitmentTree({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
+                _migrateNullifierSet({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
             }
         }
     }
@@ -105,7 +105,7 @@ contract MigrateProtocolAdapterState is Script {
     /// rejects sides that do not reproduce the root.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The v2 protocol adapter proxy.
-    function _seedCommitmentTree(address protocolAdapterV1, address proxy) internal {
+    function _migrateCommitmentTree(address protocolAdapterV1, address proxy) internal {
         // The proxy refuses to write a tree twice.
         if (ICommitmentTree(proxy).commitmentCount() != 0) {
             return;
@@ -124,7 +124,7 @@ contract MigrateProtocolAdapterState is Script {
         }
 
         vm.broadcast();
-        TransitionalProtocolAdapter(proxy).seedCommitmentTree(sides);
+        MigrationalProtocolAdapter(proxy).migrateCommitmentTree(sides);
     }
 
     /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction. The proxy reads each
@@ -132,14 +132,18 @@ contract MigrateProtocolAdapterState is Script {
     /// skipped nor repeated.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The v2 protocol adapter proxy.
-    function _seedNullifierSet(address protocolAdapterV1, address proxy) internal {
+    function _migrateNullifierSet(address protocolAdapterV1, address proxy) internal {
         uint256 total = INullifierSet(protocolAdapterV1).nullifierCount();
 
-        for (uint256 seeded = INullifierSet(proxy).nullifierCount(); seeded < total; seeded += NULLIFIERS_PER_BATCH) {
-            uint256 size = Math.min(NULLIFIERS_PER_BATCH, total - seeded);
+        for (
+            uint256 migrated = INullifierSet(proxy).nullifierCount();
+            migrated < total;
+            migrated += NULLIFIERS_PER_BATCH
+        ) {
+            uint256 size = Math.min(NULLIFIERS_PER_BATCH, total - migrated);
 
             vm.broadcast();
-            TransitionalProtocolAdapter(proxy).seedNullifierSet(size);
+            MigrationalProtocolAdapter(proxy).migrateNullifierSet(size);
         }
     }
 
@@ -183,12 +187,12 @@ contract MigrateProtocolAdapterState is Script {
         );
     }
 
-    /// @notice Reverts unless the proxy copies its state from the given v1 protocol adapter. Only the transitional
+    /// @notice Reverts unless the proxy copies its state from the given v1 protocol adapter. Only the migrational
     /// implementation has the getter, so the call also rejects any other proxy.
     /// @param protocolAdapterV1 The v1 protocol adapter the caller names.
     /// @param proxy The v2 protocol adapter proxy.
     function _requireProtocolAdapterV1(address protocolAdapterV1, address proxy) internal view {
-        address copiedFrom = TransitionalProtocolAdapter(proxy).getProtocolAdapterV1();
+        address copiedFrom = MigrationalProtocolAdapter(proxy).getProtocolAdapterV1();
         require(
             copiedFrom == protocolAdapterV1,
             ProtocolAdapterV1Mismatch({expected: protocolAdapterV1, actual: copiedFrom})

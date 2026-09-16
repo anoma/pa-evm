@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.16.2/src/Script.sol";
 
+import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
@@ -12,7 +12,7 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. It
 /// unpauses the v2 proxy `MigrateProtocolAdapterState` copied the v1 state into, upgrades it from
-/// `TransitionalProtocolAdapter` to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
+/// `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
 /// production proxy owner. The unpause compares the copied state against v1 and reverts on a difference, so no run
 /// reaches the upgrade with the wrong state. Every step skips once it is done, so a run that stops early is repeated
 /// until it reaches the end.
@@ -20,7 +20,7 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
 contract FinalizeProtocolAdapterStateMigration is Script {
-    /// @notice Thrown if the transitional proxy copies its state from another v1 protocol adapter than the given one.
+    /// @notice Thrown if the migrational proxy copies its state from another v1 protocol adapter than the given one.
     error ProtocolAdapterV1Mismatch(address expected, address actual);
 
     /// @notice Unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the
@@ -31,7 +31,7 @@ contract FinalizeProtocolAdapterStateMigration is Script {
     /// step skips once it is done, so a run that stops early can be repeated. Run `MigrateProtocolAdapterState.verify`
     /// afterwards to assert the result against the chain.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter the state was copied from.
-    /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter` or, after the upgrade,
+    /// @param proxy The v2 protocol adapter proxy, running `MigrationalProtocolAdapter` or, after the upgrade,
     /// `ProtocolAdapter`.
     /// @param isProduction Whether the proxy belongs to the production environment, whose proxy owner receives it.
     function run(address protocolAdapterV1, address proxy, bool isProduction) public {
@@ -78,12 +78,12 @@ contract FinalizeProtocolAdapterStateMigration is Script {
         );
     }
 
-    /// @notice Reverts unless the proxy copies its state from the given v1 protocol adapter. Only the transitional
+    /// @notice Reverts unless the proxy copies its state from the given v1 protocol adapter. Only the migrational
     /// implementation has the getter, so the call also rejects any other proxy.
     /// @param protocolAdapterV1 The v1 protocol adapter the caller names.
     /// @param proxy The v2 protocol adapter proxy.
     function _requireProtocolAdapterV1(address protocolAdapterV1, address proxy) internal view {
-        address copiedFrom = TransitionalProtocolAdapter(proxy).getProtocolAdapterV1();
+        address copiedFrom = MigrationalProtocolAdapter(proxy).getProtocolAdapterV1();
         require(
             copiedFrom == protocolAdapterV1,
             ProtocolAdapterV1Mismatch({expected: protocolAdapterV1, actual: copiedFrom})

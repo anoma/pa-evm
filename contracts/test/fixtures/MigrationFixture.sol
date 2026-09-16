@@ -9,12 +9,12 @@ import {
     FinalizeProtocolAdapterStateMigration
 } from "../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
 import {MigrateProtocolAdapterState} from "../../script/migration/MigrateProtocolAdapterState.s.sol";
-import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
+import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapterV1Mock} from "../mocks/ProtocolAdapterV1.m.sol";
 import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
 /// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the v1 protocol adapter,
-/// a paused transitional proxy bound to it, and the migration and finalization scripts. Forge's default sender owns the
+/// a paused migrational proxy bound to it, and the migration and finalization scripts. Forge's default sender owns the
 /// stand-in and the proxy, because the scripts broadcast their transactions and a broadcast cannot be pranked.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
     uint256 internal constant _COMMITMENT_COUNT = 9;
@@ -42,16 +42,16 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
         vm.prank(DEFAULT_SENDER);
         _v1.emergencyStop();
 
-        _proxy = _deployTransitionalProxy(address(_v1));
+        _proxy = _deployMigrationalProxy(address(_v1));
 
         _migrationScript = new MigrateProtocolAdapterState();
         _finalizationScript = new FinalizeProtocolAdapterStateMigration();
     }
 
-    /// @notice Deploys a paused transitional proxy bound to the given v1 protocol adapter.
+    /// @notice Deploys a paused migrational proxy bound to the given v1 protocol adapter.
     /// @param protocolAdapterV1 The v1 protocol adapter the proxy copies its state from.
     /// @return proxy The proxy address.
-    function _deployTransitionalProxy(address protocolAdapterV1) internal returns (address proxy) {
+    function _deployMigrationalProxy(address protocolAdapterV1) internal returns (address proxy) {
         // forge-lint: disable-next-line(unused-return)
         (, bytes memory implementationData) = new DeployProtocolAdapterImplementation().predict();
         (address router, bytes4 selector) = abi.decode(implementationData, (address, bytes4));
@@ -59,8 +59,8 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
         Options memory opts;
         opts.constructorData = abi.encode(router, selector, protocolAdapterV1);
         proxy = Upgrades.deployUUPSProxy(
-            "TransitionalProtocolAdapter.sol",
-            abi.encodeCall(TransitionalProtocolAdapter.initialize, (DEFAULT_SENDER)),
+            "MigrationalProtocolAdapter.sol",
+            abi.encodeCall(MigrationalProtocolAdapter.initialize, (DEFAULT_SENDER)),
             opts
         );
     }
