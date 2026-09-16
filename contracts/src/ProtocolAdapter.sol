@@ -129,6 +129,7 @@ contract ProtocolAdapter is
         require(newKindTableCommitment != bytes32(0), ZeroKindTableCommitmentNotAllowed());
 
         _getProtocolAdapterStorage().kindTableCommitment = newKindTableCommitment;
+
         emit KindTableCommitmentUpdated({kindTableCommitment: newKindTableCommitment});
     }
 
@@ -227,6 +228,7 @@ contract ProtocolAdapter is
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
         bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
 
+        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
@@ -295,10 +297,12 @@ contract ProtocolAdapter is
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
 
-        // slither-disable-next-line calls-loop
+        // NOTE: Each action carries its own forwarder call, so the call belongs inside the loop over the actions.
+        // forge-lint: disable-next-item(calls-loop)
         bytes memory actualOutput =
             IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
 
+        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
         require(
             keccak256(actualOutput) == keccak256(expectedOutput),
             ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput})
@@ -366,6 +370,7 @@ contract ProtocolAdapter is
 
         // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
         _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
+
         emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
 
         // Sanity check that the verifier is not paused already.
@@ -431,7 +436,6 @@ contract ProtocolAdapter is
         _checkSelector(bytes4(proof[0:4]));
 
         if (!skipVerification) {
-            // slither-disable-next-line calls-loop
             RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
                 seal: proof, imageId: verifyingKey, journalDigest: instance
             });

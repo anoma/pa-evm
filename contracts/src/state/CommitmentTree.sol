@@ -113,6 +113,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
         require($._roots.add(root), PreExistingRoot(root));
+
         emit CommitmentTreeRootAdded(root);
     }
 

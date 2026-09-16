@@ -117,11 +117,11 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         // solhint-disable-next-line gas-strict-inequalities
         require(count <= available, NullifierBatchOutOfRange({available: available, requested: count}));
 
+        // NOTE: v1 exposes no batch getter, and it is a fixed, stopped contract, so the read belongs in the loop.
+        // forge-lint: disable-next-item(calls-loop)
         for (uint256 i = 0; i < count; ++i) {
             uint256 index = start + i;
 
-            // v1 exposes no batch getter, and it is a fixed, stopped contract.
-            // slither-disable-next-line calls-loop
             bytes32 nullifier = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(index);
             _addNullifier(nullifier);
 
