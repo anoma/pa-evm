@@ -15,10 +15,10 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A script to copy one chain's state from the stopped v1 protocol adapter into a v2 proxy running
 /// `TransitionalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
-/// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeMigration` then unpauses, upgrades
-/// the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the production proxy
-/// owner. `verify` checks the migrated proxy against the chain. Every step skips once it is done, so a run that stops
-/// early is repeated until it reaches the end.
+/// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
+/// unpauses, upgrades the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
+/// production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips once it is done, so a
+/// run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
@@ -71,8 +71,8 @@ contract MigrateProtocolAdapterState is Script {
     /// before the ERC20 forwarder balances move. Without `--broadcast` the run is simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
-    /// step skips once it is done, so a run that stops early can be repeated. Run `FinalizeMigration` once the ERC20
-    /// forwarder balances moved.
+    /// step skips once it is done, so a run that stops early can be repeated. Run
+    /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
     /// @param proxy The v2 protocol adapter proxy, running `TransitionalProtocolAdapter`.
     function run(address protocolAdapterV1, address proxy) public {
@@ -90,8 +90,8 @@ contract MigrateProtocolAdapterState is Script {
     }
 
     /// @notice Checks a migrated proxy against the stopped v1 protocol adapter and against the end state of the
-    /// migration, reading both from the chain. Run it after `FinalizeMigration` has broadcast, because
-    /// `FinalizeMigration` itself only ever sees the simulated state.
+    /// migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has broadcast,
+    /// because that script only ever sees the simulated state.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The migrated v2 protocol adapter proxy.
     /// @param isProduction Whether the production proxy owner must own the proxy.

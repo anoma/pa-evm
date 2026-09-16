@@ -8,7 +8,7 @@ import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
-/// @title FinalizeMigration
+/// @title FinalizeProtocolAdapterStateMigration
 /// @author Anoma Foundation, 2026
 /// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. It
 /// unpauses the v2 proxy `MigrateProtocolAdapterState` copied the v1 state into, upgrades it from
@@ -19,7 +19,7 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
-contract FinalizeMigration is Script {
+contract FinalizeProtocolAdapterStateMigration is Script {
     /// @notice Thrown if the transitional proxy copies its state from another v1 protocol adapter than the given one.
     error ProtocolAdapterV1Mismatch(address expected, address actual);
 

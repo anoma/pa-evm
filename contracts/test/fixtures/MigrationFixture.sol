@@ -5,31 +5,47 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
 import {DeployProtocolAdapterImplementation} from "../../script/DeployProtocolAdapterImplementation.s.sol";
+import {
+    FinalizeProtocolAdapterStateMigration
+} from "../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
+import {MigrateProtocolAdapterState} from "../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {TransitionalProtocolAdapter} from "../../src/TransitionalProtocolAdapter.sol";
 import {ProtocolAdapterV1Mock} from "../mocks/ProtocolAdapterV1.m.sol";
 import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
-/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the v1 protocol
-/// adapter, and a paused transitional proxy bound to it. Forge's default sender owns both, because the migration
-/// scripts broadcast their transactions and a broadcast cannot be pranked.
+/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the v1 protocol adapter,
+/// a paused transitional proxy bound to it, and the migration and finalization scripts. Forge's default sender owns the
+/// stand-in and the proxy, because the scripts broadcast their transactions and a broadcast cannot be pranked.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
     uint256 internal constant _COMMITMENT_COUNT = 9;
     /// @dev More than one batch, so the nullifier loop of the migration run is exercised.
     uint256 internal constant _NULLIFIER_COUNT = 450;
 
-    /// @notice Deploys a stand-in for the v1 protocol adapter holding `_COMMITMENT_COUNT` commitments and
-    /// `_NULLIFIER_COUNT` nullifiers, and stops it.
-    /// @return v1 The stopped v1 protocol adapter.
-    function _deployStoppedProtocolAdapterV1() internal returns (ProtocolAdapterV1Mock v1) {
-        v1 = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
+    ProtocolAdapterV1Mock internal _v1;
+    address internal _proxy;
+    MigrateProtocolAdapterState internal _migrationScript;
+    FinalizeProtocolAdapterStateMigration internal _finalizationScript;
+
+    function setUp() public {
+        _deployRiscZeroRouter();
+
+        // The implementation the completion run upgrades to, at its deterministic address.
+        new DeployProtocolAdapterImplementation().run();
+
+        _v1 = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
         for (uint256 i = 0; i < _COMMITMENT_COUNT; ++i) {
-            v1.addCommitment(keccak256(abi.encode("commitment", i)));
+            _v1.addCommitment(keccak256(abi.encode("commitment", i)));
         }
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
-            v1.addNullifier(keccak256(abi.encode("nullifier", i)));
+            _v1.addNullifier(keccak256(abi.encode("nullifier", i)));
         }
         vm.prank(DEFAULT_SENDER);
-        v1.emergencyStop();
+        _v1.emergencyStop();
+
+        _proxy = _deployTransitionalProxy(address(_v1));
+
+        _migrationScript = new MigrateProtocolAdapterState();
+        _finalizationScript = new FinalizeProtocolAdapterStateMigration();
     }
 
     /// @notice Deploys a paused transitional proxy bound to the given v1 protocol adapter.
