@@ -87,7 +87,10 @@ Writing the v1 state into the proxy: `seedCommitmentTree` once, then `seedNullif
 _Avoid_: seeding (the function names say it; the act has its own word), import
 
 **Migration run**:
-One execution of `MigrateProtocolAdapterState` for one chain: the copy-in, the unpause, which checks the result against v1, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+One execution of `MigrateProtocolAdapterState.run` for one chain: the copy-in. The proxy stays paused, so the ERC20 forwarder balances move before anyone can transact. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+
+**Completion run**:
+One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against v1, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Sides**:
 The stored left-sibling hashes of the v1 commitment tree, one per level. v1 exposes no getter for them, so the script reads them from v1's storage and the transitional implementation proves they reproduce v1's root.
