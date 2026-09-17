@@ -29,7 +29,7 @@ The protocol adapter runs in two environments, recorded per chain in [`./crates/
 Changes flow one way, `next` → `staging` → `main`, and the promotion pull request is the gate:
 
 - **`next`** integrates feature branches. Nothing is asserted about deployments, so a version bump is green before anything is deployed.
-- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
+- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`. A proxy that copies in v1 state may run the migrational implementation of the source version until its completion run.
 - **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
 
 The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.

@@ -89,9 +89,10 @@ slither .
 To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
 
 ```sh
-forge bind \
-  --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
-  --bindings-path ../bindings/src/generated/ \
+forge clean && forge build --skip test && forge bind \
+  --skip-build \
+  --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
+  --bindings-path ../crates/bindings/src/generated/ \
   --module \
   --overwrite
 ```
