@@ -39,8 +39,7 @@ Our software undergoes regular [audits](./audits/):
 1. Informal Systems
 
    - Company Website: https://informal.systems
-   - Commit
-     ID: [fc69013e7bc2db1bddf6ef6936e8bf03d14f2963](https://github.com/anoma/pa-evm/tree/fc69013e7bc2db1bddf6ef6936e8bf03d14f2963)
+   - Commit ID: [fc69013e7bc2db1bddf6ef6936e8bf03d14f2963](https://github.com/anoma/pa-evm/tree/fc69013e7bc2db1bddf6ef6936e8bf03d14f2963)
    - Started: 2025-10-13
    - Finished: 2025-10-31
    - Last revised: 2025-11-07
@@ -50,8 +49,7 @@ Our software undergoes regular [audits](./audits/):
 2. Nethermind
 
    - Company Website: https://www.nethermind.io/nethermind-security
-   - Commit
-     ID: [fee4f47050689b82473e9a3198e7a2065becb3fb](https://github.com/anoma/pa-evm/tree/fee4f47050689b82473e9a3198e7a2065becb3fb)
+   - Commit ID: [fee4f47050689b82473e9a3198e7a2065becb3fb](https://github.com/anoma/pa-evm/tree/fee4f47050689b82473e9a3198e7a2065becb3fb)
    - Started: 2025-10-07
    - Finished: 2025-11-13
 
@@ -59,8 +57,7 @@ Our software undergoes regular [audits](./audits/):
 
 ## Security
 
-If you believe you've found a security issue, we encourage you to notify us via Email
-at [security@anoma.foundation](mailto:security@anoma.foundation).
+If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
 
 Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
 
