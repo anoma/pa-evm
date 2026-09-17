@@ -29,7 +29,7 @@ The protocol adapter runs in two environments, recorded per chain in [`./crates/
 Changes flow one way, `next` → `staging` → `main`, and the promotion pull request is the gate:
 
 - **`next`** integrates feature branches. Nothing is asserted about deployments, so a version bump is green before anything is deployed.
-- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
+- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`. A proxy that copies in v1 state may run the migrational implementation of the source version until its completion run.
 - **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
 
 The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.
@@ -88,11 +88,11 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment and the implementation the proxy starts on. `IS_PRODUCTION` picks the CREATE2 salt and, for a plain proxy, the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol). `IS_TRANSITIONAL` starts the proxy on the transitional implementation instead of the plain one, owned by the staging proxy owner in both environments; set it to `true` only for a chain that ran v1, as [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md) describes. Both are deliberately kept out of `contracts/.env` so that they are a conscious choice per session.
+- [ ] Select the environment and the implementation the proxy starts on. `IS_PRODUCTION` picks the CREATE2 salt and, for a plain proxy, the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol). `IS_MIGRATIONAL` starts the proxy on the migrational implementation instead of the plain one, owned by the staging proxy owner in both environments; set it to `true` only for a chain that ran v1, as [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md) describes. Both are deliberately kept out of `contracts/.env` so that they are a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false
-  export IS_TRANSITIONAL=false
+  export IS_MIGRATIONAL=false
   ```
 
   Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read them; every other recipe takes its addresses as arguments.
@@ -297,7 +297,7 @@ For **staging**:
 
   ```sh
   export IS_PRODUCTION=false
-  export IS_TRANSITIONAL=false
+  export IS_MIGRATIONAL=false
   ```
 
 For **production**:
@@ -308,7 +308,7 @@ For **production**:
 
   ```sh
   export IS_PRODUCTION=true
-  export IS_TRANSITIONAL=false
+  export IS_MIGRATIONAL=false
   ```
 
   The proxy is owned by the Safe from its constructor, so there is no ownership transfer. This is the only production step that needs no signer action.

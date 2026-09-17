@@ -4,13 +4,15 @@
 
 mod common;
 
-use alloy::primitives::{Address, keccak256};
+use alloy::primitives::{Address, B256, FixedBytes, keccak256};
 use alloy::providers::{DynProvider, Provider, ProviderBuilder};
 use alloy::sol;
 use alloy::sol_types::SolConstructor;
 use alloy_chains::NamedChain;
 use anoma_pa_evm_bindings::addresses::{Environment, protocol_adapter_deployments_map};
 use anoma_pa_evm_bindings::contract::protocol_adapter;
+use anoma_pa_evm_bindings::generated::i_migrational::IMigrational;
+use anoma_pa_evm_bindings::generated::migrational_protocol_adapter::MigrationalProtocolAdapter;
 use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use common::{CREATE2_DEPLOYER, context, is_armed, is_release, is_release_candidate, parameters};
@@ -71,7 +73,10 @@ async fn production_deployments_run_a_release_version_and_are_safe_owned() {
 }
 
 /// Every recorded proxy delegates to the implementation this source predicts for its chain, which proves the
-/// environment runs this source. The record is not a term in the comparison — the chain answers what it runs.
+/// environment runs this source. A staging proxy may also delegate to the migrational implementation this
+/// source predicts, until its completion run upgrades it. A production proxy may not: the completion run
+/// upgrades it before the Safe receives it. The record is not a term in the comparison — the chain answers
+/// what it runs.
 async fn expect_source_implementations(environment: Environment) {
     if !is_armed(environment) {
         return;
@@ -98,13 +103,11 @@ async fn expect_source_implementations(environment: Environment) {
             riscZeroVerifierSelector: selector,
         }
         .abi_encode();
-        let init_code = [
-            ProtocolAdapter::BYTECODE.as_ref(),
-            constructor_args.as_ref(),
-        ]
-        .concat();
-        let source_implementation =
-            CREATE2_DEPLOYER.create2(implementation_salt, keccak256(&init_code));
+        let source_implementation = create2_address(
+            implementation_salt,
+            &ProtocolAdapter::BYTECODE,
+            &constructor_args,
+        );
 
         let deployed_implementation = adapter
             .getImplementation()
@@ -112,11 +115,55 @@ async fn expect_source_implementations(environment: Environment) {
             .await
             .expect("getImplementation");
 
+        if deployed_implementation != source_implementation
+            && environment == Environment::Staging
+            && migrational_source_implementation(&adapter, implementation_salt, router, selector)
+                .await
+                .is_some_and(|implementation| implementation == deployed_implementation)
+        {
+            eprintln!("info: {context}: runs the migrational implementation this source predicts");
+            continue;
+        }
+
         assert_eq!(
             deployed_implementation, source_implementation,
             "{context}: does not run the source implementation"
         );
     }
+}
+
+/// The migrational implementation this source predicts for the proxy, or `None` if the proxy does not run
+/// one. Only the migrational implementation reports the v1 protocol adapter, its third constructor argument,
+/// so the call fails for any other implementation.
+async fn migrational_source_implementation(
+    adapter: &ProtocolAdapter::ProtocolAdapterInstance<DynProvider>,
+    implementation_salt: B256,
+    router: Address,
+    selector: FixedBytes<4>,
+) -> Option<Address> {
+    let protocol_adapter_v1 = IMigrational::new(*adapter.address(), adapter.provider())
+        .getProtocolAdapterV1()
+        .call()
+        .await
+        .ok()?;
+
+    let constructor_args = MigrationalProtocolAdapter::constructorCall {
+        riscZeroVerifierRouter: router,
+        riscZeroVerifierSelector: selector,
+        protocolAdapterV1: protocol_adapter_v1,
+    }
+    .abi_encode();
+
+    Some(create2_address(
+        implementation_salt,
+        &MigrationalProtocolAdapter::BYTECODE,
+        &constructor_args,
+    ))
+}
+
+/// The address at which the deterministic deployer creates a contract from its creation code and arguments.
+fn create2_address(salt: B256, creation_code: &[u8], constructor_args: &[u8]) -> Address {
+    CREATE2_DEPLOYER.create2(salt, keccak256([creation_code, constructor_args].concat()))
 }
 
 /// The protocol adapter instance of every chain recorded for the environment, read over its own RPC.

@@ -89,9 +89,10 @@ slither .
 To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
 
 ```sh
-forge bind \
-  --select '^(ProtocolAdapter|IProtocolAdapter|ICommitmentTree|INullifierSet)$' \
-  --bindings-path ../bindings/src/generated/ \
+forge clean && forge build --skip test && forge bind \
+  --skip-build \
+  --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
+  --bindings-path ../crates/bindings/src/generated/ \
   --module \
   --overwrite
 ```
@@ -110,11 +111,11 @@ To simulate deployment on sepolia, run
 
 ```sh
 forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
-  --sig "run(bool,bool)" <IS_PRODUCTION> <IS_TRANSITIONAL> \
+  --sig "run(bool,bool)" <IS_PRODUCTION> <IS_MIGRATIONAL> \
   --rpc-url sepolia
 ```
 
-`<IS_TRANSITIONAL>` is `true` only for a chain that ran v1: its proxy then starts on the transitional implementation, which copies the v1 state in. See [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md).
+`<IS_MIGRATIONAL>` is `true` only for a chain that ran v1: its proxy then starts on the migrational implementation, which copies the v1 state in. See [`MIGRATION_CHECKLIST.md`](../MIGRATION_CHECKLIST.md).
 
 Append the
 

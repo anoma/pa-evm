@@ -29,8 +29,8 @@ contract ProposeProtocolAdapterPauseTest is RiscZeroRouterFixture, SafeFixture {
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
 
-        (_productionProxy,,,) = deployScript.run({isProduction: true, isTransitional: false});
-        (_stagingProxy,,,) = deployScript.run({isProduction: false, isTransitional: false});
+        (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false, isMigrational: false});
     }
 
     function test_run_pauses_the_protocol_adapter() public {
