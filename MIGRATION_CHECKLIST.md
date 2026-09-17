@@ -43,7 +43,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 - [ ] Install the chain's kind table commitment on the proxy. Generate the table after the forwarders are recorded, so that it carries the V1 members. The proxy can take the commitment while paused, so install it before the v1 stop. The migration and completion runs do not change it. Simulate, run, and read it back:
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <DEPLOYMENT_WALLET> <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   cast call <PROXY> "getKindTableCommitment()(bytes32)" --rpc-url <CHAIN>
   ```

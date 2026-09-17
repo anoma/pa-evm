@@ -15,14 +15,12 @@ abstract contract StagingScript is Script {
     /// @notice Thrown if the proxy is not a staging deployment, i.e. not owned by the staging proxy owner.
     error NotAStagingDeployment(address proxy);
 
-    /// @notice Thrown if the sender is not the proxy owner.
-    error UnauthorizedSender(address sender);
-
-    /// @notice Checks that the proxy belongs to the staging environment and that the sender owns it.
+    /// @notice Returns the owner of the proxy, and reverts unless the proxy belongs to the staging environment.
+    /// @dev The scripts broadcast as this owner, because with `--account` alone forge runs them as its default sender.
     /// @param proxy The staging environment protocol adapter proxy to act on.
-    function _checkSenderAuthorization(address proxy) internal {
-        address owner = ProtocolAdapter(proxy).owner();
+    /// @return owner The staging proxy owner, which sends the transactions.
+    function _stagingOwner(address proxy) internal returns (address owner) {
+        owner = ProtocolAdapter(proxy).owner();
         require(owner == new DeployProtocolAdapterProxy().PROXY_OWNER_STAGING(), NotAStagingDeployment(proxy));
-        require(msg.sender == owner, UnauthorizedSender(msg.sender));
     }
 }

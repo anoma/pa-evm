@@ -11,13 +11,12 @@ import {StagingScript} from "./StagingScript.s.sol";
 /// pause proposed by `production/ProposeProtocolAdapterPause` in the Safe app instead.
 /// @custom:security-contact security@anoma.foundation
 contract ExecuteProtocolAdapterPause is StagingScript {
-    /// @notice Pauses the protocol adapter as the proxy owner, which the sender must be. Without `--broadcast`, the
-    /// pause is simulated locally.
+    /// @notice Pauses the protocol adapter as the proxy owner. Without `--broadcast`, the pause is simulated locally.
     /// @param proxy The staging environment protocol adapter proxy to pause.
     function run(address proxy) public {
-        _checkSenderAuthorization({proxy: proxy});
+        address owner = _stagingOwner({proxy: proxy});
 
-        vm.startBroadcast();
+        vm.startBroadcast(owner);
         IProtocolAdapter(proxy).pause();
         vm.stopBroadcast();
     }

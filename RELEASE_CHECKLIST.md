@@ -158,10 +158,10 @@ For each chain in the `staging` section of the record:
 
   and check that the verification worked (e.g. on https://sourcify.dev/#/lookup). The proxy was verified at its genesis deploy and carries the ERC-1967 bytecode, not the implementation's, so it needs no reverification.
 
-- [ ] **Simulate** the upgrade, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade 0x61462bE56782568376f9cB069382EFa72764a407 $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
@@ -420,10 +420,10 @@ Not a release. The kind table commitment is rotated on a live proxy without chan
 
 For **staging**:
 
-- [ ] **Simulate** the update, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-table-update 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <COMMITMENT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <COMMITMENT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
@@ -454,10 +454,10 @@ Not a release. A paused protocol adapter executes no transaction until its owner
 
 For **staging**:
 
-- [ ] **Simulate** the pause, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the pause by running
 
   ```sh
-  just contracts-simulate-staging-pause 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <CHAIN>
+  just contracts-simulate-staging-pause <PROXY> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
