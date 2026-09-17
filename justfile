@@ -233,12 +233,12 @@ contracts-propose-v1-ownership-transfer deployer protocol_adapter_v1 proposer ch
         --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the migration run of one chain (dry-run): the copy-in, after which the proxy stays paused (sender = the proxy owner)
-contracts-simulate-migration sender chain *args:
+# Simulate the migration run of one chain as the proxy owner (dry-run): the copy-in, after which the proxy stays paused
+contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
         --sig "run(bool)" $IS_PRODUCTION \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Copy the v1 state into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
 contracts-execute-migration deployer chain *args:
@@ -246,12 +246,12 @@ contracts-execute-migration deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the completion run of one chain (dry-run): unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
-contracts-simulate-migration-completion sender chain *args:
+# Simulate the completion run of one chain as the proxy owner (dry-run): unpause, upgrade and, in production, the ownership transfer
+contracts-simulate-migration-completion chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
         --sig "run(bool)" $IS_PRODUCTION \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Complete the migration of one chain as the proxy owner, once the ERC20 forwarder balances moved
 contracts-execute-migration-completion deployer chain *args:

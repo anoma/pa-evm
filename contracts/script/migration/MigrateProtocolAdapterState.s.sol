@@ -20,7 +20,8 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips once it is done, so a
 /// run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
-/// Safe multisig needs the same calls proposed there instead.
+/// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
+/// `--account` alone forge runs it as its default sender.
 /// @custom:security-contact security@anoma.foundation
 contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the v1 protocol adapter. `ReentrancyGuardTransient`
@@ -120,7 +121,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
             sides[i] = vm.load({target: protocolAdapterV1, slot: bytes32(firstElementSlot + i)});
         }
 
-        vm.broadcast();
+        address owner = MigrationalProtocolAdapter(proxy).owner();
+        vm.broadcast(owner);
         MigrationalProtocolAdapter(proxy).migrateCommitmentTree(sides);
     }
 
@@ -131,6 +133,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// @param proxy The v2 protocol adapter proxy.
     function _migrateNullifierSet(address protocolAdapterV1, address proxy) internal {
         uint256 total = INullifierSet(protocolAdapterV1).nullifierCount();
+        address owner = MigrationalProtocolAdapter(proxy).owner();
 
         for (
             uint256 migrated = INullifierSet(proxy).nullifierCount();
@@ -139,7 +142,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
         ) {
             uint256 size = Math.min(NULLIFIERS_PER_BATCH, total - migrated);
 
-            vm.broadcast();
+            vm.broadcast(owner);
             MigrationalProtocolAdapter(proxy).migrateNullifierSet(size);
         }
     }

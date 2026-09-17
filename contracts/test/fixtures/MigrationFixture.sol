@@ -17,8 +17,7 @@ import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
 /// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the v1 protocol adapter,
 /// a paused migrational proxy bound to it, and the migration and finalization scripts reading the two in place of the
-/// records. Forge's default sender owns the stand-in and the proxy, because the scripts broadcast their transactions
-/// and a broadcast cannot be pranked.
+/// records. Forge's default sender owns the stand-in and the proxy.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
     uint256 internal constant _COMMITMENT_COUNT = 9;
     /// @dev More than one batch, so the nullifier loop of the migration run is exercised.

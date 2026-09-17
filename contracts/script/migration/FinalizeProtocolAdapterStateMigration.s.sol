@@ -15,7 +15,8 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// reaches the upgrade with the wrong state. Every step skips once it is done, so a run that stops early is repeated
 /// until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
-/// Safe multisig needs the same calls proposed there instead.
+/// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
+/// `--account` alone forge runs it as its default sender.
 /// @custom:security-contact security@anoma.foundation
 contract FinalizeProtocolAdapterStateMigration is MigrationScript {
     /// @notice Unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the
@@ -33,25 +34,26 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         address implementation = _requireDeployedImplementation(implementationDeployScript);
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
+        address owner = protocolAdapter.owner();
 
         if (protocolAdapter.getImplementation() != implementation) {
             _requireProtocolAdapterV1({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
 
             if (protocolAdapter.paused()) {
-                vm.broadcast();
+                vm.broadcast(owner);
                 protocolAdapter.unpause();
             }
 
             // Read before the broadcast: `vm.broadcast` arms only the next call, and a view call would take it.
             bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();
-            vm.broadcast();
+            vm.broadcast(owner);
             protocolAdapter.upgradeToAndCall(implementation, initializationData);
         }
 
         if (isProduction) {
             address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
             if (protocolAdapter.owner() != productionOwner) {
-                vm.broadcast();
+                vm.broadcast(owner);
                 protocolAdapter.transferOwnership(productionOwner);
             }
         }

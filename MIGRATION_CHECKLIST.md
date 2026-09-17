@@ -75,11 +75,11 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
 
    The stop cannot be undone: v1 has no function that lifts it. Nothing transfers v1 back, and no step needs to.
 
-3. [ ] Simulate the migration run, with the proxy owner as the sender. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
+3. [ ] Simulate the migration run. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration <OWNER> <CHAIN>
+   just contracts-simulate-migration <CHAIN>
    ```
 
 4. [ ] Run it:
@@ -94,11 +94,11 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
 
 5. [ ] Move the V1 ERC20 forwarder balances to the V2 ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must stay paused until they moved: the kind table's V1 members let V1 resources unwrap from the V2 forwarder.
 
-6. [ ] Simulate the completion run, with the proxy owner as the sender. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
+6. [ ] Simulate the completion run. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration-completion <OWNER> <CHAIN>
+   just contracts-simulate-migration-completion <CHAIN>
    ```
 
 7. [ ] Run it:
