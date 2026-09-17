@@ -7,7 +7,7 @@ pragma solidity ^0.8.30;
 /// @notice The protocol adapter deployments each environment records, and the v1 protocol adapters they copy the state
 /// from.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
-/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen-deployments`, which CI reruns
+/// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
 /// and fails on any diff. The records live with the bindings because that crate publishes them; this library carries
 /// them into Solidity so the contracts package reads nothing outside itself.
 /// @custom:security-contact security@anoma.foundation

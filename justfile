@@ -94,6 +94,9 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
+# Regenerate the recorded deployments library, then the Rust bindings
+contracts-gen: contracts-gen-deployments contracts-gen-bindings
+
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
