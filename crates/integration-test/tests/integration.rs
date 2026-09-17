@@ -1,15 +1,35 @@
 use alloy::sol_types::SolError;
+use anoma_pa_evm_bindings::generated::protocol_adapter::{
+    IProtocolAdapter, ProtocolAdapter as PaContract,
+};
+use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
 #[cfg(feature = "e2e")]
 use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
+use anoma_pa_evm_integration_test::state::actors::default_signer;
+use anoma_pa_evm_integration_test::state::pa::pa_address;
 use anoma_pa_testkit::assert::{Needle, expect_integration_panic};
 use anoma_pa_testkit::environment::Environment;
 use anoma_pa_testkit::fixtures::trivial;
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
 use anoma_risc0_verifier_bindings::generated::risc_zero_mock_verifier::RiscZeroMockVerifier;
+use anoma_rm_risc0::Digest;
 use anyhow::Context;
 use rstest::*;
+
+/// Expects a revert carrying the given custom error selector.
+fn expect_revert_selector<T>(
+    selector: [u8; 4],
+) -> impl FnOnce(anyhow::Result<T>) -> anyhow::Result<()> {
+    expect_integration_panic(Needle::Regexp(
+        regex::Regex::new(&regex::escape(&format!(
+            "custom error 0x{}",
+            hex::encode(selector)
+        )))
+        .unwrap(),
+    ))
+}
 
 #[rstest]
 #[case::local(EvmLocalEnv::setup_bare())]
@@ -209,4 +229,109 @@ async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
     tamper(&mut tx).context("failed to tamper transaction proof")?;
 
     assert_err(execute_tx(&mut env, tx).await)
+}
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[tokio::test]
+async fn execute_reverts_on_a_non_historical_root<Env>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()>
+where
+    Env: Environment<Transaction = Transaction>,
+{
+    let env = env.context("env setup failed")?;
+
+    let actions = trivial::build_many(1, 71).context("failed to build trivial actions")?;
+    let mut tx = prove_actions(&env, &actions).await?;
+
+    tx.as_arm_mut()
+        .aggregation
+        .as_mut()
+        .context("the transaction must carry an aggregation")?
+        .instance
+        .actions[0]
+        .consumed_publics[0]
+        .commitment_tree_root = Digest::from([0x42u8; 32]);
+
+    // `execute_tx` pre-checks the roots client-side, so call the contract
+    // directly to reach the on-chain check. It runs before proof verification,
+    // so tampering the proven instance still hits `NonExistingRoot` first.
+    let pa_tx: IProtocolAdapter::Transaction = tx.into_arm().into();
+    let pa = protocol_adapter(pa_address(&env)?, default_signer(&env)?);
+
+    let err = match pa.execute(pa_tx).call().await {
+        Ok(_) => anyhow::bail!("execute accepted a non-historical root"),
+        Err(err) => err,
+    };
+    let data = err
+        .as_revert_data()
+        .with_context(|| format!("execute failed without revert data: {err}"))?;
+
+    anyhow::ensure!(
+        data.len() >= 4 && data[..4] == PaContract::NonExistingRoot::SELECTOR,
+        "expected `NonExistingRoot`, got selector 0x{}",
+        hex::encode(&data[..data.len().min(4)]),
+    );
+    Ok(())
+}
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[tokio::test]
+async fn execute_tx_reverts_on_a_replayed_transaction<Env: Environment>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()> {
+    let mut env = env.context("env setup failed")?;
+
+    // The trivial fixture is deterministic per seed, so a rebuild consumes the
+    // same nullifiers.
+    let tx = prove_actions(&env, &trivial::build_many(1, 72)?).await?;
+    execute_tx(&mut env, tx)
+        .await
+        .context("the first execution must settle")?;
+
+    let replay = prove_actions(&env, &trivial::build_many(1, 72)?).await?;
+
+    expect_revert_selector(PaContract::PreExistingNullifier::SELECTOR)(
+        execute_tx(&mut env, replay).await,
+    )
+}
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[tokio::test]
+async fn execute_tx_reverts_on_a_tampered_action_tree_root<Env>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()>
+where
+    Env: Environment<Transaction = Transaction>,
+{
+    let mut env = env.context("env setup failed")?;
+
+    let actions = trivial::build_many(1, 73).context("failed to build trivial actions")?;
+    let mut tx = prove_actions(&env, &actions).await?;
+
+    // The delta proof signs the action tree roots, so the tampered root fails
+    // the delta check before the aggregation proof is even considered.
+    let root = &mut tx
+        .as_arm_mut()
+        .aggregation
+        .as_mut()
+        .context("the transaction must carry an aggregation")?
+        .instance
+        .actions[0]
+        .action_tree_root;
+    let mut bytes = [0u8; 32];
+    bytes.copy_from_slice(root.as_bytes());
+    bytes[0] ^= 0xff;
+    *root = Digest::from(bytes);
+
+    expect_revert_selector(PaContract::DeltaMismatch::SELECTOR)(execute_tx(&mut env, tx).await)
 }
