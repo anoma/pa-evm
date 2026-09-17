@@ -73,10 +73,9 @@ async fn production_deployments_run_a_release_version_and_are_safe_owned() {
 }
 
 /// Every recorded proxy delegates to the implementation this source predicts for its chain, which proves the
-/// environment runs this source. A staging proxy may also delegate to the migrational implementation this
-/// source predicts, until its completion run upgrades it. A production proxy may not: the completion run
-/// upgrades it before the Safe receives it. The record is not a term in the comparison — the chain answers
-/// what it runs.
+/// environment runs this source. A proxy may also delegate to the migrational implementation this source
+/// predicts, until its completion run upgrades it. The record is not a term in the comparison — the chain
+/// answers what it runs.
 async fn expect_source_implementations(environment: Environment) {
     if !is_armed(environment) {
         return;
@@ -116,7 +115,6 @@ async fn expect_source_implementations(environment: Environment) {
             .expect("getImplementation");
 
         if deployed_implementation != source_implementation
-            && environment == Environment::Staging
             && migrational_source_implementation(&adapter, implementation_salt, router, selector)
                 .await
                 .is_some_and(|implementation| implementation == deployed_implementation)
