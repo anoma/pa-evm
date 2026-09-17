@@ -94,6 +94,9 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
+# Regenerate the recorded deployments library, then the Rust bindings
+contracts-gen: contracts-gen-deployments contracts-gen-bindings
+
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
@@ -434,7 +437,7 @@ all-check:
     @just all-fmt-check
     @echo "==> Linting..."
     @just all-lint
-    @echo "==> Checking bindings are up-to-date..."
-    @just bindings-check
     @echo "==> Checking the recorded deployments library is up-to-date..."
     @just contracts-deployments-check
+    @echo "==> Checking bindings are up-to-date..."
+    @just bindings-check

@@ -109,7 +109,7 @@ A release candidate and a release go through the same cycle. Steps 1 to 5 are re
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.0.0-rc.N`, where `A` is the last `MAJOR` version number incremented by 1.
 
-- [ ] Regenerate the bindings with `just contracts-gen-bindings`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Regenerate the recorded deployments library and the bindings with `just contracts-gen`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Open a pull request into `next` and merge it once green. The deploy is a separate mechanical step afterwards.
 
@@ -364,13 +364,13 @@ For **both**:
 
   The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited.
 
-- [ ] Regenerate the library the deploy script reads the record through with
+- [ ] Regenerate the library the deploy script reads the record through, and the bindings, with
 
   ```sh
-  just contracts-gen-deployments
+  just contracts-gen
   ```
 
-  and commit it alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+  and commit the changes alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
