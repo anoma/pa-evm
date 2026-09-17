@@ -5,9 +5,11 @@ import {Vm} from "forge-std-1.16.2/src/Vm.sol";
 
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {MigrateProtocolAdapterState} from "../../../script/migration/MigrateProtocolAdapterState.s.sol";
+import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
+import {MigrateProtocolAdapterStateMock} from "../../mocks/MigrateProtocolAdapterState.m.sol";
 import {ProtocolAdapterV1Mock} from "../../mocks/ProtocolAdapterV1.m.sol";
 
 /// @notice Checks the migration run end to end against a stand-in for the v1 protocol adapter, and the check of a
@@ -18,7 +20,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         bytes32 kindTableCommitment = pa.getKindTableCommitment();
         address migrationalImplementation = pa.getImplementation();
 
-        _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+        _migrationScript.run({isProduction: false});
 
         assertEq(pa.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "the root differs from v1");
         assertEq(pa.commitmentCount(), _COMMITMENT_COUNT, "the commitment count differs from v1");
@@ -42,20 +44,41 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         ProtocolAdapterV1Mock running = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
         running.addCommitment(keccak256("commitment"));
         address proxy = _deployMigrationalProxy(address(running));
+        MigrateProtocolAdapterState script =
+            new MigrateProtocolAdapterStateMock({protocolAdapterV1: address(running), proxy: proxy});
 
         vm.expectRevert(
             abi.encodeWithSelector(MigrationalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
         );
-        _migrationScript.run({protocolAdapterV1: address(running), proxy: proxy});
+        script.run({isProduction: false});
     }
 
     function test_run_reverts_for_a_proxy_that_copies_from_another_v1_protocol_adapter() public {
         address other = makeAddr("other v1 protocol adapter");
+        MigrateProtocolAdapterState script =
+            new MigrateProtocolAdapterStateMock({protocolAdapterV1: other, proxy: _proxy});
+
+        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterV1Mismatch.selector, other, address(_v1)));
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_on_a_chain_that_records_no_v1_protocol_adapter() public {
+        MigrateProtocolAdapterState script = new MigrateProtocolAdapterState();
+        uint256 chainId = 31337;
+        vm.chainId(chainId);
+
+        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterV1NotRecorded.selector, chainId));
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_if_the_environment_records_no_proxy() public {
+        MigrateProtocolAdapterState script =
+            new MigrateProtocolAdapterStateMock({protocolAdapterV1: address(_v1), proxy: address(0)});
 
         vm.expectRevert(
-            abi.encodeWithSelector(MigrateProtocolAdapterState.ProtocolAdapterV1Mismatch.selector, other, address(_v1))
+            abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", block.chainid)
         );
-        _migrationScript.run({protocolAdapterV1: other, proxy: _proxy});
+        script.run({isProduction: true});
     }
 
     function test_run_sends_one_transaction_per_nullifier_batch() public {
@@ -64,7 +87,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         assertGt(expectedBatches, 1, "the fixture should need more than one batch");
 
         vm.recordLogs();
-        _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
+        _migrationScript.run({isProduction: false});
 
         uint256 batches;
         bytes32 topic = keccak256("NullifierBatchMigrated(uint256,uint256)");
@@ -81,20 +104,20 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         vm.prank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
 
-        _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
-        _finalizationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _migrationScript.run({isProduction: false});
+        _finalizationScript.run({isProduction: false});
 
-        _migrationScript.verify({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _migrationScript.verify({isProduction: false});
     }
 
     function test_verify_reverts_if_a_production_proxy_was_not_transferred() public {
-        _migrationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy});
-        _finalizationScript.run({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: false});
+        _migrationScript.run({isProduction: false});
+        _finalizationScript.run({isProduction: false});
         address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
 
         vm.expectRevert(
             abi.encodeWithSelector(MigrateProtocolAdapterState.OwnerMismatch.selector, productionOwner, DEFAULT_SENDER)
         );
-        _migrationScript.verify({protocolAdapterV1: address(_v1), proxy: _proxy, isProduction: true});
+        _migrationScript.verify({isProduction: true});
     }
 }

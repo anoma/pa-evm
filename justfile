@@ -231,34 +231,36 @@ contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the migration run of one chain (dry-run): the copy-in, after which the proxy stays paused (sender = the proxy owner)
-contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+contracts-simulate-migration sender chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Copy the v1 state into the proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
-contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
+# Copy the v1 state into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
+contracts-execute-migration deployer chain *args:
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the completion run of one chain (dry-run): unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
-contracts-simulate-migration-completion sender protocol_adapter_v1 proxy chain *args:
+contracts-simulate-migration-completion sender chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
-        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
 # Complete the migration of one chain as the proxy owner, once the ERC20 forwarder balances moved
-contracts-execute-migration-completion deployer protocol_adapter_v1 proxy chain *args:
+contracts-execute-migration-completion deployer chain *args:
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
-        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check a migrated proxy against the stopped v1 protocol adapter and the end state of the completion run, reading both from the chain
-contracts-check-migration protocol_adapter_v1 proxy chain *args:
+# Check the recorded proxy of one chain against the stopped v1 protocol adapter and the end state of the completion run, reading both from the chain
+contracts-check-migration chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "verify(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "verify(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)

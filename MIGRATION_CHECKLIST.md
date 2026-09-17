@@ -36,7 +36,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
   The proxy gets the staging proxy owner, the deployment wallet, in both environments, because the migration and completion runs send their calls from the owner. A production proxy moves to the production proxy owner at the end of the completion run. Until then, the staging recipes act on it too, because they check the owner and not the environment.
 
-- [ ] Record the proxy in `deployments.json` and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The kind tables take their chains from this record. The bindings tests on the promotion gate require a recorded proxy to run the plain implementation this source predicts and, in production, to be owned by a Safe, so they fail for this chain until the completion run. Do not promote the environment before the check at the end.
+- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` with `just contracts-gen-deployments`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the v1 protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. The bindings tests on the promotion gate require a recorded proxy to run the plain implementation this source predicts and, in production, to be owned by a Safe, so they fail for this chain until the completion run. Do not promote the environment before the check at the end.
 
 - [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's V1 ERC20 forwarder.
 
@@ -63,16 +63,17 @@ Steps 2 to 8 leave users unable to transact, so prepare every transaction before
 
    Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). The stop cannot be undone: v1 has no function that lifts it.
 
-3. [ ] Simulate the migration run, with the proxy owner as the sender:
+3. [ ] Simulate the migration run, with the proxy owner as the sender. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
    ```sh
-   just contracts-simulate-migration <OWNER> <PROTOCOL_ADAPTER_V1> <PROXY> <CHAIN>
+   export IS_PRODUCTION=<true|false>
+   just contracts-simulate-migration <OWNER> <CHAIN>
    ```
 
 4. [ ] Run it:
 
    ```sh
-   just contracts-execute-migration deployer <PROTOCOL_ADAPTER_V1> <PROXY> <CHAIN>
+   just contracts-execute-migration deployer <CHAIN>
    ```
 
    The run copies the commitment tree and the nullifier set, and the proxy stays paused. The recipe waits for each transaction before it sends the next (`--slow`). Without that, a transaction that reverts on chain would not stop the ones behind it. The run sends one transaction for the tree and one per `NULLIFIERS_PER_BATCH` nullifiers. A chain holding 8000 nullifiers sends 41 transactions.
@@ -85,13 +86,13 @@ Steps 2 to 8 leave users unable to transact, so prepare every transaction before
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration-completion <OWNER> <PROTOCOL_ADAPTER_V1> <PROXY> <CHAIN>
+   just contracts-simulate-migration-completion <OWNER> <CHAIN>
    ```
 
 7. [ ] Run it:
 
    ```sh
-   just contracts-execute-migration-completion deployer <PROTOCOL_ADAPTER_V1> <PROXY> <CHAIN>
+   just contracts-execute-migration-completion deployer <CHAIN>
    ```
 
    The run unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the production proxy owner, the Safe `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`. The transfer takes effect at once, and only a Safe transaction can move ownership back. The run sends one transaction each for the unpause, the upgrade and, in production, the transfer.
@@ -101,7 +102,7 @@ Steps 2 to 8 leave users unable to transact, so prepare every transaction before
 8. [ ] Check the result, reading from the chain:
 
    ```sh
-   just contracts-check-migration <PROTOCOL_ADAPTER_V1> <PROXY> <CHAIN>
+   just contracts-check-migration <CHAIN>
    ```
 
    It compares the copied state with v1, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy.

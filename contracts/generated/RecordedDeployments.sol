@@ -40,11 +40,19 @@ library RecordedDeployments {
     /// @param chainId The chain ID to look for.
     /// @return recorded Whether the environment records a deployment for the chain.
     function isRecorded(bool isProduction, uint256 chainId) internal pure returns (bool recorded) {
+        recorded = protocolAdapterProxy({isProduction: isProduction, chainId: chainId}) != address(0);
+    }
+
+    /// @notice Returns the protocol adapter proxy an environment records for a chain.
+    /// @param isProduction Whether to read the production or the staging environment.
+    /// @param chainId The chain ID to look for.
+    /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
+    function protocolAdapterProxy(bool isProduction, uint256 chainId) internal pure returns (address proxy) {
         Deployment[] memory deployments = isProduction ? production() : staging();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             if (deployments[i].chainId == chainId) {
-                return true;
+                return deployments[i].proxy.addr;
             }
         }
     }
