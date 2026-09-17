@@ -9,6 +9,9 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
+# Evaluate a variable only when a recipe uses it, so `impl_contract` stops only the recipes that need it.
+set lazy := true
+
 # Default recipe
 default:
     @just --list
@@ -278,8 +281,17 @@ contracts-verify-custom address contract chain verifier-url *args:
 # Verify a contract on both sourcify and etherscan
 contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
 
-# Verify the protocol adapter implementation on both explorers
-contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
+# The implementation contract a proxy starts on, which `IS_MIGRATIONAL` selects as for `contracts-deploy-proxy`
+impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
+    "src/MigrationalProtocolAdapter.sol:MigrationalProtocolAdapter"
+} else if env("IS_MIGRATIONAL", "") == "false" {
+    "src/ProtocolAdapter.sol:ProtocolAdapter"
+} else {
+    error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
+}
+
+# Verify the protocol adapter implementation on both explorers, as the contract `IS_MIGRATIONAL` selects
+contracts-verify-impl implementation chain: (contracts-verify implementation impl_contract chain)
 
 # Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
 contracts-verify-proxy proxy chain: \
