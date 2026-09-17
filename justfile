@@ -221,15 +221,15 @@ contracts-propose-production-pause deployer proxy proposer chain *args:
         --sig "run(address,address)" {{proxy}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the v1 stop proposal (dry-run): simulates the Safe that owns v1 executing the stop
-contracts-simulate-v1-stop-proposal protocol_adapter_v1 proposer chain *args:
-    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+# Simulate the v1 ownership transfer proposal (dry-run): simulates the Safe that owns v1 executing the transfer
+contracts-simulate-v1-ownership-transfer-proposal protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1OwnershipTransfer.s.sol:ProposeProtocolAdapterV1OwnershipTransfer \
         --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose the v1 stop to the Safe that owns v1 (proposer = unlocked deployer); the stop cannot be undone
-contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
-    cd contracts && forge script script/migration/ProposeProtocolAdapterV1Stop.s.sol:ProposeProtocolAdapterV1Stop \
+# Propose the v1 ownership transfer to the deployment wallet, to the Safe that owns v1 (proposer = unlocked deployer)
+contracts-propose-v1-ownership-transfer deployer protocol_adapter_v1 proposer chain *args:
+    cd contracts && forge script script/migration/ProposeProtocolAdapterV1OwnershipTransfer.s.sol:ProposeProtocolAdapterV1OwnershipTransfer \
         --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 

@@ -50,18 +50,30 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 ## Per chain
 
-Steps 2 to 8 leave users unable to transact, so prepare every transaction before step 2.
+The stop in step 2 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction before the stop.
 
 1. [ ] Read and record v1's `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount`. They are what the runs are checked against.
 
-2. [ ] Stop the v1 protocol adapter. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns v1 on every chain, so the stop is a Safe transaction. Simulate the proposal, then propose it:
+2. [ ] Transfer the v1 protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns v1 on every chain, so the transfer is a Safe transaction. Besides the `Ownable` functions, the owner of v1 can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
 
    ```sh
-   just contracts-simulate-v1-stop-proposal <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
-   just contracts-propose-v1-stop deployer <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
+   just contracts-simulate-v1-ownership-transfer-proposal <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
+   just contracts-propose-v1-ownership-transfer deployer <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
    ```
 
-   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). The stop cannot be undone: v1 has no function that lifts it.
+   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). v1 keeps running, so do this before the planned stop and read the new owner back:
+
+   ```sh
+   cast call <PROTOCOL_ADAPTER_V1> "owner()(address)" --rpc-url <CHAIN>
+   ```
+
+   Then stop v1 from the deployment wallet. The stop and the migration run of step 4 follow each other without a Safe transaction between them, which is why the ownership moves at all:
+
+   ```sh
+   cast send <PROTOCOL_ADAPTER_V1> "emergencyStop()" --rpc-url <CHAIN> --account deployer
+   ```
+
+   The stop cannot be undone: v1 has no function that lifts it. Nothing transfers v1 back, and no step needs to.
 
 3. [ ] Simulate the migration run, with the proxy owner as the sender. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
