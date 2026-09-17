@@ -131,13 +131,13 @@ contracts-deploy-proxy deployer chain *args:
         --sig "run(bool,bool)" $IS_PRODUCTION $IS_MIGRATIONAL \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally (sender = the staging proxy owner)
-contracts-simulate-staging-upgrade sender proxy implementation chain *args:
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
+contracts-simulate-staging-upgrade proxy implementation chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
         --sig "run(address,address)" {{proxy}} {{implementation}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Execute the staging upgrade to the deployed implementation as the proxy owner
 contracts-execute-staging-upgrade deployer proxy implementation chain *args:
@@ -163,13 +163,13 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging kind table update (dry-run): impersonates the owner (sender = the staging proxy owner)
-contracts-simulate-staging-kind-table-update sender proxy commitment chain *args:
+# Simulate the staging kind table update (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-kind-table-update proxy commitment chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
         --sig "run(address,bytes32)" {{proxy}} {{commitment}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Execute the staging kind table update as the proxy owner
 contracts-execute-staging-kind-table-update deployer proxy commitment chain *args:
@@ -197,11 +197,11 @@ contracts-propose-production-kind-table-update deployer proxy proposer commitmen
 
 # A pause deploys no bytecode, so the pause recipes skip the clean rebuild. In an emergency, that saves time.
 
-# Simulate the staging pause (dry-run): impersonates the owner (sender = the staging proxy owner)
-contracts-simulate-staging-pause sender proxy chain *args:
+# Simulate the staging pause (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-pause proxy chain *args:
     cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
         --sig "run(address)" {{proxy}} \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Execute the staging pause as the proxy owner
 contracts-execute-staging-pause deployer proxy chain *args:
@@ -233,12 +233,12 @@ contracts-propose-v1-ownership-transfer deployer protocol_adapter_v1 proposer ch
         --sig "run(address,address)" {{protocol_adapter_v1}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the migration run of one chain (dry-run): the copy-in, after which the proxy stays paused (sender = the proxy owner)
-contracts-simulate-migration sender chain *args:
+# Simulate the migration run of one chain as the proxy owner (dry-run): the copy-in, after which the proxy stays paused
+contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
         --sig "run(bool)" $IS_PRODUCTION \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Copy the v1 state into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
 contracts-execute-migration deployer chain *args:
@@ -246,12 +246,12 @@ contracts-execute-migration deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the completion run of one chain (dry-run): unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
-contracts-simulate-migration-completion sender chain *args:
+# Simulate the completion run of one chain as the proxy owner (dry-run): unpause, upgrade and, in production, the ownership transfer
+contracts-simulate-migration-completion chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
         --sig "run(bool)" $IS_PRODUCTION \
-        --sender {{sender}} --rpc-url {{chain}} {{ args }}
+        --rpc-url {{chain}} {{ args }}
 
 # Complete the migration of one chain as the proxy owner, once the ERC20 forwarder balances moved
 contracts-execute-migration-completion deployer chain *args:
