@@ -55,6 +55,9 @@ jobs:
       - name: Run Slither Static Analyzer
         run: just contracts-static-analysis
 
+      - name: Run storage check
+        run: just contracts-storage-check
+
       - name: Run Forge fmt
         run: just contracts-fmt-check
 
