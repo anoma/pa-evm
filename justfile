@@ -9,6 +9,9 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
+# Evaluate a variable only when a recipe uses it, so `impl_contract` stops only the recipes that need it.
+set lazy := true
+
 # Default recipe
 default:
     @just --list
@@ -228,34 +231,36 @@ contracts-propose-v1-stop deployer protocol_adapter_v1 proposer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the migration run of one chain (dry-run): the copy-in, after which the proxy stays paused (sender = the proxy owner)
-contracts-simulate-migration sender protocol_adapter_v1 proxy chain *args:
+contracts-simulate-migration sender chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
-# Copy the v1 state into the proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
-contracts-execute-migration deployer protocol_adapter_v1 proxy chain *args:
+# Copy the v1 state into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
+contracts-execute-migration deployer chain *args:
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "run(address,address)" {{protocol_adapter_v1}} {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the completion run of one chain (dry-run): unpause, upgrade and, in production, the ownership transfer (sender = the proxy owner)
-contracts-simulate-migration-completion sender protocol_adapter_v1 proxy chain *args:
+contracts-simulate-migration-completion sender chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
-        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "run(bool)" $IS_PRODUCTION \
         --sender {{sender}} --rpc-url {{chain}} {{ args }}
 
 # Complete the migration of one chain as the proxy owner, once the ERC20 forwarder balances moved
-contracts-execute-migration-completion deployer protocol_adapter_v1 proxy chain *args:
+contracts-execute-migration-completion deployer chain *args:
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
-        --sig "run(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check a migrated proxy against the stopped v1 protocol adapter and the end state of the completion run, reading both from the chain
-contracts-check-migration protocol_adapter_v1 proxy chain *args:
+# Check the recorded proxy of one chain against the stopped v1 protocol adapter and the end state of the completion run, reading both from the chain
+contracts-check-migration chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
-        --sig "verify(address,address,bool)" {{protocol_adapter_v1}} {{proxy}} $IS_PRODUCTION \
+        --sig "verify(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
@@ -278,8 +283,17 @@ contracts-verify-custom address contract chain verifier-url *args:
 # Verify a contract on both sourcify and etherscan
 contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
 
-# Verify the protocol adapter implementation on both explorers
-contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
+# The implementation contract a proxy starts on, which `IS_MIGRATIONAL` selects as for `contracts-deploy-proxy`
+impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
+    "src/MigrationalProtocolAdapter.sol:MigrationalProtocolAdapter"
+} else if env("IS_MIGRATIONAL", "") == "false" {
+    "src/ProtocolAdapter.sol:ProtocolAdapter"
+} else {
+    error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
+}
+
+# Verify the protocol adapter implementation on both explorers, as the contract `IS_MIGRATIONAL` selects
+contracts-verify-impl implementation chain: (contracts-verify implementation impl_contract chain)
 
 # Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
 contracts-verify-proxy proxy chain: \

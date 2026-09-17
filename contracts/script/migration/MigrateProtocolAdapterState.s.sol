@@ -2,7 +2,6 @@
 pragma solidity ^0.8.30;
 
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
-import {Script} from "forge-std-1.16.2/src/Script.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
@@ -10,6 +9,7 @@ import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.s
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
@@ -22,7 +22,7 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead.
 /// @custom:security-contact security@anoma.foundation
-contract MigrateProtocolAdapterState is Script {
+contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the v1 protocol adapter. `ReentrancyGuardTransient`
     /// holds no persistent state, and `Ownable._owner` and `Pausable._paused` are 20 and 1 bytes, so they share slot
     /// 0 and the tree starts at slot 1.
@@ -38,9 +38,6 @@ contract MigrateProtocolAdapterState is Script {
     /// costs two fresh storage writes, about 45000 gas, so a batch of this size costs roughly 9 million — a third of
     /// a 30 million block. A chain holding 8000 nullifiers therefore takes 40 transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
-
-    /// @notice Thrown if the migrational proxy copies its state from another v1 protocol adapter than the given one.
-    error ProtocolAdapterV1Mismatch(address expected, address actual);
 
     /// @notice Thrown if a v1 storage slot does not hold what its public getter reports, i.e. if v1's storage layout
     /// is not the one this script reads.
@@ -73,9 +70,9 @@ contract MigrateProtocolAdapterState is Script {
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run
     /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
-    /// @param protocolAdapterV1 The stopped v1 protocol adapter to read the state from.
-    /// @param proxy The v2 protocol adapter proxy, running `MigrationalProtocolAdapter`.
-    function run(address protocolAdapterV1, address proxy) public {
+    /// @param isProduction Whether to copy the state into the production or the staging proxy.
+    function run(bool isProduction) public {
+        (address protocolAdapterV1, address proxy) = _configuration(isProduction);
         address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
 
@@ -92,10 +89,10 @@ contract MigrateProtocolAdapterState is Script {
     /// @notice Checks a migrated proxy against the stopped v1 protocol adapter and against the end state of the
     /// migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has broadcast,
     /// because that script only ever sees the simulated state.
-    /// @param protocolAdapterV1 The stopped v1 protocol adapter.
-    /// @param proxy The migrated v2 protocol adapter proxy.
-    /// @param isProduction Whether the production proxy owner must own the proxy.
-    function verify(address protocolAdapterV1, address proxy, bool isProduction) public {
+    /// @param isProduction Whether to check the production or the staging proxy. The production proxy owner must own a
+    /// production proxy.
+    function verify(bool isProduction) public {
+        (address protocolAdapterV1, address proxy) = _configuration(isProduction);
         _check({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
         _checkEndState({proxy: proxy, isProduction: isProduction});
     }
@@ -169,34 +166,6 @@ contract MigrateProtocolAdapterState is Script {
             address actualOwner = protocolAdapter.owner();
             require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
         }
-    }
-
-    /// @notice Returns the plain implementation the proxy ends on, and reverts unless it is deployed.
-    /// @param implementationDeployScript The script that predicts the implementation's deterministic address.
-    /// @return implementation The deployed plain implementation.
-    function _requireDeployedImplementation(DeployProtocolAdapterImplementation implementationDeployScript)
-        internal
-        view
-        returns (address implementation)
-    {
-        // forge-lint: disable-next-line(unused-return)
-        (implementation,) = implementationDeployScript.predict();
-        require(
-            implementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
-        );
-    }
-
-    /// @notice Reverts unless the proxy copies its state from the given v1 protocol adapter. Only the migrational
-    /// implementation has the getter, so the call also rejects any other proxy.
-    /// @param protocolAdapterV1 The v1 protocol adapter the caller names.
-    /// @param proxy The v2 protocol adapter proxy.
-    function _requireProtocolAdapterV1(address protocolAdapterV1, address proxy) internal view {
-        address copiedFrom = MigrationalProtocolAdapter(proxy).getProtocolAdapterV1();
-        require(
-            copiedFrom == protocolAdapterV1,
-            ProtocolAdapterV1Mismatch({expected: protocolAdapterV1, actual: copiedFrom})
-        );
     }
 
     /// @notice Checks the proxy against the stopped v1 protocol adapter: the latest root, the commitment count, the

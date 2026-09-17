@@ -10,12 +10,15 @@ import {
 } from "../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
 import {MigrateProtocolAdapterState} from "../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
+import {FinalizeProtocolAdapterStateMigrationMock} from "../mocks/FinalizeProtocolAdapterStateMigration.m.sol";
+import {MigrateProtocolAdapterStateMock} from "../mocks/MigrateProtocolAdapterState.m.sol";
 import {ProtocolAdapterV1Mock} from "../mocks/ProtocolAdapterV1.m.sol";
 import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
 /// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the v1 protocol adapter,
-/// a paused migrational proxy bound to it, and the migration and finalization scripts. Forge's default sender owns the
-/// stand-in and the proxy, because the scripts broadcast their transactions and a broadcast cannot be pranked.
+/// a paused migrational proxy bound to it, and the migration and finalization scripts reading the two in place of the
+/// records. Forge's default sender owns the stand-in and the proxy, because the scripts broadcast their transactions
+/// and a broadcast cannot be pranked.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
     uint256 internal constant _COMMITMENT_COUNT = 9;
     /// @dev More than one batch, so the nullifier loop of the migration run is exercised.
@@ -44,8 +47,9 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
 
         _proxy = _deployMigrationalProxy(address(_v1));
 
-        _migrationScript = new MigrateProtocolAdapterState();
-        _finalizationScript = new FinalizeProtocolAdapterStateMigration();
+        _migrationScript = new MigrateProtocolAdapterStateMock({protocolAdapterV1: address(_v1), proxy: _proxy});
+        _finalizationScript =
+            new FinalizeProtocolAdapterStateMigrationMock({protocolAdapterV1: address(_v1), proxy: _proxy});
     }
 
     /// @notice Deploys a paused migrational proxy bound to the given v1 protocol adapter.
