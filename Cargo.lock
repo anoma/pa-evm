@@ -1040,6 +1040,7 @@ dependencies = [
  "alloy-chains",
  "anoma-pa-evm-bindings",
  "anoma-pa-testkit",
+ "anoma-risc0-kind-tables",
  "anoma-risc0-verifier-bindings",
  "anoma-rm-risc0",
  "anyhow",
@@ -1071,6 +1072,24 @@ dependencies = [
  "serde",
  "sha2 0.11.0",
  "tokio",
+]
+
+[[package]]
+name = "anoma-risc0-kind-tables"
+version = "1.0.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39756420aeb427a83a8d894d26a9df62f5da780d10e39246695f830294ce1020"
+dependencies = [
+ "alloy",
+ "alloy-chains",
+ "anoma-rm-risc0",
+ "hex",
+ "k256",
+ "risc0-zkvm",
+ "semver 1.0.28",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
 ]
 
 [[package]]

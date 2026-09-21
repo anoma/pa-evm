@@ -1,15 +1,18 @@
 use alloy::node_bindings::Anvil;
 use alloy::primitives::utils::parse_ether;
-use alloy::providers::Provider;
-use alloy::providers::ProviderBuilder;
 use alloy::providers::ext::AnvilApi;
-use anoma_pa_evm_bindings::addresses::protocol_adapter_address;
+use alloy::providers::{DynProvider, Provider, ProviderBuilder};
+use anoma_pa_evm_bindings::addresses::{self, protocol_adapter_address};
+use anoma_pa_evm_bindings::generated::protocol_adapter::ProtocolAdapter as PaContract;
 use anoma_pa_evm_bindings::helpers::alchemy_url;
 use anoma_pa_testkit::environment::StateBuilder;
 use anoma_pa_testkit::fixtures::identities;
 
 use crate::keychain::EvmSigner;
 use anoma_pa_testkit::prover::QueueProver;
+use anoma_risc0_kind_tables::table;
+use anoma_rm_risc0::compliance::KindTableEntry;
+use anoma_rm_risc0::constants::{init_kind_table_from_entries, kind_table_hash};
 use anyhow::Context;
 
 use crate::deploy::pa::protocol_adapter;
@@ -69,6 +72,8 @@ impl Environment {
                 )
             })?;
         let pa = protocol_adapter(pa_address, provider.clone());
+
+        load_kind_table(&pa, &config).await?;
         let protocol_adapter = ProtocolAdapter::new(pa).await?;
 
         let prover = QueueProver::new(&config.queue_base_url, &config.queue_auth_token)
@@ -94,4 +99,30 @@ impl Environment {
             protocol_adapter,
         })
     }
+}
+
+/// Loads the kind table recorded for the chain, or the empty table if none is recorded, and checks that the adapter
+/// stores its commitment.
+async fn load_kind_table(
+    pa: &PaContract::ProtocolAdapterInstance<DynProvider>,
+    config: &E2eConfig,
+) -> anyhow::Result<()> {
+    let entries = match config.environment {
+        addresses::Environment::Staging => table::staging::table(config.chain),
+        addresses::Environment::Production => table::production::table(config.chain),
+    }
+    .map(|table| table.entries.iter().map(KindTableEntry::from).collect())
+    .unwrap_or_default();
+    init_kind_table_from_entries(entries).context("failed to load the kind table")?;
+    let loaded = kind_table_hash().context("no kind table loaded")?;
+    let stored = pa
+        .getKindTableCommitment()
+        .call()
+        .await
+        .context("failed to query the kind table commitment")?;
+    anyhow::ensure!(
+        stored.as_slice() == loaded.as_bytes(),
+        "the protocol adapter stores the kind table {stored}, the tests prove against {loaded}"
+    );
+    Ok(())
 }
