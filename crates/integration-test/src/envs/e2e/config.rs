@@ -24,7 +24,7 @@ pub struct E2eConfig {
 impl E2eConfig {
     /// Read the config from the environment.
     ///
-    /// `E2E_CHAIN_ID` selects the chain (defaults to Base Sepolia);
+    /// `E2E_CHAIN_ID` selects the chain (defaults to Sepolia, the staging chain);
     /// `E2E_ENVIRONMENT` selects the deployment environment (defaults to
     /// staging), which a promotion into `main` sets to production so the tests
     /// exercise the deployment being promoted; `QUEUE_BASE_URL` and
@@ -40,7 +40,7 @@ impl E2eConfig {
                 NamedChain::try_from(chain_id)
                     .map_err(|_| anyhow::anyhow!("unsupported E2E_CHAIN_ID {chain_id}"))?
             }
-            Err(_) => NamedChain::BaseSepolia,
+            Err(_) => NamedChain::Sepolia,
         };
 
         let environment = match env::var("E2E_ENVIRONMENT") {
