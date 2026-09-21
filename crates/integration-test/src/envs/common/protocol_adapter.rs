@@ -3,7 +3,6 @@ use alloy::providers::DynProvider;
 use anoma_pa_evm_bindings::generated::protocol_adapter::{
     IProtocolAdapter, ProtocolAdapter as PaContract,
 };
-use anoma_pa_testkit::environment::CommitmentTree as CoreCommitmentTree;
 use anoma_pa_testkit::environment::ProtocolAdapter as CoreProtocolAdapter;
 use anoma_pa_testkit::environment::Transaction as CoreTransaction;
 use anoma_pa_testkit::transaction::Transaction;
@@ -19,20 +18,21 @@ pub struct ProtocolAdapter {
 }
 
 impl ProtocolAdapter {
-    async fn assert_root_consistency(&self, tx: &ArmTxn) -> anyhow::Result<()> {
-        let local_root = self.commitment_tree.root()?;
-        let pa_root = self
-            .pa
-            .latestCommitmentTreeRoot()
-            .call()
+    /// Wraps the adapter, with the commitment tree it holds.
+    pub(in crate::envs) async fn new(
+        pa: PaContract::ProtocolAdapterInstance<DynProvider>,
+    ) -> anyhow::Result<Self> {
+        let commitment_tree = CommitmentTree::read(&pa)
             .await
-            .context("failed to query latest commitment tree root from protocol adapter")?;
+            .context("failed to read the commitment tree")?;
+        Ok(Self {
+            pa,
+            commitment_tree,
+        })
+    }
 
-        let local_root_b256 = B256::from_slice(local_root.as_bytes());
-        anyhow::ensure!(
-            local_root_b256 == pa_root,
-            "commitment tree root mismatch before execution: local={local_root_b256:?}, pa={pa_root:?}"
-        );
+    async fn assert_root_consistency(&self, tx: &ArmTxn) -> anyhow::Result<()> {
+        let pa_root = self.commitment_tree.ensure_latest_root(&self.pa).await?;
 
         let aggregation = tx
             .aggregation
@@ -58,7 +58,7 @@ impl ProtocolAdapter {
                     contained,
                     "consumed commitment tree root not found in PA for action {action_idx} \
                      consumed resource {resource_idx}: root={consumed_root:?}, \
-                     pa_latest={pa_root:?}, local_latest={local_root_b256:?}"
+                     pa_latest={pa_root:?}"
                 );
             }
         }

@@ -17,7 +17,6 @@ use crate::state::actors::insert_default_signer;
 use crate::state::chains::insert_chain;
 use crate::state::pa::insert_pa_address;
 
-use super::CommitmentTree;
 use super::Environment;
 use super::ProtocolAdapter;
 use super::config::E2eConfig;
@@ -70,6 +69,7 @@ impl Environment {
                 )
             })?;
         let pa = protocol_adapter(pa_address, provider.clone());
+        let protocol_adapter = ProtocolAdapter::new(pa).await?;
 
         let prover = QueueProver::new(&config.queue_base_url, &config.queue_auth_token)
             .context("failed to build queue prover")?;
@@ -91,10 +91,7 @@ impl Environment {
             anvil,
             state,
             prover,
-            protocol_adapter: ProtocolAdapter {
-                pa,
-                commitment_tree: CommitmentTree::default(),
-            },
+            protocol_adapter,
         })
     }
 }
