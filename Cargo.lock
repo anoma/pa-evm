@@ -1053,8 +1053,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-testkit"
-version = "0.3.0"
-source = "git+https://github.com/anoma/pa-testkit?rev=d61575df22ddc81e427948605a4e5da8ebf5da9c#d61575df22ddc81e427948605a4e5da8ebf5da9c"
+version = "1.0.0-rc.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35eb2dbfe3d6306d868113937c6fd2e2fecd597a52bc61b696a1ab6f0b6216d8"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
@@ -3825,9 +3826,9 @@ checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
 name = "heliax-ap-orchestrator-sdk"
-version = "0.14.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56eef6564772c8be23bc7ebe41ae1ea1cab830a2873f30e27335fe57bf3916d5"
+checksum = "85fc8bd1abdb9849d0b041217b84fc1a872a6e08495c92b55ba713c3eff65aa4"
 dependencies = [
  "heliax-ap-orchestrator-shared",
  "reqwest 0.12.28",
@@ -3839,12 +3840,13 @@ dependencies = [
 
 [[package]]
 name = "heliax-ap-orchestrator-shared"
-version = "0.14.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dfbdf274755868c87e16da5ec59e36c9bc037813cdc4844d8cc2f61be942825c"
+checksum = "61fc85c236d74e84998a006f0cac67cf47742d97eb3b58c565e3a2a4e1ebeb61"
 dependencies = [
  "aes-gcm",
  "base64 0.22.1",
+ "bincode",
  "chrono",
  "hex",
  "pem",
