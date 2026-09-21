@@ -26,9 +26,8 @@ impl E2eConfig {
     ///
     /// `E2E_CHAIN_ID` selects the chain (defaults to Sepolia, the staging chain);
     /// `E2E_ENVIRONMENT` selects the deployment environment (defaults to
-    /// staging), which a promotion into `main` sets to production so the tests
-    /// exercise the deployment being promoted; `QUEUE_BASE_URL` and
-    /// `QUEUE_AUTH_TOKEN` configure the proving queue.
+    /// staging); `QUEUE_BASE_URL` and `QUEUE_AUTH_TOKEN` configure the proving
+    /// queue.
     pub fn from_env() -> anyhow::Result<Self> {
         dotenvy::dotenv().ok();
 
