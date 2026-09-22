@@ -74,7 +74,7 @@ impl CommitmentTree {
     }
 
     /// Adds the commitments a transaction created as the next leaves, in order.
-    pub(in crate::envs) fn add_leaves(&mut self, commitments: impl IntoIterator<Item = Digest>) {
+    pub(in crate::envs) fn add(&mut self, commitments: impl IntoIterator<Item = Digest>) {
         self.leaves.extend(commitments);
     }
 

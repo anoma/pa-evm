@@ -81,7 +81,7 @@ impl CoreProtocolAdapter for ProtocolAdapter {
 
         super::execute::execute_on_pa(&self.pa, pa_tx).await?;
 
-        self.commitment_tree.add_leaves(created_commitments);
+        self.commitment_tree.add(created_commitments);
 
         Ok(())
     }
