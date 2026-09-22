@@ -189,7 +189,7 @@ For each chain in the `staging` section of the record:
 
 ### 4. Promote `next` into `staging`
 
-- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests fork every chain in the staging section and check that it runs the implementation this source predicts.
+- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests fork every chain in the staging section and check that it runs the implementation this source predicts. CI also runs the e2e cases against the staging deployment on Sepolia, proven by the queue the `QUEUE_BASE_URL` secret names.
 
 - [ ] Merge it once green.
 
