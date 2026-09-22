@@ -119,15 +119,16 @@ library MerkleTree {
         count = self._nextLeafIndex;
     }
 
-    /// @notice Returns the sides of the tree: per level below the root, the latest left node, which a push reads as the
-    /// left sibling of a right child.
+    /// @notice Returns the sides of the tree: for each level below the root, the last left node on that level. `push`
+    /// keeps them to add leaves without storing the earlier ones.
     /// @param self The tree data structure.
     /// @return treeSides The sides, from the leaf level up.
     function sides(Tree storage self) internal view returns (bytes32[] memory treeSides) {
         treeSides = self._sides;
     }
 
-    /// @notice Returns the zeros of the tree: per level up to the root, the root of an empty subtree of that height.
+    /// @notice Returns the zeros of the tree: for each level up to the root, the root of an empty subtree of that
+    /// height.
     /// @param self The tree data structure.
     /// @return treeZeros The zeros, from the leaf level up.
     function zeros(Tree storage self) internal view returns (bytes32[] memory treeZeros) {
