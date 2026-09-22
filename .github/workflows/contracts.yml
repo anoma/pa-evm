@@ -55,14 +55,17 @@ jobs:
       - name: Run Slither Static Analyzer
         run: just contracts-static-analysis
 
+      - name: Run storage check
+        run: just contracts-storage-check
+
       - name: Run Forge fmt
         run: just contracts-fmt-check
 
-      - name: Check that bindings are up-to-date
-        run: just bindings-check
-
       - name: Check that the recorded deployments library is up-to-date
         run: just contracts-deployments-check
+
+      - name: Check that bindings are up-to-date
+        run: just bindings-check
 
       - name: Run Forge tests
         run: just contracts-test

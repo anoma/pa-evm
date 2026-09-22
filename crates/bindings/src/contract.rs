@@ -15,7 +15,7 @@ pub async fn protocol_adapter(
             .await
             .map_err(BindingsError::RpcTransportError)?,
     )
-    .map_err(|_| BindingsError::ChainIdUnkown)?;
+    .map_err(|_| BindingsError::ChainIdUnknown)?;
 
     match protocol_adapter_address(environment, &named_chain) {
         Some(address) => Ok(ProtocolAdapterInstance::new(address, provider.clone())),

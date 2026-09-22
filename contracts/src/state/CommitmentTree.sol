@@ -59,6 +59,20 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
+    function commitmentTreeSides() external view override returns (bytes32[] memory sides) {
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        sides = $._merkleTree.sides();
+    }
+
+    /// @inheritdoc ICommitmentTree
+    function commitmentTreeZeros() external view override returns (bytes32[] memory zeros) {
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        zeros = $._merkleTree.zeros();
+    }
+
+    /// @inheritdoc ICommitmentTree
     function isCommitmentTreeRootContained(bytes32 root) external view override returns (bool isContained) {
         isContained = _isCommitmentTreeRootContained(root);
     }

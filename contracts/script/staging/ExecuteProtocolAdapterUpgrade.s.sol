@@ -14,8 +14,7 @@ import {StagingScript} from "./StagingScript.s.sol";
 /// `production/ProposeProtocolAdapterUpgrade` in the Safe app instead.
 /// @custom:security-contact security@anoma.foundation
 contract ExecuteProtocolAdapterUpgrade is StagingScript {
-    /// @notice Executes the upgrade as the proxy owner, which the sender must be. Without `--broadcast`, the upgrade
-    /// is simulated locally.
+    /// @notice Executes the upgrade as the proxy owner. Without `--broadcast`, the upgrade is simulated locally.
     /// @param proxy The staging environment protocol adapter proxy to upgrade.
     /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
     /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
@@ -34,9 +33,9 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
             DeployProtocolAdapterImplementation.ImplementationNotDeployed(newImplementation)
         );
 
-        _checkSenderAuthorization({proxy: proxy});
+        address owner = _stagingOwner({proxy: proxy});
 
-        vm.startBroadcast();
+        vm.startBroadcast(owner);
         UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationDeployScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }

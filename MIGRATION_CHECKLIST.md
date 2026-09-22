@@ -36,38 +36,50 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
   The proxy gets the staging proxy owner, the deployment wallet, in both environments, because the migration and completion runs send their calls from the owner. A production proxy moves to the production proxy owner at the end of the completion run. Until then, the staging recipes act on it too, because they check the owner and not the environment.
 
-- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` with `just contracts-gen-deployments`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the v1 protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. On the production promotion gate, the bindings tests require a recorded proxy to run the plain implementation this source predicts and to be owned by a Safe, so they fail for this chain until the completion run. Do not promote production before the check at the end. The staging gate also accepts the migrational implementation this source predicts, and prints an info line for the chain.
+- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` and the bindings with `just contracts-gen`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the v1 protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
 
 - [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's V1 ERC20 forwarder.
 
 - [ ] Install the chain's kind table commitment on the proxy. Generate the table after the forwarders are recorded, so that it carries the V1 members. The proxy can take the commitment while paused, so install it before the v1 stop. The migration and completion runs do not change it. Simulate, run, and read it back:
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <DEPLOYMENT_WALLET> <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   cast call <PROXY> "getKindTableCommitment()(bytes32)" --rpc-url <CHAIN>
   ```
 
 ## Per chain
 
-Steps 2 to 8 leave users unable to transact, so prepare every transaction before step 2.
+The stop in step 2 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction before the stop.
 
 1. [ ] Read and record v1's `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount`. They are what the runs are checked against.
 
-2. [ ] Stop the v1 protocol adapter. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns v1 on every chain, so the stop is a Safe transaction. Simulate the proposal, then propose it:
+2. [ ] Transfer the v1 protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns v1 on every chain, so the transfer is a Safe transaction. Besides the `Ownable` functions, the owner of v1 can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
 
    ```sh
-   just contracts-simulate-v1-stop-proposal <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
-   just contracts-propose-v1-stop deployer <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
+   just contracts-simulate-v1-ownership-transfer-proposal <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
+   just contracts-propose-v1-ownership-transfer deployer <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
    ```
 
-   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). The stop cannot be undone: v1 has no function that lifts it.
+   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). v1 keeps running, so do this before the planned stop and read the new owner back:
 
-3. [ ] Simulate the migration run, with the proxy owner as the sender. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
+   ```sh
+   cast call <PROTOCOL_ADAPTER_V1> "owner()(address)" --rpc-url <CHAIN>
+   ```
+
+   Then stop v1 from the deployment wallet. The stop and the migration run of step 4 follow each other without a Safe transaction between them, which is why the ownership moves at all:
+
+   ```sh
+   cast send <PROTOCOL_ADAPTER_V1> "emergencyStop()" --rpc-url <CHAIN> --account deployer
+   ```
+
+   The stop cannot be undone: v1 has no function that lifts it. Nothing transfers v1 back, and no step needs to.
+
+3. [ ] Simulate the migration run. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration <OWNER> <CHAIN>
+   just contracts-simulate-migration <CHAIN>
    ```
 
 4. [ ] Run it:
@@ -82,11 +94,11 @@ Steps 2 to 8 leave users unable to transact, so prepare every transaction before
 
 5. [ ] Move the V1 ERC20 forwarder balances to the V2 ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must stay paused until they moved: the kind table's V1 members let V1 resources unwrap from the V2 forwarder.
 
-6. [ ] Simulate the completion run, with the proxy owner as the sender. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
+6. [ ] Simulate the completion run. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
 
    ```sh
    export IS_PRODUCTION=<true|false>
-   just contracts-simulate-migration-completion <OWNER> <CHAIN>
+   just contracts-simulate-migration-completion <CHAIN>
    ```
 
 7. [ ] Run it:

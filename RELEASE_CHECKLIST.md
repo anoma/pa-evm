@@ -29,8 +29,10 @@ The protocol adapter runs in two environments, recorded per chain in [`./crates/
 Changes flow one way, `next` → `staging` → `main`, and the promotion pull request is the gate:
 
 - **`next`** integrates feature branches. Nothing is asserted about deployments, so a version bump is green before anything is deployed.
-- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`. A proxy that copies in v1 state may run the migrational implementation of the source version until its completion run.
+- **`staging`** receives `next`. A pull request into it requires every entry in the staging section to run the source version, checked with `VERIFY_STAGING_DEPLOYMENTS`.
 - **`main`** receives `staging`. A pull request into it requires every entry in the production section to run the source version, carry no prerelease suffix, and be owned by a Safe, checked with `VERIFY_PRODUCTION_DEPLOYMENTS`.
+
+In both environments, a proxy deployed with `IS_MIGRATIONAL=true` may run the migrational implementation of the source version until its completion run. The deployment wallet owns it until then, so the production gate fails for a production proxy until the completion run transfers it to the Safe.
 
 The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.
 
@@ -107,7 +109,7 @@ A release candidate and a release go through the same cycle. Steps 1 to 5 are re
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.0.0-rc.N`, where `A` is the last `MAJOR` version number incremented by 1.
 
-- [ ] Regenerate the bindings with `just contracts-gen-bindings`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Regenerate the recorded deployments library and the bindings with `just contracts-gen`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Open a pull request into `next` and merge it once green. The deploy is a separate mechanical step afterwards.
 
@@ -156,10 +158,10 @@ For each chain in the `staging` section of the record:
 
   and check that the verification worked (e.g. on https://sourcify.dev/#/lookup). The proxy was verified at its genesis deploy and carries the ERC-1967 bytecode, not the implementation's, so it needs no reverification.
 
-- [ ] **Simulate** the upgrade, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade 0x61462bE56782568376f9cB069382EFa72764a407 $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
@@ -362,13 +364,13 @@ For **both**:
 
   The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited.
 
-- [ ] Regenerate the library the deploy script reads the record through with
+- [ ] Regenerate the library the deploy script reads the record through, and the bindings, with
 
   ```sh
-  just contracts-gen-deployments
+  just contracts-gen
   ```
 
-  and commit it alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+  and commit the changes alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
@@ -418,10 +420,10 @@ Not a release. The kind table commitment is rotated on a live proxy without chan
 
 For **staging**:
 
-- [ ] **Simulate** the update, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-table-update 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <COMMITMENT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <COMMITMENT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
@@ -452,10 +454,10 @@ Not a release. A paused protocol adapter executes no transaction until its owner
 
 For **staging**:
 
-- [ ] **Simulate** the pause, with the staging proxy owner as the sender, by running
+- [ ] **Simulate** the pause by running
 
   ```sh
-  just contracts-simulate-staging-pause 0x61462bE56782568376f9cB069382EFa72764a407 <PROXY> <CHAIN>
+  just contracts-simulate-staging-pause <PROXY> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running

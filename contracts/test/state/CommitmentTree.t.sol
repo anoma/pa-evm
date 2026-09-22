@@ -5,6 +5,7 @@ import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967P
 import {Test} from "forge-std-1.16.2/src/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {CommitmentTree} from "../../src/state/CommitmentTree.sol";
 import {MerkleTreeExample} from "../examples/MerkleTree.e.sol";
 import {CommitmentTreeMock} from "../mocks/CommitmentTree.m.sol";
@@ -94,6 +95,28 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitment(cm);
     }
 
+    function test_commitmentTreeZeros_returns_the_root_of_an_empty_subtree_per_level() public {
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
+        }
+
+        bytes32[] memory zeros = _cmAcc.commitmentTreeZeros();
+
+        assertEq(zeros.length, _cmAcc.commitmentTreeDepth() + 1, "the zeros should cover every level up to the root");
+        assertEq(zeros[0], SHA256.EMPTY_HASH, "the zero of the leaf level should be the empty hash");
+        for (uint256 level = 1; level < zeros.length; ++level) {
+            assertEq(zeros[level], SHA256.hash(zeros[level - 1], zeros[level - 1]), "a zero should pair the one below");
+        }
+    }
+
+    function test_commitmentTreeSides_and_commitmentTreeZeros_reproduce_the_root_after_every_push() public {
+        _assertTheSidesAndZerosReproduce(_cmAcc.latestCommitmentTreeRoot());
+
+        for (uint256 i = 0; i < 33; ++i) {
+            _assertTheSidesAndZerosReproduce(_cmAcc.addCommitment(keccak256(abi.encode(i))));
+        }
+    }
+
     /// @dev Deploys the mock behind an ERC-1967 proxy, initialized through the proxy constructor because the
     /// implementation contract disables the initializers.
     function _deployCommitmentTreeMock() internal returns (CommitmentTreeMock mock) {
@@ -102,5 +125,21 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
                 new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
             )
         );
+    }
+
+    /// @dev Rebuilds the root the way `MerkleTree.currentRoot` does, from the commitment count, the sides and the zeros.
+    function _assertTheSidesAndZerosReproduce(bytes32 root) internal view {
+        uint256 count = _cmAcc.commitmentCount();
+        bytes32[] memory sides = _cmAcc.commitmentTreeSides();
+        bytes32[] memory zeros = _cmAcc.commitmentTreeZeros();
+
+        assertEq(sides.length, _cmAcc.commitmentTreeDepth(), "the sides should cover every level below the root");
+
+        bytes32 rebuilt = zeros[0];
+        for (uint256 level = 0; level < sides.length; ++level) {
+            rebuilt =
+                ((count >> level) & 1) == 0 ? SHA256.hash(rebuilt, zeros[level]) : SHA256.hash(sides[level], rebuilt);
+        }
+        assertEq(rebuilt, root, "the sides and zeros should reproduce the root");
     }
 }
