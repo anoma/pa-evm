@@ -22,6 +22,16 @@ interface ICommitmentTree {
     /// @return capacity The computed tree capacity.
     function commitmentTreeCapacity() external view returns (uint256 capacity);
 
+    /// @notice Returns the sides of the commitment tree: per level below the root, the latest left node, which adding
+    /// a commitment reads as the left sibling of a right child.
+    /// @return sides The sides, from the leaf level up.
+    function commitmentTreeSides() external view returns (bytes32[] memory sides);
+
+    /// @notice Returns the zeros of the commitment tree: per level up to the root, the root of an empty subtree of that
+    /// height.
+    /// @return zeros The zeros, from the leaf level up.
+    function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
+
     /// @notice Returns the latest  commitment tree root.
     /// @return root The latest commitment tree root.
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
