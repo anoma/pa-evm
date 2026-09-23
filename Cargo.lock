@@ -1049,6 +1049,7 @@ dependencies = [
  "regex",
  "risc0-zkvm",
  "rstest",
+ "serde",
  "tokio",
 ]
 
