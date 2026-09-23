@@ -130,7 +130,7 @@ fn depth_at(count: usize) -> usize {
 
 /// The root of an empty subtree of height `level`.
 fn empty(level: usize) -> Digest {
-    (0..level).fold(*PADDING_LEAF, |node, _| hash_two(&node, &node))
+    (0..level).fold(PADDING_LEAF, |node, _| hash_two(&node, &node))
 }
 
 #[cfg(test)]
@@ -148,7 +148,7 @@ mod tests {
     fn reference(leaves: &[Digest]) -> ActionTree {
         let mut padded = leaves.to_vec();
         if padded.is_empty() || padded.len().is_power_of_two() {
-            padded.push(*PADDING_LEAF);
+            padded.push(PADDING_LEAF);
         }
         ActionTree::new(padded)
     }
