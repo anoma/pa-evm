@@ -18,7 +18,7 @@ use crate::state::actors::insert_default_signer;
 use crate::state::chains::insert_chain;
 use crate::state::pa::insert_pa_address;
 
-use super::{CommitmentTree, Environment, ProtocolAdapter};
+use super::{Environment, ProtocolAdapter};
 use crate::deploy::mock_risc0_bindings::{MOCK_VERIFIER_SELECTOR, deploy_mock_risc0_stack};
 
 impl Environment {
@@ -71,10 +71,7 @@ impl Environment {
             anvil,
             state,
             prover: anoma_pa_testkit::prover::LocalProver,
-            protocol_adapter: ProtocolAdapter {
-                pa,
-                commitment_tree: CommitmentTree::default(),
-            },
+            protocol_adapter: ProtocolAdapter::new(pa).await?,
         })
     }
 }

@@ -30,7 +30,7 @@ The [contracts](./contracts/) folder contains the contracts written in [Solidity
 The [crates](./crates/) folder contains the Rust workspace:
 
 - [bindings](./crates/bindings/) provides [Rust](https://www.rust-lang.org/) bindings for the conversion of Rust and [RISC Zero](https://risczero.com/) types into [EVM types](https://docs.soliditylang.org/en/latest/types.html) and exposes the deployment addresses on the different supported networks using the [alloy-rs](https://github.com/alloy-rs) library.
-- [integration-test](./crates/integration-test/) contains the Rust integration and e2e test harness that deploys the protocol adapter to a local or forked chain and exercises it with risc0-proven transactions.
+- [integration-test](./crates/integration-test/) contains the Rust integration and e2e test harness that deploys the protocol adapter to a local or forked chain and exercises it with risc0-proven transactions. `just crates-test` runs the local cases. `just crates-test-e2e` runs the e2e cases on a fork of `E2E_CHAIN_ID` (Sepolia by default) against the recorded protocol adapter, and proves them with the queue at `QUEUE_BASE_URL`. CI runs them on pull requests into `staging` and `main`.
 
 ## Audits
 
