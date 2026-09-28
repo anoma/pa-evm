@@ -17,6 +17,7 @@ import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
+import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 /// @title ProtocolAdapter
@@ -33,7 +34,8 @@ contract ProtocolAdapter is
     OwnableUpgradeable,
     PausableUpgradeable,
     CommitmentTree,
-    NullifierSet
+    NullifierSet,
+    LogicRefDenylist
 {
     using Aggregation for Action[];
     using DeltaProof for bytes;
@@ -89,7 +91,7 @@ contract ProtocolAdapter is
 
     /// @notice Initializes the protocol adapter contract.
     /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
-    /// to authorize upgrades, and to set the kind table commitment.
+    /// to authorize upgrades, to set the kind table commitment, and to deny logic references.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -131,6 +133,11 @@ contract ProtocolAdapter is
         _getProtocolAdapterStorage().kindTableCommitment = newKindTableCommitment;
 
         emit KindTableCommitmentUpdated({kindTableCommitment: newKindTableCommitment});
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function denyLogicRef(bytes32 logicRef) external override onlyOwner {
+        _denyLogicRef(logicRef);
     }
 
     /// @inheritdoc IProtocolAdapter
@@ -212,6 +219,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Processes an action by
+    /// * checking that no consumed or created resource carries a denied logic reference,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
     /// * executing external forwarder calls,
@@ -231,6 +239,8 @@ contract ProtocolAdapter is
         // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
+
+            require(!_isLogicRefDenied(consumed.logicRef), DeniedLogicRef(consumed.logicRef));
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
@@ -254,6 +264,8 @@ contract ProtocolAdapter is
 
         for (uint256 i = 0; i < createdCount; ++i) {
             Created calldata created = action.created[i];
+
+            require(!_isLogicRefDenied(created.logicRef), DeniedLogicRef(created.logicRef));
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
@@ -358,8 +370,8 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set
-    /// and the empty kind table.
+    /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
+    /// the empty logic reference denylist and the empty kind table.
     /// @param initialOwner The account receiving ownership.
     // solhint-disable-next-line func-name-mixedcase
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -367,6 +379,7 @@ contract ProtocolAdapter is
         __Pausable_init();
         __CommitmentTree_init();
         __NullifierSet_init();
+        __LogicRefDenylist_init();
 
         // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
         _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;

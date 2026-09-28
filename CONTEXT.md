@@ -46,6 +46,9 @@ delta proof.
 The PA's on-chain state — a Merkle tree of resource commitments and the set of
 spent nullifiers.
 
+**Logic ref denylist**:
+The logic refs the PA no longer settles: a transaction that consumes or creates a resource carrying one reverts. The owner adds a logic ref when its circuit turns out to be broken, and no entry is ever removed. Say "denied" (not "refused" or "blocked").
+
 **Forwarder**:
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA
 drives to enact EVM side effects on behalf of an action. Each lives in its own repo.
