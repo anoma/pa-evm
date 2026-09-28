@@ -146,9 +146,3 @@ forge verify-contract \
    --chain sepolia \
    --verifier etherscan
 ```
-
-### Benchmarks
-
-The following benchmark shows the transaction execution costs without and with proof aggregation for the current protocol adapter implementation:
-
-<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
