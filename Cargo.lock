@@ -1076,9 +1076,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-risc0-kind-tables"
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55a1d12e14072dd251a407890a53f79e3f418830779c63a9e1e27c8991d553e9"
+checksum = "5248c2ae50ead1eab47886021c4a3af075445b2d23627b8732bb06b276afc0ca"
 dependencies = [
  "alloy",
  "alloy-chains",
