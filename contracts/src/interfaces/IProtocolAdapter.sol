@@ -163,6 +163,14 @@ interface IProtocolAdapter {
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 
+    /// @notice Adds a logic reference to the denylist, so that no transaction consumes or creates a resource that
+    /// carries it.
+    /// @param logicRef The logic reference to deny.
+    /// @dev No function removes a logic reference from the denylist. An application can move the resources of a denied
+    /// logic reference without consuming them, as the ERC20 forwarder migration does, and a removed entry would let
+    /// them be spent again.
+    function denyLogicRef(bytes32 logicRef) external;
+
     /// @notice Returns the kind table commitment that transactions must be proven against.
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
