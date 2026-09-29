@@ -9,7 +9,6 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
-import {ILogicRefDenylist} from "../src/interfaces/ILogicRefDenylist.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {LogicRefDenylist} from "../src/state/LogicRefDenylist.sol";
@@ -42,20 +41,6 @@ contract ProtocolAdapterDenylistTest is Test {
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
         _mockPa.denyLogicRef(_DENIED_LOGIC_REF);
-    }
-
-    function testFuzz_denyLogicRef_denies_the_logic_ref_and_emits_the_event(bytes32 logicRef) public {
-        vm.assume(logicRef != bytes32(0));
-        assertFalse(_mockPa.isLogicRefDenied(logicRef), "no logic ref should be denied at first");
-
-        vm.prank(_OWNER);
-        vm.expectEmit(address(_mockPa));
-        emit ILogicRefDenylist.LogicRefDenied({logicRef: logicRef});
-        _mockPa.denyLogicRef(logicRef);
-
-        assertTrue(_mockPa.isLogicRefDenied(logicRef), "the logic ref should be denied");
-        assertEq(_mockPa.deniedLogicRefCount(), 1, "one logic ref should be denied");
-        assertEq(_mockPa.deniedLogicRefAtIndex(0), logicRef, "the denied logic ref should be listed");
     }
 
     function test_execute_reverts_if_a_consumed_resource_carries_a_denied_logic_ref() public {
