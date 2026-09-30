@@ -14,7 +14,7 @@ import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
-contract KindTableCommitmentTest is Test {
+contract ProtocolAdapterKindTableCommitmentTest is Test {
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -40,23 +40,6 @@ contract KindTableCommitmentTest is Test {
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
         _mockPa.setKindTableCommitment(bytes32(uint256(1)));
-    }
-
-    function test_setKindTableCommitment_reverts_on_the_zero_commitment() public {
-        vm.prank(_OWNER);
-        vm.expectRevert(ProtocolAdapter.ZeroKindTableCommitmentNotAllowed.selector);
-        _mockPa.setKindTableCommitment(bytes32(0));
-    }
-
-    function testFuzz_setKindTableCommitment_updates_the_commitment_and_emits_the_event(bytes32 newCommitment) public {
-        vm.assume(newCommitment != bytes32(0));
-
-        vm.prank(_OWNER);
-        vm.expectEmit(address(_mockPa));
-        emit IProtocolAdapter.KindTableCommitmentUpdated({kindTableCommitment: newCommitment});
-        _mockPa.setKindTableCommitment(newCommitment);
-
-        assertEq(_mockPa.getKindTableCommitment(), newCommitment, "the commitment should be updated");
     }
 
     /// @dev A transaction proven against the previous kind table is unencodable after a rotation: the journal the
@@ -90,9 +73,5 @@ contract KindTableCommitmentTest is Test {
         txn = TxGen.transactionAggregation({mockVerifier: _mockVerifier, txn: txn, kindTableCommitment: newCommitment});
 
         _mockPa.execute(txn);
-    }
-
-    function test_initialize_sets_the_empty_kind_table_commitment() public view {
-        assertEq(_mockPa.getKindTableCommitment(), sha256(""), "the default should be the empty-table commitment");
     }
 }

@@ -17,6 +17,7 @@ import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
+import {KindTableCommitment} from "./state/KindTableCommitment.sol";
 import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
@@ -35,25 +36,12 @@ contract ProtocolAdapter is
     PausableUpgradeable,
     CommitmentTree,
     NullifierSet,
-    LogicRefDenylist
+    LogicRefDenylist,
+    KindTableCommitment
 {
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
-
-    /// @custom:storage-location erc7201:anoma.storage.ProtocolAdapter
-    struct ProtocolAdapterStorage {
-        bytes32 kindTableCommitment;
-    }
-
-    /// @notice The commitment of the empty kind table (the SHA-256 hash of zero bytes of table content), under
-    /// which every resource kind is derived via hash-to-curve. Note that this is not `SHA256.EMPTY_HASH`.
-    bytes32 internal constant _EMPTY_KIND_TABLE_COMMITMENT =
-        0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855;
-
-    // keccak256(abi.encode(uint256(keccak256("anoma.storage.ProtocolAdapter")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant _PROTOCOL_ADAPTER_STORAGE_SLOT =
-        0x3d00115d316bc70efe890550f490ccb6fcbb5768711f93a773ced4553de0a700;
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.5";
@@ -68,7 +56,6 @@ contract ProtocolAdapter is
 
     error ZeroRiscZeroVerifierRouterNotAllowed();
     error ZeroRiscZeroVerifierSelectorNotAllowed();
-    error ZeroKindTableCommitmentNotAllowed();
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
@@ -128,21 +115,12 @@ contract ProtocolAdapter is
 
     /// @inheritdoc IProtocolAdapter
     function setKindTableCommitment(bytes32 newKindTableCommitment) external override onlyOwner {
-        require(newKindTableCommitment != bytes32(0), ZeroKindTableCommitmentNotAllowed());
-
-        _getProtocolAdapterStorage().kindTableCommitment = newKindTableCommitment;
-
-        emit KindTableCommitmentUpdated({kindTableCommitment: newKindTableCommitment});
+        _setKindTableCommitment(newKindTableCommitment);
     }
 
     /// @inheritdoc IProtocolAdapter
     function denyLogicRef(bytes32 logicRef) external override onlyOwner {
         _denyLogicRef(logicRef);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function getKindTableCommitment() external view override returns (bytes32 kindTableCommitment) {
-        kindTableCommitment = _getProtocolAdapterStorage().kindTableCommitment;
     }
 
     /// @inheritdoc IImplementation
@@ -380,11 +358,7 @@ contract ProtocolAdapter is
         __CommitmentTree_init();
         __NullifierSet_init();
         __LogicRefDenylist_init();
-
-        // Start with the empty kind table, under which every resource kind is derived via hash-to-curve.
-        _getProtocolAdapterStorage().kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
-
-        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
+        __KindTableCommitment_init();
 
         // Sanity check that the verifier is not paused already.
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
@@ -421,10 +395,7 @@ contract ProtocolAdapter is
         // table commitment — a transaction proven against any other values is unencodable and fails verification.
         bytes32 journalDigest = sha256(
             transaction.actions
-                .toJournal({
-                    complianceKey: VerifyingKeys._COMPLIANCE,
-                    kindTableCommitment: _getProtocolAdapterStorage().kindTableCommitment
-                })
+                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: _getKindTableCommitment()})
         );
 
         // Process the aggregation proof.
@@ -462,20 +433,5 @@ contract ProtocolAdapter is
             selector == RISC_ZERO_VERIFIER_SELECTOR,
             RiscZeroVerifierSelectorMismatch({expected: RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
         );
-    }
-
-    /// @notice Returns the storage from the protocol adapter storage location.
-    /// @return protocolAdapterStorage The data associated with the protocol adapter storage.
-    function _getProtocolAdapterStorage()
-        internal
-        pure
-        returns (ProtocolAdapterStorage storage protocolAdapterStorage)
-    {
-        /* solhint-disable no-inline-assembly */
-        // slither-disable-next-line assembly
-        assembly {
-            protocolAdapterStorage.slot := _PROTOCOL_ADAPTER_STORAGE_SLOT
-        }
-        /* solhint-enable no-inline-assembly */
     }
 }
