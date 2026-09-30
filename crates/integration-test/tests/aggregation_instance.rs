@@ -2,7 +2,8 @@
 //! risc0 serde encoding of arm-risc0's `AggregationInstance`: the mock seal
 //! the local prover mints over the Rust-built instance must pass
 //! `simulateExecute`. A selector other than `Simulated` means the encodings
-//! diverge — including the injected compliance key and kind table commitment.
+//! diverge — including the injected compliance key and the carried kind table
+//! commitment.
 
 mod common;
 

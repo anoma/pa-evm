@@ -11,4 +11,8 @@ contract KindTableCommitmentMock is KindTableCommitment {
     function setKindTableCommitment(bytes32 newKindTableCommitment) external {
         _setKindTableCommitment(newKindTableCommitment);
     }
+
+    function isKindTableCommitmentAccepted(bytes32 kindTableCommitment) external view returns (bool isAccepted) {
+        isAccepted = _isKindTableCommitmentAccepted(kindTableCommitment);
+    }
 }

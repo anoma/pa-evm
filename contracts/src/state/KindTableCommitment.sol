@@ -7,8 +7,8 @@ import {IKindTableCommitment} from "../interfaces/IKindTableCommitment.sol";
 
 /// @title KindTableCommitment
 /// @author Anoma Foundation, 2026
-/// @notice The kind table commitment being inherited by the protocol adapter. Transactions must be proven against the
-/// kind table it commits to.
+/// @notice The kind table commitment being inherited by the protocol adapter. A transaction is proven against the kind
+/// table it commits to or against the empty kind table.
 /// @custom:security-contact security@anoma.foundation
 abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     /// @custom:storage-location erc7201:anoma.storage.KindTableCommitment
@@ -26,6 +26,7 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
         0x54765cac2cb330b12e843854496f3e05fcf80a7a08eec8213621776191851900;
 
     error ZeroKindTableCommitmentNotAllowed();
+    error UnacceptedKindTableCommitment(bytes32 kindTableCommitment);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -57,10 +58,20 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
         emit KindTableCommitmentUpdated({kindTableCommitment: newKindTableCommitment});
     }
 
-    /// @notice Returns the kind table commitment that transactions must be proven against.
+    /// @notice Returns the stored kind table commitment.
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function _getKindTableCommitment() internal view returns (bytes32 kindTableCommitment) {
         kindTableCommitment = _getKindTableCommitmentStorage()._kindTableCommitment;
+    }
+
+    /// @notice Checks whether a transaction can be proven against a kind table: the stored one or the empty one.
+    /// @param kindTableCommitment The kind table commitment to check.
+    /// @return isAccepted Whether the kind table commitment is accepted or not.
+    /// @dev The empty kind table merges no kinds, so a transaction that balances with it also balances with the stored
+    /// kind table.
+    function _isKindTableCommitmentAccepted(bytes32 kindTableCommitment) internal view returns (bool isAccepted) {
+        isAccepted =
+            kindTableCommitment == _getKindTableCommitment() || kindTableCommitment == _EMPTY_KIND_TABLE_COMMITMENT;
     }
 
     /// @notice Returns the storage from the kind table commitment storage location.

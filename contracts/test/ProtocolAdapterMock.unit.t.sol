@@ -300,7 +300,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_reverts_on_the_empty_transaction() public {
         IProtocolAdapter.Transaction memory txn = IProtocolAdapter.Transaction({
-            actions: new IProtocolAdapter.Action[](0), deltaProof: "", aggregationProof: ""
+            actions: new IProtocolAdapter.Action[](0),
+            deltaProof: "",
+            aggregationProof: "",
+            kindTableCommitment: TxGen.emptyKindTableCommitment()
         });
 
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_mockPa));

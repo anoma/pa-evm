@@ -35,4 +35,33 @@ contract KindTableCommitmentTest is Test {
 
         assertEq(_kindTable.getKindTableCommitment(), bytes32(uint256(2)), "the latest commitment should be stored");
     }
+
+    function testFuzz_isKindTableCommitmentAccepted_returns_true_for_the_stored_commitment(bytes32 storedCommitment)
+        public
+    {
+        vm.assume(storedCommitment != bytes32(0));
+        _kindTable.setKindTableCommitment(storedCommitment);
+
+        assertTrue(_kindTable.isKindTableCommitmentAccepted(storedCommitment), "the stored commitment is accepted");
+    }
+
+    function testFuzz_isKindTableCommitmentAccepted_returns_true_for_the_empty_kind_table(bytes32 storedCommitment)
+        public
+    {
+        vm.assume(storedCommitment != bytes32(0));
+        _kindTable.setKindTableCommitment(storedCommitment);
+
+        assertTrue(_kindTable.isKindTableCommitmentAccepted(sha256("")), "the empty kind table is accepted");
+    }
+
+    function testFuzz_isKindTableCommitmentAccepted_returns_false_for_any_other_commitment(
+        bytes32 storedCommitment,
+        bytes32 otherCommitment
+    ) public {
+        vm.assume(storedCommitment != bytes32(0));
+        vm.assume(otherCommitment != storedCommitment && otherCommitment != sha256(""));
+        _kindTable.setKindTableCommitment(storedCommitment);
+
+        assertFalse(_kindTable.isKindTableCommitmentAccepted(otherCommitment), "any other commitment is rejected");
+    }
 }

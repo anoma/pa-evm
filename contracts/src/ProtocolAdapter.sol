@@ -158,6 +158,11 @@ contract ProtocolAdapter is
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
         require(actionCount != 0, EmptyTransactionNotAllowed());
 
+        require(
+            _isKindTableCommitmentAccepted(transaction.kindTableCommitment),
+            UnacceptedKindTableCommitment(transaction.kindTableCommitment)
+        );
+
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
         bytes32 updatedCommitmentTreeRoot = bytes32(0);
@@ -391,11 +396,13 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal, injecting the compliance circuit verifying key and the stored kind
-        // table commitment — a transaction proven against any other values is unencodable and fails verification.
+        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
+        // commitment the transaction carries.
         bytes32 journalDigest = sha256(
             transaction.actions
-                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: _getKindTableCommitment()})
+                .toJournal({
+                    complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: transaction.kindTableCommitment
+                })
         );
 
         // Process the aggregation proof.

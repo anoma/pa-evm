@@ -18,10 +18,13 @@ interface IProtocolAdapter {
     /// @param deltaProof The proof for the transaction delta value.
     /// @param aggregationProof The recursive proof of all compliance and resource logics in the transaction — the only
     /// RISC Zero proof being verified.
+    /// @param kindTableCommitment The commitment of the kind table the aggregation proof is proven against: the stored
+    /// commitment or the commitment of the empty kind table.
     struct Transaction {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
+        bytes32 kindTableCommitment;
     }
 
     /// @notice The action object providing context separation between non-intersecting sets of resources. An action
@@ -153,7 +156,8 @@ interface IProtocolAdapter {
     /// @notice Lifts the pause.
     function unpause() external;
 
-    /// @notice Sets the kind table commitment that transactions must be proven against.
+    /// @notice Sets the stored kind table commitment. A transaction is proven against the stored kind table or against
+    /// the empty kind table.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
