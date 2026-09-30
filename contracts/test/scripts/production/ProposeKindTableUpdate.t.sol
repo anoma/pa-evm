@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeKindTableUpdate} from "../../../script/production/ProposeKindTableUpdate.s.sol";
-import {IProtocolAdapter} from "../../../src/interfaces/IProtocolAdapter.sol";
+import {IKindTableCommitment} from "../../../src/interfaces/IKindTableCommitment.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
@@ -39,7 +39,7 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         vm.expectEmit({
             checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _productionProxy
         });
-        emit IProtocolAdapter.KindTableCommitmentUpdated(_NEW_KIND_TABLE_COMMITMENT);
+        emit IKindTableCommitment.KindTableCommitmentUpdated(_NEW_KIND_TABLE_COMMITMENT);
 
         new ProposeKindTableUpdate()
             .run({proxy: _productionProxy, proposer: _owner, newKindTableCommitment: _NEW_KIND_TABLE_COMMITMENT});

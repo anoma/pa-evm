@@ -46,14 +46,13 @@ interface IProtocolAdapter {
     event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event ExternalPayload(bytes32 indexed tag, uint256 index, bytes blob);
     event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
-    event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
     event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
     event TransactionExecuted(bytes32 indexed transactionId);
 
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
+    function denyLogicRef(bytes32 logicRef) external;
     function execute(Transaction memory transaction) external;
-    function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
     function pause() external;
     function paused() external view returns (bool isPaused);
     function riscZeroVerifierPaused() external view returns (bool isPaused);
@@ -91,6 +90,19 @@ interface IProtocolAdapter {
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "denyLogicRef",
+    "inputs": [
+      {
+        "name": "logicRef",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -334,19 +346,6 @@ interface IProtocolAdapter {
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "getKindTableCommitment",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "kindTableCommitment",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -782,19 +781,6 @@ interface IProtocolAdapter {
         "type": "bytes",
         "indexed": false,
         "internalType": "bytes"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "KindTableCommitmentUpdated",
-    "inputs": [
-      {
-        "name": "kindTableCommitment",
-        "type": "bytes32",
-        "indexed": true,
-        "internalType": "bytes32"
       }
     ],
     "anonymous": false
@@ -3498,119 +3484,6 @@ event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, byt
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Event with signature `KindTableCommitmentUpdated(bytes32)` and selector `0x902d68080c9f4bf7ed1c926758236afc2b4044487f6f8684352d38087244aee6`.
-```solidity
-event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
-```*/
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    #[derive(Clone)]
-    pub struct KindTableCommitmentUpdated {
-        #[allow(missing_docs)]
-        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        #[automatically_derived]
-        impl alloy_sol_types::SolEvent for KindTableCommitmentUpdated {
-            type DataTuple<'a> = ();
-            type DataToken<'a> = <Self::DataTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type TopicList = (
-                alloy_sol_types::sol_data::FixedBytes<32>,
-                alloy::sol_types::sol_data::FixedBytes<32>,
-            );
-            const SIGNATURE: &'static str = "KindTableCommitmentUpdated(bytes32)";
-            const SIGNATURE_HASH: alloy_sol_types::private::B256 = alloy_sol_types::private::B256::new([
-                144u8, 45u8, 104u8, 8u8, 12u8, 159u8, 75u8, 247u8, 237u8, 28u8, 146u8,
-                103u8, 88u8, 35u8, 106u8, 252u8, 43u8, 64u8, 68u8, 72u8, 127u8, 111u8,
-                134u8, 132u8, 53u8, 45u8, 56u8, 8u8, 114u8, 68u8, 174u8, 230u8,
-            ]);
-            const ANONYMOUS: bool = false;
-            #[allow(unused_variables)]
-            #[inline]
-            fn new(
-                topics: <Self::TopicList as alloy_sol_types::SolType>::RustType,
-                data: <Self::DataTuple<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                Self {
-                    kindTableCommitment: topics.1,
-                }
-            }
-            #[inline]
-            fn check_signature(
-                topics: &<Self::TopicList as alloy_sol_types::SolType>::RustType,
-            ) -> alloy_sol_types::Result<()> {
-                if topics.0 != Self::SIGNATURE_HASH {
-                    return Err(
-                        alloy_sol_types::Error::invalid_event_signature_hash(
-                            Self::SIGNATURE,
-                            topics.0,
-                            Self::SIGNATURE_HASH,
-                        ),
-                    );
-                }
-                Ok(())
-            }
-            #[inline]
-            fn tokenize_body(&self) -> Self::DataToken<'_> {
-                ()
-            }
-            #[inline]
-            fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (Self::SIGNATURE_HASH.into(), self.kindTableCommitment.clone())
-            }
-            #[inline]
-            fn encode_topics_raw(
-                &self,
-                out: &mut [alloy_sol_types::abi::token::WordToken],
-            ) -> alloy_sol_types::Result<()> {
-                if out.len() < <Self::TopicList as alloy_sol_types::TopicList>::COUNT {
-                    return Err(alloy_sol_types::Error::Overrun);
-                }
-                out[0usize] = alloy_sol_types::abi::token::WordToken(
-                    Self::SIGNATURE_HASH,
-                );
-                out[1usize] = <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::EventTopic>::encode_topic(
-                    &self.kindTableCommitment,
-                );
-                Ok(())
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::private::IntoLogData for KindTableCommitmentUpdated {
-            fn to_log_data(&self) -> alloy_sol_types::private::LogData {
-                From::from(self)
-            }
-            fn into_log_data(self) -> alloy_sol_types::private::LogData {
-                From::from(&self)
-            }
-        }
-        #[automatically_derived]
-        impl From<&KindTableCommitmentUpdated> for alloy_sol_types::private::LogData {
-            #[inline]
-            fn from(
-                this: &KindTableCommitmentUpdated,
-            ) -> alloy_sol_types::private::LogData {
-                alloy_sol_types::SolEvent::encode_log_data(this)
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Event with signature `ResourcePayload(bytes32,uint256,bytes)` and selector `0x3a134d01c07803003c63301717ddc4612e6c47ae408eeea3222cded532d02ae6`.
 ```solidity
 event ResourcePayload(bytes32 indexed tag, uint256 index, bytes blob);
@@ -4167,6 +4040,163 @@ function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSel
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `denyLogicRef(bytes32)` and selector `0x50a188c9`.
+```solidity
+function denyLogicRef(bytes32 logicRef) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct denyLogicRefCall {
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+    }
+    ///Container type for the return parameters of the [`denyLogicRef(bytes32)`](denyLogicRefCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct denyLogicRefReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<denyLogicRefCall> for UnderlyingRustTuple<'_> {
+                fn from(value: denyLogicRefCall) -> Self {
+                    (value.logicRef,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { logicRef: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<denyLogicRefReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: denyLogicRefReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl denyLogicRefReturn {
+            fn _tokenize(
+                &self,
+            ) -> <denyLogicRefCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for denyLogicRefCall {
+            type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = denyLogicRefReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "denyLogicRef(bytes32)";
+            const SELECTOR: [u8; 4] = [80u8, 161u8, 136u8, 201u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                denyLogicRefReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
 ```solidity
 function execute(Transaction memory transaction) external;
@@ -4308,170 +4338,6 @@ function execute(Transaction memory transaction) external;
                         config,
                     )
                     .map(Into::into)
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `getKindTableCommitment()` and selector `0xffc33f72`.
-```solidity
-function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct getKindTableCommitmentCall;
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`getKindTableCommitment()`](getKindTableCommitmentCall) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct getKindTableCommitmentReturn {
-        #[allow(missing_docs)]
-        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<getKindTableCommitmentCall>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: getKindTableCommitmentCall) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getKindTableCommitmentCall {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<getKindTableCommitmentReturn>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: getKindTableCommitmentReturn) -> Self {
-                    (value.kindTableCommitment,)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getKindTableCommitmentReturn {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {
-                        kindTableCommitment: tuple.0,
-                    }
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for getKindTableCommitmentCall {
-            type Parameters<'a> = ();
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = alloy::sol_types::private::FixedBytes<32>;
-            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "getKindTableCommitment()";
-            const SELECTOR: [u8; 4] = [255u8, 195u8, 63u8, 114u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                ()
-            }
-            #[inline]
-            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(ret),
-                )
-            }
-            #[inline]
-            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
-                    .map(|r| {
-                        let r: getKindTableCommitmentReturn = r.into();
-                        r.kindTableCommitment
-                    })
-            }
-            #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(|r| {
-                        let r: getKindTableCommitmentReturn = r.into();
-                        r.kindTableCommitment
-                    })
             }
             #[inline]
             fn abi_decode_returns_validate(
@@ -5454,9 +5320,9 @@ function unpause() external;
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_SELECTOR(RISC_ZERO_VERIFIER_SELECTORCall),
         #[allow(missing_docs)]
-        execute(executeCall),
+        denyLogicRef(denyLogicRefCall),
         #[allow(missing_docs)]
-        getKindTableCommitment(getKindTableCommitmentCall),
+        execute(executeCall),
         #[allow(missing_docs)]
         pause(pauseCall),
         #[allow(missing_docs)]
@@ -5479,6 +5345,7 @@ function unpause() external;
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [63u8, 75u8, 168u8, 58u8],
+            [80u8, 161u8, 136u8, 201u8],
             [92u8, 151u8, 90u8, 187u8],
             [103u8, 53u8, 49u8, 34u8],
             [107u8, 240u8, 160u8, 75u8],
@@ -5487,11 +5354,11 @@ function unpause() external;
             [135u8, 9u8, 62u8, 186u8],
             [192u8, 37u8, 48u8, 35u8],
             [227u8, 90u8, 93u8, 47u8],
-            [255u8, 195u8, 63u8, 114u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
             ::core::stringify!(unpause),
+            ::core::stringify!(denyLogicRef),
             ::core::stringify!(paused),
             ::core::stringify!(riscZeroVerifierPaused),
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
@@ -5500,11 +5367,11 @@ function unpause() external;
             ::core::stringify!(simulateExecute),
             ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(RISC_ZERO_VERIFIER_SELECTOR),
-            ::core::stringify!(getKindTableCommitment),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
             <unpauseCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <denyLogicRefCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5513,7 +5380,6 @@ function unpause() external;
             <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
         #[inline]
@@ -5550,10 +5416,10 @@ function unpause() external;
                 Self::RISC_ZERO_VERIFIER_SELECTOR(_) => {
                     <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
-                Self::getKindTableCommitment(_) => {
-                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::denyLogicRef(_) => {
+                    <denyLogicRefCall as alloy_sol_types::SolCall>::SELECTOR
                 }
+                Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::pause(_) => <pauseCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::paused(_) => <pausedCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::riscZeroVerifierPaused(_) => {
@@ -5611,6 +5477,19 @@ function unpause() external;
                             .map(IProtocolAdapterCalls::unpause)
                     }
                     unpause
+                },
+                {
+                    fn denyLogicRef(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <denyLogicRefCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::denyLogicRef)
+                    }
+                    denyLogicRef
                 },
                 {
                     fn paused(
@@ -5716,19 +5595,6 @@ function unpause() external;
                     }
                     RISC_ZERO_VERIFIER_SELECTOR
                 },
-                {
-                    fn getKindTableCommitment(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(IProtocolAdapterCalls::getKindTableCommitment)
-                    }
-                    getKindTableCommitment
-                },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
                 return Err(
@@ -5765,13 +5631,13 @@ function unpause() external;
                         inner,
                     )
                 }
-                Self::execute(inner) => {
-                    <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
-                }
-                Self::getKindTableCommitment(inner) => {
-                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::denyLogicRef(inner) => {
+                    <denyLogicRefCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
+                }
+                Self::execute(inner) => {
+                    <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
                 Self::pause(inner) => {
                     <pauseCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
@@ -5814,14 +5680,14 @@ function unpause() external;
                         out,
                     )
                 }
-                Self::execute(inner) => {
-                    <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
-                }
-                Self::getKindTableCommitment(inner) => {
-                    <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::denyLogicRef(inner) => {
+                    <denyLogicRefCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
+                }
+                Self::execute(inner) => {
+                    <executeCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
                 Self::pause(inner) => {
                     <pauseCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
@@ -5869,8 +5735,6 @@ function unpause() external;
         #[allow(missing_docs)]
         ForwarderCallExecuted(ForwarderCallExecuted),
         #[allow(missing_docs)]
-        KindTableCommitmentUpdated(KindTableCommitmentUpdated),
-        #[allow(missing_docs)]
         ResourcePayload(ResourcePayload),
         #[allow(missing_docs)]
         TransactionExecuted(TransactionExecuted),
@@ -5904,11 +5768,6 @@ function unpause() external;
                 221u8, 154u8, 170u8, 182u8, 219u8, 14u8, 201u8, 148u8, 61u8, 206u8,
             ],
             [
-                144u8, 45u8, 104u8, 8u8, 12u8, 159u8, 75u8, 247u8, 237u8, 28u8, 146u8,
-                103u8, 88u8, 35u8, 106u8, 252u8, 43u8, 64u8, 68u8, 72u8, 127u8, 111u8,
-                134u8, 132u8, 53u8, 45u8, 56u8, 8u8, 114u8, 68u8, 174u8, 230u8,
-            ],
-            [
                 156u8, 97u8, 178u8, 144u8, 246u8, 49u8, 9u8, 127u8, 86u8, 39u8, 60u8,
                 244u8, 218u8, 244u8, 13u8, 241u8, 255u8, 156u8, 204u8, 51u8, 241u8, 1u8,
                 212u8, 100u8, 131u8, 125u8, 161u8, 245u8, 174u8, 24u8, 189u8, 89u8,
@@ -5930,7 +5789,6 @@ function unpause() external;
             ::core::stringify!(DiscoveryPayload),
             ::core::stringify!(ActionExecuted),
             ::core::stringify!(TransactionExecuted),
-            ::core::stringify!(KindTableCommitmentUpdated),
             ::core::stringify!(ExternalPayload),
             ::core::stringify!(ApplicationPayload),
             ::core::stringify!(ForwarderCallExecuted),
@@ -5941,7 +5799,6 @@ function unpause() external;
             <DiscoveryPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ActionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
             <TransactionExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
-            <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::SIGNATURE,
             <ExternalPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ApplicationPayload as alloy_sol_types::SolEvent>::SIGNATURE,
             <ForwarderCallExecuted as alloy_sol_types::SolEvent>::SIGNATURE,
@@ -5970,7 +5827,7 @@ function unpause() external;
     #[automatically_derived]
     impl alloy_sol_types::SolEventInterface for IProtocolAdapterEvents {
         const NAME: &'static str = "IProtocolAdapterEvents";
-        const COUNT: usize = 8usize;
+        const COUNT: usize = 7usize;
         fn decode_raw_log(
             topics: &[alloy_sol_types::Word],
             data: &[u8],
@@ -6030,16 +5887,6 @@ function unpause() external;
                             config,
                         )
                         .map(Self::ForwarderCallExecuted)
-                }
-                Some(
-                    <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::SIGNATURE_HASH,
-                ) => {
-                    <KindTableCommitmentUpdated as alloy_sol_types::SolEvent>::decode_raw_log_with_config(
-                            topics,
-                            data,
-                            config,
-                        )
-                        .map(Self::KindTableCommitmentUpdated)
                 }
                 Some(<ResourcePayload as alloy_sol_types::SolEvent>::SIGNATURE_HASH) => {
                     <ResourcePayload as alloy_sol_types::SolEvent>::decode_raw_log_with_config(
@@ -6104,9 +5951,6 @@ function unpause() external;
                 Self::ForwarderCallExecuted(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
-                Self::KindTableCommitmentUpdated(inner) => {
-                    alloy_sol_types::private::IntoLogData::to_log_data(inner)
-                }
                 Self::ResourcePayload(inner) => {
                     alloy_sol_types::private::IntoLogData::to_log_data(inner)
                 }
@@ -6130,9 +5974,6 @@ function unpause() external;
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
                 Self::ForwarderCallExecuted(inner) => {
-                    alloy_sol_types::private::IntoLogData::into_log_data(inner)
-                }
-                Self::KindTableCommitmentUpdated(inner) => {
                     alloy_sol_types::private::IntoLogData::into_log_data(inner)
                 }
                 Self::ResourcePayload(inner) => {
@@ -6241,19 +6082,6 @@ event ForwarderCallExecuted(address,bytes,bytes)
                 untrustedForwarder: untrusted_forwarder,
                 input: input,
                 output: output,
-            })
-        }
-        /**Creates a [`KindTableCommitmentUpdated`] event.
-
-```solidity
-event KindTableCommitmentUpdated(bytes32)
-```*/
-        #[inline]
-        pub fn kind_table_commitment_updated(
-            kind_table_commitment: alloy::sol_types::private::FixedBytes<32>,
-        ) -> Self {
-            Self::KindTableCommitmentUpdated(KindTableCommitmentUpdated {
-                kindTableCommitment: kind_table_commitment,
             })
         }
         /**Creates a [`ResourcePayload`] event.
@@ -6456,18 +6284,19 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, RISC_ZERO_VERIFIER_SELECTORCall, N> {
             self.call_builder(&RISC_ZERO_VERIFIER_SELECTORCall)
         }
+        ///Creates a new call builder for the [`denyLogicRef`] function.
+        pub fn denyLogicRef(
+            &self,
+            logicRef: alloy::sol_types::private::FixedBytes<32>,
+        ) -> alloy_contract::SolCallBuilder<&P, denyLogicRefCall, N> {
+            self.call_builder(&denyLogicRefCall { logicRef })
+        }
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
             &self,
             transaction: <Transaction as alloy::sol_types::SolType>::RustType,
         ) -> alloy_contract::SolCallBuilder<&P, executeCall, N> {
             self.call_builder(&executeCall { transaction })
-        }
-        ///Creates a new call builder for the [`getKindTableCommitment`] function.
-        pub fn getKindTableCommitment(
-            &self,
-        ) -> alloy_contract::SolCallBuilder<&P, getKindTableCommitmentCall, N> {
-            self.call_builder(&getKindTableCommitmentCall)
         }
         ///Creates a new call builder for the [`pause`] function.
         pub fn pause(&self) -> alloy_contract::SolCallBuilder<&P, pauseCall, N> {
@@ -6555,12 +6384,6 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::Event<&P, ForwarderCallExecuted, N> {
             self.event_filter::<ForwarderCallExecuted>()
-        }
-        ///Creates a new event filter for the [`KindTableCommitmentUpdated`] event.
-        pub fn KindTableCommitmentUpdated_filter(
-            &self,
-        ) -> alloy_contract::Event<&P, KindTableCommitmentUpdated, N> {
-            self.event_filter::<KindTableCommitmentUpdated>()
         }
         ///Creates a new event filter for the [`ResourcePayload`] event.
         pub fn ResourcePayload_filter(

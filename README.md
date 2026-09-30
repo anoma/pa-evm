@@ -60,10 +60,3 @@ Our software undergoes regular [audits](./audits/):
 If you believe you've found a security issue, we encourage you to notify us via Email at [security@anoma.foundation](mailto:security@anoma.foundation).
 
 Please do not use the issue tracker for security issues. We welcome working with you to resolve the issue promptly.
-
-### Benchmarks
-
-The following benchmark shows the transaction execution costs without and with proof aggregation for the current
-protocol adapter implementation:
-
-<img src=".assets/Benchmark.png" width=67% alt="Protocol adapter benchmark.">
