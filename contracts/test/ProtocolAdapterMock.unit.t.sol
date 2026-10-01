@@ -10,8 +10,8 @@ import {
     _encodedDefaultInput,
     EXPECTED_OUTPUT
 } from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderTargetExample.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.2/test/script/DeployRiscZeroContractsMock.s.sol";
-import {Test, Vm} from "forge-std-1.16.2/src/Test.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.4/test/script/DeployRiscZeroContractsMock.s.sol";
+import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";

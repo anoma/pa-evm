@@ -1,3 +1,5 @@
+version = 1
+
 [[dependencies]]
 name = "@openzeppelin-contracts"
 version = "5.7.0"
@@ -21,10 +23,10 @@ integrity = "0c8a4d6236e39045dc6140cf14ce9a3d4e3a9c8c9e0ce75ab9b0eb21d178c127"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
-version = "1.2.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_2_24-08-2026_09:37:18_contracts.zip"
-checksum = "666fd7e4ad6f99d4cb82fb844109a194aa52d1f4c12f63f7d5079fbafe88c3fb"
-integrity = "58969eeeba77e87cf2b69ebe4cc695476b9d57a41b2a07bddd02881aadb0cb41"
+version = "1.2.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_4_01-10-2026_16:03:41_contracts.zip"
+checksum = "9ea14846e2d69874963ccf4e4bbe760d2a9b0d49c4430148e97d64f08f72f6b3"
+integrity = "40a5b4ec5ef3c6ce51972d78304ca89b72e83d059039fe4041dfc5f956578ab1"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -34,10 +36,10 @@ rev = "347547890840fd501809dfe0b855206407136ec0"
 
 [[dependencies]]
 name = "forge-std"
-version = "1.16.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_16_2_03-07-2026_07:37:45_forge-std-1.16.zip"
-checksum = "405dccc9d60d753f6abc412b4adf0359f4390f65dbadbbb277a12b4946ed8969"
-integrity = "5fb4325b60d7d4194bd0481e2f94398cf1d9c6561dd12a66fb2748ef4a68205f"
+version = "1.17.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_17_0_01-10-2026_10:59:49_forge-std-1.17.zip"
+checksum = "a77ad38d5fbef0ec10d1f4d191698e5fbaa2bffbee5d1aced91a39da5e9b908c"
+integrity = "fa706c8a7caf3426c90f75e6aafa3224b0a6c899b490800cf6944e4ec42f9344"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"
