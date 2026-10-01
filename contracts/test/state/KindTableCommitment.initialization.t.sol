@@ -16,8 +16,10 @@ contract KindTableCommitmentInitializationTest is Test {
     }
 
     function test_initialize_emits_the_KindTableCommitmentUpdated_event_for_the_empty_kind_table() public {
+        bytes32 emptyKindTableCommitment = _kindTable.EMPTY_KIND_TABLE_COMMITMENT();
+
         vm.expectEmit();
-        emit IKindTableCommitment.KindTableCommitmentUpdated({kindTableCommitment: sha256("")});
+        emit IKindTableCommitment.KindTableCommitmentUpdated({kindTableCommitment: emptyKindTableCommitment});
         _deployKindTableCommitmentMock();
     }
 
@@ -34,7 +36,11 @@ contract KindTableCommitmentInitializationTest is Test {
     }
 
     function test_initialize_sets_the_empty_kind_table_commitment() public view {
-        assertEq(_kindTable.getKindTableCommitment(), sha256(""), "the initial commitment should be the empty table's");
+        assertEq(
+            _kindTable.getKindTableCommitment(),
+            _kindTable.EMPTY_KIND_TABLE_COMMITMENT(),
+            "the initial commitment should be the empty table's"
+        );
     }
 
     /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.

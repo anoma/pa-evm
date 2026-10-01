@@ -51,7 +51,10 @@ contract KindTableCommitmentTest is Test {
         vm.assume(storedCommitment != bytes32(0));
         _kindTable.setKindTableCommitment(storedCommitment);
 
-        assertTrue(_kindTable.isKindTableCommitmentAccepted(sha256("")), "the empty kind table is accepted");
+        assertTrue(
+            _kindTable.isKindTableCommitmentAccepted(_kindTable.EMPTY_KIND_TABLE_COMMITMENT()),
+            "the empty kind table is accepted"
+        );
     }
 
     function testFuzz_isKindTableCommitmentAccepted_returns_false_for_any_other_commitment(
@@ -59,7 +62,7 @@ contract KindTableCommitmentTest is Test {
         bytes32 otherCommitment
     ) public {
         vm.assume(storedCommitment != bytes32(0));
-        vm.assume(otherCommitment != storedCommitment && otherCommitment != sha256(""));
+        vm.assume(otherCommitment != storedCommitment && otherCommitment != _kindTable.EMPTY_KIND_TABLE_COMMITMENT());
         _kindTable.setKindTableCommitment(storedCommitment);
 
         assertFalse(_kindTable.isKindTableCommitmentAccepted(otherCommitment), "any other commitment is rejected");

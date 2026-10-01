@@ -16,9 +16,9 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
         bytes32 _kindTableCommitment;
     }
 
-    /// @notice The commitment of the empty kind table (the SHA-256 hash of zero bytes of table content), under
-    /// which every resource kind is derived via hash-to-curve. Note that this is not `SHA256.EMPTY_HASH`.
-    bytes32 internal constant _EMPTY_KIND_TABLE_COMMITMENT =
+    /// @inheritdoc IKindTableCommitment
+    /// @dev Note that this is not `SHA256.EMPTY_HASH`.
+    bytes32 public constant override EMPTY_KIND_TABLE_COMMITMENT =
         0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855;
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.KindTableCommitment")) - 1)) & ~bytes32(uint256(0xff))
@@ -43,9 +43,9 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     /// derived via hash-to-curve.
     // solhint-disable-next-line func-name-mixedcase
     function __KindTableCommitment_init() internal onlyInitializing {
-        _getKindTableCommitmentStorage()._kindTableCommitment = _EMPTY_KIND_TABLE_COMMITMENT;
+        _getKindTableCommitmentStorage()._kindTableCommitment = EMPTY_KIND_TABLE_COMMITMENT;
 
-        emit KindTableCommitmentUpdated({kindTableCommitment: _EMPTY_KIND_TABLE_COMMITMENT});
+        emit KindTableCommitmentUpdated({kindTableCommitment: EMPTY_KIND_TABLE_COMMITMENT});
     }
 
     /// @notice Sets the kind table commitment and emits the `KindTableCommitmentUpdated` event.
@@ -71,7 +71,7 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     /// kind table.
     function _isKindTableCommitmentAccepted(bytes32 kindTableCommitment) internal view returns (bool isAccepted) {
         isAccepted =
-            kindTableCommitment == _getKindTableCommitment() || kindTableCommitment == _EMPTY_KIND_TABLE_COMMITMENT;
+            kindTableCommitment == _getKindTableCommitment() || kindTableCommitment == EMPTY_KIND_TABLE_COMMITMENT;
     }
 
     /// @notice Returns the storage from the kind table commitment storage location.

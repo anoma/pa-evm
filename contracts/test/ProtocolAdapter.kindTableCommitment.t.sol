@@ -55,10 +55,12 @@ contract ProtocolAdapterKindTableCommitmentTest is Test {
     }
 
     function test_execute_executes_a_transaction_proven_against_the_empty_kind_table() public {
-        assertNotEq(_STORED_COMMITMENT, TxGen.emptyKindTableCommitment(), "the stored kind table must not be empty");
+        assertNotEq(
+            _STORED_COMMITMENT, _mockPa.EMPTY_KIND_TABLE_COMMITMENT(), "the stored kind table must not be empty"
+        );
         _setKindTableCommitment(_STORED_COMMITMENT);
 
-        IProtocolAdapter.Transaction memory txn = _transaction(TxGen.emptyKindTableCommitment());
+        IProtocolAdapter.Transaction memory txn = _transaction(_mockPa.EMPTY_KIND_TABLE_COMMITMENT());
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.TransactionExecuted({transactionId: TxGen.transactionId(txn)});
@@ -66,7 +68,9 @@ contract ProtocolAdapterKindTableCommitmentTest is Test {
     }
 
     function test_execute_reverts_for_a_transaction_proven_against_a_replaced_kind_table() public {
-        assertNotEq(_REPLACED_COMMITMENT, TxGen.emptyKindTableCommitment(), "the replaced kind table must not be empty");
+        assertNotEq(
+            _REPLACED_COMMITMENT, _mockPa.EMPTY_KIND_TABLE_COMMITMENT(), "the replaced kind table must not be empty"
+        );
         _setKindTableCommitment(_REPLACED_COMMITMENT);
         IProtocolAdapter.Transaction memory txn = _transaction(_REPLACED_COMMITMENT);
 
