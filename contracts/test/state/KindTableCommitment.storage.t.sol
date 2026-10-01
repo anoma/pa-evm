@@ -12,6 +12,6 @@ contract KindTableCommitmentStorageTest is Test, KindTableCommitment {
     }
 
     function test_empty_kind_table_commitment_is_the_hash_of_empty_bytes() public pure {
-        assertEq(_EMPTY_KIND_TABLE_COMMITMENT, sha256(""));
+        assertEq(EMPTY_KIND_TABLE_COMMITMENT, sha256(""));
     }
 }

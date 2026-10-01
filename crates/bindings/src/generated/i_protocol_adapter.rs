@@ -39,6 +39,7 @@ interface IProtocolAdapter {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
+        bytes32 kindTableCommitment;
     }
 
     event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
@@ -340,6 +341,11 @@ interface IProtocolAdapter {
             "name": "aggregationProof",
             "type": "bytes",
             "internalType": "bytes"
+          },
+          {
+            "name": "kindTableCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
           }
         ]
       }
@@ -629,6 +635,11 @@ interface IProtocolAdapter {
             "name": "aggregationProof",
             "type": "bytes",
             "internalType": "bytes"
+          },
+          {
+            "name": "kindTableCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
           }
         ]
       },
@@ -2583,7 +2594,7 @@ struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**```solidity
-struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; }
+struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; bytes32 kindTableCommitment; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -2596,6 +2607,8 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
         pub deltaProof: alloy::sol_types::private::Bytes,
         #[allow(missing_docs)]
         pub aggregationProof: alloy::sol_types::private::Bytes,
+        #[allow(missing_docs)]
+        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
     }
     #[allow(
         non_camel_case_types,
@@ -2611,6 +2624,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
             alloy::sol_types::sol_data::Array<Action>,
             alloy::sol_types::sol_data::Bytes,
             alloy::sol_types::sol_data::Bytes,
+            alloy::sol_types::sol_data::FixedBytes<32>,
         );
         #[doc(hidden)]
         type UnderlyingRustTuple<'a> = (
@@ -2619,6 +2633,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
             >,
             alloy::sol_types::private::Bytes,
             alloy::sol_types::private::Bytes,
+            alloy::sol_types::private::FixedBytes<32>,
         );
         #[cfg(test)]
         #[allow(dead_code, unreachable_patterns)]
@@ -2635,7 +2650,12 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
         #[doc(hidden)]
         impl ::core::convert::From<Transaction> for UnderlyingRustTuple<'_> {
             fn from(value: Transaction) -> Self {
-                (value.actions, value.deltaProof, value.aggregationProof)
+                (
+                    value.actions,
+                    value.deltaProof,
+                    value.aggregationProof,
+                    value.kindTableCommitment,
+                )
             }
         }
         #[automatically_derived]
@@ -2646,6 +2666,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     actions: tuple.0,
                     deltaProof: tuple.1,
                     aggregationProof: tuple.2,
+                    kindTableCommitment: tuple.3,
                 }
             }
         }
@@ -2667,6 +2688,9 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     <alloy::sol_types::sol_data::Bytes as alloy_sol_types::SolType>::tokenize(
                         &self.aggregationProof,
                     ),
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.kindTableCommitment),
                 )
             }
             #[inline]
@@ -2741,7 +2765,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof)",
+                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof,bytes32 kindTableCommitment)",
                 )
             }
             #[inline]
@@ -2770,6 +2794,12 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                             &self.aggregationProof,
                         )
                         .0,
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.kindTableCommitment,
+                        )
+                        .0,
                 ]
                     .concat()
             }
@@ -2789,6 +2819,11 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     )
                     + <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::topic_preimage_length(
                         &rust.aggregationProof,
+                    )
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.kindTableCommitment,
                     )
             }
             #[inline]
@@ -2811,6 +2846,12 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                 );
                 <alloy::sol_types::sol_data::Bytes as alloy_sol_types::EventTopic>::encode_topic_preimage(
                     &rust.aggregationProof,
+                    out,
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.kindTableCommitment,
                     out,
                 );
             }
@@ -4197,7 +4238,7 @@ function denyLogicRef(bytes32 logicRef) external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))` and selector `0x73ab9916`.
+    /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32))` and selector `0x9239ac0c`.
 ```solidity
 function execute(Transaction memory transaction) external;
 ```*/
@@ -4207,7 +4248,7 @@ function execute(Transaction memory transaction) external;
         #[allow(missing_docs)]
         pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
     }
-    ///Container type for the return parameters of the [`execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))`](executeCall) function.
+    ///Container type for the return parameters of the [`execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32))`](executeCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct executeReturn {}
@@ -4303,8 +4344,8 @@ function execute(Transaction memory transaction) external;
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes))";
-            const SELECTOR: [u8; 4] = [115u8, 171u8, 153u8, 22u8];
+            const SIGNATURE: &'static str = "execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32))";
+            const SELECTOR: [u8; 4] = [146u8, 57u8, 172u8, 12u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -4989,7 +5030,7 @@ function setKindTableCommitment(bytes32 newKindTableCommitment) external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)` and selector `0x87093eba`.
+    /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)` and selector `0xa600458b`.
 ```solidity
 function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
 ```*/
@@ -5001,7 +5042,7 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
         #[allow(missing_docs)]
         pub skipRiscZeroProofVerification: bool,
     }
-    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)`](simulateExecuteCall) function.
+    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)`](simulateExecuteCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct simulateExecuteReturn {}
@@ -5106,8 +5147,8 @@ function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofV
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes),bool)";
-            const SELECTOR: [u8; 4] = [135u8, 9u8, 62u8, 186u8];
+            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)";
+            const SELECTOR: [u8; 4] = [166u8, 0u8, 69u8, 139u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -5349,9 +5390,9 @@ function unpause() external;
             [92u8, 151u8, 90u8, 187u8],
             [103u8, 53u8, 49u8, 34u8],
             [107u8, 240u8, 160u8, 75u8],
-            [115u8, 171u8, 153u8, 22u8],
             [132u8, 86u8, 203u8, 89u8],
-            [135u8, 9u8, 62u8, 186u8],
+            [146u8, 57u8, 172u8, 12u8],
+            [166u8, 0u8, 69u8, 139u8],
             [192u8, 37u8, 48u8, 35u8],
             [227u8, 90u8, 93u8, 47u8],
         ];
@@ -5362,8 +5403,8 @@ function unpause() external;
             ::core::stringify!(paused),
             ::core::stringify!(riscZeroVerifierPaused),
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
-            ::core::stringify!(execute),
             ::core::stringify!(pause),
+            ::core::stringify!(execute),
             ::core::stringify!(simulateExecute),
             ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(RISC_ZERO_VERIFIER_SELECTOR),
@@ -5375,8 +5416,8 @@ function unpause() external;
             <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pauseCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
             <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5531,19 +5572,6 @@ function unpause() external;
                     RISC_ZERO_VERIFIER_ROUTER
                 },
                 {
-                    fn execute(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(IProtocolAdapterCalls::execute)
-                    }
-                    execute
-                },
-                {
                     fn pause(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
@@ -5555,6 +5583,19 @@ function unpause() external;
                             .map(IProtocolAdapterCalls::pause)
                     }
                     pause
+                },
+                {
+                    fn execute(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <executeCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::execute)
+                    }
+                    execute
                 },
                 {
                     fn simulateExecute(

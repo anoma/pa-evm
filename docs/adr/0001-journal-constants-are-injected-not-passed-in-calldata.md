@@ -1,5 +1,7 @@
 # Journal constants are injected, not passed in calldata
 
+ADR-0004 replaces the kind table part of this decision: the transaction carries the kind table commitment. The verifying keys stay injected.
+
 ## Context
 
 The protocol adapter verifies exactly one RISC Zero proof per transaction — the

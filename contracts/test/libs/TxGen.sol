@@ -218,11 +218,13 @@ library TxGen {
             );
         }
 
-        txn = IProtocolAdapter.Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
+        txn = IProtocolAdapter.Transaction({
+            actions: actions, deltaProof: proof, aggregationProof: "", kindTableCommitment: emptyKindTableCommitment()
+        });
     }
 
-    /// @dev Mock-proves the aggregation: the seal commits to the journal reconstructed with the same compliance key
-    /// and kind table commitment the protocol adapter injects.
+    /// @dev Mock-proves the aggregation against a kind table: the transaction carries its commitment, and the seal
+    /// commits to the journal the protocol adapter reconstructs with it and the compliance key.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         IProtocolAdapter.Transaction memory txn,
@@ -230,6 +232,7 @@ library TxGen {
     ) internal view returns (IProtocolAdapter.Transaction memory aggregatedTxn) {
         aggregatedTxn = txn;
 
+        aggregatedTxn.kindTableCommitment = kindTableCommitment;
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
             imageId: VerifyingKeys._BATCH_AGGREGATION_EVM,
