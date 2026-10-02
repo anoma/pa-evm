@@ -56,8 +56,7 @@ abstract contract NullifierSet is INullifierSet, Initializable {
     /// @notice Initializes the NullifierSet contract.
     /// @dev The nullifier set requires no setup. The function exists for consistency with the OpenZeppelin
     /// initializer convention.
-    // forge-lint: disable-next-item(mixed-case-function)
-    // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
+    // forge-lint: disable-next-line(mixed-case-function)
     function __NullifierSet_init() internal onlyInitializing {}
 
     /// @notice Adds a nullifier to the set, if it does not exist already.
@@ -72,13 +71,9 @@ abstract contract NullifierSet is INullifierSet, Initializable {
     /// @notice Returns the storage from the nullifier set storage location.
     /// @return nullifierSetStorage The data associated with the nullifier set storage.
     function _getNullifierSetStorage() internal pure returns (NullifierSetStorage storage nullifierSetStorage) {
-        /* solhint-disable no-inline-assembly */
-
         // forge-lint: disable-next-item(inline-assembly)
         assembly {
             nullifierSetStorage.slot := _NULLIFIER_SET_STORAGE_SLOT
         }
-
-        /* solhint-enable no-inline-assembly */
     }
 }
