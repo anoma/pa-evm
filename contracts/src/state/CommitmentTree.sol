@@ -99,6 +99,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @notice Initializes the commitment tree by setting up the underlying Merkle tree and storing the initial root.
+    // forge-lint: disable-next-item(mixed-case-function)
     // solhint-disable-next-line func-name-mixedcase
     function __CommitmentTree_init() internal onlyInitializing {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
@@ -145,6 +146,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     function _getCommitmentTreeStorage() internal pure returns (CommitmentTreeStorage storage commitmentTreeStorage) {
         /* solhint-disable no-inline-assembly */
 
+        // forge-lint: disable-next-item(inline-assembly)
         // slither-disable-next-line assembly
         assembly {
             commitmentTreeStorage.slot := _COMMITMENT_TREE_STORAGE_SLOT

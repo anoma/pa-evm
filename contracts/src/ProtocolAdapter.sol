@@ -356,6 +356,7 @@ contract ProtocolAdapter is
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
     /// the empty logic reference denylist and the empty kind table.
     /// @param initialOwner The account receiving ownership.
+    // forge-lint: disable-next-item(mixed-case-function)
     // solhint-disable-next-line func-name-mixedcase
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
         __Ownable_init(initialOwner);

@@ -56,6 +56,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     /// @notice Initializes the LogicRefDenylist contract.
     /// @dev The denylist starts empty and requires no setup. The function exists for consistency with the OpenZeppelin
     /// initializer convention.
+    // forge-lint: disable-next-item(mixed-case-function)
     // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
     function __LogicRefDenylist_init() internal onlyInitializing {}
 
@@ -89,6 +90,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     {
         /* solhint-disable no-inline-assembly */
 
+        // forge-lint: disable-next-item(inline-assembly)
         // slither-disable-next-line assembly
         assembly {
             logicRefDenylistStorage.slot := _LOGIC_REF_DENYLIST_STORAGE_SLOT
