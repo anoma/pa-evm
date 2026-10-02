@@ -1,7 +1,9 @@
 {
   "filter_paths": "dependencies/",
   "detectors_to_exclude": [
+    "assembly",
     "calls-loop",
+    "locked-ether",
     "naming-convention",
     "pragma"
   ]

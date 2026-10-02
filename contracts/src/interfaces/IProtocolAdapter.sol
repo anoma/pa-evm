@@ -180,8 +180,6 @@ interface IProtocolAdapter {
     /// @return isPaused Whether the verifier is paused or not.
     function riscZeroVerifierPaused() external view returns (bool isPaused);
 
-    // solhint-disable func-name-mixedcase
-
     /// @notice The trusted RISC Zero verifier router associated with the protocol adapter.
     /// @return verifierRouter The RISC Zero verifier router address.
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
@@ -189,6 +187,4 @@ interface IProtocolAdapter {
     /// @notice The RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
-
-    // solhint-enable func-name-mixedcase
 }

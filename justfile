@@ -34,7 +34,7 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
-# Lint contracts (forge lint + solhint)
+# Lint contracts: forge lint, then solhint for the rules that forge lint lacks
 contracts-lint:
     cd contracts && forge lint --deny notes
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'

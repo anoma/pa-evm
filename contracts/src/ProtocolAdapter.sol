@@ -356,7 +356,7 @@ contract ProtocolAdapter is
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
     /// the empty logic reference denylist and the empty kind table.
     /// @param initialOwner The account receiving ownership.
-    // solhint-disable-next-line func-name-mixedcase
+    // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
         __Ownable_init(initialOwner);
         __Pausable_init();
@@ -370,11 +370,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc UUPSUpgradeable
-    /* solhint-disable no-empty-blocks */
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
-
-    /* solhint-enable no-empty-blocks */
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,

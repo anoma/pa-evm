@@ -66,6 +66,7 @@ ignored_warnings_from = [
 ]
 
 [lint]
+severity = ["high", "medium", "low", "info", "gas", "code-size"] # The default leaves out info, gas, and code-size.
 exclude_lints = [
     "internal-function-used-once", # Counts the call sites of `src` alone, because `ignore` hides those of the tests.
     "reentrancy-events",           # Reports events that no external call precedes; Slither checks this instead.

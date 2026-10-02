@@ -41,7 +41,7 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
 
     /// @notice Initializes the kind table commitment to the empty kind table, under which every resource kind is
     /// derived via hash-to-curve.
-    // solhint-disable-next-line func-name-mixedcase
+    // forge-lint: disable-next-line(mixed-case-function)
     function __KindTableCommitment_init() internal onlyInitializing {
         _getKindTableCommitmentStorage()._kindTableCommitment = EMPTY_KIND_TABLE_COMMITMENT;
 
@@ -81,13 +81,9 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
         pure
         returns (KindTableCommitmentStorage storage kindTableCommitmentStorage)
     {
-        /* solhint-disable no-inline-assembly */
-
-        // slither-disable-next-line assembly
+        // forge-lint: disable-next-item(inline-assembly)
         assembly {
             kindTableCommitmentStorage.slot := _KIND_TABLE_COMMITMENT_STORAGE_SLOT
         }
-
-        /* solhint-enable no-inline-assembly */
     }
 }

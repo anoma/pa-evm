@@ -15,11 +15,7 @@ interface IKindTableCommitment {
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
 
-    // solhint-disable func-name-mixedcase
-
     /// @notice The commitment of the empty kind table, under which every resource kind is derived via hash-to-curve.
     /// @return emptyKindTableCommitment The SHA-256 hash of zero bytes of table content.
     function EMPTY_KIND_TABLE_COMMITMENT() external view returns (bytes32 emptyKindTableCommitment);
-
-    // solhint-enable func-name-mixedcase
 }
