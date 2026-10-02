@@ -9,7 +9,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 set dotenv-path := "contracts/.env"
 set dotenv-required := false
 
-# Evaluate a variable only when a recipe uses it, so `impl_contract` stops only the recipes that need it.
+# Evaluate a variable only when a recipe uses it, so `initial_impl_contract` stops only the recipes that need it.
 set lazy := true
 
 # Default recipe
@@ -286,8 +286,15 @@ contracts-verify-custom address contract chain verifier-url *args:
 # Verify a contract on both sourcify and etherscan
 contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
 
+# Verify the plain implementation that `contracts-deploy-impl` deploys on both explorers
+contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
+
+# Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
+contracts-verify-proxy proxy chain: \
+    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
+
 # The implementation contract a proxy starts on, which `IS_MIGRATIONAL` selects as for `contracts-deploy-proxy`
-impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
+initial_impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
     "src/MigrationalProtocolAdapter.sol:MigrationalProtocolAdapter"
 } else if env("IS_MIGRATIONAL", "") == "false" {
     "src/ProtocolAdapter.sol:ProtocolAdapter"
@@ -295,16 +302,9 @@ impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
     error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
 }
 
-# Verify the protocol adapter implementation on both explorers, as the contract `IS_MIGRATIONAL` selects
-contracts-verify-impl implementation chain: (contracts-verify implementation impl_contract chain)
-
-# Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
-contracts-verify-proxy proxy chain: \
-    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
-
-# Verify a deployment — the protocol adapter implementation and the ERC-1967 proxy pointing at it — on both explorers
+# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers
 contracts-verify-deployment implementation proxy chain: \
-    (contracts-verify-impl implementation chain) \
+    (contracts-verify implementation initial_impl_contract chain) \
     (contracts-verify-proxy proxy chain)
 
 # Publish contracts at the version `ProtocolAdapter` compiles to
