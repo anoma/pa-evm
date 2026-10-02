@@ -75,7 +75,6 @@ abstract contract NullifierSet is INullifierSet, Initializable {
         /* solhint-disable no-inline-assembly */
 
         // forge-lint: disable-next-item(inline-assembly)
-        // slither-disable-next-line assembly
         assembly {
             nullifierSetStorage.slot := _NULLIFIER_SET_STORAGE_SLOT
         }

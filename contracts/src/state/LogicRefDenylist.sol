@@ -91,7 +91,6 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
         /* solhint-disable no-inline-assembly */
 
         // forge-lint: disable-next-item(inline-assembly)
-        // slither-disable-next-line assembly
         assembly {
             logicRefDenylistStorage.slot := _LOGIC_REF_DENYLIST_STORAGE_SLOT
         }

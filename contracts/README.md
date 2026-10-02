@@ -76,13 +76,16 @@ As a prerequisite, install the
 - `solhint` linter (see https://github.com/protofire/solhint)
 - `slither` static analyzer (see https://github.com/crytic/slither)
 
-To run the linter and static analyzer, run
+To run the linters and static analyzer, run
 
 ```sh
+forge lint --deny notes && \
 bunx solhint --config .solhint.json 'src/**/*.sol' && \
 bunx solhint --config .solhint.other.json 'script/**/*.sol' 'test/**/*.sol' && \
 slither .
 ```
+
+`forge lint` checks `src` at every severity. slither skips `assembly`, `calls-loop` and `locked-ether`, because `forge lint` reports every site that slither reports for them.
 
 #### Rust Bindings
 

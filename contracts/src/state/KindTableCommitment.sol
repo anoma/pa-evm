@@ -85,7 +85,6 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
         /* solhint-disable no-inline-assembly */
 
         // forge-lint: disable-next-item(inline-assembly)
-        // slither-disable-next-line assembly
         assembly {
             kindTableCommitmentStorage.slot := _KIND_TABLE_COMMITMENT_STORAGE_SLOT
         }
