@@ -25,6 +25,12 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-deploy-impl deployer <CHAIN>
   ```
 
+- [ ] Verify the plain implementation on sourcify and Etherscan, with the address the deployment printed:
+
+  ```sh
+  just contracts-verify-impl <IMPLEMENTATION> <CHAIN>
+  ```
+
 - [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's v1 protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `v1` entries in [`deployments.json`](./crates/bindings/deployments.json).
 
   ```sh
@@ -35,6 +41,12 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   ```
 
   The proxy gets the staging proxy owner, the deployment wallet, in both environments, because the migration and completion runs send their calls from the owner. A production proxy moves to the production proxy owner at the end of the completion run. Until then, the staging recipes act on it too, because they check the owner and not the environment.
+
+- [ ] Verify the migrational implementation and the proxy on sourcify and Etherscan, with the addresses the deployment printed. With `IS_MIGRATIONAL=true`, the recipe verifies the implementation as `MigrationalProtocolAdapter`.
+
+  ```sh
+  just contracts-verify-deployment <MIGRATIONAL_IMPLEMENTATION> <PROXY> <CHAIN>
+  ```
 
 - [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` and the bindings with `just contracts-gen`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the v1 protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
 
