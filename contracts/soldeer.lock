@@ -16,10 +16,10 @@ integrity = "1a08068b2fe262d4f6ae80e0be44965480b1a532d40722c80634d8963337743d"
 
 [[dependencies]]
 name = "anoma-forwarder-bases"
-version = "3.0.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_0_0_24-08-2026_07:42:17_contracts.zip"
-checksum = "567f292892a2e2708ad8869b797492dd2d705f086e45ac5033f6e2a651422ef3"
-integrity = "0c8a4d6236e39045dc6140cf14ce9a3d4e3a9c8c9e0ce75ab9b0eb21d178c127"
+version = "3.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_0_1_02-10-2026_07:37:10_contracts.zip"
+checksum = "6847369177f5a13d13e95cdf3dbcbbd1cf82c5833afc5e5de8894cee8540cea7"
+integrity = "b2448714fd44f39f370b48736bd3047dd8af57461abd2f9301823720191b8194"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"

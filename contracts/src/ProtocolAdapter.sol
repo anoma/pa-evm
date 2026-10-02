@@ -7,9 +7,9 @@ import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpg
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
-import {IForwarder} from "anoma-forwarder-bases-3.0.0/src/interfaces/IForwarder.sol";
-import {IImplementation} from "anoma-forwarder-bases-3.0.0/src/interfaces/IImplementation.sol";
-import {IVersion} from "anoma-forwarder-bases-3.0.0/src/interfaces/IVersion.sol";
+import {IForwarder} from "anoma-forwarder-bases-3.0.1/src/interfaces/IForwarder.sol";
+import {IImplementation} from "anoma-forwarder-bases-3.0.1/src/interfaces/IImplementation.sol";
+import {IVersion} from "anoma-forwarder-bases-3.0.1/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
