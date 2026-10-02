@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {SlotDerivation} from "@openzeppelin-contracts-5.7.0/utils/SlotDerivation.sol";
-import {Test} from "forge-std-1.16.2/src/Test.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 
 import {NullifierSet} from "../../src/state/NullifierSet.sol";
 

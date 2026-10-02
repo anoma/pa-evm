@@ -7,9 +7,9 @@ import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpg
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
-import {IForwarder} from "anoma-forwarder-bases-3.0.0/src/interfaces/IForwarder.sol";
-import {IImplementation} from "anoma-forwarder-bases-3.0.0/src/interfaces/IImplementation.sol";
-import {IVersion} from "anoma-forwarder-bases-3.0.0/src/interfaces/IVersion.sol";
+import {IForwarder} from "anoma-forwarder-bases-3.0.1/src/interfaces/IForwarder.sol";
+import {IImplementation} from "anoma-forwarder-bases-3.0.1/src/interfaces/IImplementation.sol";
+import {IVersion} from "anoma-forwarder-bases-3.0.1/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -44,7 +44,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.6";
+    string public constant override VERSION = "2.0.0-rc.7";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -157,6 +157,11 @@ contract ProtocolAdapter is
 
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
         require(actionCount != 0, EmptyTransactionNotAllowed());
+
+        require(
+            _isKindTableCommitmentAccepted(transaction.kindTableCommitment),
+            UnacceptedKindTableCommitment(transaction.kindTableCommitment)
+        );
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
@@ -351,7 +356,7 @@ contract ProtocolAdapter is
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
     /// the empty logic reference denylist and the empty kind table.
     /// @param initialOwner The account receiving ownership.
-    // solhint-disable-next-line func-name-mixedcase
+    // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
         __Ownable_init(initialOwner);
         __Pausable_init();
@@ -365,11 +370,8 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc UUPSUpgradeable
-    /* solhint-disable no-empty-blocks */
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
-
-    /* solhint-enable no-empty-blocks */
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
@@ -391,11 +393,13 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal, injecting the compliance circuit verifying key and the stored kind
-        // table commitment — a transaction proven against any other values is unencodable and fails verification.
+        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
+        // commitment the transaction carries.
         bytes32 journalDigest = sha256(
             transaction.actions
-                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: _getKindTableCommitment()})
+                .toJournal({
+                    complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: transaction.kindTableCommitment
+                })
         );
 
         // Process the aggregation proof.

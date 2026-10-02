@@ -43,7 +43,7 @@ jobs:
         run: bun install solhint
         working-directory: ./contracts
 
-      - name: Run Forge Lint
+      - name: Lint contracts
         run: just contracts-lint
 
       - name: Install Slither

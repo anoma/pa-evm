@@ -51,6 +51,8 @@ library MerkleTree {
             // Check whether the `currentIndex` node is the left or right child of its parent.
             if (isLeftChild(currentIndex)) {
                 // Store the current hash as the sibling (side) for the current level.
+                // NOTE: The next push reads this side, and the tree depth bounds the writes.
+                // forge-lint: disable-next-line(costly-loop)
                 Arrays.unsafeAccess(self._sides, i).value = currentLevelHash;
 
                 // Compute the current level hash using the right sibling, which is the zero hash of this level.

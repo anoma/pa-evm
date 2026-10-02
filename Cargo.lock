@@ -1020,7 +1020,7 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-evm-bindings"
-version = "3.0.0-rc.11"
+version = "3.0.0-rc.12"
 dependencies = [
  "alloy",
  "alloy-chains",
@@ -1040,7 +1040,6 @@ dependencies = [
  "alloy-chains",
  "anoma-pa-evm-bindings",
  "anoma-pa-testkit",
- "anoma-risc0-kind-tables",
  "anoma-risc0-verifier-bindings",
  "anoma-rm-risc0",
  "anyhow",
@@ -1075,28 +1074,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "anoma-risc0-kind-tables"
-version = "1.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5248c2ae50ead1eab47886021c4a3af075445b2d23627b8732bb06b276afc0ca"
-dependencies = [
- "alloy",
- "alloy-chains",
- "anoma-rm-risc0",
- "hex",
- "k256",
- "risc0-zkvm",
- "semver 1.0.28",
- "serde",
- "serde_json",
- "thiserror 2.0.20",
-]
-
-[[package]]
 name = "anoma-risc0-verifier-bindings"
-version = "1.2.2"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa628bcb419ae7daa01659ce7de19f981e1fabe193028d268b7edff48c256378"
+checksum = "5f516f09859ae44c8c05b121e89cd73892e80c402fb742d02a7c0d2a20671412"
 dependencies = [
  "alloy",
  "serde",

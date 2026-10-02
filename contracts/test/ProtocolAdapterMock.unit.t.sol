@@ -4,14 +4,14 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
-import {ForwarderExample} from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderExample.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-3.0.1/test/examples/ForwarderExample.sol";
 import {
     ForwarderTargetExample,
     _encodedDefaultInput,
     EXPECTED_OUTPUT
-} from "anoma-forwarder-bases-3.0.0/test/examples/ForwarderTargetExample.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.2/test/script/DeployRiscZeroContractsMock.s.sol";
-import {Test, Vm} from "forge-std-1.16.2/src/Test.sol";
+} from "anoma-forwarder-bases-3.0.1/test/examples/ForwarderTargetExample.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.4/test/script/DeployRiscZeroContractsMock.s.sol";
+import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
@@ -300,7 +300,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_reverts_on_the_empty_transaction() public {
         IProtocolAdapter.Transaction memory txn = IProtocolAdapter.Transaction({
-            actions: new IProtocolAdapter.Action[](0), deltaProof: "", aggregationProof: ""
+            actions: new IProtocolAdapter.Action[](0),
+            deltaProof: "",
+            aggregationProof: "",
+            kindTableCommitment: _mockPa.EMPTY_KIND_TABLE_COMMITMENT()
         });
 
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_mockPa));
