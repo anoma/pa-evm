@@ -36,4 +36,5 @@ anoma-pa-testkit = { workspace = true, features = [
 ] }
 regex = { workspace = true }
 rstest = { workspace = true }
+serde = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
