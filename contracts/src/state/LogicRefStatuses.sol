@@ -39,21 +39,21 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
     /// @inheritdoc ILogicRefStatuses
     function logicRefStatus(bytes32 logicRef) public view override returns (Status status) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
         status = $._logicRefStatus[logicRef];
     }
 
     /// @inheritdoc ILogicRefStatuses
     function nonActiveLogicRefCount() external view override returns (uint256 count) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
         count = $._nonActiveLogicRefs.length();
     }
 
     /// @inheritdoc ILogicRefStatuses
     function nonActiveLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
         logicRef = $._nonActiveLogicRefs.at(index);
     }
@@ -69,7 +69,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _deprecateLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
         Status status = logicRefStatus(logicRef);
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
@@ -88,7 +88,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _denyLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
         Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
@@ -118,7 +118,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
     /// @notice Returns the storage from the logic reference statuses storage location.
     /// @return logicRefStatusesStorage The data associated with the logic reference statuses storage.
-    function _getLogicRefStatusesStorage()
+    function _logicRefStatusesStorage()
         internal
         pure
         returns (LogicRefStatusesStorage storage logicRefStatusesStorage)
