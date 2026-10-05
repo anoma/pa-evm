@@ -8,6 +8,6 @@ import {LogicRefStatuses} from "../../src/state/LogicRefStatuses.sol";
 
 contract LogicRefStatusesStorageTest is Test, LogicRefStatuses {
     function test_storage_slot() public pure {
-        assertEq(_LOGIC_REF_STATUSES_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.LogicRefStatuses"));
+        assertEq(_LOGIC_REF_STATUSES_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.LogicRefDenylist"));
     }
 }
