@@ -18,7 +18,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     /// @custom:storage-location erc7201:anoma.storage.LogicRefStatuses
     struct LogicRefStatusesStorage {
         EnumerableSet.Bytes32Set _nonActiveLogicRefs;
-        mapping(bytes32 logicRef => Status status) _statuses;
+        mapping(bytes32 logicRef => Status status) _logicRefStatus;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.LogicRefStatuses")) - 1)) & ~bytes32(uint256(0xff))
@@ -41,7 +41,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function getLogicRefStatus(bytes32 logicRef) external view override returns (Status status) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        status = $._statuses[logicRef];
+        status = $._logicRefStatus[logicRef];
     }
 
     /// @inheritdoc ILogicRefStatuses
@@ -71,14 +71,14 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        Status status = $._statuses[logicRef];
+        Status status = $._logicRefStatus[logicRef];
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         assert(status == Status.Active);
         bool added = $._nonActiveLogicRefs.add(logicRef);
         assert(added);
-        $._statuses[logicRef] = Status.Deprecated;
+        $._logicRefStatus[logicRef] = Status.Deprecated;
 
         emit LogicRefDeprecated({logicRef: logicRef});
     }
@@ -90,14 +90,14 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        Status status = $._statuses[logicRef];
+        Status status = $._logicRefStatus[logicRef];
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         if (status == Status.Active) {
             bool added = $._nonActiveLogicRefs.add(logicRef);
             assert(added);
         }
-        $._statuses[logicRef] = Status.Denied;
+        $._logicRefStatus[logicRef] = Status.Denied;
 
         emit LogicRefDenied({logicRef: logicRef});
     }
@@ -107,7 +107,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _checkConsumedLogicRef(bytes32 logicRef) internal view {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        require($._statuses[logicRef] != Status.Denied, DeniedLogicRef(logicRef));
+        require($._logicRefStatus[logicRef] != Status.Denied, DeniedLogicRef(logicRef));
     }
 
     /// @notice Reverts if a created resource must not carry the logic reference.
@@ -115,7 +115,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _checkCreatedLogicRef(bytes32 logicRef) internal view {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        Status status = $._statuses[logicRef];
+        Status status = $._logicRefStatus[logicRef];
         require(status != Status.Denied, DeniedLogicRef(logicRef));
         require(status != Status.Deprecated, DeprecatedLogicRef(logicRef));
     }
