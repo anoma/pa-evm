@@ -38,7 +38,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function getLogicRefStatus(bytes32 logicRef) external view override returns (Status status) {
+    function logicRefStatus(bytes32 logicRef) public view override returns (Status status) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
         status = $._logicRefStatus[logicRef];
@@ -71,7 +71,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        Status status = $._logicRefStatus[logicRef];
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
@@ -90,7 +90,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        Status status = $._logicRefStatus[logicRef];
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         if (status == Status.Active) {
@@ -105,17 +105,13 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     /// @notice Reverts if a consumed resource must not carry the logic reference.
     /// @param logicRef The logic reference of the consumed resource.
     function _checkConsumedLogicRef(bytes32 logicRef) internal view {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        require($._logicRefStatus[logicRef] != Status.Denied, DeniedLogicRef(logicRef));
+        require(logicRefStatus(logicRef) != Status.Denied, DeniedLogicRef(logicRef));
     }
 
     /// @notice Reverts if a created resource must not carry the logic reference.
     /// @param logicRef The logic reference of the created resource.
     function _checkCreatedLogicRef(bytes32 logicRef) internal view {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        Status status = $._logicRefStatus[logicRef];
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, DeniedLogicRef(logicRef));
         require(status != Status.Deprecated, DeprecatedLogicRef(logicRef));
     }

@@ -25,7 +25,7 @@ interface ILogicRefStatuses {
     /// @notice Returns the status of a logic reference.
     /// @param logicRef The logic reference to check.
     /// @return status The status of the logic reference.
-    function getLogicRefStatus(bytes32 logicRef) external view returns (Status status);
+    function logicRefStatus(bytes32 logicRef) external view returns (Status status);
 
     /// @notice Returns the number of non-active logic references.
     /// @return count The number of deprecated and denied logic references.

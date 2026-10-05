@@ -124,11 +124,11 @@ contract LogicRefStatusesTest is Test {
         }
     }
 
-    function testFuzz_getLogicRefStatus_returns_active_for_an_unlisted_logic_ref(bytes32 logicRef) public view {
+    function testFuzz_logicRefStatus_returns_active_for_an_unlisted_logic_ref(bytes32 logicRef) public view {
         _assertStatus(logicRef, ILogicRefStatuses.Status.Active, "an unlisted logic ref should be active");
     }
 
     function _assertStatus(bytes32 logicRef, ILogicRefStatuses.Status expected, string memory message) internal view {
-        assertEq(uint8(_logicRefStatuses.getLogicRefStatus(logicRef)), uint8(expected), message);
+        assertEq(uint8(_logicRefStatuses.logicRefStatus(logicRef)), uint8(expected), message);
     }
 }
