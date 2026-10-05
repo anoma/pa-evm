@@ -17,7 +17,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
     /// @custom:storage-location erc7201:anoma.storage.LogicRefStatuses
     struct LogicRefStatusesStorage {
-        EnumerableSet.Bytes32Set _listedLogicRefs;
+        EnumerableSet.Bytes32Set _nonActiveLogicRefs;
         mapping(bytes32 logicRef => Status status) _statuses;
     }
 
@@ -45,17 +45,17 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function listedLogicRefCount() external view override returns (uint256 count) {
+    function nonActiveLogicRefCount() external view override returns (uint256 count) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        count = $._listedLogicRefs.length();
+        count = $._nonActiveLogicRefs.length();
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function listedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
+    function nonActiveLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        logicRef = $._listedLogicRefs.at(index);
+        logicRef = $._nonActiveLogicRefs.at(index);
     }
 
     /// @notice Initializes the LogicRefStatuses contract.
@@ -76,7 +76,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         assert(status == Status.Active);
-        bool added = $._listedLogicRefs.add(logicRef);
+        bool added = $._nonActiveLogicRefs.add(logicRef);
         assert(added);
         $._statuses[logicRef] = Status.Deprecated;
 
@@ -94,7 +94,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         if (status == Status.Active) {
-            bool added = $._listedLogicRefs.add(logicRef);
+            bool added = $._nonActiveLogicRefs.add(logicRef);
             assert(added);
         }
         $._statuses[logicRef] = Status.Denied;

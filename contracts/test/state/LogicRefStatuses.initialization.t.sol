@@ -26,8 +26,8 @@ contract LogicRefStatusesInitializationTest is Test {
         directMock.initialize();
     }
 
-    function test_initialize_lists_no_logic_ref() public view {
-        assertEq(_logicRefStatuses.listedLogicRefCount(), 0, "no logic ref should be listed");
+    function test_initialize_lists_no_non_active_logic_ref() public view {
+        assertEq(_logicRefStatuses.nonActiveLogicRefCount(), 0, "no logic ref should be non-active");
     }
 
     /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.
