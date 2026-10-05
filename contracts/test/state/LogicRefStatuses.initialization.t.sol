@@ -26,7 +26,7 @@ contract LogicRefStatusesInitializationTest is Test {
         directMock.initialize();
     }
 
-    function test_initialize_lists_no_non_active_logic_ref() public view {
+    function test_initialize_has_no_non_active_logic_refs() public view {
         assertEq(_logicRefStatuses.nonActiveLogicRefCount(), 0, "no logic ref should be non-active");
     }
 

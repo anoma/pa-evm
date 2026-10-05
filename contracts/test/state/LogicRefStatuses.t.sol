@@ -107,7 +107,7 @@ contract LogicRefStatusesTest is Test {
         }
     }
 
-    function test_nonActiveLogicRefAtIndex_returns_logic_refs_in_listing_order() public {
+    function test_nonActiveLogicRefAtIndex_preserves_insertion_order() public {
         uint256 n = 10;
         for (uint256 i = 0; i < n; ++i) {
             if (i % 2 == 0) {
@@ -124,7 +124,7 @@ contract LogicRefStatusesTest is Test {
         }
     }
 
-    function testFuzz_logicRefStatus_returns_active_for_an_unlisted_logic_ref(bytes32 logicRef) public view {
+    function testFuzz_logicRefStatus_defaults_to_active(bytes32 logicRef) public view {
         _assertStatus(logicRef, ILogicRefStatuses.Status.Active, "an unlisted logic ref should be active");
     }
 
