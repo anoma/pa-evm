@@ -104,7 +104,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
     /// @notice Reverts if a consumed resource must not carry the logic reference.
     /// @param logicRef The logic reference of the consumed resource.
-    function _checkConsumedLogicRef(bytes32 logicRef) internal view {
+    function _checkLogicRefForConsumption(bytes32 logicRef) internal view {
         require(logicRefStatus(logicRef) != Status.Denied, DeniedLogicRef(logicRef));
     }
 

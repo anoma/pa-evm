@@ -229,7 +229,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
-            _checkConsumedLogicRef(consumed.logicRef);
+            _checkLogicRefForConsumption(consumed.logicRef);
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
