@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
+import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 
 import {ILogicRefStatuses} from "../interfaces/ILogicRefStatuses.sol";
 
@@ -12,9 +13,11 @@ import {ILogicRefStatuses} from "../interfaces/ILogicRefStatuses.sol";
 /// reference.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
     /// @custom:storage-location erc7201:anoma.storage.LogicRefStatuses
     struct LogicRefStatusesStorage {
-        bytes32[] _listedLogicRefs;
+        EnumerableSet.Bytes32Set _listedLogicRefs;
         mapping(bytes32 logicRef => Status status) _statuses;
     }
 
@@ -45,14 +48,14 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function listedLogicRefCount() external view override returns (uint256 count) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        count = $._listedLogicRefs.length;
+        count = $._listedLogicRefs.length();
     }
 
     /// @inheritdoc ILogicRefStatuses
     function listedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
         LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
 
-        logicRef = $._listedLogicRefs[index];
+        logicRef = $._listedLogicRefs.at(index);
     }
 
     /// @notice Initializes the LogicRefStatuses contract.
@@ -72,7 +75,9 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
-        $._listedLogicRefs.push(logicRef);
+        assert(status == Status.Active);
+        bool added = $._listedLogicRefs.add(logicRef);
+        assert(added);
         $._statuses[logicRef] = Status.Deprecated;
 
         emit LogicRefDeprecated({logicRef: logicRef});
@@ -89,7 +94,8 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
         if (status == Status.Active) {
-            $._listedLogicRefs.push(logicRef);
+            bool added = $._listedLogicRefs.add(logicRef);
+            assert(added);
         }
         $._statuses[logicRef] = Status.Denied;
 
