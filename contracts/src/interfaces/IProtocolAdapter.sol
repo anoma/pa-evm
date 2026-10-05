@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {ILogicRefDenylist} from "./ILogicRefDenylist.sol";
+
 /// @title IProtocolAdapter
 /// @author Anoma Foundation, 2025
 /// @notice The interface of the protocol adapter contract verifying and executing resource machine transactions.
@@ -162,13 +164,14 @@ interface IProtocolAdapter {
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 
-    /// @notice Adds a logic reference to the denylist, so that no transaction consumes or creates a resource that
-    /// carries it.
-    /// @param logicRef The logic reference to deny.
-    /// @dev No function removes a logic reference from the denylist. An application can move the resources of a denied
-    /// logic reference without consuming them, as the ERC20 forwarder migration does, and a removed entry would let
-    /// them be spent again.
-    function denyLogicRef(bytes32 logicRef) external;
+    /// @notice Adds logic references to the denylists. To deprecate a logic reference, add it to the denylist for
+    /// created resources: transactions still consume its resources. To deny it, add it to both denylists.
+    /// @param logicRefs The logic references to deny, each with the denylist to add it to.
+    /// @dev The call reverts if a logic reference is zero or already on its denylist. No function removes an entry. An
+    /// application can move the resources of a denied logic reference without consuming them, as the ERC20 forwarder
+    /// migration does, and a removed entry would let them be consumed again. Deprecate a logic reference only after no
+    /// application creates its resources any more, since such a transaction reverts.
+    function denyLogicRefs(ILogicRefDenylist.DeniedLogicRef[] calldata logicRefs) external;
 
     /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
     /// executes no transaction.

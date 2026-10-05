@@ -9,6 +9,7 @@ import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
+import {ILogicRefDenylist} from "../src/interfaces/ILogicRefDenylist.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {LogicRefDenylist} from "../src/state/LogicRefDenylist.sol";
@@ -19,6 +20,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     address internal constant _OWNER = address(uint160(1));
     bytes32 internal constant _DENIED_LOGIC_REF = bytes32(uint256(0xdead));
+    bytes32 internal constant _DEPRECATED_LOGIC_REF = bytes32(uint256(0xdeca));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
@@ -35,12 +37,65 @@ contract ProtocolAdapterDenylistTest is Test {
         );
     }
 
-    function testFuzz_denyLogicRef_reverts_for_non_owners(address caller) public {
+    function testFuzz_denyLogicRefs_reverts_for_non_owners(address caller) public {
         vm.assume(caller != _OWNER);
 
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
-        _mockPa.denyLogicRef(_DENIED_LOGIC_REF);
+        _mockPa.denyLogicRefs(_denial(_DENIED_LOGIC_REF));
+    }
+
+    function test_denyLogicRefs_denies_one_logic_ref_and_deprecates_another_in_one_call() public {
+        ILogicRefDenylist.DeniedLogicRef[] memory logicRefs = new ILogicRefDenylist.DeniedLogicRef[](3);
+        logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DENIED_LOGIC_REF, consumed: true});
+        logicRefs[1] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DENIED_LOGIC_REF, consumed: false});
+        logicRefs[2] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DEPRECATED_LOGIC_REF, consumed: false});
+
+        vm.prank(_OWNER);
+        _mockPa.denyLogicRefs(logicRefs);
+
+        assertTrue(
+            _mockPa.isLogicRefDenied(_DENIED_LOGIC_REF, true),
+            "the denied logic ref should be on the denylist for consumed resources"
+        );
+        assertTrue(
+            _mockPa.isLogicRefDenied(_DENIED_LOGIC_REF, false),
+            "the denied logic ref should be on the denylist for created resources"
+        );
+        assertFalse(
+            _mockPa.isLogicRefDenied(_DEPRECATED_LOGIC_REF, true),
+            "the deprecated logic ref should not be on the denylist for consumed resources"
+        );
+        assertTrue(
+            _mockPa.isLogicRefDenied(_DEPRECATED_LOGIC_REF, false),
+            "the deprecated logic ref should be on the denylist for created resources"
+        );
+    }
+
+    function test_execute_reverts_if_a_created_resource_carries_a_deprecated_logic_ref() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
+        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _expectSettlement(txn);
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _DEPRECATED_LOGIC_REF, false)
+        );
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_consumes_a_resource_that_carries_a_deprecated_logic_ref() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
+        txn.actions[0].consumed[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.TransactionExecuted({transactionId: TxGen.transactionId(txn)});
+        _mockPa.execute(txn);
     }
 
     function test_execute_reverts_if_a_consumed_resource_carries_a_denied_logic_ref() public {
@@ -51,19 +106,9 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
-        _mockPa.execute(txn);
-    }
-
-    function test_execute_reverts_if_a_created_resource_carries_a_denied_logic_ref() public {
-        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].created[0].logicRef = _DENIED_LOGIC_REF;
-        txn = _reaggregate(txn);
-
-        _expectSettlement(txn);
-        _deny(_DENIED_LOGIC_REF);
-
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _DENIED_LOGIC_REF, true)
+        );
         _mockPa.execute(txn);
     }
 
@@ -75,7 +120,9 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _DENIED_LOGIC_REF, false)
+        );
         _mockPa.execute(txn);
     }
 
@@ -86,7 +133,9 @@ contract ProtocolAdapterDenylistTest is Test {
 
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _DENIED_LOGIC_REF, true)
+        );
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
     }
 
@@ -100,12 +149,19 @@ contract ProtocolAdapterDenylistTest is Test {
         _mockPa.execute(txn);
     }
 
-    function _deny(bytes32 logicRef) internal {
+    /// @dev Adds the logic ref to the denylist for created resources only.
+    function _deprecate(bytes32 logicRef) internal {
         vm.prank(_OWNER);
-        _mockPa.denyLogicRef(logicRef);
+        _mockPa.denyLogicRefs(_deprecation(logicRef));
     }
 
-    /// @dev Checks that the transaction settles before the logic ref is denied, so that a later revert is the denylist's.
+    /// @dev Adds the logic ref to both denylists.
+    function _deny(bytes32 logicRef) internal {
+        vm.prank(_OWNER);
+        _mockPa.denyLogicRefs(_denial(logicRef));
+    }
+
+    /// @dev Checks that the transaction settles before a denylist changes, so that a later revert is the denylist's.
     function _expectSettlement(IProtocolAdapter.Transaction memory txn) internal {
         vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
@@ -128,5 +184,20 @@ contract ProtocolAdapterDenylistTest is Test {
         aggregatedTxn = TxGen.transactionAggregation({
             mockVerifier: _mockVerifier, txn: txn, kindTableCommitment: _mockPa.EMPTY_KIND_TABLE_COMMITMENT()
         });
+    }
+
+    function _deprecation(bytes32 logicRef)
+        internal
+        pure
+        returns (ILogicRefDenylist.DeniedLogicRef[] memory logicRefs)
+    {
+        logicRefs = new ILogicRefDenylist.DeniedLogicRef[](1);
+        logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: logicRef, consumed: false});
+    }
+
+    function _denial(bytes32 logicRef) internal pure returns (ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) {
+        logicRefs = new ILogicRefDenylist.DeniedLogicRef[](2);
+        logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: logicRef, consumed: true});
+        logicRefs[1] = ILogicRefDenylist.DeniedLogicRef({logicRef: logicRef, consumed: false});
     }
 }

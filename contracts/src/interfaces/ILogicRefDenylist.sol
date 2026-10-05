@@ -3,24 +3,37 @@ pragma solidity ^0.8.30;
 
 /// @title ILogicRefDenylist
 /// @author Anoma Foundation, 2026
-/// @notice The interface of the logic reference denylist contract.
+/// @notice The interface of the logic reference denylist contract, which holds one denylist for the logic references
+/// of consumed resources and one for those of created resources.
 /// @custom:security-contact security@anoma.foundation
 interface ILogicRefDenylist {
-    /// @notice Emitted when a logic reference is added to the denylist.
+    /// @notice A logic reference to add to a denylist.
+    /// @param logicRef The logic reference to deny.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    struct DeniedLogicRef {
+        bytes32 logicRef;
+        bool consumed;
+    }
+
+    /// @notice Emitted when a logic reference is added to a denylist.
     /// @param logicRef The denied logic reference.
-    event LogicRefDenied(bytes32 indexed logicRef);
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    event LogicRefDenied(bytes32 indexed logicRef, bool consumed);
 
-    /// @notice Returns whether the denylist contains a given logic reference or not.
+    /// @notice Returns whether a denylist contains a given logic reference or not.
     /// @param logicRef The logic reference to check.
-    /// @return isDenied Whether the logic reference is denied or not.
-    function isLogicRefDenied(bytes32 logicRef) external view returns (bool isDenied);
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    /// @return isDenied Whether the denylist contains the logic reference or not.
+    function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool isDenied);
 
-    /// @notice Returns the number of logic references in the denylist.
+    /// @notice Returns the number of logic references in a denylist.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     /// @return count The number of denied logic references.
-    function deniedLogicRefCount() external view returns (uint256 count);
+    function deniedLogicRefCount(bool consumed) external view returns (uint256 count);
 
-    /// @notice Returns the denied logic reference with the given index.
+    /// @notice Returns the denied logic reference with the given index in a denylist.
     /// @param index The index, in the order the logic references were denied.
+    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     /// @return logicRef The logic reference at the given index.
-    function deniedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
+    function deniedLogicRefAtIndex(uint256 index, bool consumed) external view returns (bytes32 logicRef);
 }
