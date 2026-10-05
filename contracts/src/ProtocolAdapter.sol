@@ -119,6 +119,11 @@ contract ProtocolAdapter is
     }
 
     /// @inheritdoc IProtocolAdapter
+    function deprecateLogicRef(bytes32 logicRef) external override onlyOwner {
+        _deprecateLogicRef(logicRef);
+    }
+
+    /// @inheritdoc IProtocolAdapter
     function denyLogicRef(bytes32 logicRef) external override onlyOwner {
         _denyLogicRef(logicRef);
     }
@@ -202,7 +207,8 @@ contract ProtocolAdapter is
     }
 
     /// @notice Processes an action by
-    /// * checking that no consumed or created resource carries a denied logic reference,
+    /// * checking that no consumed resource carries a denied logic reference and no created resource a deprecated or
+    ///   denied one,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
     /// * executing external forwarder calls,
@@ -223,7 +229,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
-            require(!_isLogicRefDenied(consumed.logicRef), DeniedLogicRef(consumed.logicRef));
+            _checkConsumedLogicRef(consumed.logicRef);
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
@@ -248,7 +254,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < createdCount; ++i) {
             Created calldata created = action.created[i];
 
-            require(!_isLogicRefDenied(created.logicRef), DeniedLogicRef(created.logicRef));
+            _checkCreatedLogicRef(created.logicRef);
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.

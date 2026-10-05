@@ -8,6 +8,10 @@ contract LogicRefDenylistMock is LogicRefDenylist {
         __LogicRefDenylist_init();
     }
 
+    function deprecateLogicRef(bytes32 logicRef) external {
+        _deprecateLogicRef(logicRef);
+    }
+
     function denyLogicRef(bytes32 logicRef) external {
         _denyLogicRef(logicRef);
     }

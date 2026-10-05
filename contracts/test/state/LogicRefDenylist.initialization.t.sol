@@ -27,7 +27,7 @@ contract LogicRefDenylistInitializationTest is Test {
     }
 
     function test_initialize_starts_with_an_empty_denylist() public view {
-        assertEq(_denylist.deniedLogicRefCount(), 0, "the denylist should start empty");
+        assertEq(_denylist.listedLogicRefCount(), 0, "the denylist should start empty");
     }
 
     /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.

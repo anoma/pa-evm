@@ -3,21 +3,18 @@ pragma solidity ^0.8.30;
 
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
-
 import {ILogicRefDenylist} from "../interfaces/ILogicRefDenylist.sol";
 
 /// @title LogicRefDenylist
 /// @author Anoma Foundation, 2026
 /// @notice A denylist of logic references being inherited by the protocol adapter.
-/// @dev The implementation is based on OpenZeppelin's `EnumerableSet` implementation. No function removes an entry.
+/// @dev A status only becomes stricter, from active to deprecated to denied. No function removes an entry.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-
     /// @custom:storage-location erc7201:anoma.storage.LogicRefDenylist
     struct LogicRefDenylistStorage {
-        EnumerableSet.Bytes32Set _deniedLogicRefs;
+        bytes32[] _listedLogicRefs;
+        mapping(bytes32 logicRef => Status status) _statuses;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.LogicRefDenylist")) - 1)) & ~bytes32(uint256(0xff))
@@ -25,7 +22,9 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
         0x4236e6c1c068f5e3b8927e001e7112af467e55c6094df039f1d58b8530a62900;
 
     error ZeroLogicRefNotAllowed();
+    error LogicRefAlreadyDeprecated(bytes32 logicRef);
     error LogicRefAlreadyDenied(bytes32 logicRef);
+    error DeprecatedLogicRef(bytes32 logicRef);
     error DeniedLogicRef(bytes32 logicRef);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
@@ -35,22 +34,24 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     }
 
     /// @inheritdoc ILogicRefDenylist
-    function isLogicRefDenied(bytes32 logicRef) external view override returns (bool isDenied) {
-        isDenied = _isLogicRefDenied(logicRef);
+    function getLogicRefStatus(bytes32 logicRef) external view override returns (Status status) {
+        LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
+
+        status = $._statuses[logicRef];
     }
 
     /// @inheritdoc ILogicRefDenylist
-    function deniedLogicRefCount() external view override returns (uint256 count) {
+    function listedLogicRefCount() external view override returns (uint256 count) {
         LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
 
-        count = $._deniedLogicRefs.length();
+        count = $._listedLogicRefs.length;
     }
 
     /// @inheritdoc ILogicRefDenylist
-    function deniedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
+    function listedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
         LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
 
-        logicRef = $._deniedLogicRefs.at(index);
+        logicRef = $._listedLogicRefs[index];
     }
 
     /// @notice Initializes the LogicRefDenylist contract.
@@ -59,25 +60,57 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     // forge-lint: disable-next-line(mixed-case-function)
     function __LogicRefDenylist_init() internal onlyInitializing {}
 
-    /// @notice Adds a logic reference to the denylist and emits the `LogicRefDenied` event.
+    /// @notice Deprecates an active logic reference and emits the `LogicRefDeprecated` event.
+    /// @param logicRef The logic reference to deprecate.
+    function _deprecateLogicRef(bytes32 logicRef) internal {
+        require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
+
+        LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
+
+        Status status = $._statuses[logicRef];
+        require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
+        require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
+
+        $._listedLogicRefs.push(logicRef);
+        $._statuses[logicRef] = Status.Deprecated;
+
+        emit LogicRefDeprecated({logicRef: logicRef});
+    }
+
+    /// @notice Denies an active or deprecated logic reference and emits the `LogicRefDenied` event.
     /// @param logicRef The logic reference to deny.
     function _denyLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
         LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
 
-        require($._deniedLogicRefs.add(logicRef), LogicRefAlreadyDenied(logicRef));
+        Status status = $._statuses[logicRef];
+        require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
+
+        if (status == Status.Active) {
+            $._listedLogicRefs.push(logicRef);
+        }
+        $._statuses[logicRef] = Status.Denied;
 
         emit LogicRefDenied({logicRef: logicRef});
     }
 
-    /// @notice Checks whether the denylist contains a logic reference.
-    /// @param logicRef The logic reference to check.
-    /// @return isDenied Whether the logic reference is denied or not.
-    function _isLogicRefDenied(bytes32 logicRef) internal view returns (bool isDenied) {
+    /// @notice Reverts if a consumed resource must not carry the logic reference.
+    /// @param logicRef The logic reference of the consumed resource.
+    function _checkConsumedLogicRef(bytes32 logicRef) internal view {
         LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
 
-        isDenied = $._deniedLogicRefs.contains(logicRef);
+        require($._statuses[logicRef] != Status.Denied, DeniedLogicRef(logicRef));
+    }
+
+    /// @notice Reverts if a created resource must not carry the logic reference.
+    /// @param logicRef The logic reference of the created resource.
+    function _checkCreatedLogicRef(bytes32 logicRef) internal view {
+        LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
+
+        Status status = $._statuses[logicRef];
+        require(status != Status.Denied, DeniedLogicRef(logicRef));
+        require(status != Status.Deprecated, DeprecatedLogicRef(logicRef));
     }
 
     /// @notice Returns the storage from the logic reference denylist storage location.

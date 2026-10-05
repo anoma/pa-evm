@@ -19,6 +19,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     address internal constant _OWNER = address(uint160(1));
     bytes32 internal constant _DENIED_LOGIC_REF = bytes32(uint256(0xdead));
+    bytes32 internal constant _DEPRECATED_LOGIC_REF = bytes32(uint256(0xdeca));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
@@ -41,6 +42,38 @@ contract ProtocolAdapterDenylistTest is Test {
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
         _mockPa.denyLogicRef(_DENIED_LOGIC_REF);
+    }
+
+    function testFuzz_deprecateLogicRef_reverts_for_non_owners(address caller) public {
+        vm.assume(caller != _OWNER);
+
+        vm.prank(caller);
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
+        _mockPa.deprecateLogicRef(_DEPRECATED_LOGIC_REF);
+    }
+
+    function test_execute_reverts_if_a_created_resource_carries_a_deprecated_logic_ref() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
+        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _expectSettlement(txn);
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_consumes_a_resource_that_carries_a_deprecated_logic_ref() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
+        txn.actions[0].consumed[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.TransactionExecuted({transactionId: TxGen.transactionId(txn)});
+        _mockPa.execute(txn);
     }
 
     function test_execute_reverts_if_a_consumed_resource_carries_a_denied_logic_ref() public {
@@ -98,6 +131,11 @@ contract ProtocolAdapterDenylistTest is Test {
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.TransactionExecuted({transactionId: TxGen.transactionId(txn)});
         _mockPa.execute(txn);
+    }
+
+    function _deprecate(bytes32 logicRef) internal {
+        vm.prank(_OWNER);
+        _mockPa.deprecateLogicRef(logicRef);
     }
 
     function _deny(bytes32 logicRef) internal {

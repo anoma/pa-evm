@@ -16,13 +16,60 @@ contract LogicRefDenylistTest is Test {
         _denylist = new LogicRefDenylistMock();
     }
 
+    function testFuzz_deprecateLogicRef_deprecates_the_logic_ref(bytes32 logicRef) public {
+        vm.assume(logicRef != bytes32(0));
+
+        _denylist.deprecateLogicRef(logicRef);
+
+        _assertStatus(logicRef, ILogicRefDenylist.Status.Deprecated, "the logic ref should be deprecated");
+    }
+
+    function test_deprecateLogicRef_emits_the_LogicRefDeprecated_event() public {
+        vm.expectEmit(address(_denylist));
+        emit ILogicRefDenylist.LogicRefDeprecated({logicRef: _EXAMPLE_LOGIC_REF});
+        _denylist.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+    }
+
+    function test_deprecateLogicRef_reverts_on_a_deprecated_logic_ref() public {
+        _denylist.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.LogicRefAlreadyDeprecated.selector, _EXAMPLE_LOGIC_REF),
+            address(_denylist)
+        );
+        _denylist.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+    }
+
+    function test_deprecateLogicRef_reverts_on_a_denied_logic_ref() public {
+        _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(LogicRefDenylist.LogicRefAlreadyDenied.selector, _EXAMPLE_LOGIC_REF),
+            address(_denylist)
+        );
+        _denylist.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+    }
+
+    function test_deprecateLogicRef_reverts_on_the_zero_logic_ref() public {
+        vm.expectRevert(LogicRefDenylist.ZeroLogicRefNotAllowed.selector, address(_denylist));
+        _denylist.deprecateLogicRef(bytes32(0));
+    }
+
     function testFuzz_denyLogicRef_denies_the_logic_ref(bytes32 logicRef) public {
         vm.assume(logicRef != bytes32(0));
-        assertFalse(_denylist.isLogicRefDenied(logicRef), "the logic ref should not be denied before");
 
         _denylist.denyLogicRef(logicRef);
 
-        assertTrue(_denylist.isLogicRefDenied(logicRef), "the logic ref should be denied after");
+        _assertStatus(logicRef, ILogicRefDenylist.Status.Denied, "the logic ref should be denied");
+    }
+
+    function test_denyLogicRef_denies_a_deprecated_logic_ref() public {
+        _denylist.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+
+        _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF);
+
+        _assertStatus(_EXAMPLE_LOGIC_REF, ILogicRefDenylist.Status.Denied, "the logic ref should be denied");
+        assertEq(_denylist.listedLogicRefCount(), 1, "the logic ref should be listed once");
     }
 
     function test_denyLogicRef_emits_the_LogicRefDenied_event() public {
@@ -31,7 +78,7 @@ contract LogicRefDenylistTest is Test {
         _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF);
     }
 
-    function test_denyLogicRef_reverts_on_duplicate() public {
+    function test_denyLogicRef_reverts_on_a_denied_logic_ref() public {
         _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF);
 
         vm.expectRevert(
@@ -46,30 +93,40 @@ contract LogicRefDenylistTest is Test {
         _denylist.denyLogicRef(bytes32(0));
     }
 
-    function test_deniedLogicRefCount_returns_the_count() public {
-        assertEq(_denylist.deniedLogicRefCount(), 0, "the denylist should start empty");
+    function test_listedLogicRefCount_counts_deprecated_and_denied_logic_refs() public {
+        assertEq(_denylist.listedLogicRefCount(), 0, "the denylist should start empty");
 
         uint256 n = 10;
         for (uint256 i = 1; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(i));
-            assertEq(_denylist.deniedLogicRefCount(), i, "the count should match the number of denied logic refs");
+            if (i % 2 == 0) {
+                _denylist.deprecateLogicRef(bytes32(i));
+            } else {
+                _denylist.denyLogicRef(bytes32(i));
+            }
+            assertEq(_denylist.listedLogicRefCount(), i, "the count should match the number of listed logic refs");
         }
     }
 
-    function test_deniedLogicRefAtIndex_returns_the_logic_refs_in_the_order_they_were_denied() public {
+    function test_listedLogicRefAtIndex_returns_the_logic_refs_in_the_order_they_were_listed() public {
         uint256 n = 10;
         for (uint256 i = 0; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(n - i));
+            if (i % 2 == 0) {
+                _denylist.deprecateLogicRef(bytes32(n - i));
+            } else {
+                _denylist.denyLogicRef(bytes32(n - i));
+            }
         }
 
         for (uint256 i = 0; i < n; ++i) {
-            assertEq(_denylist.deniedLogicRefAtIndex(i), bytes32(n - i), "the logic ref at the index should match");
+            assertEq(_denylist.listedLogicRefAtIndex(i), bytes32(n - i), "the logic ref at the index should match");
         }
     }
 
-    function test_isLogicRefDenied_returns_false_if_the_logic_ref_is_not_denied() public {
-        _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF);
+    function testFuzz_getLogicRefStatus_returns_active_for_an_unlisted_logic_ref(bytes32 logicRef) public view {
+        _assertStatus(logicRef, ILogicRefDenylist.Status.Active, "an unlisted logic ref should be active");
+    }
 
-        assertFalse(_denylist.isLogicRefDenied(bytes32(uint256(2))), "another logic ref should not be denied");
+    function _assertStatus(bytes32 logicRef, ILogicRefDenylist.Status expected, string memory message) internal view {
+        assertEq(uint8(_denylist.getLogicRefStatus(logicRef)), uint8(expected), message);
     }
 }

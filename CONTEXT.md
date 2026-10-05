@@ -47,7 +47,7 @@ The PA's on-chain state — a Merkle tree of resource commitments and the set of
 spent nullifiers.
 
 **Logic ref denylist**:
-The logic refs the PA no longer settles: a transaction that consumes or creates a resource carrying one reverts. The owner adds a logic ref when its circuit turns out to be broken, and no entry is ever removed. Say "denied" (not "refused" or "blocked").
+The status of each logic ref, which restricts the resources that carry it. Every logic ref is *active* until the owner deprecates or denies it, and an active logic ref restricts nothing. The resources of a *deprecated* logic ref can be consumed but not created: the owner deprecates a logic ref once a newer circuit version replaces it. The resources of a *denied* logic ref can be neither consumed nor created: the owner denies a logic ref when its circuit turns out to be broken. A transaction that breaks either rule reverts. A status only becomes stricter, and no entry is ever removed. "Active" and "deprecated" are also the statuses of a circuit version in the kind tables. Say "active" (not "allowed") and "denied" (not "refused" or "blocked").
 
 **Forwarder**:
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA

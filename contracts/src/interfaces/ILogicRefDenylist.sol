@@ -6,21 +6,33 @@ pragma solidity ^0.8.30;
 /// @notice The interface of the logic reference denylist contract.
 /// @custom:security-contact security@anoma.foundation
 interface ILogicRefDenylist {
-    /// @notice Emitted when a logic reference is added to the denylist.
+    /// @notice The status of a logic reference. `Active` restricts nothing, `Deprecated` stops the creation of the
+    /// resources that carry it, and `Denied` stops their creation and their consumption.
+    enum Status {
+        Active,
+        Deprecated,
+        Denied
+    }
+
+    /// @notice Emitted when a logic reference is deprecated.
+    /// @param logicRef The deprecated logic reference.
+    event LogicRefDeprecated(bytes32 indexed logicRef);
+
+    /// @notice Emitted when a logic reference is denied.
     /// @param logicRef The denied logic reference.
     event LogicRefDenied(bytes32 indexed logicRef);
 
-    /// @notice Returns whether the denylist contains a given logic reference or not.
+    /// @notice Returns the status of a logic reference.
     /// @param logicRef The logic reference to check.
-    /// @return isDenied Whether the logic reference is denied or not.
-    function isLogicRefDenied(bytes32 logicRef) external view returns (bool isDenied);
+    /// @return status The status of the logic reference.
+    function getLogicRefStatus(bytes32 logicRef) external view returns (Status status);
 
-    /// @notice Returns the number of logic references in the denylist.
-    /// @return count The number of denied logic references.
-    function deniedLogicRefCount() external view returns (uint256 count);
+    /// @notice Returns the number of deprecated and denied logic references.
+    /// @return count The number of listed logic references.
+    function listedLogicRefCount() external view returns (uint256 count);
 
-    /// @notice Returns the denied logic reference with the given index.
-    /// @param index The index, in the order the logic references were denied.
+    /// @notice Returns the deprecated or denied logic reference with the given index.
+    /// @param index The index, in the order the logic references were first deprecated or denied.
     /// @return logicRef The logic reference at the given index.
-    function deniedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
+    function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
 }

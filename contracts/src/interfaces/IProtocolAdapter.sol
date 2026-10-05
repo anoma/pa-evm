@@ -162,8 +162,15 @@ interface IProtocolAdapter {
     /// @dev The commitment changes whenever the set of supported resource kinds changes.
     function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 
-    /// @notice Adds a logic reference to the denylist, so that no transaction consumes or creates a resource that
-    /// carries it.
+    /// @notice Deprecates a logic reference, so that no transaction creates a resource that carries it. Transactions
+    /// still consume such resources.
+    /// @param logicRef The logic reference to deprecate.
+    /// @dev A deprecated logic reference can still be denied, but no function makes it active again. Deprecate a logic
+    /// reference only after no application creates its resources any more, since such a transaction reverts.
+    function deprecateLogicRef(bytes32 logicRef) external;
+
+    /// @notice Denies a logic reference, also a deprecated one, so that no transaction consumes or creates a resource
+    /// that carries it.
     /// @param logicRef The logic reference to deny.
     /// @dev No function removes a logic reference from the denylist. An application can move the resources of a denied
     /// logic reference without consuming them, as the ERC20 forwarder migration does, and a removed entry would let

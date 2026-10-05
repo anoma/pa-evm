@@ -53,6 +53,7 @@ interface IProtocolAdapter {
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
     function denyLogicRef(bytes32 logicRef) external;
+    function deprecateLogicRef(bytes32 logicRef) external;
     function execute(Transaction memory transaction) external;
     function pause() external;
     function paused() external view returns (bool isPaused);
@@ -95,6 +96,19 @@ interface IProtocolAdapter {
   {
     "type": "function",
     "name": "denyLogicRef",
+    "inputs": [
+      {
+        "name": "logicRef",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "deprecateLogicRef",
     "inputs": [
       {
         "name": "logicRef",
@@ -4238,6 +4252,167 @@ function denyLogicRef(bytes32 logicRef) external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `deprecateLogicRef(bytes32)` and selector `0x380543dc`.
+```solidity
+function deprecateLogicRef(bytes32 logicRef) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct deprecateLogicRefCall {
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+    }
+    ///Container type for the return parameters of the [`deprecateLogicRef(bytes32)`](deprecateLogicRefCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct deprecateLogicRefReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<deprecateLogicRefCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: deprecateLogicRefCall) -> Self {
+                    (value.logicRef,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for deprecateLogicRefCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self { logicRef: tuple.0 }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<deprecateLogicRefReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: deprecateLogicRefReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for deprecateLogicRefReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl deprecateLogicRefReturn {
+            fn _tokenize(
+                &self,
+            ) -> <deprecateLogicRefCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for deprecateLogicRefCall {
+            type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = deprecateLogicRefReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "deprecateLogicRef(bytes32)";
+            const SELECTOR: [u8; 4] = [56u8, 5u8, 67u8, 220u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                deprecateLogicRefReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `execute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32))` and selector `0x9239ac0c`.
 ```solidity
 function execute(Transaction memory transaction) external;
@@ -5363,6 +5538,8 @@ function unpause() external;
         #[allow(missing_docs)]
         denyLogicRef(denyLogicRefCall),
         #[allow(missing_docs)]
+        deprecateLogicRef(deprecateLogicRefCall),
+        #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
         pause(pauseCall),
@@ -5385,6 +5562,7 @@ function unpause() external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [56u8, 5u8, 67u8, 220u8],
             [63u8, 75u8, 168u8, 58u8],
             [80u8, 161u8, 136u8, 201u8],
             [92u8, 151u8, 90u8, 187u8],
@@ -5398,6 +5576,7 @@ function unpause() external;
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
+            ::core::stringify!(deprecateLogicRef),
             ::core::stringify!(unpause),
             ::core::stringify!(denyLogicRef),
             ::core::stringify!(paused),
@@ -5411,6 +5590,7 @@ function unpause() external;
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
+            <deprecateLogicRefCall as alloy_sol_types::SolCall>::SIGNATURE,
             <unpauseCall as alloy_sol_types::SolCall>::SIGNATURE,
             <denyLogicRefCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5447,7 +5627,7 @@ function unpause() external;
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 10usize;
+        const COUNT: usize = 11usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5459,6 +5639,9 @@ function unpause() external;
                 }
                 Self::denyLogicRef(_) => {
                     <denyLogicRefCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::deprecateLogicRef(_) => {
+                    <deprecateLogicRefCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::pause(_) => <pauseCall as alloy_sol_types::SolCall>::SELECTOR,
@@ -5506,6 +5689,19 @@ function unpause() external;
                 &[u8],
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
+                {
+                    fn deprecateLogicRef(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <deprecateLogicRefCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::deprecateLogicRef)
+                    }
+                    deprecateLogicRef
+                },
                 {
                     fn unpause(
                         data: &[u8],
@@ -5677,6 +5873,11 @@ function unpause() external;
                         inner,
                     )
                 }
+                Self::deprecateLogicRef(inner) => {
+                    <deprecateLogicRefCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
                 Self::execute(inner) => {
                     <executeCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
@@ -5723,6 +5924,12 @@ function unpause() external;
                 }
                 Self::denyLogicRef(inner) => {
                     <denyLogicRefCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::deprecateLogicRef(inner) => {
+                    <deprecateLogicRefCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -6331,6 +6538,13 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             logicRef: alloy::sol_types::private::FixedBytes<32>,
         ) -> alloy_contract::SolCallBuilder<&P, denyLogicRefCall, N> {
             self.call_builder(&denyLogicRefCall { logicRef })
+        }
+        ///Creates a new call builder for the [`deprecateLogicRef`] function.
+        pub fn deprecateLogicRef(
+            &self,
+            logicRef: alloy::sol_types::private::FixedBytes<32>,
+        ) -> alloy_contract::SolCallBuilder<&P, deprecateLogicRefCall, N> {
+            self.call_builder(&deprecateLogicRefCall { logicRef })
         }
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
