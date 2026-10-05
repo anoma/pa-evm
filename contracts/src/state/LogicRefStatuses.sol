@@ -69,13 +69,12 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _deprecateLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
-
         Status status = logicRefStatus(logicRef);
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
-
         assert(status == Status.Active);
+
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
         bool added = $._nonActiveLogicRefs.add(logicRef);
         assert(added);
         $._logicRefStatus[logicRef] = Status.Deprecated;
@@ -88,11 +87,10 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _denyLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
-
         Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
         if (status == Status.Active) {
             bool added = $._nonActiveLogicRefs.add(logicRef);
             assert(added);
