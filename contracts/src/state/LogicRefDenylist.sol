@@ -37,6 +37,16 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     }
 
     /// @inheritdoc ILogicRefDenylist
+    function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external override {
+        _authorizeLogicRefDenylistChange();
+
+        uint256 count = logicRefs.length;
+        for (uint256 i = 0; i < count; ++i) {
+            _denyLogicRef({logicRef: logicRefs[i].logicRef, consumed: logicRefs[i].consumed});
+        }
+    }
+
+    /// @inheritdoc ILogicRefDenylist
     function isLogicRefDenied(bytes32 logicRef, bool consumed) external view override returns (bool isDenied) {
         isDenied = _deniedLogicRefs(consumed).contains(logicRef);
     }
@@ -56,6 +66,9 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     /// initializer convention.
     // forge-lint: disable-next-line(mixed-case-function)
     function __LogicRefDenylist_init() internal onlyInitializing {}
+
+    /// @notice Reverts unless the caller is allowed to add logic references to the denylists.
+    function _authorizeLogicRefDenylistChange() internal virtual;
 
     /// @notice Adds a logic reference to a denylist and emits the `LogicRefDenied` event.
     /// @param logicRef The logic reference to deny.

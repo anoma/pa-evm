@@ -113,19 +113,6 @@ contract ProtocolAdapter is
         _unpause();
     }
 
-    /// @inheritdoc IProtocolAdapter
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external override onlyOwner {
-        _setKindTableCommitment(newKindTableCommitment);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external override onlyOwner {
-        uint256 count = logicRefs.length;
-        for (uint256 i = 0; i < count; ++i) {
-            _denyLogicRef({logicRef: logicRefs[i].logicRef, consumed: logicRefs[i].consumed});
-        }
-    }
-
     /// @inheritdoc IImplementation
     function getImplementation() external view override returns (address current) {
         current = ERC1967Utils.getImplementation();
@@ -375,6 +362,12 @@ contract ProtocolAdapter is
     /// @inheritdoc UUPSUpgradeable
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+    /// @notice Allows only the owner to set the kind table commitment.
+    function _authorizeKindTableCommitmentChange() internal override onlyOwner {}
+
+    /// @notice Allows only the owner to add logic references to the denylists.
+    function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
