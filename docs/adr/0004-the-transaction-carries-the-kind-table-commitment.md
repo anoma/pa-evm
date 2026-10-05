@@ -16,7 +16,7 @@ The compliance and aggregation verifying keys stay injected, as ADR-0001 decides
 
 - A proof made with the empty kind table stays valid when the owner stores a new commitment. A prover that converts no merged kinds can always use the empty kind table.
 - A proof made with a replaced kind table reverts with `UnacceptedKindTableCommitment`, which names the commitment, instead of `VerificationFailed()`.
-- A kind table cannot stop a kind, because a transaction can use the empty kind table instead. The logic ref denylist stops logic refs.
+- A kind table cannot stop a kind, because a transaction can use the empty kind table instead. The protocol adapter stops a logic ref by denying it.
 - The new field changes the ABI of `execute` and `simulateExecute`. A deployed protocol adapter needs an implementation upgrade, and its clients need a release that sends the field, at the same time.
 - Each transaction carries 32 more bytes of calldata.
 - `crates/bindings/src/conversion.rs` copies the kind table commitment from arm-risc0's `AggregationInstance`. It still drops the compliance key.

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {LogicRefDenylist} from "../../src/state/LogicRefDenylist.sol";
+import {LogicRefStatuses} from "../../src/state/LogicRefStatuses.sol";
 
-contract LogicRefDenylistMock is LogicRefDenylist {
+contract LogicRefStatusesMock is LogicRefStatuses {
     function initialize() external initializer {
-        __LogicRefDenylist_init();
+        __LogicRefStatuses_init();
     }
 
     function deprecateLogicRef(bytes32 logicRef) external {

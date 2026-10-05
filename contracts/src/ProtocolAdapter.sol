@@ -18,7 +18,7 @@ import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {KindTableCommitment} from "./state/KindTableCommitment.sol";
-import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
+import {LogicRefStatuses} from "./state/LogicRefStatuses.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 /// @title ProtocolAdapter
@@ -36,7 +36,7 @@ contract ProtocolAdapter is
     PausableUpgradeable,
     CommitmentTree,
     NullifierSet,
-    LogicRefDenylist,
+    LogicRefStatuses,
     KindTableCommitment
 {
     using Aggregation for Action[];
@@ -360,7 +360,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
-    /// the empty logic reference denylist and the empty kind table.
+    /// the logic reference statuses, under which every logic reference is active, and the empty kind table.
     /// @param initialOwner The account receiving ownership.
     // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -368,7 +368,7 @@ contract ProtocolAdapter is
         __Pausable_init();
         __CommitmentTree_init();
         __NullifierSet_init();
-        __LogicRefDenylist_init();
+        __LogicRefStatuses_init();
         __KindTableCommitment_init();
 
         // Sanity check that the verifier is not paused already.

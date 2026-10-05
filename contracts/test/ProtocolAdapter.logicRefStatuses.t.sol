@@ -11,10 +11,10 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {LogicRefDenylist} from "../src/state/LogicRefDenylist.sol";
+import {LogicRefStatuses} from "../src/state/LogicRefStatuses.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
-contract ProtocolAdapterDenylistTest is Test {
+contract ProtocolAdapterLogicRefStatusesTest is Test {
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -60,7 +60,7 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deprecate(_DEPRECATED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -84,7 +84,7 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -96,7 +96,7 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -108,7 +108,7 @@ contract ProtocolAdapterDenylistTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -119,7 +119,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefDenylist.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
     }
 
@@ -143,7 +143,7 @@ contract ProtocolAdapterDenylistTest is Test {
         _mockPa.denyLogicRef(logicRef);
     }
 
-    /// @dev Checks that the transaction settles before the logic ref is denied, so that a later revert is the denylist's.
+    /// @dev Checks that the transaction settles before the status changes, so that the status causes a later revert.
     function _expectSettlement(IProtocolAdapter.Transaction memory txn) internal {
         vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});

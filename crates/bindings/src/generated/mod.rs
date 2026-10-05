@@ -7,7 +7,7 @@ pub mod deployment_parameters;
 pub mod erc1967_proxy;
 pub mod i_commitment_tree;
 pub mod i_kind_table_commitment;
-pub mod i_logic_ref_denylist;
+pub mod i_logic_ref_statuses;
 pub mod i_migrational;
 pub mod i_nullifier_set;
 pub mod i_protocol_adapter;

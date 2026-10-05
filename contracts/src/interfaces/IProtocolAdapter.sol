@@ -172,9 +172,9 @@ interface IProtocolAdapter {
     /// @notice Denies a logic reference, also a deprecated one, so that no transaction consumes or creates a resource
     /// that carries it.
     /// @param logicRef The logic reference to deny.
-    /// @dev No function removes a logic reference from the denylist. An application can move the resources of a denied
-    /// logic reference without consuming them, as the ERC20 forwarder migration does, and a removed entry would let
-    /// them be spent again.
+    /// @dev No function changes the status of a denied logic reference. An application can move the resources of a
+    /// denied logic reference without consuming them, as the ERC20 forwarder migration does, and another status would
+    /// let them be consumed again.
     function denyLogicRef(bytes32 logicRef) external;
 
     /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
