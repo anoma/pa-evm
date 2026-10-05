@@ -254,7 +254,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < createdCount; ++i) {
             Created calldata created = action.created[i];
 
-            _checkCreatedLogicRef(created.logicRef);
+            _checkLogicRefForCreation(created.logicRef);
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.

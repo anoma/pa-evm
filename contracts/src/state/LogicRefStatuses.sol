@@ -110,7 +110,7 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
 
     /// @notice Reverts if a created resource must not carry the logic reference.
     /// @param logicRef The logic reference of the created resource.
-    function _checkCreatedLogicRef(bytes32 logicRef) internal view {
+    function _checkLogicRefForCreation(bytes32 logicRef) internal view {
         Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, DeniedLogicRef(logicRef));
         require(status != Status.Deprecated, DeprecatedLogicRef(logicRef));
