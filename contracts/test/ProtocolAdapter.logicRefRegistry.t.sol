@@ -12,10 +12,10 @@ import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/tes
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {LogicRefStatuses} from "../src/state/LogicRefStatuses.sol";
+import {LogicRefRegistry} from "../src/state/LogicRefRegistry.sol";
 import {TxGen} from "./libs/TxGen.sol";
 
-contract ProtocolAdapterLogicRefStatusesTest is Test {
+contract ProtocolAdapterLogicRefRegistryTest is Test {
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
@@ -61,7 +61,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         _expectSettlement(txn);
         _deprecate(_DEPRECATED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -90,7 +90,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         uint256 nullifiers = _mockPa.nullifierCount();
         uint256 commitments = _mockPa.commitmentCount();
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
         _mockPa.execute(txn);
 
         assertEq(_mockPa.latestCommitmentTreeRoot(), root);
@@ -106,7 +106,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         _expectSettlement(txn);
         _deprecate(_DEPRECATED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
         _mockPa.execute(txn);
 
         txn.actions[0].created[0].logicRef = txn.actions[0].consumed[0].logicRef;
@@ -138,7 +138,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -150,7 +150,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -162,7 +162,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
         _expectSettlement(txn);
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.execute(txn);
     }
 
@@ -173,7 +173,7 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
 
         _deny(_DENIED_LOGIC_REF);
 
-        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.DeniedLogicRef.selector, _DENIED_LOGIC_REF));
         _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
     }
 

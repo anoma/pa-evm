@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {LogicRefStatuses} from "../../src/state/LogicRefStatuses.sol";
+import {LogicRefRegistry} from "../../src/state/LogicRefRegistry.sol";
 
-contract LogicRefStatusesMock is LogicRefStatuses {
+contract LogicRefRegistryMock is LogicRefRegistry {
     function initialize() external initializer {
-        __LogicRefStatuses_init();
+        __LogicRefRegistry_init();
     }
 
     function deprecateLogicRef(bytes32 logicRef) external {

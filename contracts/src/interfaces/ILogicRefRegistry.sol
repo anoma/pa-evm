@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/// @title ILogicRefStatuses
+/// @title ILogicRefRegistry
 /// @author Anoma Foundation, 2026
-/// @notice The interface of the logic reference statuses contract.
+/// @notice The interface of the logic reference registry contract.
 /// @custom:security-contact security@anoma.foundation
-interface ILogicRefStatuses {
+interface ILogicRefRegistry {
     /// @notice The status of a logic reference. `Active` restricts nothing, `Deprecated` stops the creation of the
     /// resources that carry it, and `Denied` stops their creation and their consumption.
     enum Status {

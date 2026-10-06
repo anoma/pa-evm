@@ -18,7 +18,7 @@ import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {KindTableCommitment} from "./state/KindTableCommitment.sol";
-import {LogicRefStatuses} from "./state/LogicRefStatuses.sol";
+import {LogicRefRegistry} from "./state/LogicRefRegistry.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 /// @title ProtocolAdapter
@@ -36,7 +36,7 @@ contract ProtocolAdapter is
     PausableUpgradeable,
     CommitmentTree,
     NullifierSet,
-    LogicRefStatuses,
+    LogicRefRegistry,
     KindTableCommitment
 {
     using Aggregation for Action[];
@@ -368,7 +368,7 @@ contract ProtocolAdapter is
         __Pausable_init();
         __CommitmentTree_init();
         __NullifierSet_init();
-        __LogicRefStatuses_init();
+        __LogicRefRegistry_init();
         __KindTableCommitment_init();
 
         // Sanity check that the verifier is not paused already.

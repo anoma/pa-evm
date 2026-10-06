@@ -2,7 +2,7 @@
 /**
 
 ```solidity
-library ILogicRefStatuses {
+library ILogicRefRegistry {
     type Status is uint8;
 }
 ```*/
@@ -13,7 +13,7 @@ library ILogicRefStatuses {
     clippy::style,
     clippy::empty_structs_with_brackets
 )]
-pub mod ILogicRefStatuses {
+pub mod ILogicRefRegistry {
     use super::*;
     use alloy::sol_types as alloy_sol_types;
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -154,9 +154,9 @@ pub mod ILogicRefStatuses {
         }
     };
     use alloy::contract as alloy_contract;
-    /**Creates a new wrapper around an on-chain [`ILogicRefStatuses`](self) contract instance.
+    /**Creates a new wrapper around an on-chain [`ILogicRefRegistry`](self) contract instance.
 
-See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.*/
+See the [wrapper's documentation](`ILogicRefRegistryInstance`) for more details.*/
     #[inline]
     pub const fn new<
         P: alloy_contract::private::Provider<N>,
@@ -164,13 +164,13 @@ See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.
     >(
         address: alloy_sol_types::private::Address,
         __provider: P,
-    ) -> ILogicRefStatusesInstance<P, N> {
-        ILogicRefStatusesInstance::<P, N>::new(address, __provider)
+    ) -> ILogicRefRegistryInstance<P, N> {
+        ILogicRefRegistryInstance::<P, N>::new(address, __provider)
     }
-    /**A [`ILogicRefStatuses`](self) instance.
+    /**A [`ILogicRefRegistry`](self) instance.
 
 Contains type-safe methods for interacting with an on-chain instance of the
-[`ILogicRefStatuses`](self) contract located at a given `address`, using a given
+[`ILogicRefRegistry`](self) contract located at a given `address`, using a given
 provider `P`.
 
 If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
@@ -179,26 +179,26 @@ be used to deploy a new instance of the contract.
 
 See the [module-level documentation](self) for all the available methods.*/
     #[derive(Clone)]
-    pub struct ILogicRefStatusesInstance<P, N = alloy_contract::private::Ethereum> {
+    pub struct ILogicRefRegistryInstance<P, N = alloy_contract::private::Ethereum> {
         address: alloy_sol_types::private::Address,
         provider: P,
         _network: ::core::marker::PhantomData<N>,
     }
     #[automatically_derived]
-    impl<P, N> ::core::fmt::Debug for ILogicRefStatusesInstance<P, N> {
+    impl<P, N> ::core::fmt::Debug for ILogicRefRegistryInstance<P, N> {
         #[inline]
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("ILogicRefStatusesInstance").field(&self.address).finish()
+            f.debug_tuple("ILogicRefRegistryInstance").field(&self.address).finish()
         }
     }
     /// Instantiation and getters/setters.
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ILogicRefStatusesInstance<P, N> {
-        /**Creates a new wrapper around an on-chain [`ILogicRefStatuses`](self) contract instance.
+    > ILogicRefRegistryInstance<P, N> {
+        /**Creates a new wrapper around an on-chain [`ILogicRefRegistry`](self) contract instance.
 
-See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.*/
+See the [wrapper's documentation](`ILogicRefRegistryInstance`) for more details.*/
         #[inline]
         pub const fn new(
             address: alloy_sol_types::private::Address,
@@ -231,11 +231,11 @@ See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.
             &self.provider
         }
     }
-    impl<P: ::core::clone::Clone, N> ILogicRefStatusesInstance<&P, N> {
+    impl<P: ::core::clone::Clone, N> ILogicRefRegistryInstance<&P, N> {
         /// Clones the provider and returns a new instance with the cloned provider.
         #[inline]
-        pub fn with_cloned_provider(self) -> ILogicRefStatusesInstance<P, N> {
-            ILogicRefStatusesInstance {
+        pub fn with_cloned_provider(self) -> ILogicRefRegistryInstance<P, N> {
+            ILogicRefRegistryInstance {
                 address: self.address,
                 provider: ::core::clone::Clone::clone(&self.provider),
                 _network: ::core::marker::PhantomData,
@@ -246,7 +246,7 @@ See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ILogicRefStatusesInstance<P, N> {
+    > ILogicRefRegistryInstance<P, N> {
         /// Creates a new call builder using this contract instance's provider and address.
         ///
         /// Note that the call can be any function call, not just those defined in this
@@ -262,7 +262,7 @@ See the [wrapper's documentation](`ILogicRefStatusesInstance`) for more details.
     impl<
         P: alloy_contract::private::Provider<N>,
         N: alloy_contract::private::Network,
-    > ILogicRefStatusesInstance<P, N> {
+    > ILogicRefRegistryInstance<P, N> {
         /// Creates a new event filter using this contract instance's provider and address.
         ///
         /// Note that the type can be any event, not just those defined in this contract.
@@ -2428,7 +2428,7 @@ See the [wrapper's documentation](`IProtocolAdapterInstance`) for more details.*
 
 Generated by the following Solidity interface...
 ```solidity
-library ILogicRefStatuses {
+library ILogicRefRegistry {
     type Status is uint8;
 }
 
@@ -2550,7 +2550,7 @@ interface ProtocolAdapter {
     function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
     function isNullifierContained(bytes32 nullifier) external view returns (bool isContained);
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
-    function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatuses.Status status);
+    function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefRegistry.Status status);
     function nonActiveLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
     function nonActiveLogicRefCount() external view returns (uint256 count);
     function nullifierAtIndex(uint256 index) external view returns (bytes32 nullifier);
@@ -3128,7 +3128,7 @@ interface ProtocolAdapter {
       {
         "name": "status",
         "type": "uint8",
-        "internalType": "enum ILogicRefStatuses.Status"
+        "internalType": "enum ILogicRefRegistry.Status"
       }
     ],
     "stateMutability": "view"
@@ -12422,7 +12422,7 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `logicRefStatus(bytes32)` and selector `0x2091096e`.
 ```solidity
-function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatuses.Status status);
+function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefRegistry.Status status);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -12437,7 +12437,7 @@ function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatus
     #[derive(Clone)]
     pub struct logicRefStatusReturn {
         #[allow(missing_docs)]
-        pub status: <ILogicRefStatuses::Status as alloy::sol_types::SolType>::RustType,
+        pub status: <ILogicRefRegistry::Status as alloy::sol_types::SolType>::RustType,
     }
     #[allow(
         non_camel_case_types,
@@ -12482,10 +12482,10 @@ function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatus
         {
             #[doc(hidden)]
             #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (ILogicRefStatuses::Status,);
+            type UnderlyingSolTuple<'a> = (ILogicRefRegistry::Status,);
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <ILogicRefStatuses::Status as alloy::sol_types::SolType>::RustType,
+                <ILogicRefRegistry::Status as alloy::sol_types::SolType>::RustType,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
@@ -12521,8 +12521,8 @@ function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatus
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = <ILogicRefStatuses::Status as alloy::sol_types::SolType>::RustType;
-            type ReturnTuple<'a> = (ILogicRefStatuses::Status,);
+            type Return = <ILogicRefRegistry::Status as alloy::sol_types::SolType>::RustType;
+            type ReturnTuple<'a> = (ILogicRefRegistry::Status,);
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -12544,7 +12544,7 @@ function logicRefStatus(bytes32 logicRef) external view returns (ILogicRefStatus
             }
             #[inline]
             fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                (<ILogicRefStatuses::Status as alloy_sol_types::SolType>::tokenize(ret),)
+                (<ILogicRefRegistry::Status as alloy_sol_types::SolType>::tokenize(ret),)
             }
             #[inline]
             fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
