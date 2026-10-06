@@ -6,6 +6,7 @@ import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.4/test/sc
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
@@ -73,6 +74,59 @@ contract ProtocolAdapterLogicRefStatusesTest is Test {
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.TransactionExecuted({transactionId: TxGen.transactionId(txn)});
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_rolls_back_if_a_later_action_creates_a_deprecated_resource() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 3});
+        txn.actions[0].consumed[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[2].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _expectSettlement(txn);
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        bytes32 root = _mockPa.latestCommitmentTreeRoot();
+        uint256 nullifiers = _mockPa.nullifierCount();
+        uint256 commitments = _mockPa.commitmentCount();
+
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        _mockPa.execute(txn);
+
+        assertEq(_mockPa.latestCommitmentTreeRoot(), root);
+        assertEq(_mockPa.nullifierCount(), nullifiers);
+        assertEq(_mockPa.commitmentCount(), commitments);
+    }
+
+    function test_execute_reverts_if_a_deprecated_creation_is_relabelled_without_a_new_proof() public {
+        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
+        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn = _reaggregate(txn);
+
+        _expectSettlement(txn);
+        _deprecate(_DEPRECATED_LOGIC_REF);
+
+        vm.expectRevert(abi.encodeWithSelector(LogicRefStatuses.DeprecatedLogicRef.selector, _DEPRECATED_LOGIC_REF));
+        _mockPa.execute(txn);
+
+        txn.actions[0].created[0].logicRef = txn.actions[0].consumed[0].logicRef;
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.execute(txn);
+        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+
+        IProtocolAdapter.Consumed memory consumed = txn.actions[0].consumed[0];
+        IProtocolAdapter.Created memory created = txn.actions[0].created[0];
+        txn.actions[0].consumed[0] = IProtocolAdapter.Consumed({
+            nullifier: created.commitment,
+            logicRef: created.logicRef,
+            commitmentTreeRoot: consumed.commitmentTreeRoot,
+            appData: created.appData
+        });
+        txn.actions[0].created[0] = IProtocolAdapter.Created({
+            commitment: consumed.nullifier, logicRef: consumed.logicRef, appData: consumed.appData
+        });
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
         _mockPa.execute(txn);
     }
 
