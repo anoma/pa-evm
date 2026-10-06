@@ -4,6 +4,8 @@
 
 The protocol adapter contract written in Solidity enabling Anoma Resource Machine transaction settlement on EVM-compatible chains.
 
+For logic ref deprecation, see the proposed [retirement and withdrawal acceptance test](../docs/logic-ref-retirement.md).
+
 ## Prerequisites
 
 1. Get an up-to-date version of [Foundry](https://github.com/foundry-rs/foundry) with
