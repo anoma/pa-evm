@@ -1,7 +1,375 @@
+///Module containing a contract's types and functions.
+/**
+
+```solidity
+library ILogicRefDenylist {
+    struct DeniedLogicRef { bytes32 logicRef; bool consumed; }
+}
+```*/
+#[allow(
+    non_camel_case_types,
+    non_snake_case,
+    clippy::pub_underscore_fields,
+    clippy::style,
+    clippy::empty_structs_with_brackets
+)]
+pub mod ILogicRefDenylist {
+    use super::*;
+    use alloy::sol_types as alloy_sol_types;
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**```solidity
+struct DeniedLogicRef { bytes32 logicRef; bool consumed; }
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct DeniedLogicRef {
+        #[allow(missing_docs)]
+        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        #[allow(missing_docs)]
+        pub consumed: bool,
+    }
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        #[doc(hidden)]
+        #[allow(dead_code)]
+        type UnderlyingSolTuple<'a> = (
+            alloy::sol_types::sol_data::FixedBytes<32>,
+            alloy::sol_types::sol_data::Bool,
+        );
+        #[doc(hidden)]
+        type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>, bool);
+        #[cfg(test)]
+        #[allow(dead_code, unreachable_patterns)]
+        fn _type_assertion(
+            _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+        ) {
+            match _t {
+                alloy_sol_types::private::AssertTypeEq::<
+                    <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                >(_) => {}
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<DeniedLogicRef> for UnderlyingRustTuple<'_> {
+            fn from(value: DeniedLogicRef) -> Self {
+                (value.logicRef, value.consumed)
+            }
+        }
+        #[automatically_derived]
+        #[doc(hidden)]
+        impl ::core::convert::From<UnderlyingRustTuple<'_>> for DeniedLogicRef {
+            fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                Self {
+                    logicRef: tuple.0,
+                    consumed: tuple.1,
+                }
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolValue for DeniedLogicRef {
+            type SolType = Self;
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::private::SolTypeValue<Self> for DeniedLogicRef {
+            #[inline]
+            fn stv_to_tokens(&self) -> <Self as alloy_sol_types::SolType>::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
+                        &self.consumed,
+                    ),
+                )
+            }
+            #[inline]
+            fn stv_abi_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encoded_size(&tuple)
+            }
+            #[inline]
+            fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
+                <Self as alloy_sol_types::SolStruct>::eip712_hash_struct(self)
+            }
+            #[inline]
+            fn stv_abi_encode_packed_to(
+                &self,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_encode_packed_to(&tuple, out)
+            }
+            #[inline]
+            fn stv_abi_packed_encoded_size(&self) -> usize {
+                if let Some(size) = <Self as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE {
+                    return size;
+                }
+                let tuple = <UnderlyingRustTuple<
+                    '_,
+                > as ::core::convert::From<Self>>::from(self.clone());
+                <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_packed_encoded_size(&tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolType for DeniedLogicRef {
+            type RustType = Self;
+            type Token<'a> = <UnderlyingSolTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;
+            const ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::ENCODED_SIZE;
+            const PACKED_ENCODED_SIZE: Option<usize> = <UnderlyingSolTuple<
+                '_,
+            > as alloy_sol_types::SolType>::PACKED_ENCODED_SIZE;
+            #[inline]
+            fn valid_token(token: &Self::Token<'_>) -> bool {
+                <UnderlyingSolTuple<'_> as alloy_sol_types::SolType>::valid_token(token)
+            }
+            #[inline]
+            fn detokenize(token: Self::Token<'_>) -> Self::RustType {
+                let tuple = <UnderlyingSolTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::detokenize(token);
+                <Self as ::core::convert::From<UnderlyingRustTuple<'_>>>::from(tuple)
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolStruct for DeniedLogicRef {
+            const NAME: &'static str = "DeniedLogicRef";
+            #[inline]
+            fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
+                alloy_sol_types::private::Cow::Borrowed(
+                    "DeniedLogicRef(bytes32 logicRef,bool consumed)",
+                )
+            }
+            #[inline]
+            fn eip712_components() -> alloy_sol_types::private::Vec<
+                alloy_sol_types::private::Cow<'static, str>,
+            > {
+                alloy_sol_types::private::Vec::new()
+            }
+            #[inline]
+            fn eip712_encode_type() -> alloy_sol_types::private::Cow<'static, str> {
+                <Self as alloy_sol_types::SolStruct>::eip712_root_type()
+            }
+            #[inline]
+            fn eip712_encode_data(&self) -> alloy_sol_types::private::Vec<u8> {
+                [
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.logicRef)
+                        .0,
+                    <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::eip712_data_word(
+                            &self.consumed,
+                        )
+                        .0,
+                ]
+                    .concat()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::EventTopic for DeniedLogicRef {
+            #[inline]
+            fn topic_preimage_length(rust: &Self::RustType) -> usize {
+                0usize
+                    + <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.logicRef,
+                    )
+                    + <alloy::sol_types::sol_data::Bool as alloy_sol_types::EventTopic>::topic_preimage_length(
+                        &rust.consumed,
+                    )
+            }
+            #[inline]
+            fn encode_topic_preimage(
+                rust: &Self::RustType,
+                out: &mut alloy_sol_types::private::Vec<u8>,
+            ) {
+                out.reserve(
+                    <Self as alloy_sol_types::EventTopic>::topic_preimage_length(rust),
+                );
+                <alloy::sol_types::sol_data::FixedBytes<
+                    32,
+                > as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.logicRef,
+                    out,
+                );
+                <alloy::sol_types::sol_data::Bool as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    &rust.consumed,
+                    out,
+                );
+            }
+            #[inline]
+            fn encode_topic(
+                rust: &Self::RustType,
+            ) -> alloy_sol_types::abi::token::WordToken {
+                let mut out = alloy_sol_types::private::Vec::new();
+                <Self as alloy_sol_types::EventTopic>::encode_topic_preimage(
+                    rust,
+                    &mut out,
+                );
+                alloy_sol_types::abi::token::WordToken(
+                    alloy_sol_types::private::keccak256(out),
+                )
+            }
+        }
+    };
+    use alloy::contract as alloy_contract;
+    /**Creates a new wrapper around an on-chain [`ILogicRefDenylist`](self) contract instance.
+
+See the [wrapper's documentation](`ILogicRefDenylistInstance`) for more details.*/
+    #[inline]
+    pub const fn new<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    >(
+        address: alloy_sol_types::private::Address,
+        __provider: P,
+    ) -> ILogicRefDenylistInstance<P, N> {
+        ILogicRefDenylistInstance::<P, N>::new(address, __provider)
+    }
+    /**A [`ILogicRefDenylist`](self) instance.
+
+Contains type-safe methods for interacting with an on-chain instance of the
+[`ILogicRefDenylist`](self) contract located at a given `address`, using a given
+provider `P`.
+
+If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
+documentation on how to provide it), the `deploy` and `deploy_builder` methods can
+be used to deploy a new instance of the contract.
+
+See the [module-level documentation](self) for all the available methods.*/
+    #[derive(Clone)]
+    pub struct ILogicRefDenylistInstance<P, N = alloy_contract::private::Ethereum> {
+        address: alloy_sol_types::private::Address,
+        provider: P,
+        _network: ::core::marker::PhantomData<N>,
+    }
+    #[automatically_derived]
+    impl<P, N> ::core::fmt::Debug for ILogicRefDenylistInstance<P, N> {
+        #[inline]
+        fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+            f.debug_tuple("ILogicRefDenylistInstance").field(&self.address).finish()
+        }
+    }
+    /// Instantiation and getters/setters.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > ILogicRefDenylistInstance<P, N> {
+        /**Creates a new wrapper around an on-chain [`ILogicRefDenylist`](self) contract instance.
+
+See the [wrapper's documentation](`ILogicRefDenylistInstance`) for more details.*/
+        #[inline]
+        pub const fn new(
+            address: alloy_sol_types::private::Address,
+            __provider: P,
+        ) -> Self {
+            Self {
+                address,
+                provider: __provider,
+                _network: ::core::marker::PhantomData,
+            }
+        }
+        /// Returns a reference to the address.
+        #[inline]
+        pub const fn address(&self) -> &alloy_sol_types::private::Address {
+            &self.address
+        }
+        /// Sets the address.
+        #[inline]
+        pub fn set_address(&mut self, address: alloy_sol_types::private::Address) {
+            self.address = address;
+        }
+        /// Sets the address and returns `self`.
+        pub fn at(mut self, address: alloy_sol_types::private::Address) -> Self {
+            self.set_address(address);
+            self
+        }
+        /// Returns a reference to the provider.
+        #[inline]
+        pub const fn provider(&self) -> &P {
+            &self.provider
+        }
+    }
+    impl<P: ::core::clone::Clone, N> ILogicRefDenylistInstance<&P, N> {
+        /// Clones the provider and returns a new instance with the cloned provider.
+        #[inline]
+        pub fn with_cloned_provider(self) -> ILogicRefDenylistInstance<P, N> {
+            ILogicRefDenylistInstance {
+                address: self.address,
+                provider: ::core::clone::Clone::clone(&self.provider),
+                _network: ::core::marker::PhantomData,
+            }
+        }
+    }
+    /// Function calls.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > ILogicRefDenylistInstance<P, N> {
+        /// Creates a new call builder using this contract instance's provider and address.
+        ///
+        /// Note that the call can be any function call, not just those defined in this
+        /// contract. Prefer using the other methods for building type-safe contract calls.
+        pub fn call_builder<C: alloy_sol_types::SolCall>(
+            &self,
+            call: &C,
+        ) -> alloy_contract::SolCallBuilder<&P, C, N> {
+            alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
+        }
+    }
+    /// Event filters.
+    impl<
+        P: alloy_contract::private::Provider<N>,
+        N: alloy_contract::private::Network,
+    > ILogicRefDenylistInstance<P, N> {
+        /// Creates a new event filter using this contract instance's provider and address.
+        ///
+        /// Note that the type can be any event, not just those defined in this contract.
+        /// Prefer using the other methods for building type-safe event filters.
+        pub fn event_filter<E: alloy_sol_types::SolEvent>(
+            &self,
+        ) -> alloy_contract::Event<&P, E, N> {
+            alloy_contract::Event::new_sol(&self.provider, &self.address)
+        }
+    }
+}
 /**
 
 Generated by the following Solidity interface...
 ```solidity
+library ILogicRefDenylist {
+    struct DeniedLogicRef {
+        bytes32 logicRef;
+        bool consumed;
+    }
+}
+
 interface IProtocolAdapter {
     type DeletionCriterion is uint8;
     struct Action {
@@ -52,7 +420,7 @@ interface IProtocolAdapter {
 
     function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
     function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
-    function denyLogicRef(bytes32 logicRef) external;
+    function denyLogicRefs(ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) external;
     function execute(Transaction memory transaction) external;
     function pause() external;
     function paused() external view returns (bool isPaused);
@@ -94,12 +462,24 @@ interface IProtocolAdapter {
   },
   {
     "type": "function",
-    "name": "denyLogicRef",
+    "name": "denyLogicRefs",
     "inputs": [
       {
-        "name": "logicRef",
-        "type": "bytes32",
-        "internalType": "bytes32"
+        "name": "logicRefs",
+        "type": "tuple[]",
+        "internalType": "struct ILogicRefDenylist.DeniedLogicRef[]",
+        "components": [
+          {
+            "name": "logicRef",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "consumed",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
       }
     ],
     "outputs": [],
@@ -4081,20 +4461,22 @@ function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSel
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `denyLogicRef(bytes32)` and selector `0x50a188c9`.
+    /**Function with signature `denyLogicRefs((bytes32,bool)[])` and selector `0x1a8473bc`.
 ```solidity
-function denyLogicRef(bytes32 logicRef) external;
+function denyLogicRefs(ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct denyLogicRefCall {
+    pub struct denyLogicRefsCall {
         #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
+        pub logicRefs: alloy::sol_types::private::Vec<
+            <ILogicRefDenylist::DeniedLogicRef as alloy::sol_types::SolType>::RustType,
+        >,
     }
-    ///Container type for the return parameters of the [`denyLogicRef(bytes32)`](denyLogicRefCall) function.
+    ///Container type for the return parameters of the [`denyLogicRefs((bytes32,bool)[])`](denyLogicRefsCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct denyLogicRefReturn {}
+    pub struct denyLogicRefsReturn {}
     #[allow(
         non_camel_case_types,
         non_snake_case,
@@ -4106,9 +4488,15 @@ function denyLogicRef(bytes32 logicRef) external;
         {
             #[doc(hidden)]
             #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type UnderlyingSolTuple<'a> = (
+                alloy::sol_types::sol_data::Array<ILogicRefDenylist::DeniedLogicRef>,
+            );
             #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::Vec<
+                    <ILogicRefDenylist::DeniedLogicRef as alloy::sol_types::SolType>::RustType,
+                >,
+            );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
             fn _type_assertion(
@@ -4122,16 +4510,16 @@ function denyLogicRef(bytes32 logicRef) external;
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<denyLogicRefCall> for UnderlyingRustTuple<'_> {
-                fn from(value: denyLogicRefCall) -> Self {
-                    (value.logicRef,)
+            impl ::core::convert::From<denyLogicRefsCall> for UnderlyingRustTuple<'_> {
+                fn from(value: denyLogicRefsCall) -> Self {
+                    (value.logicRefs,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefCall {
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefsCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { logicRef: tuple.0 }
+                    Self { logicRefs: tuple.0 }
                 }
             }
         }
@@ -4154,39 +4542,41 @@ function denyLogicRef(bytes32 logicRef) external;
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<denyLogicRefReturn> for UnderlyingRustTuple<'_> {
-                fn from(value: denyLogicRefReturn) -> Self {
+            impl ::core::convert::From<denyLogicRefsReturn> for UnderlyingRustTuple<'_> {
+                fn from(value: denyLogicRefsReturn) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefReturn {
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for denyLogicRefsReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self {}
                 }
             }
         }
-        impl denyLogicRefReturn {
+        impl denyLogicRefsReturn {
             fn _tokenize(
                 &self,
-            ) -> <denyLogicRefCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
+            ) -> <denyLogicRefsCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
                 ()
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for denyLogicRefCall {
-            type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+        impl alloy_sol_types::SolCall for denyLogicRefsCall {
+            type Parameters<'a> = (
+                alloy::sol_types::sol_data::Array<ILogicRefDenylist::DeniedLogicRef>,
+            );
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = denyLogicRefReturn;
+            type Return = denyLogicRefsReturn;
             type ReturnTuple<'a> = ();
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "denyLogicRef(bytes32)";
-            const SELECTOR: [u8; 4] = [80u8, 161u8, 136u8, 201u8];
+            const SIGNATURE: &'static str = "denyLogicRefs((bytes32,bool)[])";
+            const SELECTOR: [u8; 4] = [26u8, 132u8, 115u8, 188u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -4196,14 +4586,14 @@ function denyLogicRef(bytes32 logicRef) external;
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
                 (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.logicRef),
+                    <alloy::sol_types::sol_data::Array<
+                        ILogicRefDenylist::DeniedLogicRef,
+                    > as alloy_sol_types::SolType>::tokenize(&self.logicRefs),
                 )
             }
             #[inline]
             fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                denyLogicRefReturn::_tokenize(ret)
+                denyLogicRefsReturn::_tokenize(ret)
             }
             #[inline]
             fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
@@ -5361,7 +5751,7 @@ function unpause() external;
         #[allow(missing_docs)]
         RISC_ZERO_VERIFIER_SELECTOR(RISC_ZERO_VERIFIER_SELECTORCall),
         #[allow(missing_docs)]
-        denyLogicRef(denyLogicRefCall),
+        denyLogicRefs(denyLogicRefsCall),
         #[allow(missing_docs)]
         execute(executeCall),
         #[allow(missing_docs)]
@@ -5385,8 +5775,8 @@ function unpause() external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [26u8, 132u8, 115u8, 188u8],
             [63u8, 75u8, 168u8, 58u8],
-            [80u8, 161u8, 136u8, 201u8],
             [92u8, 151u8, 90u8, 187u8],
             [103u8, 53u8, 49u8, 34u8],
             [107u8, 240u8, 160u8, 75u8],
@@ -5398,8 +5788,8 @@ function unpause() external;
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
+            ::core::stringify!(denyLogicRefs),
             ::core::stringify!(unpause),
-            ::core::stringify!(denyLogicRef),
             ::core::stringify!(paused),
             ::core::stringify!(riscZeroVerifierPaused),
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
@@ -5411,8 +5801,8 @@ function unpause() external;
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
+            <denyLogicRefsCall as alloy_sol_types::SolCall>::SIGNATURE,
             <unpauseCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <denyLogicRefCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
@@ -5457,8 +5847,8 @@ function unpause() external;
                 Self::RISC_ZERO_VERIFIER_SELECTOR(_) => {
                     <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::denyLogicRef(_) => {
-                    <denyLogicRefCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::denyLogicRefs(_) => {
+                    <denyLogicRefsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::execute(_) => <executeCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::pause(_) => <pauseCall as alloy_sol_types::SolCall>::SELECTOR,
@@ -5507,6 +5897,19 @@ function unpause() external;
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IProtocolAdapterCalls>] = &[
                 {
+                    fn denyLogicRefs(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
+                        <denyLogicRefsCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IProtocolAdapterCalls::denyLogicRefs)
+                    }
+                    denyLogicRefs
+                },
+                {
                     fn unpause(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
@@ -5518,19 +5921,6 @@ function unpause() external;
                             .map(IProtocolAdapterCalls::unpause)
                     }
                     unpause
-                },
-                {
-                    fn denyLogicRef(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <denyLogicRefCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(IProtocolAdapterCalls::denyLogicRef)
-                    }
-                    denyLogicRef
                 },
                 {
                     fn paused(
@@ -5672,8 +6062,8 @@ function unpause() external;
                         inner,
                     )
                 }
-                Self::denyLogicRef(inner) => {
-                    <denyLogicRefCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::denyLogicRefs(inner) => {
+                    <denyLogicRefsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -5721,8 +6111,8 @@ function unpause() external;
                         out,
                     )
                 }
-                Self::denyLogicRef(inner) => {
-                    <denyLogicRefCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::denyLogicRefs(inner) => {
+                    <denyLogicRefsCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -6325,12 +6715,14 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, RISC_ZERO_VERIFIER_SELECTORCall, N> {
             self.call_builder(&RISC_ZERO_VERIFIER_SELECTORCall)
         }
-        ///Creates a new call builder for the [`denyLogicRef`] function.
-        pub fn denyLogicRef(
+        ///Creates a new call builder for the [`denyLogicRefs`] function.
+        pub fn denyLogicRefs(
             &self,
-            logicRef: alloy::sol_types::private::FixedBytes<32>,
-        ) -> alloy_contract::SolCallBuilder<&P, denyLogicRefCall, N> {
-            self.call_builder(&denyLogicRefCall { logicRef })
+            logicRefs: alloy::sol_types::private::Vec<
+                <ILogicRefDenylist::DeniedLogicRef as alloy::sol_types::SolType>::RustType,
+            >,
+        ) -> alloy_contract::SolCallBuilder<&P, denyLogicRefsCall, N> {
+            self.call_builder(&denyLogicRefsCall { logicRefs })
         }
         ///Creates a new call builder for the [`execute`] function.
         pub fn execute(
