@@ -195,7 +195,7 @@ contracts-propose-production-kind-table-update deployer proxy proposer commitmen
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# A pause deploys no bytecode, so the pause recipes skip the clean rebuild. In an emergency, that saves time.
+# A pause or a logic ref status update deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
 
 # Simulate the staging pause (dry-run): runs it locally as the staging proxy owner
 contracts-simulate-staging-pause proxy chain *args:
@@ -219,6 +219,30 @@ contracts-simulate-production-pause-proposal proxy proposer chain *args:
 contracts-propose-production-pause deployer proxy proposer chain *args:
     cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
         --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the staging logic ref status update (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-logic-ref-status-update proxy logic_refs chain *args:
+    cd contracts && forge script script/staging/ExecuteLogicRefStatusUpdate.s.sol:ExecuteLogicRefStatusUpdate \
+        --sig "run(address,(bytes32,uint8)[])" {{proxy}} {{quote(logic_refs)}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging logic ref status update as the proxy owner
+contracts-execute-staging-logic-ref-status-update deployer proxy logic_refs chain *args:
+    cd contracts && forge script script/staging/ExecuteLogicRefStatusUpdate.s.sol:ExecuteLogicRefStatusUpdate \
+        --sig "run(address,(bytes32,uint8)[])" {{proxy}} {{quote(logic_refs)}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production logic ref status update proposal (dry-run): simulates the Safe executing the updates
+contracts-simulate-production-logic-ref-status-update-proposal proxy proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefStatusUpdate.s.sol:ProposeLogicRefStatusUpdate \
+        --sig "run(address,address,(bytes32,uint8)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the production logic ref status update to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-logic-ref-status-update deployer proxy proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefStatusUpdate.s.sol:ProposeLogicRefStatusUpdate \
+        --sig "run(address,address,(bytes32,uint8)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the v1 ownership transfer proposal (dry-run): simulates the Safe that owns v1 executing the transfer

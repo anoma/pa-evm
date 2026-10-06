@@ -44,7 +44,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.7";
+    string public constant override VERSION = "2.0.0-rc.8";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -111,21 +111,6 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function unpause() external override onlyOwner {
         _unpause();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external override onlyOwner {
-        _setKindTableCommitment(newKindTableCommitment);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function deprecateLogicRef(bytes32 logicRef) external override onlyOwner {
-        _deprecateLogicRef(logicRef);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function denyLogicRef(bytes32 logicRef) external override onlyOwner {
-        _denyLogicRef(logicRef);
     }
 
     /// @inheritdoc IImplementation
@@ -378,6 +363,12 @@ contract ProtocolAdapter is
     /// @inheritdoc UUPSUpgradeable
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+    /// @notice Allows only the owner to set the kind table commitment.
+    function _authorizeKindTableCommitmentChange() internal override onlyOwner {}
+
+    /// @notice Allows only the owner to change logic reference statuses.
+    function _authorizeLogicRefRegistryChange() internal override onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,

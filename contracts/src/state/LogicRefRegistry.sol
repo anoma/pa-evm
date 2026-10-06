@@ -31,6 +31,7 @@ abstract contract LogicRefRegistry is ILogicRefRegistry, Initializable {
     error LogicRefAlreadyDenied(bytes32 logicRef);
     error DeprecatedLogicRef(bytes32 logicRef);
     error DeniedLogicRef(bytes32 logicRef);
+    error InvalidLogicRefStatus(Status status);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -39,10 +40,30 @@ abstract contract LogicRefRegistry is ILogicRefRegistry, Initializable {
     }
 
     /// @inheritdoc ILogicRefRegistry
-    function logicRefStatus(bytes32 logicRef) public view override returns (Status status) {
-        LogicRefRegistryStorage storage $ = _logicRefRegistryStorage();
+    function deprecateLogicRef(bytes32 logicRef) external override {
+        _authorizeLogicRefRegistryChange();
+        _deprecateLogicRef(logicRef);
+    }
 
-        status = $._logicRefStatus[logicRef];
+    /// @inheritdoc ILogicRefRegistry
+    function denyLogicRef(bytes32 logicRef) external override {
+        _authorizeLogicRefRegistryChange();
+        _denyLogicRef(logicRef);
+    }
+
+    /// @inheritdoc ILogicRefRegistry
+    function setLogicRefStatuses(StatusUpdate[] calldata updates) external override {
+        _authorizeLogicRefRegistryChange();
+
+        uint256 count = updates.length;
+        for (uint256 i = 0; i < count; ++i) {
+            if (updates[i].status == Status.Deprecated) {
+                _deprecateLogicRef(updates[i].logicRef);
+            } else {
+                require(updates[i].status == Status.Denied, InvalidLogicRefStatus(updates[i].status));
+                _denyLogicRef(updates[i].logicRef);
+            }
+        }
     }
 
     /// @inheritdoc ILogicRefRegistry
@@ -59,11 +80,21 @@ abstract contract LogicRefRegistry is ILogicRefRegistry, Initializable {
         logicRef = $._nonActiveLogicRefs.at(index);
     }
 
+    /// @inheritdoc ILogicRefRegistry
+    function logicRefStatus(bytes32 logicRef) public view override returns (Status status) {
+        LogicRefRegistryStorage storage $ = _logicRefRegistryStorage();
+
+        status = $._logicRefStatus[logicRef];
+    }
+
     /// @notice Initializes the LogicRefRegistry contract.
     /// @dev Every logic reference starts active, so the contract requires no setup. The function exists for
     /// consistency with the OpenZeppelin initializer convention.
     // forge-lint: disable-next-line(mixed-case-function)
     function __LogicRefRegistry_init() internal onlyInitializing {}
+
+    /// @notice Reverts unless the caller is allowed to change logic reference statuses.
+    function _authorizeLogicRefRegistryChange() internal virtual;
 
     /// @notice Deprecates an active logic reference and emits the `LogicRefDeprecated` event.
     /// @param logicRef The logic reference to deprecate.

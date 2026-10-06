@@ -124,6 +124,76 @@ contract LogicRefRegistryTest is Test {
         }
     }
 
+    function test_setLogicRefStatuses_deprecates_then_denies_a_reference_without_listing_it_twice() public {
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](2);
+        updates[0] = ILogicRefRegistry.StatusUpdate(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Deprecated);
+        updates[1] = ILogicRefRegistry.StatusUpdate(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Denied);
+
+        _logicRefRegistry.setLogicRefStatuses(updates);
+
+        _assertStatus(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Denied, "both transitions should apply");
+        assertEq(_logicRefRegistry.nonActiveLogicRefCount(), 1);
+        assertEq(_logicRefRegistry.nonActiveLogicRefAtIndex(0), _EXAMPLE_LOGIC_REF);
+    }
+
+    function testFuzz_setLogicRefStatuses_rolls_back_invalid_transitions(
+        ILogicRefRegistry.Status target,
+        bool alreadyDenied
+    ) public {
+        vm.assume(alreadyDenied || target != ILogicRefRegistry.Status.Denied);
+        if (alreadyDenied) {
+            _logicRefRegistry.denyLogicRef(_EXAMPLE_LOGIC_REF);
+        } else {
+            _logicRefRegistry.deprecateLogicRef(_EXAMPLE_LOGIC_REF);
+        }
+        ILogicRefRegistry.Status original = _logicRefRegistry.logicRefStatus(_EXAMPLE_LOGIC_REF);
+        bytes32 otherRef = bytes32(uint256(2));
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](2);
+        updates[0] = ILogicRefRegistry.StatusUpdate(otherRef, ILogicRefRegistry.Status.Denied);
+        updates[1] = ILogicRefRegistry.StatusUpdate(_EXAMPLE_LOGIC_REF, target);
+
+        bytes4 expectedError = target == ILogicRefRegistry.Status.Active
+            ? LogicRefRegistry.InvalidLogicRefStatus.selector
+            : alreadyDenied
+                ? LogicRefRegistry.LogicRefAlreadyDenied.selector
+                : LogicRefRegistry.LogicRefAlreadyDeprecated.selector;
+        vm.expectRevert(
+            target == ILogicRefRegistry.Status.Active
+                ? abi.encodeWithSelector(expectedError, target)
+                : abi.encodeWithSelector(expectedError, _EXAMPLE_LOGIC_REF)
+        );
+        _logicRefRegistry.setLogicRefStatuses(updates);
+
+        _assertStatus(otherRef, ILogicRefRegistry.Status.Active, "the earlier update must roll back");
+        _assertStatus(_EXAMPLE_LOGIC_REF, original, "the existing status must be preserved");
+        assertEq(_logicRefRegistry.nonActiveLogicRefCount(), 1);
+        assertEq(_logicRefRegistry.nonActiveLogicRefAtIndex(0), _EXAMPLE_LOGIC_REF);
+    }
+
+    function test_setLogicRefStatuses_rolls_back_repeated_updates() public {
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](2);
+        updates[0] = ILogicRefRegistry.StatusUpdate(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Deprecated);
+        updates[1] = updates[0];
+
+        vm.expectRevert(abi.encodeWithSelector(LogicRefRegistry.LogicRefAlreadyDeprecated.selector, _EXAMPLE_LOGIC_REF));
+        _logicRefRegistry.setLogicRefStatuses(updates);
+
+        _assertStatus(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Active, "the first update must roll back");
+        assertEq(_logicRefRegistry.nonActiveLogicRefCount(), 0);
+    }
+
+    function test_setLogicRefStatuses_rolls_back_a_batch_containing_the_zero_reference() public {
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](2);
+        updates[0] = ILogicRefRegistry.StatusUpdate(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Deprecated);
+        updates[1] = ILogicRefRegistry.StatusUpdate(bytes32(0), ILogicRefRegistry.Status.Denied);
+
+        vm.expectRevert(LogicRefRegistry.ZeroLogicRefNotAllowed.selector);
+        _logicRefRegistry.setLogicRefStatuses(updates);
+
+        _assertStatus(_EXAMPLE_LOGIC_REF, ILogicRefRegistry.Status.Active, "the earlier update must roll back");
+        assertEq(_logicRefRegistry.nonActiveLogicRefCount(), 0);
+    }
+
     function testFuzz_logicRefStatus_defaults_to_active(bytes32 logicRef) public view {
         _assertStatus(logicRef, ILogicRefRegistry.Status.Active, "an unlisted logic ref should be active");
     }

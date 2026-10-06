@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {IKindTableCommitment} from "../../src/interfaces/IKindTableCommitment.sol";
 import {ProductionScript} from "./ProductionScript.s.sol";
 
 /// @title ProposeKindTableUpdate
@@ -17,7 +17,7 @@ contract ProposeKindTableUpdate is ProductionScript {
     function run(address proxy, address proposer, bytes32 newKindTableCommitment) public {
         _propose({
             proxy: proxy,
-            callData: abi.encodeCall(IProtocolAdapter.setKindTableCommitment, (newKindTableCommitment)),
+            callData: abi.encodeCall(IKindTableCommitment.setKindTableCommitment, (newKindTableCommitment)),
             proposer: proposer
         });
     }

@@ -7,6 +7,7 @@ interface IKindTableCommitment {
 
     function EMPTY_KIND_TABLE_COMMITMENT() external view returns (bytes32 emptyKindTableCommitment);
     function getKindTableCommitment() external view returns (bytes32 kindTableCommitment);
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
 }
 ```
 
@@ -38,6 +39,19 @@ interface IKindTableCommitment {
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setKindTableCommitment",
+    "inputs": [
+      {
+        "name": "newKindTableCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "event",
@@ -525,6 +539,173 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
             }
         }
     };
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(Default, Debug, PartialEq, Eq, Hash)]
+    /**Function with signature `setKindTableCommitment(bytes32)` and selector `0xc0253023`.
+```solidity
+function setKindTableCommitment(bytes32 newKindTableCommitment) external;
+```*/
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct setKindTableCommitmentCall {
+        #[allow(missing_docs)]
+        pub newKindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+    }
+    ///Container type for the return parameters of the [`setKindTableCommitment(bytes32)`](setKindTableCommitmentCall) function.
+    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
+    #[derive(Clone)]
+    pub struct setKindTableCommitmentReturn {}
+    #[allow(
+        non_camel_case_types,
+        non_snake_case,
+        clippy::pub_underscore_fields,
+        clippy::style
+    )]
+    const _: () = {
+        use alloy::sol_types as alloy_sol_types;
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<setKindTableCommitmentCall>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: setKindTableCommitmentCall) -> Self {
+                    (value.newKindTableCommitment,)
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for setKindTableCommitmentCall {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {
+                        newKindTableCommitment: tuple.0,
+                    }
+                }
+            }
+        }
+        {
+            #[doc(hidden)]
+            #[allow(dead_code)]
+            type UnderlyingSolTuple<'a> = ();
+            #[doc(hidden)]
+            type UnderlyingRustTuple<'a> = ();
+            #[cfg(test)]
+            #[allow(dead_code, unreachable_patterns)]
+            fn _type_assertion(
+                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
+            ) {
+                match _t {
+                    alloy_sol_types::private::AssertTypeEq::<
+                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
+                    >(_) => {}
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<setKindTableCommitmentReturn>
+            for UnderlyingRustTuple<'_> {
+                fn from(value: setKindTableCommitmentReturn) -> Self {
+                    ()
+                }
+            }
+            #[automatically_derived]
+            #[doc(hidden)]
+            impl ::core::convert::From<UnderlyingRustTuple<'_>>
+            for setKindTableCommitmentReturn {
+                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
+                    Self {}
+                }
+            }
+        }
+        impl setKindTableCommitmentReturn {
+            fn _tokenize(
+                &self,
+            ) -> <setKindTableCommitmentCall as alloy_sol_types::SolCall>::ReturnToken<
+                '_,
+            > {
+                ()
+            }
+        }
+        #[automatically_derived]
+        impl alloy_sol_types::SolCall for setKindTableCommitmentCall {
+            type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
+            type Token<'a> = <Self::Parameters<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            type Return = setKindTableCommitmentReturn;
+            type ReturnTuple<'a> = ();
+            type ReturnToken<'a> = <Self::ReturnTuple<
+                'a,
+            > as alloy_sol_types::SolType>::Token<'a>;
+            const SIGNATURE: &'static str = "setKindTableCommitment(bytes32)";
+            const SELECTOR: [u8; 4] = [192u8, 37u8, 48u8, 35u8];
+            #[inline]
+            fn new<'a>(
+                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
+            ) -> Self {
+                tuple.into()
+            }
+            #[inline]
+            fn tokenize(&self) -> Self::Token<'_> {
+                (
+                    <alloy::sol_types::sol_data::FixedBytes<
+                        32,
+                    > as alloy_sol_types::SolType>::tokenize(
+                        &self.newKindTableCommitment,
+                    ),
+                )
+            }
+            #[inline]
+            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
+                setKindTableCommitmentReturn::_tokenize(ret)
+            }
+            #[inline]
+            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_with_config(
+                data: &[u8],
+                config: alloy_sol_types::abi::AbiDecoderConfig,
+            ) -> alloy_sol_types::Result<Self::Return> {
+                <Self::ReturnTuple<
+                    '_,
+                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
+                        data,
+                        config,
+                    )
+                    .map(Into::into)
+            }
+            #[inline]
+            fn abi_decode_returns_validate(
+                data: &[u8],
+            ) -> alloy_sol_types::Result<Self::Return> {
+                Self::abi_decode_returns_with_config(
+                    data,
+                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
+                )
+            }
+        }
+    };
     ///Container for all the [`IKindTableCommitment`](self) function calls.
     #[derive(Clone)]
     #[derive(serde::Serialize, serde::Deserialize)]
@@ -534,6 +715,8 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
         EMPTY_KIND_TABLE_COMMITMENT(EMPTY_KIND_TABLE_COMMITMENTCall),
         #[allow(missing_docs)]
         getKindTableCommitment(getKindTableCommitmentCall),
+        #[allow(missing_docs)]
+        setKindTableCommitment(setKindTableCommitmentCall),
     }
     impl IKindTableCommitmentCalls {
         /// All the selectors of this enum.
@@ -543,16 +726,19 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [192u8, 37u8, 48u8, 35u8],
             [225u8, 197u8, 9u8, 88u8],
             [255u8, 195u8, 63u8, 114u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
+            ::core::stringify!(setKindTableCommitment),
             ::core::stringify!(EMPTY_KIND_TABLE_COMMITMENT),
             ::core::stringify!(getKindTableCommitment),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
+            <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
             <EMPTY_KIND_TABLE_COMMITMENTCall as alloy_sol_types::SolCall>::SIGNATURE,
             <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
@@ -581,7 +767,7 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
     impl alloy_sol_types::SolInterface for IKindTableCommitmentCalls {
         const NAME: &'static str = "IKindTableCommitmentCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 2usize;
+        const COUNT: usize = 3usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -590,6 +776,9 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                 }
                 Self::getKindTableCommitment(_) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
+                }
+                Self::setKindTableCommitment(_) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::SELECTOR
                 }
             }
         }
@@ -624,6 +813,19 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                 &[u8],
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IKindTableCommitmentCalls>] = &[
+                {
+                    fn setKindTableCommitment(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IKindTableCommitmentCalls> {
+                        <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IKindTableCommitmentCalls::setKindTableCommitment)
+                    }
+                    setKindTableCommitment
+                },
                 {
                     fn EMPTY_KIND_TABLE_COMMITMENT(
                         data: &[u8],
@@ -686,6 +888,11 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                         inner,
                     )
                 }
+                Self::setKindTableCommitment(inner) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                        inner,
+                    )
+                }
             }
         }
         #[inline]
@@ -699,6 +906,12 @@ function getKindTableCommitment() external view returns (bytes32 kindTableCommit
                 }
                 Self::getKindTableCommitment(inner) => {
                     <getKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                        inner,
+                        out,
+                    )
+                }
+                Self::setKindTableCommitment(inner) => {
+                    <setKindTableCommitmentCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -1014,6 +1227,17 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::SolCallBuilder<&P, getKindTableCommitmentCall, N> {
             self.call_builder(&getKindTableCommitmentCall)
+        }
+        ///Creates a new call builder for the [`setKindTableCommitment`] function.
+        pub fn setKindTableCommitment(
+            &self,
+            newKindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+        ) -> alloy_contract::SolCallBuilder<&P, setKindTableCommitmentCall, N> {
+            self.call_builder(
+                &setKindTableCommitmentCall {
+                    newKindTableCommitment,
+                },
+            )
         }
     }
     /// Event filters.

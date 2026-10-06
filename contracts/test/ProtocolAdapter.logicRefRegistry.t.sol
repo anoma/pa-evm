@@ -10,6 +10,7 @@ import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRisc
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
+import {ILogicRefRegistry} from "../src/interfaces/ILogicRefRegistry.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {LogicRefRegistry} from "../src/state/LogicRefRegistry.sol";
@@ -51,6 +52,31 @@ contract ProtocolAdapterLogicRefRegistryTest is Test {
         vm.prank(caller);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
         _mockPa.deprecateLogicRef(_DEPRECATED_LOGIC_REF);
+    }
+
+    function testFuzz_setLogicRefStatuses_reverts_for_non_owners(address caller, bool emptyBatch) public {
+        vm.assume(caller != _OWNER);
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](emptyBatch ? 0 : 1);
+        if (!emptyBatch) {
+            updates[0] = ILogicRefRegistry.StatusUpdate(_DENIED_LOGIC_REF, ILogicRefRegistry.Status.Denied);
+        }
+
+        vm.prank(caller);
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, caller));
+        _mockPa.setLogicRefStatuses(updates);
+    }
+
+    function test_setLogicRefStatuses_denies_one_logic_ref_and_deprecates_another_in_one_call() public {
+        ILogicRefRegistry.StatusUpdate[] memory updates = new ILogicRefRegistry.StatusUpdate[](2);
+        updates[0] = ILogicRefRegistry.StatusUpdate(_DENIED_LOGIC_REF, ILogicRefRegistry.Status.Denied);
+        updates[1] = ILogicRefRegistry.StatusUpdate(_DEPRECATED_LOGIC_REF, ILogicRefRegistry.Status.Deprecated);
+
+        vm.prank(_OWNER);
+        _mockPa.setLogicRefStatuses(updates);
+
+        assertEq(uint8(_mockPa.logicRefStatus(_DENIED_LOGIC_REF)), uint8(ILogicRefRegistry.Status.Denied));
+        assertEq(uint8(_mockPa.logicRefStatus(_DEPRECATED_LOGIC_REF)), uint8(ILogicRefRegistry.Status.Deprecated));
+        assertEq(_mockPa.nonActiveLogicRefCount(), 2);
     }
 
     function test_execute_reverts_if_a_created_resource_carries_a_deprecated_logic_ref() public {

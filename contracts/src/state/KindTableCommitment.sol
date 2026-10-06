@@ -35,6 +35,12 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     }
 
     /// @inheritdoc IKindTableCommitment
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external override {
+        _authorizeKindTableCommitmentChange();
+        _setKindTableCommitment(newKindTableCommitment);
+    }
+
+    /// @inheritdoc IKindTableCommitment
     function getKindTableCommitment() external view override returns (bytes32 kindTableCommitment) {
         kindTableCommitment = _getKindTableCommitment();
     }
@@ -47,6 +53,9 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
 
         emit KindTableCommitmentUpdated({kindTableCommitment: EMPTY_KIND_TABLE_COMMITMENT});
     }
+
+    /// @notice Reverts unless the caller is allowed to set the kind table commitment.
+    function _authorizeKindTableCommitmentChange() internal virtual;
 
     /// @notice Sets the kind table commitment and emits the `KindTableCommitmentUpdated` event.
     /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.

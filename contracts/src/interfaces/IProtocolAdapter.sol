@@ -156,27 +156,6 @@ interface IProtocolAdapter {
     /// @notice Lifts the pause.
     function unpause() external;
 
-    /// @notice Sets the stored kind table commitment. A transaction is proven against the stored kind table or against
-    /// the empty kind table.
-    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
-    /// @dev The commitment changes whenever the set of supported resource kinds changes.
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
-
-    /// @notice Deprecates a logic reference, so that no transaction creates a resource that carries it. Transactions
-    /// still consume such resources.
-    /// @param logicRef The logic reference to deprecate.
-    /// @dev A deprecated logic reference can still be denied, but no function makes it active again. Deprecate a logic
-    /// reference only after no application creates its resources any more, since such a transaction reverts.
-    function deprecateLogicRef(bytes32 logicRef) external;
-
-    /// @notice Denies a logic reference, also a deprecated one, so that no transaction consumes or creates a resource
-    /// that carries it.
-    /// @param logicRef The logic reference to deny.
-    /// @dev No function changes the status of a denied logic reference. An application can move the resources of a
-    /// denied logic reference without consuming them, as the ERC20 forwarder migration does, and another status would
-    /// let them be consumed again.
-    function denyLogicRef(bytes32 logicRef) external;
-
     /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
     /// executes no transaction.
     /// @return isPaused Whether the protocol adapter is paused or not.

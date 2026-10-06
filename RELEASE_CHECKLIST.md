@@ -481,3 +481,41 @@ For **production**:
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
+
+## Updating Logic Reference Statuses
+
+Not a release. Each entry names a logic reference and a target status: `1` (`Deprecated`) prevents creation while allowing consumption; `2` (`Denied`) prevents both. Only `Active → Deprecated`, `Active → Denied`, and `Deprecated → Denied` are allowed. The complete batch reverts if any reference is zero, a status repeats, or a transition goes backwards. `0` (`Active`) is not a valid target.
+
+Before deprecating a reference, check the forwarders and backend have switched to the successor and complete the proposed [retirement and withdrawal acceptance test](docs/logic-ref-retirement.md). Its real-proof integration test is still outstanding.
+
+Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, target status)` pairs: `"[(<LOGIC_REF>,1)]"` deprecates a reference, and `"[(<LOGIC_REF>,2)]"` denies it directly. Different statuses can be combined in one atomic batch.
+
+For **staging**:
+
+- [ ] **Simulate** the status update by running
+
+  ```sh
+  just contracts-simulate-staging-logic-ref-status-update <PROXY> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **execute** it by running
+
+  ```sh
+  just contracts-execute-staging-logic-ref-status-update deployer <PROXY> <LOGIC_REFS> <CHAIN>
+  ```
+
+For **production**:
+
+- [ ] **Simulate** the proposal, which simulates the Safe executing the status update, by running
+
+  ```sh
+  just contracts-simulate-production-logic-ref-status-update-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **propose** it to the owning Safe by running
+
+  ```sh
+  just contracts-propose-production-logic-ref-status-update deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

@@ -8,11 +8,7 @@ contract LogicRefRegistryMock is LogicRefRegistry {
         __LogicRefRegistry_init();
     }
 
-    function deprecateLogicRef(bytes32 logicRef) external {
-        _deprecateLogicRef(logicRef);
-    }
-
-    function denyLogicRef(bytes32 logicRef) external {
-        _denyLogicRef(logicRef);
-    }
+    // The mock lets anyone change statuses; `ProtocolAdapter` allows only the owner.
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeLogicRefRegistryChange() internal override {}
 }
