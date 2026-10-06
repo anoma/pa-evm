@@ -8,11 +8,11 @@ contract KindTableCommitmentMock is KindTableCommitment {
         __KindTableCommitment_init();
     }
 
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external {
-        _setKindTableCommitment(newKindTableCommitment);
-    }
-
     function isKindTableCommitmentAccepted(bytes32 kindTableCommitment) external view returns (bool isAccepted) {
         isAccepted = _isKindTableCommitmentAccepted(kindTableCommitment);
     }
+
+    // The mock lets anyone set the commitment; `ProtocolAdapter` allows only the owner.
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeKindTableCommitmentChange() internal override {}
 }

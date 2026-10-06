@@ -10,6 +10,12 @@ interface IKindTableCommitment {
     /// @param kindTableCommitment The commitment (SHA-256 hash) of the stored kind table.
     event KindTableCommitmentUpdated(bytes32 indexed kindTableCommitment);
 
+    /// @notice Sets the stored kind table commitment. A transaction is proven against the stored kind table or against
+    /// the empty kind table.
+    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
+    /// @dev The commitment changes whenever the set of supported resource kinds changes.
+    function setKindTableCommitment(bytes32 newKindTableCommitment) external;
+
     /// @notice Returns the stored kind table commitment. A transaction is proven against the stored kind table or
     /// against the empty kind table.
     /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.

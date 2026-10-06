@@ -20,6 +20,15 @@ interface ILogicRefDenylist {
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     event LogicRefDenied(bytes32 indexed logicRef, bool consumed);
 
+    /// @notice Adds logic references to the denylists. To deprecate a logic reference, add it to the denylist for
+    /// created resources: transactions still consume its resources. To deny it, add it to both denylists.
+    /// @param logicRefs The logic references to deny, each with the denylist to add it to.
+    /// @dev The call reverts if a logic reference is zero or already on its denylist. No function removes an entry. An
+    /// application can move the resources of a denied logic reference without consuming them, as the ERC20 forwarder
+    /// migration does, and a removed entry would let them be consumed again. Deprecate a logic reference only after no
+    /// application creates its resources any more, since such a transaction reverts.
+    function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external;
+
     /// @notice Returns whether a denylist contains a given logic reference or not.
     /// @param logicRef The logic reference to check.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
