@@ -8,7 +8,11 @@ contract LogicRefDenylistMock is LogicRefDenylist {
         __LogicRefDenylist_init();
     }
 
-    function denyLogicRef(bytes32 logicRef) external {
-        _denyLogicRef(logicRef);
+    function denyLogicRef(bytes32 logicRef, bool consumed) external {
+        _denyLogicRef({logicRef: logicRef, consumed: consumed});
     }
+
+    // The mock lets anyone deny a logic reference; `ProtocolAdapter` allows only the owner.
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeLogicRefDenylistChange() internal override {}
 }

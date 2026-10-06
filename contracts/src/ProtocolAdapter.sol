@@ -44,7 +44,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.7";
+    string public constant override VERSION = "2.0.0-rc.8";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -111,16 +111,6 @@ contract ProtocolAdapter is
     /// @inheritdoc IProtocolAdapter
     function unpause() external override onlyOwner {
         _unpause();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function setKindTableCommitment(bytes32 newKindTableCommitment) external override onlyOwner {
-        _setKindTableCommitment(newKindTableCommitment);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function denyLogicRef(bytes32 logicRef) external override onlyOwner {
-        _denyLogicRef(logicRef);
     }
 
     /// @inheritdoc IImplementation
@@ -202,7 +192,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Processes an action by
-    /// * checking that no consumed or created resource carries a denied logic reference,
+    /// * checking the logic references of the consumed and created resources against the denylists,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
     /// * executing external forwarder calls,
@@ -223,7 +213,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
-            require(!_isLogicRefDenied(consumed.logicRef), DeniedLogicRef(consumed.logicRef));
+            _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
 
             // Check that the referenced commitment tree root is part of the historical roots.
             require(
@@ -248,7 +238,7 @@ contract ProtocolAdapter is
         for (uint256 i = 0; i < createdCount; ++i) {
             Created calldata created = action.created[i];
 
-            require(!_isLogicRefDenied(created.logicRef), DeniedLogicRef(created.logicRef));
+            _checkLogicRefNotDenied({logicRef: created.logicRef, consumed: false});
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
@@ -354,7 +344,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
-    /// the empty logic reference denylist and the empty kind table.
+    /// the empty logic reference denylists and the empty kind table.
     /// @param initialOwner The account receiving ownership.
     // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -372,6 +362,12 @@ contract ProtocolAdapter is
     /// @inheritdoc UUPSUpgradeable
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+
+    /// @notice Allows only the owner to set the kind table commitment.
+    function _authorizeKindTableCommitmentChange() internal override onlyOwner {}
+
+    /// @notice Allows only the owner to add logic references to the denylists.
+    function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,

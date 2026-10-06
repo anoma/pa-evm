@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {IKindTableCommitment} from "../../src/interfaces/IKindTableCommitment.sol";
 import {StagingScript} from "./StagingScript.s.sol";
 
 /// @title ExecuteKindTableUpdate
@@ -19,7 +19,7 @@ contract ExecuteKindTableUpdate is StagingScript {
         address owner = _stagingOwner({proxy: proxy});
 
         vm.startBroadcast(owner);
-        IProtocolAdapter(proxy).setKindTableCommitment(newKindTableCommitment);
+        IKindTableCommitment(proxy).setKindTableCommitment(newKindTableCommitment);
         vm.stopBroadcast();
     }
 }
