@@ -69,7 +69,7 @@ contract LogicRefStatusesTest is Test {
         _logicRefStatuses.denyLogicRef(_EXAMPLE_LOGIC_REF);
 
         _assertStatus(_EXAMPLE_LOGIC_REF, ILogicRefStatuses.Status.Denied, "the logic ref should be denied");
-        assertEq(_logicRefStatuses.listedLogicRefCount(), 1, "the logic ref should be listed once");
+        assertEq(_logicRefStatuses.nonActiveLogicRefCount(), 1, "the logic ref should be listed once");
     }
 
     function test_denyLogicRef_emits_the_LogicRefDenied_event() public {
@@ -93,8 +93,8 @@ contract LogicRefStatusesTest is Test {
         _logicRefStatuses.denyLogicRef(bytes32(0));
     }
 
-    function test_listedLogicRefCount_counts_deprecated_and_denied_logic_refs() public {
-        assertEq(_logicRefStatuses.listedLogicRefCount(), 0, "no logic ref should be listed");
+    function test_nonActiveLogicRefCount_counts_deprecated_and_denied_logic_refs() public {
+        assertEq(_logicRefStatuses.nonActiveLogicRefCount(), 0, "no logic ref should be non-active");
 
         uint256 n = 10;
         for (uint256 i = 1; i < n; ++i) {
@@ -103,13 +103,11 @@ contract LogicRefStatusesTest is Test {
             } else {
                 _logicRefStatuses.denyLogicRef(bytes32(i));
             }
-            assertEq(
-                _logicRefStatuses.listedLogicRefCount(), i, "the count should match the number of listed logic refs"
-            );
+            assertEq(_logicRefStatuses.nonActiveLogicRefCount(), i, "the count should match non-active logic refs");
         }
     }
 
-    function test_listedLogicRefAtIndex_returns_the_logic_refs_in_the_order_they_were_listed() public {
+    function test_nonActiveLogicRefAtIndex_preserves_insertion_order() public {
         uint256 n = 10;
         for (uint256 i = 0; i < n; ++i) {
             if (i % 2 == 0) {
@@ -121,16 +119,16 @@ contract LogicRefStatusesTest is Test {
 
         for (uint256 i = 0; i < n; ++i) {
             assertEq(
-                _logicRefStatuses.listedLogicRefAtIndex(i), bytes32(n - i), "the logic ref at the index should match"
+                _logicRefStatuses.nonActiveLogicRefAtIndex(i), bytes32(n - i), "the non-active logic ref should match"
             );
         }
     }
 
-    function testFuzz_getLogicRefStatus_returns_active_for_an_unlisted_logic_ref(bytes32 logicRef) public view {
+    function testFuzz_logicRefStatus_defaults_to_active(bytes32 logicRef) public view {
         _assertStatus(logicRef, ILogicRefStatuses.Status.Active, "an unlisted logic ref should be active");
     }
 
     function _assertStatus(bytes32 logicRef, ILogicRefStatuses.Status expected, string memory message) internal view {
-        assertEq(uint8(_logicRefStatuses.getLogicRefStatus(logicRef)), uint8(expected), message);
+        assertEq(uint8(_logicRefStatuses.logicRefStatus(logicRef)), uint8(expected), message);
     }
 }

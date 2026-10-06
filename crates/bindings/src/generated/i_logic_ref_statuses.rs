@@ -8,9 +8,9 @@ interface ILogicRefStatuses {
     event LogicRefDenied(bytes32 indexed logicRef);
     event LogicRefDeprecated(bytes32 indexed logicRef);
 
-    function getLogicRefStatus(bytes32 logicRef) external view returns (Status status);
-    function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
-    function listedLogicRefCount() external view returns (uint256 count);
+    function logicRefStatus(bytes32 logicRef) external view returns (Status status);
+    function nonActiveLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
+    function nonActiveLogicRefCount() external view returns (uint256 count);
 }
 ```
 
@@ -19,7 +19,7 @@ interface ILogicRefStatuses {
 [
   {
     "type": "function",
-    "name": "getLogicRefStatus",
+    "name": "logicRefStatus",
     "inputs": [
       {
         "name": "logicRef",
@@ -38,7 +38,7 @@ interface ILogicRefStatuses {
   },
   {
     "type": "function",
-    "name": "listedLogicRefAtIndex",
+    "name": "nonActiveLogicRefAtIndex",
     "inputs": [
       {
         "name": "index",
@@ -57,7 +57,7 @@ interface ILogicRefStatuses {
   },
   {
     "type": "function",
-    "name": "listedLogicRefCount",
+    "name": "nonActiveLogicRefCount",
     "inputs": [],
     "outputs": [
       {
@@ -479,22 +479,22 @@ event LogicRefDeprecated(bytes32 indexed logicRef);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `getLogicRefStatus(bytes32)` and selector `0x4a818324`.
+    /**Function with signature `logicRefStatus(bytes32)` and selector `0x2091096e`.
 ```solidity
-function getLogicRefStatus(bytes32 logicRef) external view returns (Status status);
+function logicRefStatus(bytes32 logicRef) external view returns (Status status);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getLogicRefStatusCall {
+    pub struct logicRefStatusCall {
         #[allow(missing_docs)]
         pub logicRef: alloy::sol_types::private::FixedBytes<32>,
     }
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`getLogicRefStatus(bytes32)`](getLogicRefStatusCall) function.
+    ///Container type for the return parameters of the [`logicRefStatus(bytes32)`](logicRefStatusCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getLogicRefStatusReturn {
+    pub struct logicRefStatusReturn {
         #[allow(missing_docs)]
         pub status: <Status as alloy::sol_types::SolType>::RustType,
     }
@@ -525,16 +525,14 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getLogicRefStatusCall>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: getLogicRefStatusCall) -> Self {
+            impl ::core::convert::From<logicRefStatusCall> for UnderlyingRustTuple<'_> {
+                fn from(value: logicRefStatusCall) -> Self {
                     (value.logicRef,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getLogicRefStatusCall {
+            impl ::core::convert::From<UnderlyingRustTuple<'_>> for logicRefStatusCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { logicRef: tuple.0 }
                 }
@@ -561,23 +559,23 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getLogicRefStatusReturn>
+            impl ::core::convert::From<logicRefStatusReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: getLogicRefStatusReturn) -> Self {
+                fn from(value: logicRefStatusReturn) -> Self {
                     (value.status,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getLogicRefStatusReturn {
+            for logicRefStatusReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { status: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for getLogicRefStatusCall {
+        impl alloy_sol_types::SolCall for logicRefStatusCall {
             type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -587,8 +585,8 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "getLogicRefStatus(bytes32)";
-            const SELECTOR: [u8; 4] = [74u8, 129u8, 131u8, 36u8];
+            const SIGNATURE: &'static str = "logicRefStatus(bytes32)";
+            const SELECTOR: [u8; 4] = [32u8, 145u8, 9u8, 110u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -613,7 +611,7 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: getLogicRefStatusReturn = r.into();
+                        let r: logicRefStatusReturn = r.into();
                         r.status
                     })
             }
@@ -629,7 +627,7 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
                         config,
                     )
                     .map(|r| {
-                        let r: getLogicRefStatusReturn = r.into();
+                        let r: logicRefStatusReturn = r.into();
                         r.status
                     })
             }
@@ -646,22 +644,22 @@ function getLogicRefStatus(bytes32 logicRef) external view returns (Status statu
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `listedLogicRefAtIndex(uint256)` and selector `0x6eae57b6`.
+    /**Function with signature `nonActiveLogicRefAtIndex(uint256)` and selector `0x250d0d76`.
 ```solidity
-function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
+function nonActiveLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct listedLogicRefAtIndexCall {
+    pub struct nonActiveLogicRefAtIndexCall {
         #[allow(missing_docs)]
         pub index: alloy::sol_types::private::primitives::aliases::U256,
     }
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`listedLogicRefAtIndex(uint256)`](listedLogicRefAtIndexCall) function.
+    ///Container type for the return parameters of the [`nonActiveLogicRefAtIndex(uint256)`](nonActiveLogicRefAtIndexCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct listedLogicRefAtIndexReturn {
+    pub struct nonActiveLogicRefAtIndexReturn {
         #[allow(missing_docs)]
         pub logicRef: alloy::sol_types::private::FixedBytes<32>,
     }
@@ -694,16 +692,16 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<listedLogicRefAtIndexCall>
+            impl ::core::convert::From<nonActiveLogicRefAtIndexCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: listedLogicRefAtIndexCall) -> Self {
+                fn from(value: nonActiveLogicRefAtIndexCall) -> Self {
                     (value.index,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for listedLogicRefAtIndexCall {
+            for nonActiveLogicRefAtIndexCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { index: tuple.0 }
                 }
@@ -728,23 +726,23 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<listedLogicRefAtIndexReturn>
+            impl ::core::convert::From<nonActiveLogicRefAtIndexReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: listedLogicRefAtIndexReturn) -> Self {
+                fn from(value: nonActiveLogicRefAtIndexReturn) -> Self {
                     (value.logicRef,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for listedLogicRefAtIndexReturn {
+            for nonActiveLogicRefAtIndexReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { logicRef: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for listedLogicRefAtIndexCall {
+        impl alloy_sol_types::SolCall for nonActiveLogicRefAtIndexCall {
             type Parameters<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -754,8 +752,8 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "listedLogicRefAtIndex(uint256)";
-            const SELECTOR: [u8; 4] = [110u8, 174u8, 87u8, 182u8];
+            const SIGNATURE: &'static str = "nonActiveLogicRefAtIndex(uint256)";
+            const SELECTOR: [u8; 4] = [37u8, 13u8, 13u8, 118u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -784,7 +782,7 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: listedLogicRefAtIndexReturn = r.into();
+                        let r: nonActiveLogicRefAtIndexReturn = r.into();
                         r.logicRef
                     })
             }
@@ -800,7 +798,7 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
                         config,
                     )
                     .map(|r| {
-                        let r: listedLogicRefAtIndexReturn = r.into();
+                        let r: nonActiveLogicRefAtIndexReturn = r.into();
                         r.logicRef
                     })
             }
@@ -817,19 +815,19 @@ function listedLogicRefAtIndex(uint256 index) external view returns (bytes32 log
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `listedLogicRefCount()` and selector `0xb5adc85b`.
+    /**Function with signature `nonActiveLogicRefCount()` and selector `0x49340d22`.
 ```solidity
-function listedLogicRefCount() external view returns (uint256 count);
+function nonActiveLogicRefCount() external view returns (uint256 count);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct listedLogicRefCountCall;
+    pub struct nonActiveLogicRefCountCall;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`listedLogicRefCount()`](listedLogicRefCountCall) function.
+    ///Container type for the return parameters of the [`nonActiveLogicRefCount()`](nonActiveLogicRefCountCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct listedLogicRefCountReturn {
+    pub struct nonActiveLogicRefCountReturn {
         #[allow(missing_docs)]
         pub count: alloy::sol_types::private::primitives::aliases::U256,
     }
@@ -860,16 +858,16 @@ function listedLogicRefCount() external view returns (uint256 count);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<listedLogicRefCountCall>
+            impl ::core::convert::From<nonActiveLogicRefCountCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: listedLogicRefCountCall) -> Self {
+                fn from(value: nonActiveLogicRefCountCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for listedLogicRefCountCall {
+            for nonActiveLogicRefCountCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -896,23 +894,23 @@ function listedLogicRefCount() external view returns (uint256 count);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<listedLogicRefCountReturn>
+            impl ::core::convert::From<nonActiveLogicRefCountReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: listedLogicRefCountReturn) -> Self {
+                fn from(value: nonActiveLogicRefCountReturn) -> Self {
                     (value.count,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for listedLogicRefCountReturn {
+            for nonActiveLogicRefCountReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { count: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for listedLogicRefCountCall {
+        impl alloy_sol_types::SolCall for nonActiveLogicRefCountCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -922,8 +920,8 @@ function listedLogicRefCount() external view returns (uint256 count);
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "listedLogicRefCount()";
-            const SELECTOR: [u8; 4] = [181u8, 173u8, 200u8, 91u8];
+            const SIGNATURE: &'static str = "nonActiveLogicRefCount()";
+            const SELECTOR: [u8; 4] = [73u8, 52u8, 13u8, 34u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -948,7 +946,7 @@ function listedLogicRefCount() external view returns (uint256 count);
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: listedLogicRefCountReturn = r.into();
+                        let r: nonActiveLogicRefCountReturn = r.into();
                         r.count
                     })
             }
@@ -964,7 +962,7 @@ function listedLogicRefCount() external view returns (uint256 count);
                         config,
                     )
                     .map(|r| {
-                        let r: listedLogicRefCountReturn = r.into();
+                        let r: nonActiveLogicRefCountReturn = r.into();
                         r.count
                     })
             }
@@ -985,11 +983,11 @@ function listedLogicRefCount() external view returns (uint256 count);
     #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum ILogicRefStatusesCalls {
         #[allow(missing_docs)]
-        getLogicRefStatus(getLogicRefStatusCall),
+        logicRefStatus(logicRefStatusCall),
         #[allow(missing_docs)]
-        listedLogicRefAtIndex(listedLogicRefAtIndexCall),
+        nonActiveLogicRefAtIndex(nonActiveLogicRefAtIndexCall),
         #[allow(missing_docs)]
-        listedLogicRefCount(listedLogicRefCountCall),
+        nonActiveLogicRefCount(nonActiveLogicRefCountCall),
     }
     impl ILogicRefStatusesCalls {
         /// All the selectors of this enum.
@@ -999,21 +997,21 @@ function listedLogicRefCount() external view returns (uint256 count);
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [74u8, 129u8, 131u8, 36u8],
-            [110u8, 174u8, 87u8, 182u8],
-            [181u8, 173u8, 200u8, 91u8],
+            [32u8, 145u8, 9u8, 110u8],
+            [37u8, 13u8, 13u8, 118u8],
+            [73u8, 52u8, 13u8, 34u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(getLogicRefStatus),
-            ::core::stringify!(listedLogicRefAtIndex),
-            ::core::stringify!(listedLogicRefCount),
+            ::core::stringify!(logicRefStatus),
+            ::core::stringify!(nonActiveLogicRefAtIndex),
+            ::core::stringify!(nonActiveLogicRefCount),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <getLogicRefStatusCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <listedLogicRefAtIndexCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <listedLogicRefCountCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <logicRefStatusCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <nonActiveLogicRefAtIndexCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <nonActiveLogicRefCountCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
         #[inline]
@@ -1044,14 +1042,14 @@ function listedLogicRefCount() external view returns (uint256 count);
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
-                Self::getLogicRefStatus(_) => {
-                    <getLogicRefStatusCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::logicRefStatus(_) => {
+                    <logicRefStatusCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::listedLogicRefAtIndex(_) => {
-                    <listedLogicRefAtIndexCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::nonActiveLogicRefAtIndex(_) => {
+                    <nonActiveLogicRefAtIndexCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::listedLogicRefCount(_) => {
-                    <listedLogicRefCountCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::nonActiveLogicRefCount(_) => {
+                    <nonActiveLogicRefCountCall as alloy_sol_types::SolCall>::SELECTOR
                 }
             }
         }
@@ -1087,43 +1085,43 @@ function listedLogicRefCount() external view returns (uint256 count);
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ILogicRefStatusesCalls>] = &[
                 {
-                    fn getLogicRefStatus(
+                    fn logicRefStatus(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ILogicRefStatusesCalls> {
-                        <getLogicRefStatusCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <logicRefStatusCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(ILogicRefStatusesCalls::getLogicRefStatus)
+                            .map(ILogicRefStatusesCalls::logicRefStatus)
                     }
-                    getLogicRefStatus
+                    logicRefStatus
                 },
                 {
-                    fn listedLogicRefAtIndex(
+                    fn nonActiveLogicRefAtIndex(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ILogicRefStatusesCalls> {
-                        <listedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <nonActiveLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(ILogicRefStatusesCalls::listedLogicRefAtIndex)
+                            .map(ILogicRefStatusesCalls::nonActiveLogicRefAtIndex)
                     }
-                    listedLogicRefAtIndex
+                    nonActiveLogicRefAtIndex
                 },
                 {
-                    fn listedLogicRefCount(
+                    fn nonActiveLogicRefCount(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ILogicRefStatusesCalls> {
-                        <listedLogicRefCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <nonActiveLogicRefCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(ILogicRefStatusesCalls::listedLogicRefCount)
+                            .map(ILogicRefStatusesCalls::nonActiveLogicRefCount)
                     }
-                    listedLogicRefCount
+                    nonActiveLogicRefCount
                 },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
@@ -1151,18 +1149,18 @@ function listedLogicRefCount() external view returns (uint256 count);
         #[inline]
         fn abi_encoded_size(&self) -> usize {
             match self {
-                Self::getLogicRefStatus(inner) => {
-                    <getLogicRefStatusCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::logicRefStatus(inner) => {
+                    <logicRefStatusCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
-                Self::listedLogicRefAtIndex(inner) => {
-                    <listedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::nonActiveLogicRefAtIndex(inner) => {
+                    <nonActiveLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
-                Self::listedLogicRefCount(inner) => {
-                    <listedLogicRefCountCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::nonActiveLogicRefCount(inner) => {
+                    <nonActiveLogicRefCountCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -1171,20 +1169,20 @@ function listedLogicRefCount() external view returns (uint256 count);
         #[inline]
         fn abi_encode_raw(&self, out: &mut alloy_sol_types::private::Vec<u8>) {
             match self {
-                Self::getLogicRefStatus(inner) => {
-                    <getLogicRefStatusCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::logicRefStatus(inner) => {
+                    <logicRefStatusCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
                 }
-                Self::listedLogicRefAtIndex(inner) => {
-                    <listedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::nonActiveLogicRefAtIndex(inner) => {
+                    <nonActiveLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
                 }
-                Self::listedLogicRefCount(inner) => {
-                    <listedLogicRefCountCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::nonActiveLogicRefCount(inner) => {
+                    <nonActiveLogicRefCountCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -1525,25 +1523,29 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, C, N> {
             alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
         }
-        ///Creates a new call builder for the [`getLogicRefStatus`] function.
-        pub fn getLogicRefStatus(
+        ///Creates a new call builder for the [`logicRefStatus`] function.
+        pub fn logicRefStatus(
             &self,
             logicRef: alloy::sol_types::private::FixedBytes<32>,
-        ) -> alloy_contract::SolCallBuilder<&P, getLogicRefStatusCall, N> {
-            self.call_builder(&getLogicRefStatusCall { logicRef })
+        ) -> alloy_contract::SolCallBuilder<&P, logicRefStatusCall, N> {
+            self.call_builder(&logicRefStatusCall { logicRef })
         }
-        ///Creates a new call builder for the [`listedLogicRefAtIndex`] function.
-        pub fn listedLogicRefAtIndex(
+        ///Creates a new call builder for the [`nonActiveLogicRefAtIndex`] function.
+        pub fn nonActiveLogicRefAtIndex(
             &self,
             index: alloy::sol_types::private::primitives::aliases::U256,
-        ) -> alloy_contract::SolCallBuilder<&P, listedLogicRefAtIndexCall, N> {
-            self.call_builder(&listedLogicRefAtIndexCall { index })
+        ) -> alloy_contract::SolCallBuilder<&P, nonActiveLogicRefAtIndexCall, N> {
+            self.call_builder(
+                &nonActiveLogicRefAtIndexCall {
+                    index,
+                },
+            )
         }
-        ///Creates a new call builder for the [`listedLogicRefCount`] function.
-        pub fn listedLogicRefCount(
+        ///Creates a new call builder for the [`nonActiveLogicRefCount`] function.
+        pub fn nonActiveLogicRefCount(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, listedLogicRefCountCall, N> {
-            self.call_builder(&listedLogicRefCountCall)
+        ) -> alloy_contract::SolCallBuilder<&P, nonActiveLogicRefCountCall, N> {
+            self.call_builder(&nonActiveLogicRefCountCall)
         }
     }
     /// Event filters.

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
+import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 
 import {ILogicRefStatuses} from "../interfaces/ILogicRefStatuses.sol";
 
@@ -12,10 +13,12 @@ import {ILogicRefStatuses} from "../interfaces/ILogicRefStatuses.sol";
 /// reference.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
     /// @custom:storage-location erc7201:anoma.storage.LogicRefStatuses
     struct LogicRefStatusesStorage {
-        bytes32[] _listedLogicRefs;
-        mapping(bytes32 logicRef => Status status) _statuses;
+        EnumerableSet.Bytes32Set _nonActiveLogicRefs;
+        mapping(bytes32 logicRef => Status status) _logicRefStatus;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.LogicRefStatuses")) - 1)) & ~bytes32(uint256(0xff))
@@ -35,24 +38,24 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function getLogicRefStatus(bytes32 logicRef) external view override returns (Status status) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+    function logicRefStatus(bytes32 logicRef) public view override returns (Status status) {
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
-        status = $._statuses[logicRef];
+        status = $._logicRefStatus[logicRef];
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function listedLogicRefCount() external view override returns (uint256 count) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+    function nonActiveLogicRefCount() external view override returns (uint256 count) {
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
-        count = $._listedLogicRefs.length;
+        count = $._nonActiveLogicRefs.length();
     }
 
     /// @inheritdoc ILogicRefStatuses
-    function listedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
+    function nonActiveLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
 
-        logicRef = $._listedLogicRefs[index];
+        logicRef = $._nonActiveLogicRefs.at(index);
     }
 
     /// @notice Initializes the LogicRefStatuses contract.
@@ -66,14 +69,15 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _deprecateLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        Status status = $._statuses[logicRef];
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Deprecated, LogicRefAlreadyDeprecated(logicRef));
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
+        assert(status == Status.Active);
 
-        $._listedLogicRefs.push(logicRef);
-        $._statuses[logicRef] = Status.Deprecated;
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
+        bool added = $._nonActiveLogicRefs.add(logicRef);
+        assert(added);
+        $._logicRefStatus[logicRef] = Status.Deprecated;
 
         emit LogicRefDeprecated({logicRef: logicRef});
     }
@@ -83,40 +87,36 @@ abstract contract LogicRefStatuses is ILogicRefStatuses, Initializable {
     function _denyLogicRef(bytes32 logicRef) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        Status status = $._statuses[logicRef];
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, LogicRefAlreadyDenied(logicRef));
 
+        LogicRefStatusesStorage storage $ = _logicRefStatusesStorage();
         if (status == Status.Active) {
-            $._listedLogicRefs.push(logicRef);
+            bool added = $._nonActiveLogicRefs.add(logicRef);
+            assert(added);
         }
-        $._statuses[logicRef] = Status.Denied;
+        $._logicRefStatus[logicRef] = Status.Denied;
 
         emit LogicRefDenied({logicRef: logicRef});
     }
 
     /// @notice Reverts if a consumed resource must not carry the logic reference.
     /// @param logicRef The logic reference of the consumed resource.
-    function _checkConsumedLogicRef(bytes32 logicRef) internal view {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        require($._statuses[logicRef] != Status.Denied, DeniedLogicRef(logicRef));
+    function _checkLogicRefForConsumption(bytes32 logicRef) internal view {
+        require(logicRefStatus(logicRef) != Status.Denied, DeniedLogicRef(logicRef));
     }
 
     /// @notice Reverts if a created resource must not carry the logic reference.
     /// @param logicRef The logic reference of the created resource.
-    function _checkCreatedLogicRef(bytes32 logicRef) internal view {
-        LogicRefStatusesStorage storage $ = _getLogicRefStatusesStorage();
-
-        Status status = $._statuses[logicRef];
+    function _checkLogicRefForCreation(bytes32 logicRef) internal view {
+        Status status = logicRefStatus(logicRef);
         require(status != Status.Denied, DeniedLogicRef(logicRef));
         require(status != Status.Deprecated, DeprecatedLogicRef(logicRef));
     }
 
     /// @notice Returns the storage from the logic reference statuses storage location.
     /// @return logicRefStatusesStorage The data associated with the logic reference statuses storage.
-    function _getLogicRefStatusesStorage()
+    function _logicRefStatusesStorage()
         internal
         pure
         returns (LogicRefStatusesStorage storage logicRefStatusesStorage)
