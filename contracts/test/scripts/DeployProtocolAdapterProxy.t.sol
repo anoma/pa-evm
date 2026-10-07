@@ -201,6 +201,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));
+        assertLe(implementation.code.length, 24_576, "implementation exceeds EIP-170");
         assertEq(
             ProtocolAdapter(proxy).getImplementation(),
             implementation,

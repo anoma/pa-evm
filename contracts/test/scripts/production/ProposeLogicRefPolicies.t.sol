@@ -3,17 +3,17 @@ pragma solidity ^0.8.30;
 
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
-import {ProposeLogicRefDenial} from "../../../script/production/ProposeLogicRefDenial.s.sol";
-import {ILogicRefDenylist} from "../../../src/interfaces/ILogicRefDenylist.sol";
+import {ProposeLogicRefPolicies} from "../../../script/production/ProposeLogicRefPolicies.s.sol";
+import {ILogicRefPolicyRegistry} from "../../../src/interfaces/ILogicRefPolicyRegistry.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 
 /// @notice Checks the production-only logic reference denial proposal script against a Safe-owned production proxy.
 /// Outside broadcast mode, the script simulates the Safe executing the denial, so the proxy must end up with each logic
-/// reference on its denylist.
-contract ProposeLogicRefDenialTest is RiscZeroRouterFixture, SafeFixture {
+/// reference under its requested policy.
+contract ProposeLogicRefPoliciesTest is RiscZeroRouterFixture, SafeFixture {
     bytes32 internal constant _DENIED_LOGIC_REF = keccak256("denied logic ref");
-    bytes32 internal constant _DEPRECATED_LOGIC_REF = keccak256("deprecated logic ref");
+    bytes32 internal constant _CREATION_DENIED_LOGIC_REF = keccak256("creation-denied logic ref");
 
     address internal _owner;
     address internal _safe;
@@ -36,55 +36,52 @@ contract ProposeLogicRefDenialTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     function test_run_denies_the_logic_refs() public {
-        ILogicRefDenylist.DeniedLogicRef[] memory logicRefs = _logicRefs();
+        ILogicRefPolicyRegistry.PolicyUpdate[] memory logicRefs = _logicRefs();
         for (uint256 i = 0; i < logicRefs.length; ++i) {
             vm.expectEmit(_productionProxy);
-            emit ILogicRefDenylist.LogicRefDenied({logicRef: logicRefs[i].logicRef, consumed: logicRefs[i].consumed});
+            emit ILogicRefPolicyRegistry.LogicRefPolicyChanged(
+                logicRefs[i].logicRef, ILogicRefPolicyRegistry.LogicRefPolicy.Unrestricted, logicRefs[i].policy
+            );
         }
 
-        new ProposeLogicRefDenial().run({proxy: _productionProxy, proposer: _owner, logicRefs: logicRefs});
+        new ProposeLogicRefPolicies().run({proxy: _productionProxy, proposer: _owner, logicRefs: logicRefs});
 
-        ILogicRefDenylist denylist = ILogicRefDenylist(_productionProxy);
-        assertTrue(
-            denylist.isLogicRefDenied(_DENIED_LOGIC_REF, true),
-            "the denied logic ref should be denied for consumed resources"
+        ILogicRefPolicyRegistry registry = ILogicRefPolicyRegistry(_productionProxy);
+        assertEq(
+            uint8(registry.logicRefPolicy(_DENIED_LOGIC_REF)), uint8(ILogicRefPolicyRegistry.LogicRefPolicy.FullyDenied)
         );
-        assertTrue(
-            denylist.isLogicRefDenied(_DENIED_LOGIC_REF, false),
-            "the denied logic ref should be denied for created resources"
-        );
-        assertTrue(
-            denylist.isLogicRefDenied(_DEPRECATED_LOGIC_REF, false),
-            "the deprecated logic ref should be denied for created resources"
-        );
-        assertFalse(
-            denylist.isLogicRefDenied(_DEPRECATED_LOGIC_REF, true),
-            "the deprecated logic ref should not be denied for consumed resources"
+        assertEq(
+            uint8(registry.logicRefPolicy(_CREATION_DENIED_LOGIC_REF)),
+            uint8(ILogicRefPolicyRegistry.LogicRefPolicy.CreationDenied)
         );
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeLogicRefDenial script = new ProposeLogicRefDenial();
+        ProposeLogicRefPolicies script = new ProposeLogicRefPolicies();
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
         script.run({proxy: _stagingProxy, proposer: _owner, logicRefs: _logicRefs()});
     }
 
     function test_run_reverts_if_the_simulated_denial_fails() public {
-        ProposeLogicRefDenial script = new ProposeLogicRefDenial();
+        ProposeLogicRefPolicies script = new ProposeLogicRefPolicies();
 
         // The protocol adapter rejects the zero logic ref, so the simulated Safe execution fails.
-        ILogicRefDenylist.DeniedLogicRef[] memory logicRefs = new ILogicRefDenylist.DeniedLogicRef[](1);
-        logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: bytes32(0), consumed: true});
+        ILogicRefPolicyRegistry.PolicyUpdate[] memory logicRefs = new ILogicRefPolicyRegistry.PolicyUpdate[](1);
+        logicRefs[0] = ILogicRefPolicyRegistry.PolicyUpdate({
+            logicRef: bytes32(0), policy: ILogicRefPolicyRegistry.LogicRefPolicy.FullyDenied
+        });
 
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
         script.run({proxy: _productionProxy, proposer: _owner, logicRefs: logicRefs});
     }
 
-    function _logicRefs() internal pure returns (ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) {
-        logicRefs = new ILogicRefDenylist.DeniedLogicRef[](3);
-        logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DENIED_LOGIC_REF, consumed: true});
-        logicRefs[1] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DENIED_LOGIC_REF, consumed: false});
-        logicRefs[2] = ILogicRefDenylist.DeniedLogicRef({logicRef: _DEPRECATED_LOGIC_REF, consumed: false});
+    function _logicRefs() internal pure returns (ILogicRefPolicyRegistry.PolicyUpdate[] memory logicRefs) {
+        logicRefs = new ILogicRefPolicyRegistry.PolicyUpdate[](2);
+        logicRefs[0] =
+            ILogicRefPolicyRegistry.PolicyUpdate(_DENIED_LOGIC_REF, ILogicRefPolicyRegistry.LogicRefPolicy.FullyDenied);
+        logicRefs[1] = ILogicRefPolicyRegistry.PolicyUpdate(
+            _CREATION_DENIED_LOGIC_REF, ILogicRefPolicyRegistry.LogicRefPolicy.CreationDenied
+        );
     }
 }

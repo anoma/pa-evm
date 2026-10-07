@@ -89,7 +89,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTableCommitment|ERC1967Proxy|DeploymentParameters)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefPolicyRegistry|IKindTableCommitment|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -195,7 +195,7 @@ contracts-propose-production-kind-table-update deployer proxy proposer commitmen
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# A pause or a logic ref denial deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
+# A pause or a logic ref policy update deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
 
 # Simulate the staging pause (dry-run): runs it locally as the staging proxy owner
 contracts-simulate-staging-pause proxy chain *args:
@@ -221,28 +221,28 @@ contracts-propose-production-pause deployer proxy proposer chain *args:
         --sig "run(address,address)" {{proxy}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging logic ref denial (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-logic-ref-denial proxy logic_refs chain *args:
-    cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
-        --sig "run(address,(bytes32,bool)[])" {{proxy}} {{quote(logic_refs)}} \
+# Simulate the staging logic ref policy update (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-logic-ref-policies proxy logic_refs chain *args:
+    cd contracts && forge script script/staging/ExecuteLogicRefPolicies.s.sol:ExecuteLogicRefPolicies \
+        --sig "run(address,(bytes32,uint8)[])" {{proxy}} {{quote(logic_refs)}} \
         --rpc-url {{chain}} {{ args }}
 
-# Execute the staging logic ref denial as the proxy owner
-contracts-execute-staging-logic-ref-denial deployer proxy logic_refs chain *args:
-    cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
-        --sig "run(address,(bytes32,bool)[])" {{proxy}} {{quote(logic_refs)}} \
+# Execute the staging logic ref policy update as the proxy owner
+contracts-execute-staging-logic-ref-policies deployer proxy logic_refs chain *args:
+    cd contracts && forge script script/staging/ExecuteLogicRefPolicies.s.sol:ExecuteLogicRefPolicies \
+        --sig "run(address,(bytes32,uint8)[])" {{proxy}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the production logic ref denial proposal (dry-run): simulates the Safe executing the denial
-contracts-simulate-production-logic-ref-denial-proposal proxy proposer logic_refs chain *args:
-    cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
-        --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
+# Simulate the production logic ref policy update proposal (dry-run): simulates the Safe executing the policy update
+contracts-simulate-production-logic-ref-policies-proposal proxy proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefPolicies.s.sol:ProposeLogicRefPolicies \
+        --sig "run(address,address,(bytes32,uint8)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose the production logic ref denial to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-logic-ref-denial deployer proxy proposer logic_refs chain *args:
-    cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
-        --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
+# Propose the production logic ref policy update to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-logic-ref-policies deployer proxy proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefPolicies.s.sol:ProposeLogicRefPolicies \
+        --sig "run(address,address,(bytes32,uint8)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the v1 ownership transfer proposal (dry-run): simulates the Safe that owns v1 executing the transfer

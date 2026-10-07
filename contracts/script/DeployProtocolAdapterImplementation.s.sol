@@ -7,6 +7,7 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 
+import {ILogicRefPolicyRegistry} from "../src/interfaces/ILogicRefPolicyRegistry.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {Parameters} from "./Parameters.sol";
 
@@ -21,8 +22,8 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
 
     /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
-    /// empty because the current version requires no reinitialization.
-    bytes public constant INITIALIZATION_DATA = "";
+    /// imports legacy logic reference restrictions before the upgraded implementation accepts transactions.
+    bytes public constant INITIALIZATION_DATA = abi.encodeCall(ILogicRefPolicyRegistry.initializeLogicRefPolicies, ());
 
     /// @notice Thrown if the implementation of the current source version is not deployed yet.
     error ImplementationNotDeployed(address implementation);

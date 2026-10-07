@@ -18,7 +18,7 @@ import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {KindTableCommitment} from "./state/KindTableCommitment.sol";
-import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
+import {LogicRefPolicyRegistry} from "./state/LogicRefPolicyRegistry.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
 /// @title ProtocolAdapter
@@ -36,7 +36,7 @@ contract ProtocolAdapter is
     PausableUpgradeable,
     CommitmentTree,
     NullifierSet,
-    LogicRefDenylist,
+    LogicRefPolicyRegistry,
     KindTableCommitment
 {
     using Aggregation for Action[];
@@ -78,7 +78,7 @@ contract ProtocolAdapter is
 
     /// @notice Initializes the protocol adapter contract.
     /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
-    /// to authorize upgrades, to set the kind table commitment, and to deny logic references.
+    /// to authorize upgrades, to set the kind table commitment, and to restrict logic reference policies.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -143,6 +143,8 @@ contract ProtocolAdapter is
         nonReentrant
         whenNotPaused
     {
+        _requireLogicRefPoliciesInitialized();
+
         uint256 actionCount = transaction.actions.length;
 
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
@@ -192,7 +194,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Processes an action by
-    /// * checking the logic references of the consumed and created resources against the denylists,
+    /// * checking the logic references of the consumed and created resources against their policies,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
     /// * executing external forwarder calls,
@@ -344,7 +346,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
-    /// the empty logic reference denylists and the empty kind table.
+    /// the empty logic reference policy registry and the empty kind table.
     /// @param initialOwner The account receiving ownership.
     // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -352,7 +354,7 @@ contract ProtocolAdapter is
         __Pausable_init();
         __CommitmentTree_init();
         __NullifierSet_init();
-        __LogicRefDenylist_init();
+        __LogicRefPolicyRegistry_init();
         __KindTableCommitment_init();
 
         // Sanity check that the verifier is not paused already.
@@ -366,8 +368,8 @@ contract ProtocolAdapter is
     /// @notice Allows only the owner to set the kind table commitment.
     function _authorizeKindTableCommitmentChange() internal override onlyOwner {}
 
-    /// @notice Allows only the owner to add logic references to the denylists.
-    function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
+    /// @notice Allows only the owner to restrict logic reference policies.
+    function _authorizeLogicRefPolicyChange() internal override onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
