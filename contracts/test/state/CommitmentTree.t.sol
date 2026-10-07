@@ -22,7 +22,7 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         bytes32 initialRoot = _cmAcc.latestCommitmentTreeRoot();
 
         assertEq(initialRoot, _roots[0], "initial root should match expected root");
-        assertEq(initialRoot, _cmAcc.initialRoot(), "initial root should match initialRoot()");
+        assertTrue(_cmAcc.isCommitmentTreeRootContained(initialRoot), "initial root should be a historical root");
 
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
             assertEq(
@@ -57,14 +57,10 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_addCommitmentTreeRoot_stores_the_root() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
-        assertEq(
-            _cmAcc.latestCommitmentTreeRoot(), _cmAcc.initialRoot(), "latest root should be initial root before store"
-        );
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), false, "root should not be contained before store");
 
         _cmAcc.addCommitmentTreeRoot(rootToStore);
 
-        assertEq(_cmAcc.latestCommitmentTreeRoot(), rootToStore, "latest root should be the stored root");
         assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true, "root should be contained after store");
     }
 
@@ -77,13 +73,11 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitmentTreeRoot(rootToStore);
     }
 
-    function test_commitmentTreeRootAtIndex_returns_the_right_index() public {
+    function test_latestCommitmentTreeRoot_returns_the_root_of_the_tree() public {
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(_leaves[i + 1][i]));
-        }
+            bytes32 root = _cmAcc.addCommitment(_leaves[i + 1][i]);
 
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            assertEq(_cmAcc.commitmentTreeRootAtIndex(i), _roots[i], "The returned root should have the expected index");
+            assertEq(_cmAcc.latestCommitmentTreeRoot(), root, "latest root should be the root after the last push");
         }
     }
 
