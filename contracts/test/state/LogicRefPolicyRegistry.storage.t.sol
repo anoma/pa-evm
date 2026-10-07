@@ -8,7 +8,6 @@ import {LogicRefPolicyRegistryMock} from "../mocks/LogicRefPolicyRegistry.m.sol"
 
 contract LogicRefPolicyRegistryStorageTest is Test, LogicRefPolicyRegistryMock {
     function test_storage_slot() public pure {
-        assertEq(_LOGIC_REF_DENYLIST_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.LogicRefDenylist"));
         assertEq(
             _LOGIC_REF_POLICY_REGISTRY_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.LogicRefPolicyRegistry")
         );

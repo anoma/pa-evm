@@ -499,13 +499,11 @@ Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, target policy)` pai
 
 Creation denial applies to every resource carrying the reference, including ephemeral forwarder carriers. Before using it to retire a reference, verify the application's conversion and withdrawal path with real proofs. Consumption remaining allowed is not sufficient by itself.
 
-### Upgrading from the legacy denylists
+### Interface and storage change
 
 This release replaces `denyLogicRefs`, the operation-specific queries and `LogicRefDenied` with `setLogicRefPolicies`, a single enumeration index, and `LogicRefPolicyChanged`. Update callers and event consumers together; the regenerated Rust bindings expose the new ABI.
 
-The upgrade scripts pass `initializeLogicRefPolicies()` to `upgradeToAndCall`. Initializer version 2 copies the legacy consumed list followed by created-only entries into a new namespace, preserving all four membership combinations and emitting one policy event per restricted reference. Legacy storage remains untouched. Fresh deployments initialize an empty registry; this upgrade callback only advances their initializer version and preserves any policies already set. The callback cannot be replayed. Import is supported when upgrading to the plain `ProtocolAdapter`, including from an older migrational proxy; the temporary `MigrationalProtocolAdapter` rejects this callback to stay within the EVM code-size limit.
-
-Before upgrading each existing proxy, read `deniedLogicRefCount(true)` and `deniedLogicRefCount(false)` and simulate the complete upgrade with its actual state and chain gas limit. The import is atomic and linear in those counts. If it cannot fit, do not broadcast: a separate rollout design is needed. An upgrade that omits the callback leaves execution, simulation, policy queries and policy updates reverting until the owner initializes the registry. Subsequent releases must replace the version-2 initialization calldata rather than replay it.
+The policy registry uses a new storage namespace and does not copy existing denylist state. Upgrading a populated deployment requires a separate migration that preserves its restrictions.
 
 ### Applying policies
 

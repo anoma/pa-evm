@@ -9,7 +9,6 @@ contract LogicRefPolicyRegistryMock is LogicRefPolicyRegistry {
     }
 
     function checkLogicRef(bytes32 logicRef, bool consumed) external view {
-        _requireLogicRefPoliciesInitialized();
         _checkLogicRefNotDenied(logicRef, consumed);
     }
 

@@ -22,7 +22,7 @@ interface ILogicRefPolicyRegistry {
         LogicRefPolicy policy;
     }
 
-    /// @notice Emitted once per policy change, including each imported legacy restriction.
+    /// @notice Emitted once per policy change.
     /// @param logicRef The affected logic reference.
     /// @param previousPolicy The previous registry policy.
     /// @param newPolicy The new registry policy.
@@ -36,13 +36,7 @@ interface ILogicRefPolicyRegistry {
     /// not by itself guarantee a working withdrawal path.
     function setLogicRefPolicies(PolicyUpdate[] calldata updates) external;
 
-    /// @notice Imports the legacy denylists atomically with an upgrade to the plain adapter.
-    /// Authorized and callable once at version 2.
-    /// @dev Preserves all four membership combinations. Consumed-list order precedes created-only references.
-    /// On a fresh deployment the registry is already initialized, so this only advances the initializer version.
-    function initializeLogicRefPolicies() external;
-
-    /// @notice Returns the policy for a logic reference; unknown references are unrestricted after initialization.
+    /// @notice Returns the policy for a logic reference; unknown references are unrestricted.
     /// @param logicRef The logic reference to query.
     /// @return policy The current policy.
     function logicRefPolicy(bytes32 logicRef) external view returns (LogicRefPolicy policy);

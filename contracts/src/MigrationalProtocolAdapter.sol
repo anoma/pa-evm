@@ -138,13 +138,6 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         protocolAdapterV1 = _PROTOCOL_ADAPTER_V1;
     }
 
-    /// @notice Legacy policy import is supported only when upgrading to the plain implementation.
-    /// @dev This temporary implementation starts with a fresh registry. Excluding the importer keeps its runtime
-    /// below the EVM code-size limit; existing migrational proxies import policies when upgraded to ProtocolAdapter.
-    function initializeLogicRefPolicies() external pure override {
-        revert InvalidInitialization();
-    }
-
     /// @notice Lifts the pause, once the copy-in is complete.
     function _unpause() internal override {
         _checkStateMigrationIsComplete();

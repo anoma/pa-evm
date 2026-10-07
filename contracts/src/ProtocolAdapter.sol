@@ -143,8 +143,6 @@ contract ProtocolAdapter is
         nonReentrant
         whenNotPaused
     {
-        _requireLogicRefPoliciesInitialized();
-
         uint256 actionCount = transaction.actions.length;
 
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
