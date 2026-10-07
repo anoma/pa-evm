@@ -2,24 +2,139 @@ name: Gas Report
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, next]
   pull_request:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to compare (open, closed, or merged)
+        required: false
+        type: string
+
+concurrency:
+  group: gas-report-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 
 jobs:
+  clear-labels:
+    name: Clear previous gas labels
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    concurrency:
+      group: gas-labels-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - name: Clear managed labels for this comparison
+        run: |
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")
+          [[ $(jq -r '.head.sha' <<< "$pr") == "$HEAD_SHA" &&
+             $(jq -r '.base.sha' <<< "$pr") == "$BASE_SHA" &&
+             $(jq -r '.state' <<< "$pr") == open ]] || exit 0
+          while IFS= read -r label; do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${label}"
+          done < <(jq -r '.labels[].name | select(. == "gas:measured-improvement" or . == "gas:mixed") | @uri' <<< "$pr")
+
   gas-report:
     name: Gas Report
+    outputs:
+      gas-label: ${{ steps.operations.outputs.label }}
+      measured-sha: ${{ steps.merged.outputs.sha }}
     runs-on: macos-latest
     env:
       FOUNDRY_PROFILE: ci
+      GAS_TEST_CONTRACTS: Benchmark|ProtocolAdapterMockVerifierTest|ProtocolAdapter(Denylist|Policy)Test|LogicRef(Denylist|PolicyRegistry)Test|NullifierSetTest|CommitmentTreeTest
+      REPORT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
     steps:
+      - name: Resolve comparison revisions
+        id: revisions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$PR_NUMBER" ]]; then
+            [[ "$PR_NUMBER" =~ ^[0-9]+$ ]] || { echo "Invalid PR number" >&2; exit 1; }
+            if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+              head=$REPORT_SHA base=$BASE_SHA target=$BASE_REF
+            else
+              IFS=$'\t' read -r head base target < <(
+                gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+                  --jq '[.head.sha, .base.sha, .base.ref] | @tsv'
+              )
+            fi
+            [[ "$head" =~ ^[0-9a-f]{40}$ && "$base" =~ ^[0-9a-f]{40}$ && -n "$target" ]]
+            {
+              echo "compare=true"
+              echo "head=$head"
+              echo "base=$base"
+            } >> "$GITHUB_OUTPUT"
+            {
+              echo "REPORT_SHA=$head"
+              echo "BASE_SHA=$base"
+              echo "BASE_REF=$target"
+            } >> "$GITHUB_ENV"
+          else
+            {
+              echo "compare=false"
+              echo "head=$GITHUB_SHA"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.revisions.outputs.head }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Checkout PR base
+        if: steps.revisions.outputs.compare == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.revisions.outputs.base }}
+          path: gas-baseline
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Prepare merged comparison
+        id: merged
+        if: steps.revisions.outputs.compare == 'true'
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$REPORT_SHA"
+          test "$(git -C gas-baseline rev-parse HEAD)" = "$BASE_SHA"
+          git fetch ./gas-baseline "$BASE_SHA"
+          git checkout --detach "$BASE_SHA"
+          if ! git -c user.name='Gas comparison' -c user.email='gas-comparison@localhost' \
+              -c core.hooksPath=/dev/null merge --no-ff --no-edit "$REPORT_SHA"; then
+            echo 'Cannot merge these exact revisions; no gas comparison will be published.' >&2
+            exit 1
+          fi
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          git merge-base --is-ancestor "$REPORT_SHA" HEAD
+          measured=$(git rev-parse HEAD)
+          echo "sha=$measured" >> "$GITHUB_OUTPUT"
+          echo "MEASURED_SHA=$measured" >> "$GITHUB_ENV"
+          jq -n --arg base "$BASE_SHA" --arg head "$REPORT_SHA" --arg measured "$measured" \
+            '{base:$base,head:$head,measured:$measured}' > contracts/comparison-revisions.json
+
+      - name: Check gas label classification
+        if: hashFiles('.github/tests/gas-labels.sh') != ''
+        run: bash .github/tests/gas-labels.sh
 
       - name: Install just
         uses: extractions/setup-just@v3
@@ -32,53 +147,188 @@ jobs:
 
       - name: Generate gas snapshot
         working-directory: contracts
-        run: forge snapshot --match-contract Benchmark
-        env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+        run: |
+          forge snapshot --gas-report --match-contract "$GAS_TEST_CONTRACTS" --fuzz-seed 0x1 > gas-report.txt
+          test -s .gas-snapshot
+          # Table-driven tests report mean gas; normalize those entries for comparison.
+          sed -E 's/\(runs: [0-9]+, μ: ([0-9]+), ~: [0-9]+\)/(gas: \1)/' .gas-snapshot > .gas-snapshot-report
 
-      - name: Generate gas report
+      - name: Measure merged operations
         working-directory: contracts
-        run: forge test --gas-report --match-contract Benchmark > gas-report.txt
+        run: |
+          rm -rf gas-operation-snapshots
+          if [[ -d test/gas ]]; then
+            forge test --match-path 'test/gas/**/*.t.sol' --fuzz-seed 0x1 --isolate --gas-snapshot-emit true
+          fi
         env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          FOUNDRY_SNAPSHOTS: gas-operation-snapshots
 
       - name: Generate contract sizes
         working-directory: contracts
-        run: forge build --sizes 2>&1 | tail -n +4 > contract-sizes.txt
+        run: forge build src --sizes > contract-sizes.txt 2>&1
 
-      - name: Restore baseline gas snapshot
-        if: github.event_name == 'pull_request'
-        id: baseline
-        uses: actions/cache/restore@v4
-        with:
-          path: contracts/.gas-snapshot-main
-          key: gas-snapshot-main-
-          restore-keys: gas-snapshot-main-
+      - name: Install baseline dependencies
+        if: steps.revisions.outputs.compare == 'true'
+        working-directory: gas-baseline
+        run: just contracts-deps
+
+      - name: Generate baseline gas snapshot
+        if: steps.revisions.outputs.compare == 'true'
+        working-directory: gas-baseline/contracts
+        run: |
+          forge snapshot --match-contract "$GAS_TEST_CONTRACTS" --fuzz-seed 0x1
+          test -s .gas-snapshot
+          sed -E 's/\(runs: [0-9]+, μ: ([0-9]+), ~: [0-9]+\)/(gas: \1)/' .gas-snapshot > ../../contracts/.gas-snapshot-base
+
+      - name: Measure baseline operations
+        if: steps.revisions.outputs.compare == 'true'
+        run: |
+          rm -rf gas-baseline/contracts/gas-operation-snapshots
+          if [[ -d contracts/test/gas ]]; then
+            # Run the same operation fixtures on both revisions.
+            rm -rf gas-baseline/contracts/test/gas
+            cp -R contracts/test/gas gas-baseline/contracts/test/gas
+            cd gas-baseline/contracts
+            forge test --match-path 'test/gas/**/*.t.sol' --fuzz-seed 0x1 --isolate --gas-snapshot-emit true
+          fi
+        env:
+          FOUNDRY_SNAPSHOTS: gas-operation-snapshots
+
+      - name: Generate baseline contract sizes
+        if: steps.revisions.outputs.compare == 'true'
+        working-directory: gas-baseline/contracts
+        run: forge build src --sizes > contract-sizes.txt 2>&1
+
+      - name: Compare contract sizes
+        if: steps.revisions.outputs.compare == 'true'
+        run: |
+          set -euo pipefail
+          read_sizes() {
+            # Fully qualified artifact identities avoid matching unrelated namesakes.
+            jq -s '
+              [.[] | select(.metadata.settings.compilationTarget != null)
+                | (.metadata.settings.compilationTarget | to_entries[]) as $target
+                | select($target.key | startswith("src/"))
+                | .deployedBytecode.object as $code
+                | if ($code | type == "string" and startswith("0x") and length % 2 == 0)
+                  then {key: ($target.key + ":" + $target.value), value: (($code | length) / 2 - 1)}
+                  else error("Invalid deployed bytecode") end
+                | select(.value > 0)]
+              | if (map(.key) | length == (unique | length)) then from_entries
+                else error("Duplicate contract identity") end' "$1"/out/*/*.json
+          }
+          base=$(read_sizes gas-baseline/contracts)
+          head=$(read_sizes contracts)
+          jq -n --argjson base "$base" --argjson head "$head" '{base:$base,head:$head}' > contracts/contract-sizes.json
+          {
+            echo '| Contract | Base bytes | PR bytes | Δ bytes | PR margin |'
+            echo '| --- | ---: | ---: | ---: | ---: |'
+            jq -nr --argjson base "$base" --argjson head "$head" '
+              ($base + $head | keys[]) as $name
+              | ($base[$name] // null) as $before | ($head[$name] // null) as $after
+              | "| `\($name)` | \($before // "—") | \($after // "—") | \(
+                  if $before == null then "new" elif $after == null then "removed"
+                  else ($after - $before | if . >= 0 then "+\(.)" else tostring end) end
+                ) | \(if $after == null then "—" else (24576 - $after | tostring)
+                  + (if 24576 - $after < 2048 then " ⚠️" else "" end) end) |"'
+          } > contracts/contract-size-diff.md
+
+      - name: Compare operation gas
+        id: operations
+        if: steps.revisions.outputs.compare == 'true'
+        run: |
+          set -euo pipefail
+          read_snapshots() {
+            local directory=$1 snapshot group
+            for snapshot in "$directory"/*.json; do
+              [[ -f "$snapshot" ]] || continue
+              group=$(basename "$snapshot" .json)
+              jq -se --arg group "$group" '
+                if length == 1 and (.[0] | type == "object" and length > 0
+                    and all(.[]; tonumber > 0 and tonumber <= 9007199254740991
+                    and (tonumber | floor) == tonumber)) then
+                  .[0] | to_entries
+                    | map({key: ($group + "/" + .key), value: (.value | tonumber)})
+                    | from_entries
+                else error("Expected exactly one valid measurement object") end' "$snapshot" || return 1
+            done
+          }
+          base=$(read_snapshots gas-baseline/contracts/gas-operation-snapshots | jq -s 'add // {}')
+          head=$(read_snapshots contracts/gas-operation-snapshots | jq -s 'add // {}')
+          comparison=$(jq -n --argjson base "$base" --argjson head "$head" '
+            ($base | keys | map(select(startswith("ExecutionGas/")))) as $keys
+            | [$base | keys[] as $name | select($head | has($name))
+                | {name: $name, before: $base[$name], after: $head[$name],
+                   delta: ($head[$name] - $base[$name])}] as $rows
+            | ($keys == ($head | keys | map(select(startswith("ExecutionGas/"))))
+                and ($keys | length) > 0) as $complete
+            | ($rows | map(select(.name | startswith("ExecutionGas/")))) as $execution
+            | {execution: $execution,
+                supporting: ($rows | map(select(.name | startswith("ExecutionGas/") | not))),
+                complete: $complete,
+                classification: (if $complete | not then "unclassified"
+                  elif any($execution[]; .delta < 0) then
+                    if any($execution[]; .delta > 0) then "mixed" else "improvement" end
+                  elif any($execution[]; .delta > 0) then "regression"
+                  else "unchanged" end)}
+            | .label = (if .classification == "improvement" then "gas:measured-improvement"
+                elif .classification == "mixed" then "gas:mixed" else "" end)')
+          printf '%s\n' "$comparison" > contracts/operation-comparison.json
+          {
+            echo "### Execution gas: $(jq -r '.classification' <<< "$comparison")"
+            echo ""
+            echo 'ExecutionGas determines labels. Operation measurements exclude setup and assertions; they are not total transaction costs.'
+            for scope in execution supporting; do
+              [[ $(jq --arg scope "$scope" '.[$scope] | length' <<< "$comparison") -gt 0 ]] || continue
+              echo ""
+              if [[ "$scope" == supporting ]]; then
+                echo "<details><summary>Supporting operation gas</summary>"
+                echo ""
+              fi
+              echo "| Operation | ${BASE_REF} | PR | Δ | % |"
+              echo "| --- | ---: | ---: | ---: | ---: |"
+              while IFS=$'\t' read -r name before after delta; do
+                pct=$(awk -v delta="$delta" -v base="$before" 'BEGIN { printf "%+.2f", delta / base * 100 }')
+                # shellcheck disable=SC2016
+                printf '| `%s` | %d | %d | %+d | %s%% |\n' "$name" "$before" "$after" "$delta" "$pct"
+              done < <(jq -r --arg scope "$scope" '.[$scope][] | [.name, .before, .after, .delta] | @tsv' <<< "$comparison")
+              if [[ "$scope" == supporting ]]; then echo; echo '</details>'; fi
+            done
+            if [[ $(jq -r '.complete' <<< "$comparison") != true ]]; then
+              echo ""
+              echo 'No complete ExecutionGas comparison; no gas label.'
+            fi
+          } > contracts/operation-gas.md
+          echo "label=$(jq -r '.label' <<< "$comparison")" >> "$GITHUB_OUTPUT"
 
       - name: Generate gas diff
-        if: github.event_name == 'pull_request' && steps.baseline.outputs.cache-hit == 'true'
+        if: steps.revisions.outputs.compare == 'true'
         working-directory: contracts
         run: |
+          # shellcheck disable=SC2001
           total_base=0
           total_pr=0
 
-          # Build a diff table comparing main vs PR gas values
+          # Build a diff table comparing base vs PR gas values
           {
-            echo "| Test | main | PR | Δ | % |"
+            echo "| Test | ${BASE_REF} | PR | Δ | % |"
             echo "|------|-----:|---:|--:|--:|"
             while IFS= read -r line || [[ -n "$line" ]]; do
-              name=$(echo "$line" | sed 's/ *(gas:.*//;s/() *$//')
+              # shellcheck disable=SC2001
+              name=$(echo "$line" | sed 's/ *(gas:.*//')
+              # shellcheck disable=SC2001
               pr_gas=$(echo "$line" | sed 's/.*(gas: \([0-9]*\))/\1/')
-              total_pr=$((total_pr + pr_gas))
               # Look up the same test in the baseline
-              base_line=$(grep "^${name}()" .gas-snapshot-main 2>/dev/null || true)
+              base_line=$(grep -F -- "${name} (gas:" .gas-snapshot-base 2>/dev/null || true)
               if [[ -z "$base_line" ]]; then
                 pr_fmt=$(printf "%'d" "$pr_gas" 2>/dev/null || echo "$pr_gas")
                 echo "| \`${name}\` | — | ${pr_fmt} | *new* | |"
                 continue
               fi
+              # shellcheck disable=SC2001
               base_gas=$(echo "$base_line" | sed 's/.*(gas: \([0-9]*\))/\1/')
               total_base=$((total_base + base_gas))
+              total_pr=$((total_pr + pr_gas))
               delta=$((pr_gas - base_gas))
               if (( base_gas != 0 )); then
                 pct=$(awk "BEGIN { printf \"%.2f\", ($delta / $base_gas) * 100 }")
@@ -95,7 +345,15 @@ jobs:
                 icon=" :small_red_triangle_down:"
               fi
               echo "| \`${name}\` | ${base_fmt} | ${pr_fmt} | ${delta_fmt}${icon} | ${pct}% |"
-            done < .gas-snapshot
+            done < .gas-snapshot-report
+            while IFS= read -r line || [[ -n "$line" ]]; do
+              # shellcheck disable=SC2001
+              name=$(echo "$line" | sed 's/ *(gas:.*//')
+              grep -Fq -- "${name} (gas:" .gas-snapshot-report && continue
+              # shellcheck disable=SC2001
+              base_gas=$(echo "$line" | sed 's/.*(gas: \([0-9]*\))/\1/')
+              echo "| \`${name}\` | ${base_gas} | — | *removed* | |"
+            done < .gas-snapshot-base
           } > gas-diff.txt
 
           # Write summary with totals
@@ -116,18 +374,6 @@ jobs:
           fi
           echo "${total_base_fmt}|${total_pr_fmt}|${total_delta_fmt}|${total_pct}|${icon}" > gas-summary.txt
 
-      - name: Update baseline gas snapshot
-        if: github.ref == 'refs/heads/main'
-        working-directory: contracts
-        run: cp .gas-snapshot .gas-snapshot-main
-
-      - name: Save baseline to cache
-        if: github.ref == 'refs/heads/main'
-        uses: actions/cache/save@v4
-        with:
-          path: contracts/.gas-snapshot-main
-          key: gas-snapshot-main-${{ github.sha }}
-
       - name: Sanitize ref name
         id: ref
         run: echo "slug=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
@@ -136,113 +382,174 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gas-report-${{ steps.ref.outputs.slug }}-${{ github.sha }}
+          name: gas-report-${{ steps.ref.outputs.slug }}-${{ steps.merged.outputs.sha || steps.revisions.outputs.head }}
           path: |
+            contracts/comparison-revisions.json
             contracts/.gas-snapshot
+            contracts/.gas-snapshot-base
+            contracts/.gas-snapshot-report
+            contracts/gas-diff.txt
+            contracts/gas-summary.txt
             contracts/gas-report.txt
             contracts/contract-sizes.txt
+            gas-baseline/contracts/contract-sizes.txt
+            contracts/contract-sizes.json
+            contracts/contract-size-diff.md
+            contracts/gas-operation-snapshots/*.json
+            gas-baseline/contracts/gas-operation-snapshots/*.json
+            contracts/operation-gas.md
+            contracts/operation-comparison.json
           include-hidden-files: true
           retention-days: 30
 
       - name: Build gas report comment
-        if: github.event_name == 'pull_request'
+        if: steps.revisions.outputs.compare == 'true'
         working-directory: contracts
         run: |
+          # Full identifiers and all rows remain in the artifacts; only this comment is shortened.
+          summarize_table() {
+            awk -F'|' -v kind="$2" '
+              function trim(s) { sub(/^[[:space:]]+/, "", s); sub(/[[:space:]]+$/, "", s); return s }
+              function readable(s, limit,    result,i,c,previous) {
+                gsub(/`/, "", s); sub(/\(.*/, "", s); sub(/^test(Fuzz)?_?/, "", s)
+                gsub(/_/, " ", s)
+                for (i=1; i<=length(s); i++) {
+                  c=substr(s,i,1)
+                  if (previous ~ /[a-z0-9]/ && c ~ /[A-Z]/) result=result " "
+                  result=result c; previous=c
+                }
+                return length(result)>limit ? substr(result,1,limit-1) "…" : result
+              }
+              NR>2 && /^\|/ {
+                if (trim($3)=="—" || trim($4)=="—") next
+                name=trim($2); delta=trim($5); warning=(kind=="sizes" && $6 ~ /⚠️/)
+                same=(delta ~ /^\+?0([[:space:]]|$)/)
+                if (same) unchanged++; else changed++
+                if (warning) warnings++
+                if (same && !warning) next
+                if (!warning && shown>=10 && !(kind=="execution" && delta+0>0)) next
+                if (!header++) {
+                  if (kind=="sizes") print "| Contract | Target bytes | PR bytes | Δ bytes |\n| --- | ---: | ---: | ---: |"
+                  else print "| Suite | Measurement | Target gas | PR gas | Δ gas | % |\n| --- | --- | ---: | ---: | ---: | ---: |"
+                }
+                gsub(/`/, "", name)
+                if (kind=="sizes") {
+                  sub(/^.*:/, "", name)
+                  printf "| %s | %s | %s | %s%s |\n", readable(name,48),trim($3),trim($4),delta,(warning ? " ⚠️" : "")
+                } else {
+                  separator=(kind=="tests" ? ":" : "/"); split(name,parts,separator)
+                  measurement=substr(name,length(parts[1])+2)
+                  sub(/[[:space:]].*/, "", delta)
+                  printf "| %s | %s | %s | %s | %s | %s |\n", readable(parts[1],32),readable(measurement,60),trim($3),trim($4),delta,trim($6)
+                }
+                shown++; if (!same) shown_changed++
+              }
+              END {
+                printf "\n%d changed; %d unchanged",changed,unchanged
+                if (warnings) printf "; %d size-limit warning(s)",warnings
+                print "."
+                if (shown_changed<changed) printf "Showing %d of %d changed rows; all rows are in the artifacts.\n",shown_changed,changed
+              }' "$1"
+          }
           {
-            echo "### Gas Report"
-
-            # --- Summary (visible) ---
-            if [[ -f gas-summary.txt ]]; then
-              IFS='|' read -r s_base s_pr s_delta s_pct s_icon < gas-summary.txt
+            echo '### Gas report summary'
+            echo "Base [\`${BASE_REF}@${BASE_SHA::7}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${BASE_SHA}) · PR [\`${REPORT_SHA::7}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${REPORT_SHA}) · measured merge \`${MEASURED_SHA::7}\`."
+            echo ""
+            echo "[Full results and artifacts](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}#artifacts): full identifiers, signatures, all rows, function statistics, and exact revisions. Display names below are shortened."
+            echo ""
+            for scope in execution supporting; do
+              [[ $(jq --arg scope "$scope" '.[$scope] | length' operation-comparison.json) -gt 0 ]] || continue
               echo ""
-              echo "| | main | PR | Δ | % |"
-              echo "|:--|-----:|---:|--:|--:|"
-              echo "| **Total benchmark gas** | ${s_base} | ${s_pr} | ${s_delta} ${s_icon} | **${s_pct}%** |"
-            else
+              if [[ "$scope" == supporting ]]; then
+                echo '### Supporting operation gas'
+              else
+                echo '### Execution gas'
+              fi
+              echo 'Paired operation gas excludes setup and assertions; ExecutionGas alone determines labels.'
+              {
+                printf '| Operation | Base | PR | Δ | %% |\n| --- | ---: | ---: | ---: | ---: |\n'
+                jq -r --arg scope "$scope" '.[$scope] | sort_by(-.delta)[]
+                  | "| \(.name) | \(.before) | \(.after) | \(.delta) | \((.delta / .before * 10000 | round) / 100)% |"' operation-comparison.json
+              } > operation-summary.txt
+              summarize_table operation-summary.txt "$scope"
+            done
+            echo ""
+            if awk -F'|' 'NR>2 && /^\|/ && $3 !~ /—/ && $4 !~ /—/ { found=1 } END { exit !found }' gas-diff.txt; then
+              echo '### Test gas'
+              echo 'Includes setup and assertions; fuzz/table entries use mean gas. Totals cover matching tests only.'
+              IFS='|' read -r s_base s_pr s_delta s_pct _s_icon < gas-summary.txt
               echo ""
-              # Compute total gas for this PR when no baseline exists
-              total=0
-              while IFS= read -r line || [[ -n "$line" ]]; do
-                gas=$(echo "$line" | sed 's/.*(gas: \([0-9]*\))/\1/')
-                total=$((total + gas))
-              done < .gas-snapshot
-              total_fmt=$(printf "%'d" "$total" 2>/dev/null || echo "$total")
-              echo "**Total benchmark gas: ${total_fmt}** &mdash; no baseline yet, diff available after first merge to \`main\`"
+              echo "| Matched tests | Target (${BASE_REF}) | PR | Δ | % |"
+              echo '| --- | ---: | ---: | ---: | ---: |'
+              echo "| Total gas | ${s_base} | ${s_pr} | ${s_delta} | ${s_pct}% |"
+              echo ""
+              summarize_table gas-diff.txt tests
             fi
-
-            # --- Gas Diff (if baseline exists) ---
-            if [[ -f gas-diff.txt ]]; then
+            if awk -F'|' 'NR>2 && /^\|/ && $3 !~ /—/ && $4 !~ /—/ { found=1 } END { exit !found }' contract-size-diff.md; then
               echo ""
-              echo "<details>"
-              echo "<summary><b>Gas Diff vs. main</b> &mdash; per-test breakdown</summary>"
+              echo '### Contract sizes'
+              echo 'Paired deployed runtime for project contracts; ⚠️ marks a contract near or above the runtime size limit.'
               echo ""
-              cat gas-diff.txt
-              echo ""
-              echo "</details>"
+              summarize_table contract-size-diff.md sizes
             fi
-
-            # --- Gas Snapshot ---
-            echo ""
-            echo "<details>"
-            echo "<summary><b>Gas Snapshot</b> &mdash; per-test gas consumption</summary>"
-            echo ""
-            echo "| Test | Gas |"
-            echo "|------|----:|"
-            while IFS= read -r line || [[ -n "$line" ]]; do
-              name=$(echo "$line" | sed 's/ *(gas:.*//;s/() *$//')
-              gas=$(echo "$line"  | sed 's/.*(gas: \([0-9]*\))/\1/')
-              gas_fmt=$(printf "%'d" "$gas" 2>/dev/null || echo "$gas")
-              echo "| \`${name}\` | ${gas_fmt} |"
-            done < .gas-snapshot
-            echo ""
-            echo "</details>"
-
-            # --- Gas Report ---
-            echo ""
-            echo "<details>"
-            echo "<summary><b>Gas Report</b> &mdash; per-function statistics</summary>"
-            echo ""
-            echo '```'
-            sed -n '/╭/,/╯/p' gas-report.txt
-            echo '```'
-            echo ""
-            echo "</details>"
-
-            # --- Contract Sizes ---
-            echo ""
-            echo "<details>"
-            echo "<summary><b>Contract Sizes</b> &mdash; EVM bytecode size (24,576 B limit)</summary>"
-            echo ""
-            echo "| Contract | Runtime (B) | Initcode (B) | Margin (B) |"
-            echo "|----------|------------:|--------------:|-----------:|"
-            while IFS='|' read -r _ name runtime initcode margin _initmargin _; do
-              name=$(echo "$name" | xargs)
-              runtime=$(echo "$runtime" | xargs | tr -d ',')
-              initcode=$(echo "$initcode" | xargs | tr -d ',')
-              margin=$(echo "$margin" | xargs | tr -d ',')
-              [[ -z "$name" || "$name" == *"Contract"* || "$name" == *"---"* || "$name" == *"==="* ]] && continue
-              [[ "$runtime" =~ ^[0-9]+$ ]] || continue
-              (( runtime <= 100 )) && continue
-              [[ "$name" =~ (Mock|Test|Example|Fuzzing|^std) ]] && continue
-              runtime_fmt=$(printf "%'d" "$runtime" 2>/dev/null || echo "$runtime")
-              initcode_fmt=$(printf "%'d" "$initcode" 2>/dev/null || echo "$initcode")
-              margin_fmt=$(printf "%'d" "$margin" 2>/dev/null || echo "$margin")
-              warn=""
-              (( margin < 2048 )) && warn=" :warning:"
-              echo "| \`${name}\` | ${runtime_fmt} | ${initcode_fmt} | ${margin_fmt}${warn} |"
-            done < contract-sizes.txt
-            echo ""
-            echo "</details>"
-
-            # --- Footer ---
-            echo ""
-            echo "---"
-            echo "<sub>Generated by CI &mdash; commit \`${GITHUB_SHA::7}\` &mdash; $(date -u '+%Y-%m-%d %H:%M UTC')</sub>"
           } > /tmp/gas-comment.md
+          cat /tmp/gas-comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload PR comment
+        if: steps.revisions.outputs.compare == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-report-comment
+          path: /tmp/gas-comment.md
+          retention-days: 1
+
+  comment:
+    name: Publish Gas Report
+    concurrency:
+      group: gas-labels-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    needs: [gas-report, clear-labels]
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Download PR comment
+        uses: actions/download-artifact@v4
+        with:
+          name: gas-report-comment
+
+      - name: Reconcile gas labels for current revisions
+        id: current
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GAS_LABEL: ${{ needs.gas-report.outputs.gas-label }}
+          MEASURED_SHA: ${{ needs.gas-report.outputs.measured-sha }}
+        run: |
+          [[ "$MEASURED_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "Missing measured merge revision" >&2; exit 1; }
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")
+          [[ $(jq -r '.head.sha' <<< "$pr") == "$HEAD_SHA" &&
+             $(jq -r '.base.sha' <<< "$pr") == "$BASE_SHA" &&
+             $(jq -r '.state' <<< "$pr") == open ]] || exit 0
+          case "$GAS_LABEL" in
+            ""|gas:measured-improvement|gas:mixed) ;;
+            *) echo "Invalid gas classification" >&2; exit 1 ;;
+          esac
+          while IFS= read -r label; do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${label}"
+          done < <(jq -r '.labels[].name | select(. == "gas:measured-improvement" or . == "gas:mixed") | @uri' <<< "$pr")
+          if [[ -n "$GAS_LABEL" ]]; then
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" -f "labels[]=$GAS_LABEL"
+          fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
 
       - name: Post gas report comment
-        if: github.event_name == 'pull_request'
+        if: steps.current.outputs.publish == 'true'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: gas-report
-          path: /tmp/gas-comment.md
+          path: gas-comment.md
