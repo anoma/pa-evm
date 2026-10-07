@@ -34,15 +34,4 @@ interface ILogicRefDenylist {
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
     /// @return isDenied Whether the denylist contains the logic reference or not.
     function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool isDenied);
-
-    /// @notice Returns the number of logic references in a denylist.
-    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    /// @return count The number of denied logic references.
-    function deniedLogicRefCount(bool consumed) external view returns (uint256 count);
-
-    /// @notice Returns the denied logic reference with the given index in a denylist.
-    /// @param index The index, in the order the logic references were denied.
-    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    /// @return logicRef The logic reference at the given index.
-    function deniedLogicRefAtIndex(uint256 index, bool consumed) external view returns (bytes32 logicRef);
 }
