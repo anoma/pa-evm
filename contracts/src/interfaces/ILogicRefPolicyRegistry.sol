@@ -6,7 +6,7 @@ pragma solidity ^0.8.30;
 /// @notice Policies restricting creation and consumption of resources carrying a logic reference.
 /// @custom:security-contact security@anoma.foundation
 interface ILogicRefPolicyRegistry {
-    /// @notice The denied resource operations. Values encode creation in bit 0 and consumption in bit 1.
+    /// @notice The restrictions on resource creation and consumption.
     enum LogicRefPolicy {
         Unrestricted,
         CreationDenied,

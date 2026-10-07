@@ -22,7 +22,7 @@ contract LogicRefPolicyRegistryTest is Test {
     }
 
     function test_all_transitions_and_resource_operations() public {
-        // Row-major truth table, independent of the implementation's bit encoding.
+        // Row-major truth table, independent of the transition implementation.
         bool[16] memory allowed =
             [false, true, true, true, false, false, false, true, false, false, false, true, false, false, false, false];
         bool[4] memory creationAllowed = [true, false, true, false];

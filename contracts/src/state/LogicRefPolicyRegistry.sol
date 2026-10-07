@@ -69,9 +69,12 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
         LogicRefPolicyRegistryStorage storage $ = _getLogicRefPolicyRegistryStorage();
         LogicRefPolicy previousPolicy = $._policies[logicRef];
-        // The enum encodes denied operations as bits. Strict inclusion rejects repeats and permission restoration.
+        // Only the five transitions that strictly add restrictions are allowed.
         require(
-            newPolicy != previousPolicy && (uint8(newPolicy) & uint8(previousPolicy)) == uint8(previousPolicy),
+            (previousPolicy == LogicRefPolicy.Unrestricted && newPolicy != LogicRefPolicy.Unrestricted)
+                || ((previousPolicy == LogicRefPolicy.CreationDenied
+                        || previousPolicy == LogicRefPolicy.ConsumptionDenied)
+                    && newPolicy == LogicRefPolicy.FullyDenied),
             InvalidLogicRefPolicyTransition(logicRef, previousPolicy, newPolicy)
         );
         $._policies[logicRef] = newPolicy;
@@ -86,7 +89,11 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
     /// @param consumed Whether the resource is consumed rather than created.
     function _checkLogicRefNotDenied(bytes32 logicRef, bool consumed) internal view {
         LogicRefPolicy policy = _getLogicRefPolicyRegistryStorage()._policies[logicRef];
-        require((uint8(policy) & (consumed ? 2 : 1)) == 0, ResourceWithDeniedLogicRef(logicRef, consumed));
+        require(
+            policy != LogicRefPolicy.FullyDenied
+                && policy != (consumed ? LogicRefPolicy.ConsumptionDenied : LogicRefPolicy.CreationDenied),
+            ResourceWithDeniedLogicRef(logicRef, consumed)
+        );
     }
 
     /// @notice Returns the namespaced registry storage.
