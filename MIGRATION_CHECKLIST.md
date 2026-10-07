@@ -60,6 +60,14 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   cast call <PROXY> "getKindTableCommitment()(bytes32)" --rpc-url <CHAIN>
   ```
 
+- [ ] Deprecate the logic reference that the chain's V1 ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The kind table's V1 members make V1 resources aliases of current ones, in both directions, so without this entry a transaction could create new V1 resources from current ones. V1 resources stay consumable, so they still convert and unwrap. Take the logic reference from the V1 forwarder that the forwarder repository records, and check that the chain's current ERC20 forwarder accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the v1 stop. Simulate, run, and read it back:
+
+  ```sh
+  just contracts-simulate-staging-logic-ref-denial <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
+  just contracts-execute-staging-logic-ref-denial deployer <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
+  cast call <PROXY> "isLogicRefDenied(bytes32,bool)(bool)" <V1_LOGIC_REF> false --rpc-url <CHAIN>
+  ```
+
 ## Per chain
 
 The stop in step 2 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction before the stop.
