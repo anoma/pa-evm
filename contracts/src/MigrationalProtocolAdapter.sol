@@ -3,11 +3,10 @@ pragma solidity ^0.8.30;
 
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
-import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
+import {ICommitmentTree as ICommitmentTreeV1} from "anoma-pa-evm-1.1.0/src/interfaces/ICommitmentTree.sol";
+import {INullifierSet as INullifierSetV1} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
-import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
 import {IMigrational} from "./interfaces/IMigrational.sol";
-import {INullifierSet} from "./interfaces/INullifierSet.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
 import {ProtocolAdapter} from "./ProtocolAdapter.sol";
@@ -20,7 +19,6 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
 contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
     using SafeCast for uint256;
 
@@ -35,11 +33,10 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error LeafCountExceedsCapacity(uint256 leafCount, uint256 capacity);
     error CommitmentTreeRootMismatch(bytes32 expected, bytes32 actual);
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
-    error HistoricalRootCountMismatch(uint256 expected, uint256 actual);
-    error HistoricalRootMismatch(uint256 index, bytes32 expected, bytes32 actual);
-    error NullifierBatchOutOfRange(uint256 available, uint256 requested);
-    error NullifierIndexMismatch(uint256 index, bytes32 expected, bytes32 actual);
-    error NullifierCountMismatch(uint256 expected, uint256 actual);
+    error MissingHistoricalRoot(bytes32 root);
+    error NullifierBatchOutOfRange(uint256 end, uint256 nullifierCount);
+    error NullifierBatchLeavesGap(uint256 start);
+    error MissingNullifier(bytes32 nullifier);
 
     /// @notice Reverts unless the v1 protocol adapter is stopped, so that its state cannot change while it is read.
     modifier whenProtocolAdapterV1Stopped() {
@@ -86,7 +83,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
         require($._merkleTree.leafCount() == 0, CommitmentTreeNotEmpty());
 
-        uint256 leafCount = ICommitmentTree(_PROTOCOL_ADAPTER_V1).commitmentCount();
+        uint256 leafCount = ICommitmentTreeV1(_PROTOCOL_ADAPTER_V1).commitmentCount();
         require(leafCount != 0, EmptyCommitmentTreeNotAllowed());
 
         uint8 treeDepth = sides.length.toUint8();
@@ -98,7 +95,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         $._merkleTree._zeros = _zeroHashes(treeDepth);
 
         // The sides are the only value a caller supplies, and this is what binds them to v1.
-        bytes32 expectedRoot = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
+        bytes32 expectedRoot = ICommitmentTreeV1(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
         bytes32 root = $._merkleTree.currentRoot();
         require(root == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: root}));
 
@@ -109,25 +106,28 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     }
 
     /// @inheritdoc IMigrational
-    function migrateNullifierSet(uint256 count) external override onlyOwner whenPaused whenProtocolAdapterV1Stopped {
-        EnumerableSet.Bytes32Set storage nullifiers = _getNullifierSetStorage()._nullifierSet;
-
-        uint256 start = nullifiers.length();
-        uint256 available = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount() - start;
+    function migrateNullifierSet(uint256 start, uint256 count)
+        external
+        override
+        onlyOwner
+        whenPaused
+        whenProtocolAdapterV1Stopped
+    {
+        uint256 end = start + count;
+        uint256 nullifierCount = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierCount();
         // solhint-disable-next-line gas-strict-inequalities
-        require(count <= available, NullifierBatchOutOfRange({available: available, requested: count}));
+        require(end <= nullifierCount, NullifierBatchOutOfRange({end: end, nullifierCount: nullifierCount}));
+
+        // The copied nullifiers stay v1's first ones: a later start leaves a gap, an earlier one repeats a nullifier.
+        require(
+            start == 0 || _isNullifierContained(INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(start - 1)),
+            NullifierBatchLeavesGap(start)
+        );
 
         // NOTE: v1 exposes no batch getter, and it is a fixed, stopped contract, so the read belongs in the loop.
         // forge-lint: disable-next-item(calls-loop)
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 index = start + i;
-
-            bytes32 nullifier = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(index);
-            _addNullifier(nullifier);
-
-            // The nullifier must occupy the same index here as it does in v1.
-            bytes32 stored = nullifiers.at(index);
-            require(stored == nullifier, NullifierIndexMismatch({index: index, expected: nullifier, actual: stored}));
+        for (uint256 i = start; i < end; ++i) {
+            _addNullifier(INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(i));
         }
 
         emit NullifierBatchMigrated({start: start, count: count});
@@ -153,41 +153,30 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
 
     /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the v1 protocol
     /// adapter. The historical roots are the one difference that stays: v1 keeps every root it ever had, this contract
-    /// keeps two — the empty-tree root at index 0, and the latest root of the stopped v1 protocol adapter at index 1.
+    /// keeps two, the empty-tree root and the latest root of the stopped v1 protocol adapter.
     function _checkStateMigrationIsComplete() internal view {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
-        uint256 expectedCommitments = ICommitmentTree(_PROTOCOL_ADAPTER_V1).commitmentCount();
+        uint256 expectedCommitments = ICommitmentTreeV1(_PROTOCOL_ADAPTER_V1).commitmentCount();
         uint256 actualCommitments = $._merkleTree.leafCount();
         require(
             actualCommitments == expectedCommitments,
             CommitmentCountMismatch({expected: expectedCommitments, actual: actualCommitments})
         );
 
-        bytes32 expectedRoot = ICommitmentTree(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
+        bytes32 expectedRoot = ICommitmentTreeV1(_PROTOCOL_ADAPTER_V1).latestCommitmentTreeRoot();
         bytes32 actualRoot = $._merkleTree.currentRoot();
         require(actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot}));
 
-        uint256 rootCount = $._roots.length();
-        require(rootCount == 2, HistoricalRootCountMismatch({expected: 2, actual: rootCount}));
+        require(_isCommitmentTreeRootContained(SHA256.EMPTY_HASH), MissingHistoricalRoot(SHA256.EMPTY_HASH));
+        require(_isCommitmentTreeRootContained(expectedRoot), MissingHistoricalRoot(expectedRoot));
 
-        bytes32 initialRoot = $._roots.at(0);
-        require(
-            initialRoot == SHA256.EMPTY_HASH,
-            HistoricalRootMismatch({index: 0, expected: SHA256.EMPTY_HASH, actual: initialRoot})
-        );
-
-        bytes32 copiedRoot = $._roots.at(1);
-        require(
-            copiedRoot == expectedRoot, HistoricalRootMismatch({index: 1, expected: expectedRoot, actual: copiedRoot})
-        );
-
-        uint256 expectedNullifiers = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount();
-        uint256 actualNullifiers = _getNullifierSetStorage()._nullifierSet.length();
-        require(
-            actualNullifiers == expectedNullifiers,
-            NullifierCountMismatch({expected: expectedNullifiers, actual: actualNullifiers})
-        );
+        // The copied nullifiers are v1's first ones, so they are all in once the last one is.
+        uint256 nullifierCount = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierCount();
+        if (nullifierCount != 0) {
+            bytes32 lastNullifier = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(nullifierCount - 1);
+            require(_isNullifierContained(lastNullifier), MissingNullifier(lastNullifier));
+        }
     }
 
     /// @notice Reverts unless the v1 protocol adapter is stopped.

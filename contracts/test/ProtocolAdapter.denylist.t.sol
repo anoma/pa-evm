@@ -109,7 +109,6 @@ contract ProtocolAdapterDenylistTest is Test {
         _deprecate(_DEPRECATED_LOGIC_REF);
 
         bytes32 root = _mockPa.latestCommitmentTreeRoot();
-        uint256 nullifiers = _mockPa.nullifierCount();
         uint256 commitments = _mockPa.commitmentCount();
 
         vm.expectRevert(
@@ -118,8 +117,13 @@ contract ProtocolAdapterDenylistTest is Test {
         _mockPa.execute(txn);
 
         assertEq(_mockPa.latestCommitmentTreeRoot(), root);
-        assertEq(_mockPa.nullifierCount(), nullifiers);
         assertEq(_mockPa.commitmentCount(), commitments);
+        bytes32[] memory nullifiers = TxGen.collectNullifiers(txn);
+        for (uint256 i = 0; i < nullifiers.length; ++i) {
+            assertFalse(
+                _mockPa.isNullifierContained(nullifiers[i]), "a nullifier of the rolled back transaction stayed"
+            );
+        }
     }
 
     function test_execute_reverts_if_a_deprecated_creation_is_relabelled_without_a_new_proof() public {
