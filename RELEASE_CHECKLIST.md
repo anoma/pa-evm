@@ -482,24 +482,45 @@ For **production**:
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
 
-## Denying Logic References
+## Restricting Logic Reference Policies
 
-Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist.
+Not a release. The owner supplies target policies in an ordered, atomic batch. Numeric values are `0 = Unrestricted`, `1 = CreationDenied`, `2 = ConsumptionDenied`, and `3 = FullyDenied`. Only these changes are allowed:
 
-Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, consumed)` pairs: `"[(<LOGIC_REF>,false)]"` deprecates a logic reference, and `"[(<LOGIC_REF>,true),(<LOGIC_REF>,false)]"` denies it.
+```mermaid
+stateDiagram-v2
+    Unrestricted --> CreationDenied
+    Unrestricted --> ConsumptionDenied
+    Unrestricted --> FullyDenied
+    CreationDenied --> FullyDenied
+    ConsumptionDenied --> FullyDenied
+```
+
+Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, target policy)` pairs: `"[(<LOGIC_REF>,1)]"` denies creation, `"[(<LOGIC_REF>,2)]"` denies consumption, and `"[(<LOGIC_REF>,3)]"` denies both in one update. Zero references, repeated policies, and any restoration of permissions revert the whole batch. A reference may appear twice if each change adds restrictions.
+
+Creation denial applies to every resource carrying the reference, including ephemeral forwarder carriers. Before using it to retire a reference, verify the application's conversion and withdrawal path with real proofs. Consumption remaining allowed is not sufficient by itself.
+
+### Upgrading from the legacy denylists
+
+This release replaces `denyLogicRefs`, the operation-specific queries and `LogicRefDenied` with `setLogicRefPolicies`, a single enumeration index, and `LogicRefPolicyChanged`. Update callers and event consumers together; the regenerated Rust bindings expose the new ABI.
+
+The upgrade scripts pass `initializeLogicRefPolicies()` to `upgradeToAndCall`. Initializer version 2 copies the legacy consumed list followed by created-only entries into a new namespace, preserving all four membership combinations and emitting one policy event per restricted reference. Legacy storage remains untouched. Fresh deployments initialize an empty registry; this upgrade callback only advances their initializer version and preserves any policies already set. The callback cannot be replayed. Import is supported when upgrading to the plain `ProtocolAdapter`, including from an older migrational proxy; the temporary `MigrationalProtocolAdapter` rejects this callback to stay within the EVM code-size limit.
+
+Before upgrading each existing proxy, read `deniedLogicRefCount(true)` and `deniedLogicRefCount(false)` and simulate the complete upgrade with its actual state and chain gas limit. The import is atomic and linear in those counts. If it cannot fit, do not broadcast: a separate rollout design is needed. An upgrade that omits the callback leaves execution, simulation, policy queries and policy updates reverting until the owner initializes the registry. Subsequent releases must replace the version-2 initialization calldata rather than replay it.
+
+### Applying policies
 
 For **staging**:
 
 - [ ] **Simulate** the denial by running
 
   ```sh
-  just contracts-simulate-staging-logic-ref-denial <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-staging-logic-ref-policies <PROXY> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-logic-ref-denial deployer <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-execute-staging-logic-ref-policies deployer <PROXY> <LOGIC_REFS> <CHAIN>
   ```
 
 For **production**:
@@ -507,13 +528,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the denial, by running
 
   ```sh
-  just contracts-simulate-production-logic-ref-denial-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-production-logic-ref-policies-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-logic-ref-denial deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-propose-production-logic-ref-policies deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

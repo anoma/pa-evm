@@ -46,8 +46,8 @@ delta proof.
 The PA's on-chain state — a Merkle tree of resource commitments and the set of
 spent nullifiers.
 
-**Logic ref denylist**:
-Two lists of logic refs, one for consumed and one for created resources: a transaction reverts if it consumes a resource whose logic ref is on the first list or creates a resource whose logic ref is on the second. The owner *deprecates* a logic ref once a newer circuit version replaces it: it goes on the list for created resources, and transactions still consume its resources. The owner *denies* a logic ref when its circuit turns out to be broken: it goes on both lists. No entry is ever removed. Say "denied" (not "refused" or "blocked").
+**Logic ref policy**:
+One policy per logic reference: `Unrestricted`, `CreationDenied`, `ConsumptionDenied`, or `FullyDenied`. It restricts creation and consumption of resources carrying that reference. The owner can only add restrictions; the two partial policies can each become `FullyDenied`, but cannot switch to each other. Denying creation includes ephemeral resources, so permitting consumption alone does not guarantee a working withdrawal path.
 
 **Forwarder**:
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA
