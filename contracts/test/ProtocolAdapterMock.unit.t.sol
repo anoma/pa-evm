@@ -298,6 +298,32 @@ contract ProtocolAdapterMockVerifierTest is Test {
         }
     }
 
+    /// @dev `execute` must also store the root when the last actions create nothing.
+    function testFuzz_execute_stores_the_latest_root(
+        uint8 actionCount,
+        uint8[5] memory consumedCounts,
+        uint8[5] memory createdCounts
+    ) public {
+        TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](bound(actionCount, 1, 5));
+        uint256 createdCount = 0;
+        for (uint256 i = 0; i < configs.length; ++i) {
+            configs[i] = TxGen.ActionConfig({
+                consumedCount: bound(consumedCounts[i], 1, 5), createdCount: bound(createdCounts[i], 0, 5)
+            });
+            createdCount += configs[i].createdCount;
+        }
+        vm.assume(createdCount != 0);
+
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
+        _mockPa.execute(txn);
+
+        assertTrue(
+            _mockPa.isCommitmentTreeRootHistorical(_mockPa.latestCommitmentTreeRoot()),
+            "the latest root should be a historical root"
+        );
+    }
+
     function test_execute_reverts_on_the_empty_transaction() public {
         IProtocolAdapter.Transaction memory txn = IProtocolAdapter.Transaction({
             actions: new IProtocolAdapter.Action[](0),
