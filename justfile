@@ -481,3 +481,5 @@ all-check:
     @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the gas report is up-to-date..."
+    @just contracts-gas-report-check
