@@ -69,6 +69,14 @@ Append the
 - `--no-match-coverage "(script|test|draft)"` to exclude scripts, tests, and drafts,
 - `--report lcov` to generate the `lcov.info` file that can be used by code review tooling.
 
+#### Gas Report
+
+[`docs/gas-report.md`](../docs/gas-report.md) lists the gas use of each external function of the contracts that `gas_reports` in `foundry.toml` names. The numbers come from the calls in the unit tests, not from fuzz runs. CI fails if the file is out of date, so the diff of a pull request shows its gas changes. To update the file, run from the repository root
+
+```sh
+just contracts-gen-gas-report
+```
+
 #### Linting & Static Analysis
 
 As a prerequisite, install the
