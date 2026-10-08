@@ -71,7 +71,7 @@ Append the
 
 #### Gas Report
 
-[`docs/gas-report.md`](../docs/gas-report.md) lists the gas use of each external function of the contracts that `gas_reports` in `foundry.toml` names. The numbers come from the calls in the unit tests, not from fuzz runs. CI fails if the file is out of date, so the diff of a pull request shows its gas changes. To update the file, run from the repository root
+[`docs/gas-report.md`](../docs/gas-report.md) lists the gas use of each external function of the contracts that `gas_reports` in `foundry.toml` names. The numbers come from the calls in the `test_` unit tests, not from fuzz or invariant runs. CI fails if the file is out of date, so the diff of a pull request shows its gas changes. To update the file, run from the repository root
 
 ```sh
 just contracts-gen-gas-report
