@@ -32,7 +32,7 @@ interface ICommitmentTree {
     /// @return zeros The zeros, from the leaf level up.
     function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
 
-    /// @notice Returns the latest  commitment tree root.
+    /// @notice Returns the latest commitment tree root: the root of the tree with all commitments added so far.
     /// @return root The latest commitment tree root.
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
 
@@ -40,13 +40,4 @@ interface ICommitmentTree {
     /// @param root The root to check.
     /// @return isContained Whether the root exists or not.
     function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
-
-    /// @notice Returns the number of commitment roots in the historical root set.
-    /// @return count The number of commitment roots in the set.
-    function commitmentTreeRootCount() external view returns (uint256 count);
-
-    /// @notice Returns the historical commitment tree root with the given index.
-    /// @param index The index to return the commitment tree root for.
-    /// @return root The root at the given index.
-    function commitmentTreeRootAtIndex(uint256 index) external view returns (bytes32 root);
 }
