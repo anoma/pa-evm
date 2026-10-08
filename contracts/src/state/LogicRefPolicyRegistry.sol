@@ -13,7 +13,6 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
     /// @custom:storage-location erc7201:anoma.storage.LogicRefPolicyRegistry
     struct LogicRefPolicyRegistryStorage {
         mapping(bytes32 logicRef => LogicRefPolicy policy) _policies;
-        bytes32[] _restrictedLogicRefs;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.LogicRefPolicyRegistry")) - 1)) & ~bytes32(uint256(0xff))
@@ -44,17 +43,7 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
         policy = _getLogicRefPolicyRegistryStorage()._policies[logicRef];
     }
 
-    /// @inheritdoc ILogicRefPolicyRegistry
-    function restrictedLogicRefCount() external view override returns (uint256 count) {
-        count = _getLogicRefPolicyRegistryStorage()._restrictedLogicRefs.length;
-    }
-
-    /// @inheritdoc ILogicRefPolicyRegistry
-    function restrictedLogicRefAtIndex(uint256 index) external view override returns (bytes32 logicRef) {
-        logicRef = _getLogicRefPolicyRegistryStorage()._restrictedLogicRefs[index];
-    }
-
-    /// @notice Initializes the registry. Policies default to Unrestricted and the index starts empty.
+    /// @notice Initializes the registry. Policies default to Unrestricted.
     /// @dev No storage writes are needed; this hook follows the parent initializer convention.
     // forge-lint: disable-next-line(mixed-case-function)
     function __LogicRefPolicyRegistry_init() internal onlyInitializing {}
@@ -62,7 +51,7 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
     /// @notice Reverts unless the caller may change policies.
     function _authorizeLogicRefPolicyChange() internal virtual;
 
-    /// @notice Adds restrictions and indexes a reference only on its first change.
+    /// @notice Adds restrictions to a logic reference.
     /// @param logicRef The nonzero logic reference.
     /// @param newPolicy The target policy.
     function _setLogicRefPolicy(bytes32 logicRef, LogicRefPolicy newPolicy) internal {
@@ -78,9 +67,6 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
             InvalidLogicRefPolicyTransition(logicRef, previousPolicy, newPolicy)
         );
         $._policies[logicRef] = newPolicy;
-        if (previousPolicy == LogicRefPolicy.Unrestricted) {
-            $._restrictedLogicRefs.push(logicRef);
-        }
         emit LogicRefPolicyChanged(logicRef, previousPolicy, newPolicy);
     }
 
@@ -97,7 +83,7 @@ abstract contract LogicRefPolicyRegistry is ILogicRefPolicyRegistry, Initializab
     }
 
     /// @notice Returns the namespaced registry storage.
-    /// @return registryStorage The policy mapping and enumeration index.
+    /// @return registryStorage The policy mapping.
     function _getLogicRefPolicyRegistryStorage()
         internal
         pure

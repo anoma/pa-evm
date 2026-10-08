@@ -40,13 +40,4 @@ interface ILogicRefPolicyRegistry {
     /// @param logicRef The logic reference to query.
     /// @return policy The current policy.
     function logicRefPolicy(bytes32 logicRef) external view returns (LogicRefPolicy policy);
-
-    /// @notice Returns the number of restricted logic references.
-    /// @return count The number of references in the enumeration index.
-    function restrictedLogicRefCount() external view returns (uint256 count);
-
-    /// @notice Returns a restricted reference in order of its first restriction.
-    /// @param index The index to query.
-    /// @return logicRef The restricted logic reference.
-    function restrictedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
 }

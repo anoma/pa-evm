@@ -12,8 +12,6 @@ interface ILogicRefPolicyRegistry {
     event LogicRefPolicyChanged(bytes32 indexed logicRef, LogicRefPolicy previousPolicy, LogicRefPolicy newPolicy);
 
     function logicRefPolicy(bytes32 logicRef) external view returns (LogicRefPolicy policy);
-    function restrictedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
-    function restrictedLogicRefCount() external view returns (uint256 count);
     function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
 }
 ```
@@ -36,38 +34,6 @@ interface ILogicRefPolicyRegistry {
         "name": "policy",
         "type": "uint8",
         "internalType": "enum ILogicRefPolicyRegistry.LogicRefPolicy"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "restrictedLogicRefAtIndex",
-    "inputs": [
-      {
-        "name": "index",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "logicRef",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "restrictedLogicRefCount",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "count",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -803,341 +769,6 @@ function logicRefPolicy(bytes32 logicRef) external view returns (LogicRefPolicy 
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `restrictedLogicRefAtIndex(uint256)` and selector `0xc37d757a`.
-```solidity
-function restrictedLogicRefAtIndex(uint256 index) external view returns (bytes32 logicRef);
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct restrictedLogicRefAtIndexCall {
-        #[allow(missing_docs)]
-        pub index: alloy::sol_types::private::primitives::aliases::U256,
-    }
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`restrictedLogicRefAtIndex(uint256)`](restrictedLogicRefAtIndexCall) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct restrictedLogicRefAtIndexReturn {
-        #[allow(missing_docs)]
-        pub logicRef: alloy::sol_types::private::FixedBytes<32>,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (
-                alloy::sol_types::private::primitives::aliases::U256,
-            );
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<restrictedLogicRefAtIndexCall>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: restrictedLogicRefAtIndexCall) -> Self {
-                    (value.index,)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for restrictedLogicRefAtIndexCall {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { index: tuple.0 }
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<restrictedLogicRefAtIndexReturn>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: restrictedLogicRefAtIndexReturn) -> Self {
-                    (value.logicRef,)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for restrictedLogicRefAtIndexReturn {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { logicRef: tuple.0 }
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for restrictedLogicRefAtIndexCall {
-            type Parameters<'a> = (alloy::sol_types::sol_data::Uint<256>,);
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = alloy::sol_types::private::FixedBytes<32>;
-            type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "restrictedLogicRefAtIndex(uint256)";
-            const SELECTOR: [u8; 4] = [195u8, 125u8, 117u8, 122u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                (
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(&self.index),
-                )
-            }
-            #[inline]
-            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                (
-                    <alloy::sol_types::sol_data::FixedBytes<
-                        32,
-                    > as alloy_sol_types::SolType>::tokenize(ret),
-                )
-            }
-            #[inline]
-            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
-                    .map(|r| {
-                        let r: restrictedLogicRefAtIndexReturn = r.into();
-                        r.logicRef
-                    })
-            }
-            #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(|r| {
-                        let r: restrictedLogicRefAtIndexReturn = r.into();
-                        r.logicRef
-                    })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `restrictedLogicRefCount()` and selector `0x8ee0a261`.
-```solidity
-function restrictedLogicRefCount() external view returns (uint256 count);
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct restrictedLogicRefCountCall;
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`restrictedLogicRefCount()`](restrictedLogicRefCountCall) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct restrictedLogicRefCountReturn {
-        #[allow(missing_docs)]
-        pub count: alloy::sol_types::private::primitives::aliases::U256,
-    }
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<restrictedLogicRefCountCall>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: restrictedLogicRefCountCall) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for restrictedLogicRefCountCall {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (
-                alloy::sol_types::private::primitives::aliases::U256,
-            );
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<restrictedLogicRefCountReturn>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: restrictedLogicRefCountReturn) -> Self {
-                    (value.count,)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for restrictedLogicRefCountReturn {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { count: tuple.0 }
-                }
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for restrictedLogicRefCountCall {
-            type Parameters<'a> = ();
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = alloy::sol_types::private::primitives::aliases::U256;
-            type ReturnTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "restrictedLogicRefCount()";
-            const SELECTOR: [u8; 4] = [142u8, 224u8, 162u8, 97u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                ()
-            }
-            #[inline]
-            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                (
-                    <alloy::sol_types::sol_data::Uint<
-                        256,
-                    > as alloy_sol_types::SolType>::tokenize(ret),
-                )
-            }
-            #[inline]
-            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
-                    .map(|r| {
-                        let r: restrictedLogicRefCountReturn = r.into();
-                        r.count
-                    })
-            }
-            #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(|r| {
-                        let r: restrictedLogicRefCountReturn = r.into();
-                        r.count
-                    })
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `setLogicRefPolicies((bytes32,uint8)[])` and selector `0xc75f304d`.
 ```solidity
 function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
@@ -1313,10 +944,6 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
         #[allow(missing_docs)]
         logicRefPolicy(logicRefPolicyCall),
         #[allow(missing_docs)]
-        restrictedLogicRefAtIndex(restrictedLogicRefAtIndexCall),
-        #[allow(missing_docs)]
-        restrictedLogicRefCount(restrictedLogicRefCountCall),
-        #[allow(missing_docs)]
         setLogicRefPolicies(setLogicRefPoliciesCall),
     }
     impl ILogicRefPolicyRegistryCalls {
@@ -1327,22 +954,16 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [142u8, 224u8, 162u8, 97u8],
-            [195u8, 125u8, 117u8, 122u8],
             [199u8, 95u8, 48u8, 77u8],
             [229u8, 237u8, 253u8, 34u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(restrictedLogicRefCount),
-            ::core::stringify!(restrictedLogicRefAtIndex),
             ::core::stringify!(setLogicRefPolicies),
             ::core::stringify!(logicRefPolicy),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <restrictedLogicRefCountCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <restrictedLogicRefAtIndexCall as alloy_sol_types::SolCall>::SIGNATURE,
             <setLogicRefPoliciesCall as alloy_sol_types::SolCall>::SIGNATURE,
             <logicRefPolicyCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
@@ -1370,19 +991,13 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
     #[automatically_derived]
     impl alloy_sol_types::SolInterface for ILogicRefPolicyRegistryCalls {
         const NAME: &'static str = "ILogicRefPolicyRegistryCalls";
-        const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 4usize;
+        const MIN_DATA_LENGTH: usize = 32usize;
+        const COUNT: usize = 2usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
                 Self::logicRefPolicy(_) => {
                     <logicRefPolicyCall as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::restrictedLogicRefAtIndex(_) => {
-                    <restrictedLogicRefAtIndexCall as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::restrictedLogicRefCount(_) => {
-                    <restrictedLogicRefCountCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::setLogicRefPolicies(_) => {
                     <setLogicRefPoliciesCall as alloy_sol_types::SolCall>::SELECTOR
@@ -1420,32 +1035,6 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
                 &[u8],
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ILogicRefPolicyRegistryCalls>] = &[
-                {
-                    fn restrictedLogicRefCount(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<ILogicRefPolicyRegistryCalls> {
-                        <restrictedLogicRefCountCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(ILogicRefPolicyRegistryCalls::restrictedLogicRefCount)
-                    }
-                    restrictedLogicRefCount
-                },
-                {
-                    fn restrictedLogicRefAtIndex(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<ILogicRefPolicyRegistryCalls> {
-                        <restrictedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(ILogicRefPolicyRegistryCalls::restrictedLogicRefAtIndex)
-                    }
-                    restrictedLogicRefAtIndex
-                },
                 {
                     fn setLogicRefPolicies(
                         data: &[u8],
@@ -1503,16 +1092,6 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
                         inner,
                     )
                 }
-                Self::restrictedLogicRefAtIndex(inner) => {
-                    <restrictedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
-                Self::restrictedLogicRefCount(inner) => {
-                    <restrictedLogicRefCountCall as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
                 Self::setLogicRefPolicies(inner) => {
                     <setLogicRefPoliciesCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
@@ -1525,18 +1104,6 @@ function setLogicRefPolicies(PolicyUpdate[] memory updates) external;
             match self {
                 Self::logicRefPolicy(inner) => {
                     <logicRefPolicyCall as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::restrictedLogicRefAtIndex(inner) => {
-                    <restrictedLogicRefAtIndexCall as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::restrictedLogicRefCount(inner) => {
-                    <restrictedLogicRefCountCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -1862,23 +1429,6 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             logicRef: alloy::sol_types::private::FixedBytes<32>,
         ) -> alloy_contract::SolCallBuilder<&P, logicRefPolicyCall, N> {
             self.call_builder(&logicRefPolicyCall { logicRef })
-        }
-        ///Creates a new call builder for the [`restrictedLogicRefAtIndex`] function.
-        pub fn restrictedLogicRefAtIndex(
-            &self,
-            index: alloy::sol_types::private::primitives::aliases::U256,
-        ) -> alloy_contract::SolCallBuilder<&P, restrictedLogicRefAtIndexCall, N> {
-            self.call_builder(
-                &restrictedLogicRefAtIndexCall {
-                    index,
-                },
-            )
-        }
-        ///Creates a new call builder for the [`restrictedLogicRefCount`] function.
-        pub fn restrictedLogicRefCount(
-            &self,
-        ) -> alloy_contract::SolCallBuilder<&P, restrictedLogicRefCountCall, N> {
-            self.call_builder(&restrictedLogicRefCountCall)
         }
         ///Creates a new call builder for the [`setLogicRefPolicies`] function.
         pub fn setLogicRefPolicies(

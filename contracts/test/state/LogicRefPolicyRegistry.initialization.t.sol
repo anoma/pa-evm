@@ -5,6 +5,8 @@ import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967P
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 
+import {ILogicRefPolicyRegistry} from "../../src/interfaces/ILogicRefPolicyRegistry.sol";
+
 import {LogicRefPolicyRegistryMock} from "../mocks/LogicRefPolicyRegistry.m.sol";
 
 contract LogicRefPolicyRegistryInitializationTest is Test {
@@ -27,7 +29,10 @@ contract LogicRefPolicyRegistryInitializationTest is Test {
     }
 
     function test_initialize_starts_with_an_empty_registry() public view {
-        assertEq(_registry.restrictedLogicRefCount(), 0);
+        assertEq(
+            uint8(_registry.logicRefPolicy(bytes32(uint256(1)))),
+            uint8(ILogicRefPolicyRegistry.LogicRefPolicy.Unrestricted)
+        );
     }
 
     /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.
