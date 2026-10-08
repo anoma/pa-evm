@@ -94,6 +94,12 @@ contracts-gen-bindings:
         --module \
         --overwrite
 
+# Regenerate the gas report of the contracts that `gas_reports` in foundry.toml lists
+contracts-gen-gas-report:
+    # `forge clean`, not `--force`: forge 1.8.5 can reuse test artifacts of another branch from its ABI cache.
+    # Fuzz tests use other inputs on each run, so the report leaves them out; `sed` keeps only the gas tables.
+    cd contracts && forge clean && forge test --gas-report --md --no-match-test testFuzz | sed -n '/^| /,/^$/p' | sed '$d' > ../docs/gas-report.md
+
 # Regenerate the recorded deployments library, then the Rust bindings
 contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
@@ -369,6 +375,10 @@ bindings-check: contracts-gen-bindings
 # Check the recorded deployments library is up-to-date
 contracts-deployments-check: contracts-gen-deployments
     git diff --exit-code contracts/generated/RecordedDeployments.sol
+
+# Check the gas report is up-to-date
+contracts-gas-report-check: contracts-gen-gas-report
+    git diff --exit-code docs/gas-report.md
 
 # Publish bindings
 bindings-publish *args:

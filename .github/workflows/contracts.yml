@@ -71,3 +71,6 @@ jobs:
         run: just contracts-test
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+
+      - name: Check that the gas report is up-to-date
+        run: just contracts-gas-report-check
