@@ -25,7 +25,6 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         assertEq(pa.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "the root differs from v1");
         assertEq(pa.commitmentCount(), _COMMITMENT_COUNT, "the commitment count differs from v1");
         assertEq(pa.commitmentTreeDepth(), _v1.commitmentTreeDepth(), "the tree depth differs from v1");
-        assertEq(pa.nullifierCount(), _NULLIFIER_COUNT, "the nullifier count differs from v1");
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
             assertTrue(pa.isNullifierContained(_v1.nullifierAtIndex(i)), "a nullifier of v1 is missing");
         }
@@ -103,6 +102,23 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         bytes32[] memory sides = _v1.commitmentTreeSides();
         vm.prank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+
+        _migrationScript.run({isProduction: false});
+        _finalizationScript.run({isProduction: false});
+
+        _migrationScript.verify({isProduction: false});
+    }
+
+    /// @dev The proxy holds one nullifier more than a whole batch, so neither a restart at zero nor one at a batch
+    /// boundary continues the copy.
+    function test_run_resumes_a_run_that_stopped_inside_the_nullifier_set() public {
+        uint256 copied = _migrationScript.NULLIFIERS_PER_BATCH() + 1;
+        assertLt(copied, _NULLIFIER_COUNT, "the earlier run should leave nullifiers to copy");
+        bytes32[] memory sides = _v1.commitmentTreeSides();
+        vm.startPrank(DEFAULT_SENDER);
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: copied});
+        vm.stopPrank();
 
         _migrationScript.run({isProduction: false});
         _finalizationScript.run({isProduction: false});

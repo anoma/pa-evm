@@ -12,7 +12,7 @@ interface IMigrational {
     event CommitmentTreeMigrated(bytes32 indexed root, uint256 leafCount);
 
     /// @notice Emitted when a batch of nullifiers has been migrated.
-    /// @param start The index of the first nullifier of the batch, in both protocol adapters.
+    /// @param start The index of the first nullifier of the batch in the v1 protocol adapter.
     /// @param count The number of nullifiers in the batch.
     event NullifierBatchMigrated(uint256 start, uint256 count);
 
@@ -25,10 +25,11 @@ interface IMigrational {
     /// expose through a getter, so it is passed in and checked against v1's root.
     function migrateCommitmentTree(bytes32[] calldata sides) external;
 
-    /// @notice Copies the next `count` nullifiers of the v1 protocol adapter in. Allowed while paused, and only while
-    /// the v1 protocol adapter is stopped. Call it until every nullifier is in.
+    /// @notice Copies `count` nullifiers of the v1 protocol adapter in, from index `start` on. Allowed while paused,
+    /// and only while the v1 protocol adapter is stopped. Call it until every nullifier is in.
+    /// @param start The v1 index of the first nullifier to copy. It must equal the number of nullifiers copied so far.
     /// @param count The number of nullifiers to copy in this batch.
-    function migrateNullifierSet(uint256 count) external;
+    function migrateNullifierSet(uint256 start, uint256 count) external;
 
     /// @notice Returns the v1 protocol adapter this contract copies its state from.
     /// @return protocolAdapterV1 The v1 protocol adapter.
