@@ -22,7 +22,7 @@ contract CommitmentTreeInitializationTest is Test {
         CommitmentTreeMock newCmAcc = _deployCommitmentTreeMock();
         assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
         assertTrue(
-            newCmAcc.isCommitmentTreeRootContained(SHA256.EMPTY_HASH), "The initial root should be a historical root."
+            newCmAcc.isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), "The initial root should be a historical root."
         );
     }
 

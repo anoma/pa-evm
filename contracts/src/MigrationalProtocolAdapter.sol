@@ -168,8 +168,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         bytes32 actualRoot = $._merkleTree.currentRoot();
         require(actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot}));
 
-        require(_isCommitmentTreeRootContained(SHA256.EMPTY_HASH), MissingHistoricalRoot(SHA256.EMPTY_HASH));
-        require(_isCommitmentTreeRootContained(expectedRoot), MissingHistoricalRoot(expectedRoot));
+        require(_isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), MissingHistoricalRoot(SHA256.EMPTY_HASH));
+        require(_isCommitmentTreeRootHistorical(expectedRoot), MissingHistoricalRoot(expectedRoot));
 
         // The copied nullifiers are v1's first ones, so they are all in once the last one is.
         uint256 nullifierCount = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierCount();

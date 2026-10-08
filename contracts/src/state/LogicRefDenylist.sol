@@ -12,7 +12,7 @@ import {ILogicRefDenylist} from "../interfaces/ILogicRefDenylist.sol";
 /// @dev No function removes an entry.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
-    /// @notice Whether each denylist contains a logic reference, in one storage slot so that a check reads one slot.
+    /// @notice Whether the resource consumption or creation for a specific logic ref is denied or not.
     struct Denial {
         bool consumed; //  ┐   1
         bool created; //   ┘ + 1 = 2

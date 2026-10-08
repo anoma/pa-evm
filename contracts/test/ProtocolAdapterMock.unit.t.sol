@@ -333,8 +333,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 resourceIndex,
         bytes32 fakeRoot
     ) public {
-        // Assume the proposed commitment tree root is not already contained.
-        vm.assume(!_mockPa.isCommitmentTreeRootContained(fakeRoot));
+        // Assume the proposed commitment tree root is not a historical root.
+        vm.assume(!_mockPa.isCommitmentTreeRootHistorical(fakeRoot));
 
         // Choose a random consumed resource among the actions.
         (actionCount, resourcePairCount, actionIndex, resourceIndex) =

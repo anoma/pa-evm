@@ -215,9 +215,8 @@ contract ProtocolAdapter is
 
             _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
 
-            // Check that the referenced commitment tree root is part of the historical roots.
             require(
-                _isCommitmentTreeRootContained(consumed.commitmentTreeRoot),
+                _isCommitmentTreeRootHistorical(consumed.commitmentTreeRoot),
                 NonExistingRoot(consumed.commitmentTreeRoot)
             );
 

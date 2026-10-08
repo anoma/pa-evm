@@ -10,7 +10,7 @@ interface ICommitmentTree {
     function commitmentTreeDepth() external view returns (uint8 depth);
     function commitmentTreeSides() external view returns (bytes32[] memory sides);
     function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
-    function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
+    function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isHistorical);
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
 }
 ```
@@ -85,7 +85,7 @@ interface ICommitmentTree {
   },
   {
     "type": "function",
-    "name": "isCommitmentTreeRootContained",
+    "name": "isCommitmentTreeRootHistorical",
     "inputs": [
       {
         "name": "root",
@@ -95,7 +95,7 @@ interface ICommitmentTree {
     ],
     "outputs": [
       {
-        "name": "isContained",
+        "name": "isHistorical",
         "type": "bool",
         "internalType": "bool"
       }
@@ -1113,24 +1113,24 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `isCommitmentTreeRootContained(bytes32)` and selector `0xc879dbe4`.
+    /**Function with signature `isCommitmentTreeRootHistorical(bytes32)` and selector `0xf8adf4c3`.
 ```solidity
-function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
+function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isHistorical);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct isCommitmentTreeRootContainedCall {
+    pub struct isCommitmentTreeRootHistoricalCall {
         #[allow(missing_docs)]
         pub root: alloy::sol_types::private::FixedBytes<32>,
     }
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`isCommitmentTreeRootContained(bytes32)`](isCommitmentTreeRootContainedCall) function.
+    ///Container type for the return parameters of the [`isCommitmentTreeRootHistorical(bytes32)`](isCommitmentTreeRootHistoricalCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct isCommitmentTreeRootContainedReturn {
+    pub struct isCommitmentTreeRootHistoricalReturn {
         #[allow(missing_docs)]
-        pub isContained: bool,
+        pub isHistorical: bool,
     }
     #[allow(
         non_camel_case_types,
@@ -1159,16 +1159,16 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<isCommitmentTreeRootContainedCall>
+            impl ::core::convert::From<isCommitmentTreeRootHistoricalCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: isCommitmentTreeRootContainedCall) -> Self {
+                fn from(value: isCommitmentTreeRootHistoricalCall) -> Self {
                     (value.root,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for isCommitmentTreeRootContainedCall {
+            for isCommitmentTreeRootHistoricalCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self { root: tuple.0 }
                 }
@@ -1193,23 +1193,23 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<isCommitmentTreeRootContainedReturn>
+            impl ::core::convert::From<isCommitmentTreeRootHistoricalReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: isCommitmentTreeRootContainedReturn) -> Self {
-                    (value.isContained,)
+                fn from(value: isCommitmentTreeRootHistoricalReturn) -> Self {
+                    (value.isHistorical,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for isCommitmentTreeRootContainedReturn {
+            for isCommitmentTreeRootHistoricalReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { isContained: tuple.0 }
+                    Self { isHistorical: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for isCommitmentTreeRootContainedCall {
+        impl alloy_sol_types::SolCall for isCommitmentTreeRootHistoricalCall {
             type Parameters<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -1219,8 +1219,8 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "isCommitmentTreeRootContained(bytes32)";
-            const SELECTOR: [u8; 4] = [200u8, 121u8, 219u8, 228u8];
+            const SIGNATURE: &'static str = "isCommitmentTreeRootHistorical(bytes32)";
+            const SELECTOR: [u8; 4] = [248u8, 173u8, 244u8, 195u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -1249,8 +1249,8 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: isCommitmentTreeRootContainedReturn = r.into();
-                        r.isContained
+                        let r: isCommitmentTreeRootHistoricalReturn = r.into();
+                        r.isHistorical
                     })
             }
             #[inline]
@@ -1265,8 +1265,8 @@ function isCommitmentTreeRootContained(bytes32 root) external view returns (bool
                         config,
                     )
                     .map(|r| {
-                        let r: isCommitmentTreeRootContainedReturn = r.into();
-                        r.isContained
+                        let r: isCommitmentTreeRootHistoricalReturn = r.into();
+                        r.isHistorical
                     })
             }
             #[inline]
@@ -1458,7 +1458,7 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
         #[allow(missing_docs)]
         commitmentTreeZeros(commitmentTreeZerosCall),
         #[allow(missing_docs)]
-        isCommitmentTreeRootContained(isCommitmentTreeRootContainedCall),
+        isCommitmentTreeRootHistorical(isCommitmentTreeRootHistoricalCall),
         #[allow(missing_docs)]
         latestCommitmentTreeRoot(latestCommitmentTreeRootCall),
     }
@@ -1474,8 +1474,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
             [160u8, 96u8, 86u8, 247u8],
             [189u8, 235u8, 68u8, 45u8],
             [196u8, 73u8, 86u8, 209u8],
-            [200u8, 121u8, 219u8, 228u8],
             [237u8, 131u8, 205u8, 199u8],
+            [248u8, 173u8, 244u8, 195u8],
             [254u8, 24u8, 171u8, 145u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
@@ -1484,8 +1484,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
             ::core::stringify!(commitmentTreeDepth),
             ::core::stringify!(latestCommitmentTreeRoot),
             ::core::stringify!(commitmentCount),
-            ::core::stringify!(isCommitmentTreeRootContained),
             ::core::stringify!(commitmentTreeSides),
+            ::core::stringify!(isCommitmentTreeRootHistorical),
             ::core::stringify!(commitmentTreeCapacity),
         ];
         /// The signatures in the same order as `SELECTORS`.
@@ -1494,8 +1494,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
             <commitmentTreeDepthCall as alloy_sol_types::SolCall>::SIGNATURE,
             <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentCountCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentTreeSidesCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -1542,8 +1542,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 Self::commitmentTreeZeros(_) => {
                     <commitmentTreeZerosCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::isCommitmentTreeRootContained(_) => {
-                    <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::isCommitmentTreeRootHistorical(_) => {
+                    <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::latestCommitmentTreeRoot(_) => {
                     <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::SELECTOR
@@ -1634,19 +1634,6 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     commitmentCount
                 },
                 {
-                    fn isCommitmentTreeRootContained(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(ICommitmentTreeCalls::isCommitmentTreeRootContained)
-                    }
-                    isCommitmentTreeRootContained
-                },
-                {
                     fn commitmentTreeSides(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
@@ -1658,6 +1645,19 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                             .map(ICommitmentTreeCalls::commitmentTreeSides)
                     }
                     commitmentTreeSides
+                },
+                {
+                    fn isCommitmentTreeRootHistorical(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
+                        <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(ICommitmentTreeCalls::isCommitmentTreeRootHistorical)
+                    }
+                    isCommitmentTreeRootHistorical
                 },
                 {
                     fn commitmentTreeCapacity(
@@ -1723,8 +1723,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                         inner,
                     )
                 }
-                Self::isCommitmentTreeRootContained(inner) => {
-                    <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::isCommitmentTreeRootHistorical(inner) => {
+                    <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -1768,8 +1768,8 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                         out,
                     )
                 }
-                Self::isCommitmentTreeRootContained(inner) => {
-                    <isCommitmentTreeRootContainedCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::isCommitmentTreeRootHistorical(inner) => {
+                    <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -2110,13 +2110,13 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeZerosCall, N> {
             self.call_builder(&commitmentTreeZerosCall)
         }
-        ///Creates a new call builder for the [`isCommitmentTreeRootContained`] function.
-        pub fn isCommitmentTreeRootContained(
+        ///Creates a new call builder for the [`isCommitmentTreeRootHistorical`] function.
+        pub fn isCommitmentTreeRootHistorical(
             &self,
             root: alloy::sol_types::private::FixedBytes<32>,
-        ) -> alloy_contract::SolCallBuilder<&P, isCommitmentTreeRootContainedCall, N> {
+        ) -> alloy_contract::SolCallBuilder<&P, isCommitmentTreeRootHistoricalCall, N> {
             self.call_builder(
-                &isCommitmentTreeRootContainedCall {
+                &isCommitmentTreeRootHistoricalCall {
                     root,
                 },
             )

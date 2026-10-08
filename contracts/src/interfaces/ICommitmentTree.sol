@@ -36,8 +36,8 @@ interface ICommitmentTree {
     /// @return root The latest commitment tree root.
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
 
-    /// @notice Returns whether a commitment tree root is contained in the set of historical roots or not.
-    /// @param root The root to check.
-    /// @return isContained Whether the root exists or not.
-    function isCommitmentTreeRootContained(bytes32 root) external view returns (bool isContained);
+    /// @notice Returns whether a consumed resource can reference a commitment tree root.
+    /// @param root The commitment tree root that a consumed resource references.
+    /// @return isHistorical Whether the contract stored the root as a historical root.
+    function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isHistorical);
 }

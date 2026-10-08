@@ -105,8 +105,8 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_migrateCommitmentTree_keeps_the_empty_tree_root_and_v1_s_latest_root() public {
         _migrateCommitmentTree();
 
-        assertTrue(_pa.isCommitmentTreeRootContained(SHA256.EMPTY_HASH), "the empty-tree root should stay");
-        assertTrue(_pa.isCommitmentTreeRootContained(_v1.latestCommitmentTreeRoot()), "v1's latest root is missing");
+        assertTrue(_pa.isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), "the empty-tree root should stay");
+        assertTrue(_pa.isCommitmentTreeRootHistorical(_v1.latestCommitmentTreeRoot()), "v1's latest root is missing");
     }
 
     function test_unpause_reverts_if_the_empty_tree_root_is_missing() public {
