@@ -268,7 +268,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         assertEq(_mockPa.latestCommitmentTreeRoot(), rootBefore, "the latest root should be unchanged");
         assertEq(_mockPa.commitmentTreeRootCount(), rootCountBefore, "no root should have been stored");
-        assertEq(_mockPa.nullifierCount(), 2, "the nullifiers should have been added");
+        bytes32[] memory nullifiers = TxGen.collectNullifiers(txn);
+        for (uint256 i = 0; i < nullifiers.length; ++i) {
+            assertTrue(_mockPa.isNullifierContained(nullifiers[i]), "the nullifiers should have been added");
+        }
 
         // A second consume-only transaction executes as well.
         (txn,) = vm.transaction({mockVerifier: _mockVerifier, nonce: updatedNonce, configs: configs});
@@ -496,12 +499,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         );
     }
 
-    function testFuzz_execute_updates_nullifier_set_exactly_with_desired_nullifiers(
-        uint8 actionCount,
-        uint8 resourcePairCount
-    ) public {
+    function testFuzz_execute_adds_the_nullifiers_of_the_transaction(uint8 actionCount, uint8 resourcePairCount)
+        public
+    {
         (actionCount, resourcePairCount,,) = _bindParameters(actionCount, resourcePairCount, 0, 0);
-        assertEq(_mockPa.nullifierCount(), 0, "initial nullifier count should be 0");
         (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
@@ -513,8 +514,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
 
         bytes32[] memory nlfs = TxGen.collectNullifiers(txn);
-
-        assertEq(_mockPa.nullifierCount(), nlfs.length, "nullifier count should match collected nullifiers");
 
         for (uint256 i = 0; i < nlfs.length; ++i) {
             assertTrue(_mockPa.isNullifierContained(nlfs[i]), "nullifier should be contained after execution");

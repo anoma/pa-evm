@@ -20,6 +20,7 @@ import {MerkleTree} from "../src/libs/MerkleTree.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
 import {MigrationalProtocolAdapter} from "../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {MigrationalProtocolAdapterZeroHashesMock} from "./mocks/MigrationalProtocolAdapterZeroHashes.m.sol";
 import {ProtocolAdapterV1Mock} from "./mocks/ProtocolAdapterV1.m.sol";
@@ -160,7 +161,7 @@ contract MigrationalProtocolAdapterTest is Test {
 
         _pa.execute(txn);
 
-        assertEq(_pa.nullifierCount(), _NULLIFIER_COUNT + 1, "the transaction did not settle");
+        assertTrue(_pa.isNullifierContained(TxGen.collectNullifiers(txn)[0]), "the transaction did not settle");
     }
 
     function test_migrateCommitmentTree_reverts_on_sides_that_do_not_reproduce_the_v1_root() public {
@@ -236,16 +237,15 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.startPrank(_OWNER);
         vm.expectEmit(address(_pa));
         emit IMigrational.NullifierBatchMigrated({start: 0, count: 3});
-        _pa.migrateNullifierSet(3);
+        _pa.migrateNullifierSet({start: 0, count: 3});
 
         vm.expectEmit(address(_pa));
         emit IMigrational.NullifierBatchMigrated({start: 3, count: _NULLIFIER_COUNT - 3});
-        _pa.migrateNullifierSet(_NULLIFIER_COUNT - 3);
+        _pa.migrateNullifierSet({start: 3, count: _NULLIFIER_COUNT - 3});
         vm.stopPrank();
 
-        assertEq(_pa.nullifierCount(), _v1.nullifierCount(), "nullifier count differs from v1");
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
-            assertEq(_pa.nullifierAtIndex(i), _v1.nullifierAtIndex(i), "a nullifier sits at a different index");
+            assertTrue(_pa.isNullifierContained(_v1.nullifierAtIndex(i)), "a nullifier of v1 is missing");
         }
     }
 
@@ -253,16 +253,16 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                MigrationalProtocolAdapter.NullifierBatchOutOfRange.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT + 1
+                MigrationalProtocolAdapter.NullifierBatchOutOfRange.selector, _NULLIFIER_COUNT + 1, _NULLIFIER_COUNT
             )
         );
-        _pa.migrateNullifierSet(_NULLIFIER_COUNT + 1);
+        _pa.migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT + 1});
     }
 
     function test_migrateNullifierSet_reverts_for_an_unauthorized_caller() public {
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER));
-        _pa.migrateNullifierSet(1);
+        _pa.migrateNullifierSet({start: 0, count: 1});
     }
 
     function test_unpause_reverts_before_the_commitment_tree_is_copied_in() public {
@@ -278,11 +278,11 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_unpause_reverts_while_nullifiers_are_missing() public {
         _migrateCommitmentTree();
         vm.startPrank(_OWNER);
-        _pa.migrateNullifierSet(_NULLIFIER_COUNT - 1);
+        _pa.migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT - 1});
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                MigrationalProtocolAdapter.NullifierCountMismatch.selector, _NULLIFIER_COUNT, _NULLIFIER_COUNT - 1
+                MigrationalProtocolAdapter.MissingNullifier.selector, _v1.nullifierAtIndex(_NULLIFIER_COUNT - 1)
             )
         );
         _pa.unpause();
@@ -305,7 +305,7 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.migrateCommitmentTree(sides);
 
         vm.expectRevert(Pausable.ExpectedPause.selector);
-        _pa.migrateNullifierSet(1);
+        _pa.migrateNullifierSet({start: 0, count: 1});
         vm.stopPrank();
     }
 
@@ -343,12 +343,50 @@ contract MigrationalProtocolAdapterTest is Test {
         ProtocolAdapter base = ProtocolAdapter(address(_pa));
         assertEq(base.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "the root should survive");
         assertEq(base.commitmentCount(), _COMMITMENT_COUNT, "the commitments should survive");
-        assertEq(base.nullifierCount(), _NULLIFIER_COUNT, "the nullifiers should survive");
+        for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
+            assertTrue(base.isNullifierContained(_v1.nullifierAtIndex(i)), "the nullifiers should survive");
+        }
         assertFalse(base.paused(), "the adapter should stay unpaused");
 
         vm.prank(_OWNER);
         vm.expectRevert();
-        _pa.migrateNullifierSet(1);
+        _pa.migrateNullifierSet({start: 0, count: 1});
+    }
+
+    function test_migrateNullifierSet_reverts_on_a_batch_that_leaves_a_gap() public {
+        uint256 copied = 3;
+        vm.startPrank(_OWNER);
+        _pa.migrateNullifierSet({start: 0, count: copied});
+
+        vm.expectRevert(abi.encodeWithSelector(MigrationalProtocolAdapter.NullifierBatchLeavesGap.selector, copied + 1));
+        _pa.migrateNullifierSet({start: copied + 1, count: 1});
+        vm.stopPrank();
+    }
+
+    function test_migrateNullifierSet_reverts_on_a_batch_that_repeats_a_nullifier() public {
+        uint256 copied = 3;
+        vm.startPrank(_OWNER);
+        _pa.migrateNullifierSet({start: 0, count: copied});
+
+        vm.expectRevert(
+            abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _v1.nullifierAtIndex(copied - 1))
+        );
+        _pa.migrateNullifierSet({start: copied - 1, count: 2});
+        vm.stopPrank();
+    }
+
+    function test_unpause_succeeds_for_a_v1_protocol_adapter_without_nullifiers() public {
+        ProtocolAdapterV1Mock v1 = _deployProtocolAdapterV1({commitments: 1, nullifiers: 0});
+        v1.emergencyStop();
+        MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(v1));
+        bytes32[] memory sides = v1.commitmentTreeSides();
+
+        vm.startPrank(_OWNER);
+        pa.migrateCommitmentTree(sides);
+        pa.unpause();
+        vm.stopPrank();
+
+        assertFalse(pa.paused(), "the protocol adapter should be unpaused");
     }
 
     function test_initialize_starts_paused_and_records_the_v1_protocol_adapter() public view {
@@ -396,7 +434,7 @@ contract MigrationalProtocolAdapterTest is Test {
     function _copyInEverything() internal {
         _migrateCommitmentTree();
         vm.prank(_OWNER);
-        _pa.migrateNullifierSet(_NULLIFIER_COUNT);
+        _pa.migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT});
     }
 
     function _seedState() internal {

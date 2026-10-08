@@ -2,6 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
+import {INullifierSet as INullifierSetV1} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
@@ -49,9 +50,6 @@ contract MigrateProtocolAdapterState is MigrationScript {
 
     /// @notice Thrown if the copied commitment tree holds a different number of commitments than v1.
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
-
-    /// @notice Thrown if the copied nullifier set holds a different number of nullifiers than v1.
-    error NullifierCountMismatch(uint256 expected, uint256 actual);
 
     /// @notice Thrown if a nullifier of v1 is absent from the copied set.
     error MissingNullifier(bytes32 nullifier);
@@ -126,24 +124,23 @@ contract MigrateProtocolAdapterState is MigrationScript {
         MigrationalProtocolAdapter(proxy).migrateCommitmentTree(sides);
     }
 
-    /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction. The proxy reads each
-    /// batch from the v1 protocol adapter itself and resumes at the index it has reached, so a batch can neither be
-    /// skipped nor repeated.
+    /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction, resuming from the first
+    /// nullifier an earlier run did not copy. The proxy rejects batches that leave gaps or repeat nullifiers.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The v2 protocol adapter proxy.
     function _migrateNullifierSet(address protocolAdapterV1, address proxy) internal {
-        uint256 total = INullifierSet(protocolAdapterV1).nullifierCount();
+        uint256 total = INullifierSetV1(protocolAdapterV1).nullifierCount();
         address owner = MigrationalProtocolAdapter(proxy).owner();
 
         for (
-            uint256 migrated = INullifierSet(proxy).nullifierCount();
+            uint256 migrated = _migratedNullifierCount({protocolAdapterV1: protocolAdapterV1, proxy: proxy});
             migrated < total;
             migrated += NULLIFIERS_PER_BATCH
         ) {
             uint256 size = Math.min(NULLIFIERS_PER_BATCH, total - migrated);
 
             vm.broadcast(owner);
-            MigrationalProtocolAdapter(proxy).migrateNullifierSet(size);
+            MigrationalProtocolAdapter(proxy).migrateNullifierSet({start: migrated, count: size});
         }
     }
 
@@ -171,8 +168,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks the proxy against the stopped v1 protocol adapter: the latest root, the commitment count, the
-    /// nullifier count, and every nullifier. Reverts on the first difference.
+    /// @notice Checks the proxy against the stopped v1 protocol adapter: the latest root, the commitment count, and
+    /// every nullifier. Reverts on the first difference.
     /// @param protocolAdapterV1 The stopped v1 protocol adapter.
     /// @param proxy The v2 protocol adapter proxy.
     function _check(address protocolAdapterV1, address proxy) internal view {
@@ -184,16 +181,30 @@ contract MigrateProtocolAdapterState is MigrationScript {
         uint256 actualCount = ICommitmentTree(proxy).commitmentCount();
         require(actualCount == expectedCount, CommitmentCountMismatch({expected: expectedCount, actual: actualCount}));
 
-        uint256 expectedNullifiers = INullifierSet(protocolAdapterV1).nullifierCount();
-        uint256 actualNullifiers = INullifierSet(proxy).nullifierCount();
-        require(
-            actualNullifiers == expectedNullifiers,
-            NullifierCountMismatch({expected: expectedNullifiers, actual: actualNullifiers})
-        );
-
-        for (uint256 i = 0; i < expectedNullifiers; ++i) {
-            bytes32 nullifier = INullifierSet(protocolAdapterV1).nullifierAtIndex(i);
+        uint256 nullifierCount = INullifierSetV1(protocolAdapterV1).nullifierCount();
+        for (uint256 i = 0; i < nullifierCount; ++i) {
+            bytes32 nullifier = INullifierSetV1(protocolAdapterV1).nullifierAtIndex(i);
             require(INullifierSet(proxy).isNullifierContained(nullifier), MissingNullifier(nullifier));
+        }
+    }
+
+    /// @notice Returns the number of v1 nullifiers that the proxy holds. The proxy holds v1's first nullifiers, so a
+    /// binary search over the v1 indices finds where they end.
+    /// @param protocolAdapterV1 The stopped v1 protocol adapter.
+    /// @param proxy The v2 protocol adapter proxy.
+    /// @return count The number of copied nullifiers, which is also the v1 index of the next one to copy.
+    function _migratedNullifierCount(address protocolAdapterV1, address proxy) internal view returns (uint256 count) {
+        uint256 end = INullifierSetV1(protocolAdapterV1).nullifierCount();
+
+        while (count < end) {
+            uint256 middle = Math.average(count, end);
+            bytes32 nullifier = INullifierSetV1(protocolAdapterV1).nullifierAtIndex(middle);
+
+            if (INullifierSet(proxy).isNullifierContained(nullifier)) {
+                count = middle + 1;
+            } else {
+                end = middle;
+            }
         }
     }
 
