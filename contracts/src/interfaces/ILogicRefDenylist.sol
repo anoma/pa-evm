@@ -29,9 +29,9 @@ interface ILogicRefDenylist {
     /// application creates its resources any more, since such a transaction reverts.
     function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external;
 
-    /// @notice Returns whether a denylist contains a given logic reference or not.
+    /// @notice Returns whether a denylist contains a logic reference.
     /// @param logicRef The logic reference to check.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    /// @return isDenied Whether the denylist contains the logic reference or not.
+    /// @return isDenied Whether the denylist contains the logic reference.
     function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool isDenied);
 }

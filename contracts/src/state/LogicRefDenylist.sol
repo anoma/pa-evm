@@ -12,7 +12,7 @@ import {ILogicRefDenylist} from "../interfaces/ILogicRefDenylist.sol";
 /// @dev No function removes an entry.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
-    /// @notice Whether the resource consumption or creation for a specific logic ref is denied or not.
+    /// @notice Whether the consumption and the creation of resources that carry a logic reference are denied.
     struct Denial {
         bool consumed; //  ┐   1
         bool created; //   ┘ + 1 = 2
@@ -91,7 +91,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     /// @notice Returns whether the denylist for consumed or for created resources contains a logic reference.
     /// @param logicRef The logic reference to check.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    /// @return isDenied Whether the denylist contains the logic reference or not.
+    /// @return isDenied Whether the denylist contains the logic reference.
     function _isLogicRefDenied(bytes32 logicRef, bool consumed) internal view returns (bool isDenied) {
         Denial storage denial = _getLogicRefDenylistStorage()._denials[logicRef];
 
