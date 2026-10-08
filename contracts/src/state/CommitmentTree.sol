@@ -9,8 +9,8 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 /// @title CommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice A commitment tree being inherited by the protocol adapter.
-/// @dev The contract is based on a modified version of OZ's `MerkleTree` implementation. The set of historical roots
-/// stores whether it contains a root. It neither counts nor lists the roots.
+/// @dev The tree is a modified version of OpenZeppelin's `MerkleTree`, and the set of historical roots neither counts
+/// nor lists its roots.
 /// @custom:security-contact security@anoma.foundation
 abstract contract CommitmentTree is ICommitmentTree, Initializable {
     using MerkleTree for MerkleTree.Tree;
@@ -18,7 +18,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     /// @custom:storage-location erc7201:anoma.storage.CommitmentTree
     struct CommitmentTreeStorage {
         MerkleTree.Tree _merkleTree;
-        mapping(bytes32 root => bool isContained) _roots;
+        mapping(bytes32 root => bool isHistorical) _historicalRoots;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.CommitmentTree")) - 1)) & ~bytes32(uint256(0xff))
@@ -70,8 +70,8 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
-    function isCommitmentTreeRootContained(bytes32 root) external view override returns (bool isContained) {
-        isContained = _isCommitmentTreeRootContained(root);
+    function isCommitmentTreeRootHistorical(bytes32 root) external view override returns (bool isHistorical) {
+        isHistorical = _isCommitmentTreeRootHistorical(root);
     }
 
     /// @inheritdoc ICommitmentTree
@@ -88,7 +88,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
 
         bytes32 initialRoot = $._merkleTree.setup();
 
-        $._roots[initialRoot] = true;
+        $._historicalRoots[initialRoot] = true;
 
         emit CommitmentTreeRootAdded({root: initialRoot});
     }
@@ -108,19 +108,19 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     function _addCommitmentTreeRoot(bytes32 root) internal {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
-        require(!$._roots[root], PreExistingRoot(root));
-        $._roots[root] = true;
+        require(!$._historicalRoots[root], PreExistingRoot(root));
+        $._historicalRoots[root] = true;
 
         emit CommitmentTreeRootAdded(root);
     }
 
-    /// @notice Checks if a commitment tree root is contained in the set of historical roots.
-    /// @param root The root to check.
-    /// @return isContained Whether the root exists or not.
-    function _isCommitmentTreeRootContained(bytes32 root) internal view returns (bool isContained) {
+    /// @notice Returns whether the set of historical roots contains a commitment tree root.
+    /// @param root The commitment tree root to look up.
+    /// @return isHistorical Whether a consumed resource can reference the root.
+    function _isCommitmentTreeRootHistorical(bytes32 root) internal view returns (bool isHistorical) {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
-        isContained = $._roots[root];
+        isHistorical = $._historicalRoots[root];
     }
 
     /// @notice Returns the storage from the commitment tree storage location.
