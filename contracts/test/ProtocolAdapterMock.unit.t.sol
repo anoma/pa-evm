@@ -257,7 +257,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_executes_consume_only_transactions_without_storing_a_root() public {
         bytes32 rootBefore = _mockPa.latestCommitmentTreeRoot();
-        uint256 rootCountBefore = _mockPa.commitmentTreeRootCount();
 
         TxGen.ActionConfig[] memory configs = new TxGen.ActionConfig[](1);
         configs[0] = TxGen.ActionConfig({consumedCount: 2, createdCount: 0});
@@ -267,7 +266,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
 
         assertEq(_mockPa.latestCommitmentTreeRoot(), rootBefore, "the latest root should be unchanged");
-        assertEq(_mockPa.commitmentTreeRootCount(), rootCountBefore, "no root should have been stored");
         assertEq(_mockPa.nullifierCount(), 2, "the nullifiers should have been added");
 
         // A second consume-only transaction executes as well.
@@ -275,7 +273,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
 
         assertEq(_mockPa.latestCommitmentTreeRoot(), rootBefore, "the latest root should still be unchanged");
-        assertEq(_mockPa.commitmentTreeRootCount(), rootCountBefore, "still no root should have been stored");
     }
 
     function test_execute_emits_no_CommitmentTreeRootAdded_event_for_consume_only_transactions() public {
@@ -482,7 +479,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         );
 
         bytes32[] memory cms = TxGen.collectCommitments(txn);
-        bytes32 newRoot = newCmTree.initialRoot();
+        bytes32 newRoot = newCmTree.latestCommitmentTreeRoot();
 
         for (uint256 i = 0; i < cms.length; ++i) {
             newRoot = newCmTree.addCommitment(cms[i]);

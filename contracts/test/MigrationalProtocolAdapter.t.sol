@@ -104,37 +104,28 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_migrateCommitmentTree_keeps_the_empty_tree_root_and_v1_s_latest_root() public {
         _migrateCommitmentTree();
 
-        assertEq(_pa.commitmentTreeRootCount(), 2, "the historical root count differs");
-        assertEq(_pa.commitmentTreeRootAtIndex(0), SHA256.EMPTY_HASH, "the empty-tree root should be the first root");
-        assertEq(_pa.commitmentTreeRootAtIndex(1), _v1.latestCommitmentTreeRoot(), "the second root differs from v1");
+        assertTrue(_pa.isCommitmentTreeRootContained(SHA256.EMPTY_HASH), "the empty-tree root should stay");
+        assertTrue(_pa.isCommitmentTreeRootContained(_v1.latestCommitmentTreeRoot()), "v1's latest root is missing");
     }
 
-    function test_unpause_reverts_if_the_empty_tree_root_is_not_the_first_root() public {
+    function test_unpause_reverts_if_the_empty_tree_root_is_missing() public {
         _copyInEverything();
-
-        bytes32 wrong = bytes32(uint256(SHA256.EMPTY_HASH) ^ 1);
-        _overwriteHistoricalRoot({index: 0, root: wrong});
+        _removeHistoricalRoot(SHA256.EMPTY_HASH);
 
         vm.prank(_OWNER);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                MigrationalProtocolAdapter.HistoricalRootMismatch.selector, 0, SHA256.EMPTY_HASH, wrong
-            )
+            abi.encodeWithSelector(MigrationalProtocolAdapter.MissingHistoricalRoot.selector, SHA256.EMPTY_HASH)
         );
         _pa.unpause();
     }
 
-    function test_unpause_reverts_if_the_second_root_is_not_the_root_of_v1() public {
+    function test_unpause_reverts_if_the_latest_root_of_v1_is_missing() public {
         _copyInEverything();
-
-        bytes32 expected = _v1.latestCommitmentTreeRoot();
-        bytes32 wrong = bytes32(uint256(expected) ^ 1);
-        _overwriteHistoricalRoot({index: 1, root: wrong});
+        bytes32 root = _v1.latestCommitmentTreeRoot();
+        _removeHistoricalRoot(root);
 
         vm.prank(_OWNER);
-        vm.expectRevert(
-            abi.encodeWithSelector(MigrationalProtocolAdapter.HistoricalRootMismatch.selector, 1, expected, wrong)
-        );
+        vm.expectRevert(abi.encodeWithSelector(MigrationalProtocolAdapter.MissingHistoricalRoot.selector, root));
         _pa.unpause();
     }
 
@@ -405,16 +396,13 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.unpause();
     }
 
-    /// @dev Overwrites one entry of the historical root set, which the protocol adapter itself cannot do. The set
-    /// sits behind the commitment tree in the namespace, and the tree takes the first three slots.
-    function _overwriteHistoricalRoot(uint256 index, bytes32 root) internal {
-        uint256 valuesSlot = uint256(_COMMITMENT_TREE_STORAGE_SLOT) + 3;
+    /// @dev Removes one root from its mapping after checking the expected storage slot.
+    function _removeHistoricalRoot(bytes32 root) internal {
+        bytes32 slot = keccak256(abi.encode(root, uint256(_COMMITMENT_TREE_STORAGE_SLOT) + 3));
         assertEq(
-            uint256(vm.load({target: address(_pa), slot: bytes32(valuesSlot)})),
-            _pa.commitmentTreeRootCount(),
-            "the historical root set is not at the slot this test writes to"
+            uint256(vm.load({target: address(_pa), slot: slot})), 1, "the root is not stored where this test writes"
         );
 
-        vm.store({target: address(_pa), slot: bytes32(uint256(keccak256(abi.encode(valuesSlot))) + index), value: root});
+        vm.store({target: address(_pa), slot: slot, value: bytes32(0)});
     }
 }

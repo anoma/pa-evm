@@ -35,8 +35,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error LeafCountExceedsCapacity(uint256 leafCount, uint256 capacity);
     error CommitmentTreeRootMismatch(bytes32 expected, bytes32 actual);
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
-    error HistoricalRootCountMismatch(uint256 expected, uint256 actual);
-    error HistoricalRootMismatch(uint256 index, bytes32 expected, bytes32 actual);
+    error MissingHistoricalRoot(bytes32 root);
     error NullifierBatchOutOfRange(uint256 available, uint256 requested);
     error NullifierIndexMismatch(uint256 index, bytes32 expected, bytes32 actual);
     error NullifierCountMismatch(uint256 expected, uint256 actual);
@@ -153,7 +152,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
 
     /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the v1 protocol
     /// adapter. The historical roots are the one difference that stays: v1 keeps every root it ever had, this contract
-    /// keeps two — the empty-tree root at index 0, and the latest root of the stopped v1 protocol adapter at index 1.
+    /// keeps two, the empty-tree root and the latest root of the stopped v1 protocol adapter.
     function _checkStateMigrationIsComplete() internal view {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
@@ -168,19 +167,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         bytes32 actualRoot = $._merkleTree.currentRoot();
         require(actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot}));
 
-        uint256 rootCount = $._roots.length();
-        require(rootCount == 2, HistoricalRootCountMismatch({expected: 2, actual: rootCount}));
-
-        bytes32 initialRoot = $._roots.at(0);
-        require(
-            initialRoot == SHA256.EMPTY_HASH,
-            HistoricalRootMismatch({index: 0, expected: SHA256.EMPTY_HASH, actual: initialRoot})
-        );
-
-        bytes32 copiedRoot = $._roots.at(1);
-        require(
-            copiedRoot == expectedRoot, HistoricalRootMismatch({index: 1, expected: expectedRoot, actual: copiedRoot})
-        );
+        require(_isCommitmentTreeRootContained(SHA256.EMPTY_HASH), MissingHistoricalRoot(SHA256.EMPTY_HASH));
+        require(_isCommitmentTreeRootContained(expectedRoot), MissingHistoricalRoot(expectedRoot));
 
         uint256 expectedNullifiers = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount();
         uint256 actualNullifiers = _getNullifierSetStorage()._nullifierSet.length();
