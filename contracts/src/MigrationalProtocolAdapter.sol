@@ -4,10 +4,10 @@ pragma solidity ^0.8.30;
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
+import {INullifierSet as INullifierSetV1} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
 import {ICommitmentTree} from "./interfaces/ICommitmentTree.sol";
 import {IMigrational} from "./interfaces/IMigrational.sol";
-import {INullifierSet} from "./interfaces/INullifierSet.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
 import {ProtocolAdapter} from "./ProtocolAdapter.sol";
@@ -37,9 +37,9 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
     error HistoricalRootCountMismatch(uint256 expected, uint256 actual);
     error HistoricalRootMismatch(uint256 index, bytes32 expected, bytes32 actual);
-    error NullifierBatchOutOfRange(uint256 available, uint256 requested);
-    error NullifierIndexMismatch(uint256 index, bytes32 expected, bytes32 actual);
-    error NullifierCountMismatch(uint256 expected, uint256 actual);
+    error NullifierBatchOutOfRange(uint256 end, uint256 nullifierCount);
+    error NullifierBatchLeavesGap(uint256 start);
+    error MissingNullifier(bytes32 nullifier);
 
     /// @notice Reverts unless the v1 protocol adapter is stopped, so that its state cannot change while it is read.
     modifier whenProtocolAdapterV1Stopped() {
@@ -109,25 +109,28 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     }
 
     /// @inheritdoc IMigrational
-    function migrateNullifierSet(uint256 count) external override onlyOwner whenPaused whenProtocolAdapterV1Stopped {
-        EnumerableSet.Bytes32Set storage nullifiers = _getNullifierSetStorage()._nullifierSet;
-
-        uint256 start = nullifiers.length();
-        uint256 available = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount() - start;
+    function migrateNullifierSet(uint256 start, uint256 count)
+        external
+        override
+        onlyOwner
+        whenPaused
+        whenProtocolAdapterV1Stopped
+    {
+        uint256 end = start + count;
+        uint256 nullifierCount = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierCount();
         // solhint-disable-next-line gas-strict-inequalities
-        require(count <= available, NullifierBatchOutOfRange({available: available, requested: count}));
+        require(end <= nullifierCount, NullifierBatchOutOfRange({end: end, nullifierCount: nullifierCount}));
+
+        // The copied nullifiers stay v1's first ones: a later start leaves a gap, an earlier one repeats a nullifier.
+        require(
+            start == 0 || _isNullifierContained(INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(start - 1)),
+            NullifierBatchLeavesGap(start)
+        );
 
         // NOTE: v1 exposes no batch getter, and it is a fixed, stopped contract, so the read belongs in the loop.
         // forge-lint: disable-next-item(calls-loop)
-        for (uint256 i = 0; i < count; ++i) {
-            uint256 index = start + i;
-
-            bytes32 nullifier = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(index);
-            _addNullifier(nullifier);
-
-            // The nullifier must occupy the same index here as it does in v1.
-            bytes32 stored = nullifiers.at(index);
-            require(stored == nullifier, NullifierIndexMismatch({index: index, expected: nullifier, actual: stored}));
+        for (uint256 i = start; i < end; ++i) {
+            _addNullifier(INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(i));
         }
 
         emit NullifierBatchMigrated({start: start, count: count});
@@ -182,12 +185,12 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
             copiedRoot == expectedRoot, HistoricalRootMismatch({index: 1, expected: expectedRoot, actual: copiedRoot})
         );
 
-        uint256 expectedNullifiers = INullifierSet(_PROTOCOL_ADAPTER_V1).nullifierCount();
-        uint256 actualNullifiers = _getNullifierSetStorage()._nullifierSet.length();
-        require(
-            actualNullifiers == expectedNullifiers,
-            NullifierCountMismatch({expected: expectedNullifiers, actual: actualNullifiers})
-        );
+        // The copied nullifiers are v1's first ones, so they are all in once the last one is.
+        uint256 nullifierCount = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierCount();
+        if (nullifierCount != 0) {
+            bytes32 lastNullifier = INullifierSetV1(_PROTOCOL_ADAPTER_V1).nullifierAtIndex(nullifierCount - 1);
+            require(_isNullifierContained(lastNullifier), MissingNullifier(lastNullifier));
+        }
     }
 
     /// @notice Reverts unless the v1 protocol adapter is stopped.

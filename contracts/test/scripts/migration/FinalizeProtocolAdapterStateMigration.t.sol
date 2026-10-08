@@ -35,7 +35,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         // The copy-in is gone with the implementation that carried it.
         vm.prank(DEFAULT_SENDER);
         vm.expectRevert();
-        MigrationalProtocolAdapter(_proxy).migrateNullifierSet(1);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: 1});
     }
 
     function test_run_transfers_a_production_proxy_to_the_production_proxy_owner() public {
@@ -111,7 +111,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
 
         vm.startPrank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
-        MigrationalProtocolAdapter(_proxy).migrateNullifierSet(_NULLIFIER_COUNT);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT});
         MigrationalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
 

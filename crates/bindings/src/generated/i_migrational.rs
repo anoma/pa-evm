@@ -9,7 +9,7 @@ interface IMigrational {
 
     function getProtocolAdapterV1() external view returns (address protocolAdapterV1);
     function migrateCommitmentTree(bytes32[] memory sides) external;
-    function migrateNullifierSet(uint256 count) external;
+    function migrateNullifierSet(uint256 start, uint256 count) external;
 }
 ```
 
@@ -46,6 +46,11 @@ interface IMigrational {
     "type": "function",
     "name": "migrateNullifierSet",
     "inputs": [
+      {
+        "name": "start",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
       {
         "name": "count",
         "type": "uint256",
@@ -802,17 +807,19 @@ function migrateCommitmentTree(bytes32[] memory sides) external;
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `migrateNullifierSet(uint256)` and selector `0xf4a52cf7`.
+    /**Function with signature `migrateNullifierSet(uint256,uint256)` and selector `0x03a7fde5`.
 ```solidity
-function migrateNullifierSet(uint256 count) external;
+function migrateNullifierSet(uint256 start, uint256 count) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct migrateNullifierSetCall {
         #[allow(missing_docs)]
+        pub start: alloy::sol_types::private::primitives::aliases::U256,
+        #[allow(missing_docs)]
         pub count: alloy::sol_types::private::primitives::aliases::U256,
     }
-    ///Container type for the return parameters of the [`migrateNullifierSet(uint256)`](migrateNullifierSetCall) function.
+    ///Container type for the return parameters of the [`migrateNullifierSet(uint256,uint256)`](migrateNullifierSetCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct migrateNullifierSetReturn {}
@@ -827,9 +834,13 @@ function migrateNullifierSet(uint256 count) external;
         {
             #[doc(hidden)]
             #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (alloy::sol_types::sol_data::Uint<256>,);
+            type UnderlyingSolTuple<'a> = (
+                alloy::sol_types::sol_data::Uint<256>,
+                alloy::sol_types::sol_data::Uint<256>,
+            );
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
+                alloy::sol_types::private::primitives::aliases::U256,
                 alloy::sol_types::private::primitives::aliases::U256,
             );
             #[cfg(test)]
@@ -848,7 +859,7 @@ function migrateNullifierSet(uint256 count) external;
             impl ::core::convert::From<migrateNullifierSetCall>
             for UnderlyingRustTuple<'_> {
                 fn from(value: migrateNullifierSetCall) -> Self {
-                    (value.count,)
+                    (value.start, value.count)
                 }
             }
             #[automatically_derived]
@@ -856,7 +867,10 @@ function migrateNullifierSet(uint256 count) external;
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
             for migrateNullifierSetCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { count: tuple.0 }
+                    Self {
+                        start: tuple.0,
+                        count: tuple.1,
+                    }
                 }
             }
         }
@@ -903,7 +917,10 @@ function migrateNullifierSet(uint256 count) external;
         }
         #[automatically_derived]
         impl alloy_sol_types::SolCall for migrateNullifierSetCall {
-            type Parameters<'a> = (alloy::sol_types::sol_data::Uint<256>,);
+            type Parameters<'a> = (
+                alloy::sol_types::sol_data::Uint<256>,
+                alloy::sol_types::sol_data::Uint<256>,
+            );
             type Token<'a> = <Self::Parameters<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
@@ -912,8 +929,8 @@ function migrateNullifierSet(uint256 count) external;
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "migrateNullifierSet(uint256)";
-            const SELECTOR: [u8; 4] = [244u8, 165u8, 44u8, 247u8];
+            const SIGNATURE: &'static str = "migrateNullifierSet(uint256,uint256)";
+            const SELECTOR: [u8; 4] = [3u8, 167u8, 253u8, 229u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -923,6 +940,9 @@ function migrateNullifierSet(uint256 count) external;
             #[inline]
             fn tokenize(&self) -> Self::Token<'_> {
                 (
+                    <alloy::sol_types::sol_data::Uint<
+                        256,
+                    > as alloy_sol_types::SolType>::tokenize(&self.start),
                     <alloy::sol_types::sol_data::Uint<
                         256,
                     > as alloy_sol_types::SolType>::tokenize(&self.count),
@@ -983,20 +1003,20 @@ function migrateNullifierSet(uint256 count) external;
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
+            [3u8, 167u8, 253u8, 229u8],
             [54u8, 135u8, 145u8, 201u8],
-            [244u8, 165u8, 44u8, 247u8],
             [250u8, 131u8, 221u8, 143u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(getProtocolAdapterV1),
             ::core::stringify!(migrateNullifierSet),
+            ::core::stringify!(getProtocolAdapterV1),
             ::core::stringify!(migrateCommitmentTree),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::SIGNATURE,
             <migrateNullifierSetCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::SIGNATURE,
             <migrateCommitmentTreeCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -1071,19 +1091,6 @@ function migrateNullifierSet(uint256 count) external;
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<IMigrationalCalls>] = &[
                 {
-                    fn getProtocolAdapterV1(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<IMigrationalCalls> {
-                        <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(IMigrationalCalls::getProtocolAdapterV1)
-                    }
-                    getProtocolAdapterV1
-                },
-                {
                     fn migrateNullifierSet(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
@@ -1095,6 +1102,19 @@ function migrateNullifierSet(uint256 count) external;
                             .map(IMigrationalCalls::migrateNullifierSet)
                     }
                     migrateNullifierSet
+                },
+                {
+                    fn getProtocolAdapterV1(
+                        data: &[u8],
+                        config: alloy_sol_types::abi::AbiDecoderConfig,
+                    ) -> alloy_sol_types::Result<IMigrationalCalls> {
+                        <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                                data,
+                                config,
+                            )
+                            .map(IMigrationalCalls::getProtocolAdapterV1)
+                    }
+                    getProtocolAdapterV1
                 },
                 {
                     fn migrateCommitmentTree(
@@ -1567,9 +1587,15 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`migrateNullifierSet`] function.
         pub fn migrateNullifierSet(
             &self,
+            start: alloy::sol_types::private::primitives::aliases::U256,
             count: alloy::sol_types::private::primitives::aliases::U256,
         ) -> alloy_contract::SolCallBuilder<&P, migrateNullifierSetCall, N> {
-            self.call_builder(&migrateNullifierSetCall { count })
+            self.call_builder(
+                &migrateNullifierSetCall {
+                    start,
+                    count,
+                },
+            )
         }
     }
     /// Event filters.
