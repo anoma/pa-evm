@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
-import {TxGen} from "../libs/TxGen.sol";
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.4/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
+import {TxGen} from "../libs/TxGen.sol";
 
 interface IRestrictionGasApi {
     enum Policy {
@@ -30,8 +30,8 @@ interface IRestrictionGasApi {
 
     function setLogicRefPolicies(PolicyUpdate[] calldata updates) external;
     function denyLogicRefs(Denial[] calldata denials) external;
-    function logicRefPolicy(bytes32 logicRef) external view returns (Policy);
-    function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool);
+    function logicRefPolicy(bytes32 logicRef) external view returns (Policy policy);
+    function isLogicRefDenied(bytes32 logicRef, bool consumed) external view returns (bool denied);
 }
 
 /// @dev The same fixture is copied into the base checkout. ABI-local types support both restriction APIs.
@@ -65,6 +65,18 @@ contract ProtocolAdapterGasBenchmark is Test {
         vm.snapshotGasLastFrame("OperationGas", "execute_populated_two_actions");
         assertTrue(_pa.isNullifierContained(txn.actions[0].consumed[0].nullifier));
         assertTrue(_pa.isNullifierContained(txn.actions[1].consumed[0].nullifier));
+    }
+
+    function test_latest_root_populated() public {
+        TxGen.ActionConfig[] memory configs =
+            TxGen.generateActionConfigs({actionCount: 2, consumedCount: 1, createdCount: 1});
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, configs: configs});
+        _pa.execute(txn);
+
+        bytes32 root = _pa.latestCommitmentTreeRoot();
+        vm.snapshotGasLastFrame("OperationGas", "latest_root_populated");
+        assertTrue(_pa.isCommitmentTreeRootContained(root));
     }
 
     function test_deny_both_empty() public {
