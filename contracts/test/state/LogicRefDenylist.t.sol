@@ -56,33 +56,6 @@ contract LogicRefDenylistTest is Test {
         _denylist.denyLogicRef(bytes32(0), consumed);
     }
 
-    function testFuzz_deniedLogicRefCount_returns_the_count(bool consumed) public {
-        assertEq(_denylist.deniedLogicRefCount(consumed), 0, "the denylist should start empty");
-
-        uint256 n = 10;
-        for (uint256 i = 1; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(i), consumed);
-            assertEq(
-                _denylist.deniedLogicRefCount(consumed), i, "the count should match the number of denied logic refs"
-            );
-        }
-
-        assertEq(_denylist.deniedLogicRefCount(!consumed), 0, "the other denylist should stay empty");
-    }
-
-    function testFuzz_deniedLogicRefAtIndex_returns_the_logic_refs_in_the_order_they_were_denied(bool consumed) public {
-        uint256 n = 10;
-        for (uint256 i = 0; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(n - i), consumed);
-        }
-
-        for (uint256 i = 0; i < n; ++i) {
-            assertEq(
-                _denylist.deniedLogicRefAtIndex(i, consumed), bytes32(n - i), "the logic ref at the index should match"
-            );
-        }
-    }
-
     function testFuzz_isLogicRefDenied_returns_false_if_the_logic_ref_is_not_denied(bool consumed) public {
         _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF, consumed);
 

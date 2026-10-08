@@ -26,13 +26,8 @@ contract LogicRefDenylistInitializationTest is Test {
         directMock.initialize();
     }
 
-    function test_initialize_starts_with_empty_denylists() public view {
-        assertEq(
-            _denylist.deniedLogicRefCount({consumed: true}), 0, "the denylist for consumed resources should start empty"
-        );
-        assertEq(
-            _denylist.deniedLogicRefCount({consumed: false}), 0, "the denylist for created resources should start empty"
-        );
+    function testFuzz_initialize_denies_no_logic_ref(bytes32 logicRef, bool consumed) public view {
+        assertFalse(_denylist.isLogicRefDenied(logicRef, consumed), "the denylists should start empty");
     }
 
     /// @dev Deploys the mock behind an ERC-1967 proxy because the implementation contract disables the initializers.
