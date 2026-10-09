@@ -49,9 +49,8 @@ library TxGen {
         ResourceAndAppData[] created;
     }
 
-    /// @dev Builds an action from resource lists. The action delta is the sum of the per-resource deltas, each
-    /// generated with a value commitment randomness of 1 — the caller is responsible for quantity balance across
-    /// the transaction.
+    /// @dev Builds an action from resource lists. The action delta is the sum of the per-resource deltas — the caller
+    /// is responsible for quantity balance across the transaction.
     function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
         internal
         returns (IProtocolAdapter.Action memory action)
@@ -78,7 +77,7 @@ library TxGen {
                     kind: kind(consumed[i].resource),
                     quantity: consumed[i].resource.quantity,
                     consumed: true,
-                    valueCommitmentRandomness: 1
+                    valueCommitmentRandomness: valueCommitmentRandomness(consumedData[i].nullifier)
                 })
             );
             actionDelta = (i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
@@ -97,7 +96,7 @@ library TxGen {
                     kind: kind(created[i].resource),
                     quantity: created[i].resource.quantity,
                     consumed: false,
-                    valueCommitmentRandomness: 1
+                    valueCommitmentRandomness: valueCommitmentRandomness(createdData[i].commitment)
                 })
             );
             actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
@@ -164,14 +163,12 @@ library TxGen {
     {
         IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](actionResources.length);
 
-        uint256 resourceCount = 0;
         for (uint256 i = 0; i < actionResources.length; ++i) {
             actions[i] =
                 createAction({vm: vm, consumed: actionResources[i].consumed, created: actionResources[i].created});
-            resourceCount += actionResources[i].consumed.length + actionResources[i].created.length;
         }
 
-        txn = transactionFromActions({vm: vm, actions: actions, resourceCount: resourceCount});
+        txn = transactionFromActions({vm: vm, actions: actions});
         txn = transactionAggregation({
             mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
         });
@@ -184,7 +181,6 @@ library TxGen {
         updatedNonce = nonce;
 
         IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](configs.length);
-        uint256 resourceCount = 0;
         for (uint256 i = 0; i < configs.length; ++i) {
             (actions[i], updatedNonce) = createDefaultAction({
                 vm: vm,
@@ -192,27 +188,25 @@ library TxGen {
                 consumedCount: configs[i].consumedCount,
                 createdCount: configs[i].createdCount
             });
-            resourceCount += configs[i].consumedCount + configs[i].createdCount;
         }
 
-        txn = transactionFromActions({vm: vm, actions: actions, resourceCount: resourceCount});
+        txn = transactionFromActions({vm: vm, actions: actions});
         txn = transactionAggregation({
             mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
         });
     }
 
-    /// @dev Assembles the transaction and its delta proof. Each resource contributed a value commitment randomness
-    /// of 1, so the summed randomness is the resource count.
-    function transactionFromActions(VmSafe vm, IProtocolAdapter.Action[] memory actions, uint256 resourceCount)
+    /// @dev Assembles the transaction and its delta proof.
+    function transactionFromActions(VmSafe vm, IProtocolAdapter.Action[] memory actions)
         internal
         returns (IProtocolAdapter.Transaction memory txn)
     {
         bytes memory proof = "";
-        if (resourceCount != 0) {
+        if (countResources(actions) != 0) {
             proof = DeltaGen.generateProof(
                 vm,
                 DeltaGen.ProofInputs({
-                    summedValueCommitmentRandomness: resourceCount,
+                    summedValueCommitmentRandomness: summedValueCommitmentRandomness(actions),
                     verifyingKey: DeltaProof.computeVerifyingKey(actionTreeRoots(actions))
                 })
             );
@@ -270,6 +264,29 @@ library TxGen {
     function countResources(IProtocolAdapter.Action[] memory actions) internal pure returns (uint256 resourceCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
             resourceCount += actions[i].consumed.length + actions[i].created.length;
+        }
+    }
+
+    function summedValueCommitmentRandomness(IProtocolAdapter.Action[] memory actions)
+        internal
+        pure
+        returns (uint256 summedRandomness)
+    {
+        for (uint256 i = 0; i < actions.length; ++i) {
+            for (uint256 j = 0; j < actions[i].consumed.length; ++j) {
+                summedRandomness = addmod(
+                    summedRandomness,
+                    valueCommitmentRandomness(actions[i].consumed[j].nullifier),
+                    DeltaGen.SECP256K1_ORDER
+                );
+            }
+            for (uint256 j = 0; j < actions[i].created.length; ++j) {
+                summedRandomness = addmod(
+                    summedRandomness,
+                    valueCommitmentRandomness(actions[i].created[j].commitment),
+                    DeltaGen.SECP256K1_ORDER
+                );
+            }
         }
     }
 
@@ -397,6 +414,12 @@ library TxGen {
 
     function kind(Resource memory resource) internal pure returns (uint256 hash) {
         hash = uint256(sha256(abi.encode(resource.logicRef, resource.labelRef)));
+    }
+
+    /// @dev Derives the randomness from the resource tag, so that each action gets a distinct delta and the delta
+    /// proof can sum the randomness from the actions.
+    function valueCommitmentRandomness(bytes32 tag) internal pure returns (uint256 randomness) {
+        randomness = DeltaGen.modOrder(uint256(tag));
     }
 
     function expirableBlobs() internal pure returns (IProtocolAdapter.ExpirableBlob[] memory blobs) {

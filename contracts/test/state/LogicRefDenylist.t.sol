@@ -26,6 +26,15 @@ contract LogicRefDenylistTest is Test {
         assertFalse(_denylist.isLogicRefDenied(logicRef, !consumed), "the other denylist should not deny it");
     }
 
+    function testFuzz_denyLogicRef_keeps_the_logic_ref_in_the_other_denylist(bool consumed) public {
+        _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF, !consumed);
+
+        _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF, consumed);
+
+        assertTrue(_denylist.isLogicRefDenied(_EXAMPLE_LOGIC_REF, consumed), "the logic ref should be denied after");
+        assertTrue(_denylist.isLogicRefDenied(_EXAMPLE_LOGIC_REF, !consumed), "the other denylist should still deny it");
+    }
+
     function testFuzz_denyLogicRef_emits_the_LogicRefDenied_event(bool consumed) public {
         vm.expectEmit(address(_denylist));
         emit ILogicRefDenylist.LogicRefDenied({logicRef: _EXAMPLE_LOGIC_REF, consumed: consumed});
@@ -47,36 +56,19 @@ contract LogicRefDenylistTest is Test {
         _denylist.denyLogicRef(bytes32(0), consumed);
     }
 
-    function testFuzz_deniedLogicRefCount_returns_the_count(bool consumed) public {
-        assertEq(_denylist.deniedLogicRefCount(consumed), 0, "the denylist should start empty");
-
-        uint256 n = 10;
-        for (uint256 i = 1; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(i), consumed);
-            assertEq(
-                _denylist.deniedLogicRefCount(consumed), i, "the count should match the number of denied logic refs"
-            );
-        }
-
-        assertEq(_denylist.deniedLogicRefCount(!consumed), 0, "the other denylist should stay empty");
-    }
-
-    function testFuzz_deniedLogicRefAtIndex_returns_the_logic_refs_in_the_order_they_were_denied(bool consumed) public {
-        uint256 n = 10;
-        for (uint256 i = 0; i < n; ++i) {
-            _denylist.denyLogicRef(bytes32(n - i), consumed);
-        }
-
-        for (uint256 i = 0; i < n; ++i) {
-            assertEq(
-                _denylist.deniedLogicRefAtIndex(i, consumed), bytes32(n - i), "the logic ref at the index should match"
-            );
-        }
-    }
-
     function testFuzz_isLogicRefDenied_returns_false_if_the_logic_ref_is_not_denied(bool consumed) public {
         _denylist.denyLogicRef(_EXAMPLE_LOGIC_REF, consumed);
 
         assertFalse(_denylist.isLogicRefDenied(bytes32(uint256(2)), consumed), "another logic ref should not be denied");
+    }
+
+    function test_isLogicRefDenied_reads_the_same_slot_for_both_denylists() public {
+        vm.record();
+        _denylist.isLogicRefDenied(_EXAMPLE_LOGIC_REF, true);
+        _denylist.isLogicRefDenied(_EXAMPLE_LOGIC_REF, false);
+        (bytes32[] memory reads,) = vm.accesses(address(_denylist));
+
+        assertEq(reads.length, 2, "each check should read one slot");
+        assertEq(reads[0], reads[1], "both checks should read the same slot");
     }
 }

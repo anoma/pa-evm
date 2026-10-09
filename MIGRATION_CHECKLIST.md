@@ -11,9 +11,9 @@ The ERC20 forwarder balances move between the two runs. The kind table on the pr
 The migrational implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the v1 protocol adapter is stopped.
 
 - `migrateCommitmentTree` writes the tree in one call. The caller supplies the stored sides, the one part of the tree v1 exposes through no getter. The leaf count and the root come from v1, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces v1's root, so a wrong set of sides cannot reach storage.
-- `migrateNullifierSet` copies the next batch of nullifiers. It reads each one from v1 at the index it takes here and reverts unless it lands at that index. A batch starts where the last one stopped, so no batch can be skipped or repeated.
+- `migrateNullifierSet` copies a batch of nullifiers, reading each one from v1. The caller gives the v1 index the batch starts at. The call reverts unless the batch starts where the copied nullifiers end, so no nullifier can be skipped or copied twice.
 
-`unpause` proceeds only once the adapter holds what the stopped v1 adapter holds: the same commitment count, the same latest root, and the same nullifier count. The historical roots are the one difference that stays. v1 keeps every root it had. This adapter keeps two: the empty-tree root, which a resource created and consumed in one transaction proves membership against, and v1's latest root.
+`unpause` proceeds only once the adapter holds what the stopped v1 adapter holds: the same commitment count, the same latest root, and every nullifier. The batches copy v1's nullifiers in order, so the adapter checks only the last one. The historical roots are the one difference that stays. v1 keeps every root it had. This adapter keeps two: the empty-tree root, which a resource created and consumed in one transaction proves membership against, and v1's latest root.
 
 Neither function is closed by the contract. The upgrade to the plain implementation removes them, so a migration must always reach the end of the completion run.
 
@@ -58,6 +58,14 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
   cast call <PROXY> "getKindTableCommitment()(bytes32)" --rpc-url <CHAIN>
+  ```
+
+- [ ] Deprecate the logic reference that the chain's V1 ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The kind table's V1 members make V1 resources aliases of current ones, in both directions, so without this entry a transaction could create new V1 resources from current ones. V1 resources stay consumable, so they still convert and unwrap. Take the logic reference from the V1 forwarder that the forwarder repository records, and check that the chain's current ERC20 forwarder accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the v1 stop. Simulate, run, and read it back:
+
+  ```sh
+  just contracts-simulate-staging-logic-ref-denial <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
+  just contracts-execute-staging-logic-ref-denial deployer <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
+  cast call <PROXY> "isLogicRefDenied(bytes32,bool)(bool)" <V1_LOGIC_REF> false --rpc-url <CHAIN>
   ```
 
 ## Per chain

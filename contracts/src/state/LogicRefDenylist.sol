@@ -3,23 +3,24 @@ pragma solidity ^0.8.30;
 
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
-
 import {ILogicRefDenylist} from "../interfaces/ILogicRefDenylist.sol";
 
 /// @title LogicRefDenylist
 /// @author Anoma Foundation, 2026
 /// @notice The denylists of logic references being inherited by the protocol adapter: one for consumed resources and
 /// one for created resources.
-/// @dev The implementation is based on OpenZeppelin's `EnumerableSet` implementation. No function removes an entry.
+/// @dev No function removes an entry.
 /// @custom:security-contact security@anoma.foundation
 abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+    /// @notice Whether the resource consumption or creation for a specific logic ref is denied or not.
+    struct Denial {
+        bool consumed; //  ┐   1
+        bool created; //   ┘ + 1 = 2
+    }
 
     /// @custom:storage-location erc7201:anoma.storage.LogicRefDenylist
     struct LogicRefDenylistStorage {
-        EnumerableSet.Bytes32Set _deniedConsumedLogicRefs;
-        EnumerableSet.Bytes32Set _deniedCreatedLogicRefs;
+        mapping(bytes32 logicRef => Denial denial) _denials;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.LogicRefDenylist")) - 1)) & ~bytes32(uint256(0xff))
@@ -48,17 +49,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
 
     /// @inheritdoc ILogicRefDenylist
     function isLogicRefDenied(bytes32 logicRef, bool consumed) external view override returns (bool isDenied) {
-        isDenied = _deniedLogicRefs(consumed).contains(logicRef);
-    }
-
-    /// @inheritdoc ILogicRefDenylist
-    function deniedLogicRefCount(bool consumed) external view override returns (uint256 count) {
-        count = _deniedLogicRefs(consumed).length();
-    }
-
-    /// @inheritdoc ILogicRefDenylist
-    function deniedLogicRefAtIndex(uint256 index, bool consumed) external view override returns (bytes32 logicRef) {
-        logicRef = _deniedLogicRefs(consumed).at(index);
+        isDenied = _isLogicRefDenied(logicRef, consumed);
     }
 
     /// @notice Initializes the LogicRefDenylist contract.
@@ -76,7 +67,14 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     function _denyLogicRef(bytes32 logicRef, bool consumed) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
-        require(_deniedLogicRefs(consumed).add(logicRef), LogicRefAlreadyDenied(logicRef, consumed));
+        require(!_isLogicRefDenied(logicRef, consumed), LogicRefAlreadyDenied(logicRef, consumed));
+
+        Denial storage denial = _getLogicRefDenylistStorage()._denials[logicRef];
+        if (consumed) {
+            denial.consumed = true;
+        } else {
+            denial.created = true;
+        }
 
         emit LogicRefDenied({logicRef: logicRef, consumed: consumed});
     }
@@ -86,18 +84,18 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     /// @param consumed `true` for a consumed resource, `false` for a created resource.
     function _checkLogicRefNotDenied(bytes32 logicRef, bool consumed) internal view {
         require(
-            !_deniedLogicRefs(consumed).contains(logicRef),
-            ResourceWithDeniedLogicRef({logicRef: logicRef, consumed: consumed})
+            !_isLogicRefDenied(logicRef, consumed), ResourceWithDeniedLogicRef({logicRef: logicRef, consumed: consumed})
         );
     }
 
-    /// @notice Returns the denylist for consumed or for created resources.
+    /// @notice Returns whether the denylist for consumed or for created resources contains a logic reference.
+    /// @param logicRef The logic reference to check.
     /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
-    /// @return deniedLogicRefs The logic references in the denylist.
-    function _deniedLogicRefs(bool consumed) internal view returns (EnumerableSet.Bytes32Set storage deniedLogicRefs) {
-        LogicRefDenylistStorage storage $ = _getLogicRefDenylistStorage();
+    /// @return isDenied Whether the denylist contains the logic reference or not.
+    function _isLogicRefDenied(bytes32 logicRef, bool consumed) internal view returns (bool isDenied) {
+        Denial storage denial = _getLogicRefDenylistStorage()._denials[logicRef];
 
-        deniedLogicRefs = consumed ? $._deniedConsumedLogicRefs : $._deniedCreatedLogicRefs;
+        isDenied = consumed ? denial.consumed : denial.created;
     }
 
     /// @notice Returns the storage from the logic reference denylist storage location.

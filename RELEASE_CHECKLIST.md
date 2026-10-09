@@ -481,3 +481,39 @@ For **production**:
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
+
+## Denying Logic References
+
+Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist.
+
+Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, consumed)` pairs: `"[(<LOGIC_REF>,false)]"` deprecates a logic reference, and `"[(<LOGIC_REF>,true),(<LOGIC_REF>,false)]"` denies it.
+
+For **staging**:
+
+- [ ] **Simulate** the denial by running
+
+  ```sh
+  just contracts-simulate-staging-logic-ref-denial <PROXY> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **execute** it by running
+
+  ```sh
+  just contracts-execute-staging-logic-ref-denial deployer <PROXY> <LOGIC_REFS> <CHAIN>
+  ```
+
+For **production**:
+
+- [ ] **Simulate** the proposal, which simulates the Safe executing the denial, by running
+
+  ```sh
+  just contracts-simulate-production-logic-ref-denial-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] After successful simulation, **propose** it to the owning Safe by running
+
+  ```sh
+  just contracts-propose-production-logic-ref-denial deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  ```
+
+- [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

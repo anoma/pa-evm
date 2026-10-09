@@ -21,7 +21,9 @@ contract CommitmentTreeInitializationTest is Test {
     function test_initialize_stores_the_initial_root_being_the_empty_leaf_hash() public {
         CommitmentTreeMock newCmAcc = _deployCommitmentTreeMock();
         assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
-        assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
+        assertTrue(
+            newCmAcc.isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), "The initial root should be a historical root."
+        );
     }
 
     function test_initialize_initializes_the_tree_with_depth_0() public {

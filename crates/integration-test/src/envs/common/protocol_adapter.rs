@@ -42,22 +42,22 @@ impl ProtocolAdapter {
         for (action_idx, action) in aggregation.instance.actions.iter().enumerate() {
             for (resource_idx, consumed) in action.consumed_publics.iter().enumerate() {
                 let consumed_root = B256::from_slice(consumed.commitment_tree_root.as_bytes());
-                let contained = self
+                let is_historical = self
                     .pa
-                    .isCommitmentTreeRootContained(consumed_root)
+                    .isCommitmentTreeRootHistorical(consumed_root)
                     .call()
                     .await
                     .with_context(|| {
                         format!(
-                            "failed to query root containment for action {action_idx} consumed \
-                             resource {resource_idx}"
+                            "failed to check the root of action {action_idx} consumed resource \
+                             {resource_idx}"
                         )
                     })?;
 
                 anyhow::ensure!(
-                    contained,
-                    "consumed commitment tree root not found in PA for action {action_idx} \
-                     consumed resource {resource_idx}: root={consumed_root:?}, \
+                    is_historical,
+                    "the commitment tree root of action {action_idx} consumed resource {resource_idx} \
+                     is not a historical root of the PA: root={consumed_root:?}, \
                      pa_latest={pa_root:?}"
                 );
             }

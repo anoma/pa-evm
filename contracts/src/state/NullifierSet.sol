@@ -3,21 +3,17 @@ pragma solidity ^0.8.30;
 
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
-
 import {INullifierSet} from "../interfaces/INullifierSet.sol";
 
 /// @title NullifierSet
 /// @author Anoma Foundation, 2025
 /// @notice A nullifier set being inherited by the protocol adapter.
-/// @dev The implementation is based on OpenZeppelin's `EnumerableSet` implementation.
+/// @dev The set stores whether it contains a nullifier. It neither counts nor lists the nullifiers.
 /// @custom:security-contact security@anoma.foundation
 abstract contract NullifierSet is INullifierSet, Initializable {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-
     /// @custom:storage-location erc7201:anoma.storage.NullifierSet
     struct NullifierSetStorage {
-        EnumerableSet.Bytes32Set _nullifierSet;
+        mapping(bytes32 nullifier => bool isContained) _nullifiers;
     }
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.NullifierSet")) - 1)) & ~bytes32(uint256(0xff))
@@ -34,23 +30,7 @@ abstract contract NullifierSet is INullifierSet, Initializable {
 
     /// @inheritdoc INullifierSet
     function isNullifierContained(bytes32 nullifier) external view override returns (bool isContained) {
-        NullifierSetStorage storage $ = _getNullifierSetStorage();
-
-        isContained = $._nullifierSet.contains(nullifier);
-    }
-
-    /// @inheritdoc INullifierSet
-    function nullifierCount() external view override returns (uint256 count) {
-        NullifierSetStorage storage $ = _getNullifierSetStorage();
-
-        count = $._nullifierSet.length();
-    }
-
-    /// @inheritdoc INullifierSet
-    function nullifierAtIndex(uint256 index) external view override returns (bytes32 nullifier) {
-        NullifierSetStorage storage $ = _getNullifierSetStorage();
-
-        nullifier = $._nullifierSet.at(index);
+        isContained = _isNullifierContained(nullifier);
     }
 
     /// @notice Initializes the NullifierSet contract.
@@ -64,8 +44,17 @@ abstract contract NullifierSet is INullifierSet, Initializable {
     function _addNullifier(bytes32 nullifier) internal {
         NullifierSetStorage storage $ = _getNullifierSetStorage();
 
-        bool success = $._nullifierSet.add(nullifier);
-        require(success, PreExistingNullifier(nullifier));
+        require(!$._nullifiers[nullifier], PreExistingNullifier(nullifier));
+        $._nullifiers[nullifier] = true;
+    }
+
+    /// @notice Checks if a nullifier is contained in the set.
+    /// @param nullifier The nullifier to check.
+    /// @return isContained Whether the nullifier is contained or not.
+    function _isNullifierContained(bytes32 nullifier) internal view returns (bool isContained) {
+        NullifierSetStorage storage $ = _getNullifierSetStorage();
+
+        isContained = $._nullifiers[nullifier];
     }
 
     /// @notice Returns the storage from the nullifier set storage location.

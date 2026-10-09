@@ -44,7 +44,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.8";
+    string public constant override VERSION = "2.0.0-rc.9";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -215,9 +215,8 @@ contract ProtocolAdapter is
 
             _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
 
-            // Check that the referenced commitment tree root is part of the historical roots.
             require(
-                _isCommitmentTreeRootContained(consumed.commitmentTreeRoot),
+                _isCommitmentTreeRootHistorical(consumed.commitmentTreeRoot),
                 NonExistingRoot(consumed.commitmentTreeRoot)
             );
 
