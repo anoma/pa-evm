@@ -75,25 +75,30 @@ chain, plus the genesis fields pinning how that address was derived. Written onc
 per chain at its first deploy and never edited; what an environment currently runs
 is read from the chain, not from here.
 
-**v1**:
-The protocol adapter deployed before the v2 release: one immutable contract per chain, with no kind table. A chain that ran it moves its state into v2 through the migrational implementation.
+**Immutable protocol adapter**:
+The protocol adapter of a chain before its protocol adapter proxy: one immutable contract per chain, with no kind table. It cannot be upgraded, so it is stopped, and the migrational implementation copies its state into the protocol adapter proxy.
+_Avoid_: v1, PA v1, old adapter, legacy adapter
+
+**Protocol adapter proxy**:
+The upgradeable protocol adapter of an environment on a chain, at the address that the deployment record names. Each release is an implementation behind it.
+_Avoid_: v2, PA v2, new adapter, current adapter
 
 **Migrational implementation**:
-`MigrationalProtocolAdapter`, the implementation the proxy of a chain that ran v1 starts on. It is a protocol adapter that begins paused and accepts the v1 state. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
+`MigrationalProtocolAdapter`, the implementation that the protocol adapter proxy of a chain with an immutable protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the immutable protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
 _Avoid_: transition implementation, migration contract
 
 **Plain implementation**:
 `ProtocolAdapter`, the implementation every chain ends on. Its address is deterministic per chain.
 
 **Copy-in**:
-Writing the v1 state into the proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
+Writing the state of the immutable protocol adapter into the protocol adapter proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
 _Avoid_: seeding (the function names say it; the act has its own word), import
 
 **Migration run**:
 One execution of `MigrateProtocolAdapterState.run` for one chain: the copy-in. The proxy stays paused, so the ERC20 forwarder balances move before anyone can transact. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Completion run**:
-One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against v1, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against the immutable protocol adapter, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Sides**:
-The stored left-sibling hashes of the v1 commitment tree, one per level. v1 exposes no getter for them, so the script reads them from v1's storage and the migrational implementation proves they reproduce v1's root.
+The stored left-sibling hashes of the commitment tree of the immutable protocol adapter, one per level. The immutable protocol adapter exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.
