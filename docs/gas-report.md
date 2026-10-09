@@ -64,3 +64,4 @@
 | addNullifier                                            |           23532 | 38655 |  43696 | 43696 |       4 |
 | initialize                                              |            2522 | 18418 |  23653 | 23843 |       4 |
 | isNullifierContained                                    |            2363 |  2363 |   2363 |  2363 |       3 |
+
