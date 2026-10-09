@@ -6,10 +6,8 @@ Resource Machine** transactions on EVM-compatible chains.
 ## Language
 
 **Protocol Adapter (PA)**:
-The EVM contract that verifies and settles ARM transactions on-chain — checking
-the compliance, logic, and delta proofs and updating the commitment tree and
-nullifier set. Use "protocol adapter" (not "verifier" or "settler") for the
-contract.
+The EVM contract that verifies and settles ARM transactions on-chain — checking the compliance, logic, and delta proofs and updating the commitment tree and nullifier set. Use "protocol adapter" (not "verifier" or "settler") for the contract. Without a qualifier, it is the upgradeable protocol adapter of an environment on a chain, behind its proxy; the immutable protocol adapter always carries its qualifier.
+_Avoid_: v2, PA v2, new adapter, current adapter, protocol adapter proxy
 
 **Anoma Resource Machine (ARM)**:
 The state model the PA settles: state is a set of immutable **resources** that
@@ -76,22 +74,18 @@ per chain at its first deploy and never edited; what an environment currently ru
 is read from the chain, not from here.
 
 **Immutable protocol adapter**:
-The protocol adapter of a chain before its protocol adapter proxy: one immutable contract per chain, with no kind table. It cannot be upgraded, so it is stopped, and the migrational implementation copies its state into the protocol adapter proxy.
-_Avoid_: v1, PA v1, old adapter, legacy adapter
-
-**Protocol adapter proxy**:
-The upgradeable protocol adapter of an environment on a chain, at the address that the deployment record names. Each release is an implementation behind it.
-_Avoid_: v2, PA v2, new adapter, current adapter
+The protocol adapter that a chain ran before its upgradeable protocol adapter: one immutable contract per chain, with no kind table. It cannot be upgraded, so it is stopped, and the migrational implementation copies its state into the protocol adapter.
+_Avoid_: v1, PA v1, old adapter, legacy protocol adapter
 
 **Migrational implementation**:
-`MigrationalProtocolAdapter`, the implementation that the protocol adapter proxy of a chain with an immutable protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the immutable protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
+`MigrationalProtocolAdapter`, the implementation that the proxy of a chain that ran an immutable protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the immutable protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
 _Avoid_: transition implementation, migration contract
 
 **Plain implementation**:
 `ProtocolAdapter`, the implementation every chain ends on. Its address is deterministic per chain.
 
 **Copy-in**:
-Writing the state of the immutable protocol adapter into the protocol adapter proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
+Writing the state of the immutable protocol adapter into the proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
 _Avoid_: seeding (the function names say it; the act has its own word), import
 
 **Migration run**:
