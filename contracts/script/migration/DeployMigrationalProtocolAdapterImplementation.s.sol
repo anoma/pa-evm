@@ -13,8 +13,8 @@ import {Parameters} from "../Parameters.sol";
 
 /// @title DeployMigrationalProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
-/// @notice A script to deploy the migrational protocol adapter implementation on a supported network that runs an
-/// immutable protocol adapter. A proxy on it starts paused, copies its state in, and then upgrades to
+/// @notice A script to deploy the migrational protocol adapter implementation on a supported network that runs a
+/// legacy immutable protocol adapter. A proxy on it starts paused, copies its state in, and then upgrades to
 /// `ProtocolAdapter`.
 /// @custom:security-contact security@anoma.foundation
 contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Script {
@@ -24,11 +24,11 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
-    /// @notice Thrown if the chain runs no immutable protocol adapter to copy the state from.
+    /// @notice Thrown if the chain runs no legacy immutable protocol adapter to copy the state from.
     error NoImmutableProtocolAdapter(uint256 chainId);
 
     /// @notice Validates the migrational implementation for upgrade safety and deploys it on a supported network
-    /// that runs an immutable protocol adapter.
+    /// that runs a legacy immutable protocol adapter.
     /// @return implementation The migrational protocol adapter implementation contract.
     function run() public returns (address implementation) {
         bytes memory constructorData;
@@ -59,7 +59,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     }
 
     /// @notice Predicts the deterministic address the migrational implementation of this source version deploys to
-    /// on a supported network that runs an immutable protocol adapter.
+    /// on a supported network that runs a legacy immutable protocol adapter.
     /// @param chainId The chain ID of the network.
     /// @return implementation The predicted implementation contract address.
     /// @return constructorData The constructor arguments the predicted address commits to.
@@ -79,7 +79,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
         implementation = vm.computeCreate2Address({salt: IMPLEMENTATION_SALT, initCodeHash: keccak256(initCode)});
     }
 
-    /// @notice Returns the immutable protocol adapter of a chain, as `RecordedDeployments` records it.
+    /// @notice Returns the legacy immutable protocol adapter of a chain, as `RecordedDeployments` records it.
     /// @param chainId The chain ID of the network.
     /// @return immutableProtocolAdapter The immutable protocol adapter the migrational implementation copies the state
     /// from.

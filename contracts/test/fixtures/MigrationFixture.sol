@@ -15,9 +15,9 @@ import {ImmutableProtocolAdapterMock} from "../mocks/ImmutableProtocolAdapter.m.
 import {MigrateProtocolAdapterStateMock} from "../mocks/MigrateProtocolAdapterState.m.sol";
 import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
-/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the immutable protocol
-/// adapter, a paused migrational proxy bound to it, and the migration and finalization scripts reading the two in place
-/// of the records. Forge's default sender owns the stand-in and the proxy.
+/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the legacy immutable
+/// protocol adapter, a paused migrational proxy bound to it, and the migration and finalization scripts reading the two
+/// in place of the records. Forge's default sender owns the stand-in and the proxy.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
     uint256 internal constant _COMMITMENT_COUNT = 9;
     /// @dev More than one batch, so the nullifier loop of the migration run is exercised.
@@ -54,7 +54,7 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
         });
     }
 
-    /// @notice Deploys a paused migrational proxy bound to the given immutable protocol adapter.
+    /// @notice Deploys a paused migrational proxy bound to the given legacy immutable protocol adapter.
     /// @param immutableProtocolAdapter The immutable protocol adapter the proxy copies its state from.
     /// @return proxy The proxy address.
     function _deployMigrationalProxy(address immutableProtocolAdapter) internal returns (address proxy) {

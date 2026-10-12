@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 // forge-lint: disable-next-item(literal-instead-of-constant)
 /// @title RecordedDeployments
 /// @author Anoma Foundation, 2026
-/// @notice The protocol adapter deployments each environment records, and the immutable protocol adapters they copy the
-/// state from.
+/// @notice The protocol adapter deployments each environment records, and the legacy immutable protocol adapters they
+/// copy the state from.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
 /// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
 /// and fails on any diff. The records live with the bindings because that crate publishes them; this library carries
@@ -29,7 +29,7 @@ library RecordedDeployments {
         Proxy proxy;
     }
 
-    /// @notice An immutable protocol adapter, which a migrational proxy on the same chain copies the state from.
+    /// @notice A legacy immutable protocol adapter, which a migrational proxy on the same chain copies the state from.
     struct ImmutableDeployment {
         uint256 chainId;
         address protocolAdapter;
@@ -57,7 +57,7 @@ library RecordedDeployments {
         }
     }
 
-    /// @notice Returns the immutable protocol adapter of a chain.
+    /// @notice Returns the legacy immutable protocol adapter of a chain.
     /// @param chainId The chain ID to look for.
     /// @return protocolAdapter The immutable protocol adapter, or the zero address if the chain ran none.
     function immutableProtocolAdapter(uint256 chainId) internal pure returns (address protocolAdapter) {
@@ -100,8 +100,8 @@ library RecordedDeployments {
         deployments = new Deployment[](0);
     }
 
-    /// @notice Returns the immutable protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in `addresses.rs`,
-    /// except Aurora, which is deprecated.
+    /// @notice Returns the legacy immutable protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in
+    /// `addresses.rs`, except Aurora, which is deprecated.
     /// @return deployments The recorded deployments of the immutable protocol adapters.
     function immutableDeployments() internal pure returns (ImmutableDeployment[] memory deployments) {
         deployments = new ImmutableDeployment[](10);

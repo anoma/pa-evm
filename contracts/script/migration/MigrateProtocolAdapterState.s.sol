@@ -15,7 +15,7 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
-/// @notice A script to copy one chain's state from the stopped immutable protocol adapter into a proxy running
+/// @notice A script to copy one chain's state from the stopped legacy immutable protocol adapter into a proxy running
 /// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
 /// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
 /// unpauses, upgrades the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
@@ -26,36 +26,36 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// `--account` alone forge runs it as its default sender.
 /// @custom:security-contact security@anoma.foundation
 contract MigrateProtocolAdapterState is MigrationScript {
-    /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the immutable protocol adapter.
+    /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the legacy immutable protocol adapter.
     /// `ReentrancyGuardTransient` holds no persistent state, and `Ownable._owner` and `Pausable._paused` are 20 and 1
     /// bytes, so they share slot 0 and the tree starts at slot 1.
     /// @dev Checked against `commitmentCount()` before anything is read from it.
     uint256 internal constant _IMMUTABLE_PROTOCOL_ADAPTER_NEXT_LEAF_INDEX_SLOT = 1;
 
-    /// @notice The storage slot of `_merkleTree._sides` in the immutable protocol adapter, the one part of the tree it
-    /// does not expose through a getter.
+    /// @notice The storage slot of `_merkleTree._sides` in the legacy immutable protocol adapter, the one part of the
+    /// tree it does not expose through a getter.
     /// @dev Checked against `commitmentTreeDepth()` before anything is read from it.
     uint256 internal constant _IMMUTABLE_PROTOCOL_ADAPTER_SIDES_SLOT = 2;
 
-    /// @notice The number of nullifiers read from the immutable protocol adapter and written to the proxy per
+    /// @notice The number of nullifiers read from the legacy immutable protocol adapter and written to the proxy per
     /// transaction. Adding one nullifier costs two fresh storage writes, about 45000 gas, so a batch of this size
     /// costs roughly 9 million — a third of a 30 million block. A chain holding 8000 nullifiers therefore takes 40
     /// transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
 
-    /// @notice Thrown if a storage slot of the immutable protocol adapter does not hold what its public getter
+    /// @notice Thrown if a storage slot of the legacy immutable protocol adapter does not hold what its public getter
     /// reports, i.e. if its storage layout is not the one this script reads.
     error UnexpectedStorageLayout(uint256 slot, uint256 expected, uint256 actual);
 
-    /// @notice Thrown if the copied commitment tree does not reproduce the latest root of the immutable protocol
+    /// @notice Thrown if the copied commitment tree does not reproduce the latest root of the legacy immutable protocol
     /// adapter.
     error CommitmentTreeRootMismatch(bytes32 expected, bytes32 actual);
 
-    /// @notice Thrown if the copied commitment tree holds a different number of commitments than the immutable
+    /// @notice Thrown if the copied commitment tree holds a different number of commitments than the legacy immutable
     /// protocol adapter.
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
 
-    /// @notice Thrown if a nullifier of the immutable protocol adapter is absent from the copied set.
+    /// @notice Thrown if a nullifier of the legacy immutable protocol adapter is absent from the copied set.
     error MissingNullifier(bytes32 nullifier);
 
     /// @notice Thrown if the proxy does not run the plain implementation.
@@ -67,7 +67,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice Thrown if the proxy has another owner than the expected one.
     error OwnerMismatch(address expected, address actual);
 
-    /// @notice Copies the state of the immutable protocol adapter into the proxy. The proxy stays paused, so no
+    /// @notice Copies the state of the legacy immutable protocol adapter into the proxy. The proxy stays paused, so no
     /// transaction can use the kind table before the ERC20 forwarder balances move. Without `--broadcast` the run is
     /// simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
@@ -90,9 +90,9 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks a migrated proxy against the stopped immutable protocol adapter and against the end state of the
-    /// migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has broadcast,
-    /// because that script only ever sees the simulated state.
+    /// @notice Checks a migrated proxy against the stopped legacy immutable protocol adapter and against the end state
+    /// of the migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has
+    /// broadcast, because that script only ever sees the simulated state.
     /// @param isProduction Whether to check the production or the staging proxy. The production proxy owner must own a
     /// production proxy.
     function verify(bool isProduction) public {
@@ -101,9 +101,9 @@ contract MigrateProtocolAdapterState is MigrationScript {
         _checkEndState({proxy: proxy, isProduction: isProduction});
     }
 
-    /// @notice Copies the commitment tree of the immutable protocol adapter into the proxy, unless an earlier run did.
-    /// The tree's sides come from its storage, since it exposes no getter for them; the slot is checked against its own
-    /// getters first, and the proxy rejects sides that do not reproduce the root.
+    /// @notice Copies the commitment tree of the legacy immutable protocol adapter into the proxy, unless an earlier
+    /// run did. The tree's sides come from its storage, since it exposes no getter for them; the slot is checked
+    /// against its own getters first, and the proxy rejects sides that do not reproduce the root.
     /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _migrateCommitmentTree(address immutableProtocolAdapter, address proxy) internal {
@@ -136,8 +136,9 @@ contract MigrateProtocolAdapterState is MigrationScript {
     }
 
     /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction, from the first one that an
-    /// earlier run did not copy. The proxy reads each batch from the immutable protocol adapter itself and rejects a
-    /// batch that does not start where the copied nullifiers end, so a batch can neither be skipped nor repeated.
+    /// earlier run did not copy. The proxy reads each batch from the legacy immutable protocol adapter itself and
+    /// rejects a batch that does not start where the copied nullifiers end, so a batch can neither be skipped nor
+    /// repeated.
     /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _migrateNullifierSet(address immutableProtocolAdapter, address proxy) internal {
@@ -182,8 +183,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks the proxy against the stopped immutable protocol adapter: the latest root, the commitment count,
-    /// and every nullifier. Reverts on the first difference.
+    /// @notice Checks the proxy against the stopped legacy immutable protocol adapter: the latest root, the commitment
+    /// count, and every nullifier. Reverts on the first difference.
     /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _check(address immutableProtocolAdapter, address proxy) internal view {
@@ -202,8 +203,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Returns the number of nullifiers of the immutable protocol adapter that the proxy holds. The proxy
-    /// holds its first nullifiers, so a binary search over its indices finds where they end.
+    /// @notice Returns the number of nullifiers of the legacy immutable protocol adapter that the proxy holds. The
+    /// proxy holds its first nullifiers, so a binary search over its indices finds where they end.
     /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     /// @return count The number of copied nullifiers, which is also the index of the next one to copy.
@@ -226,8 +227,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks that a storage slot of the immutable protocol adapter holds what its public getter reports,
-    /// which pins the layout this script reads the tree sides from.
+    /// @notice Checks that a storage slot of the legacy immutable protocol adapter holds what its public getter
+    /// reports, which pins the layout this script reads the tree sides from.
     /// @param target The immutable protocol adapter.
     /// @param slot The storage slot to read.
     /// @param expected The value the matching getter reports.

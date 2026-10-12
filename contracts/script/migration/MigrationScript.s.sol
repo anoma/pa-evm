@@ -10,21 +10,21 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that move one chain's state from the stopped immutable protocol adapter into the
-/// proxy. Both come from the recorded deployments, so `--rpc-url` alone names the chain.
+/// @notice The base of the scripts that move one chain's state from the stopped legacy immutable protocol adapter into
+/// the proxy. Both come from the recorded deployments, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract MigrationScript is Script {
-    /// @notice Thrown if the chain records no immutable protocol adapter, i.e. it has no state to migrate.
+    /// @notice Thrown if the chain records no legacy immutable protocol adapter, i.e. it has no state to migrate.
     error ImmutableProtocolAdapterNotRecorded(uint256 chainId);
 
     /// @notice Thrown if the environment records no proxy for the chain, i.e. the state has no destination.
     error DeploymentNotRecorded(string environment, uint256 chainId);
 
-    /// @notice Thrown if the migrational proxy copies its state from another immutable protocol adapter than the
+    /// @notice Thrown if the migrational proxy copies its state from another legacy immutable protocol adapter than the
     /// recorded one.
     error ImmutableProtocolAdapterMismatch(address expected, address actual);
 
-    /// @notice Returns the chain's recorded immutable protocol adapter and the environment's recorded proxy, and
+    /// @notice Returns the chain's recorded legacy immutable protocol adapter and the environment's recorded proxy, and
     /// reverts unless both are recorded.
     /// @param isProduction Whether to read the production or the staging proxy.
     /// @return immutableProtocolAdapter The immutable protocol adapter, which holds the state.
@@ -58,8 +58,8 @@ abstract contract MigrationScript is Script {
     /// @notice Returns what the records hold for the chain `--rpc-url` names.
     /// @dev Tests override it: the records are compiled into the script, so they cannot name a test deployment.
     /// @param isProduction Whether to read the production or the staging proxy.
-    /// @return immutableProtocolAdapter The recorded immutable protocol adapter, or the zero address if the chain
-    /// records none.
+    /// @return immutableProtocolAdapter The recorded legacy immutable protocol adapter, or the zero address if the
+    /// chain records none.
     /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
     function _recordedDeployments(bool isProduction)
         internal
@@ -71,7 +71,7 @@ abstract contract MigrationScript is Script {
         proxy = RecordedDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
     }
 
-    /// @notice Reverts unless the proxy copies its state from the recorded immutable protocol adapter. Only the
+    /// @notice Reverts unless the proxy copies its state from the recorded legacy immutable protocol adapter. Only the
     /// migrational implementation has the getter, so the call also rejects any other proxy.
     /// @param immutableProtocolAdapter The immutable protocol adapter the records name.
     /// @param proxy The proxy of the protocol adapter.

@@ -25,9 +25,9 @@ import {TxGen} from "./libs/TxGen.sol";
 import {ImmutableProtocolAdapterMock} from "./mocks/ImmutableProtocolAdapter.m.sol";
 import {MigrationalProtocolAdapterZeroHashesMock} from "./mocks/MigrationalProtocolAdapterZeroHashes.m.sol";
 
-/// @dev The immutable protocol adapter is a stand-in with the storage layout of the deployed one. The migrational
-/// adapter reads every value from it, so the test fills it, stops it, and then checks what the migrational adapter
-/// copies in.
+/// @dev The legacy immutable protocol adapter is a stand-in with the storage layout of the deployed one. The
+/// migrational adapter reads every value from it, so the test fills it, stops it, and then checks what the migrational
+/// adapter copies in.
 contract MigrationalProtocolAdapterTest is Test {
     using MerkleTree for MerkleTree.Tree;
     using TxGen for Vm;
@@ -381,7 +381,7 @@ contract MigrationalProtocolAdapterTest is Test {
         });
         _pa.execute(txn);
 
-        // The immutable protocol adapter receives the same commitments in the same order.
+        // The legacy immutable protocol adapter receives the same commitments in the same order.
         for (uint256 i = 0; i < txn.actions.length; ++i) {
             for (uint256 j = 0; j < txn.actions[i].created.length; ++j) {
                 _immutableProtocolAdapter.addCommitment(txn.actions[i].created[j].commitment);
@@ -439,7 +439,7 @@ contract MigrationalProtocolAdapterTest is Test {
         assertEq(_pa.commitmentCount(), 0, "the tree should start empty");
     }
 
-    /// @notice Deploys a stand-in for the immutable protocol adapter and fills it.
+    /// @notice Deploys a stand-in for the legacy immutable protocol adapter and fills it.
     function _deployImmutableProtocolAdapter(uint256 commitments, uint256 nullifiers)
         internal
         returns (ImmutableProtocolAdapterMock immutableProtocolAdapter)
@@ -453,7 +453,7 @@ contract MigrationalProtocolAdapterTest is Test {
         }
     }
 
-    /// @notice Deploys a paused migrational proxy bound to the given immutable protocol adapter.
+    /// @notice Deploys a paused migrational proxy bound to the given legacy immutable protocol adapter.
     function _deployMigrationalProxy(address immutableProtocolAdapter)
         internal
         returns (MigrationalProtocolAdapter migrationalProxy)

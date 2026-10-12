@@ -13,17 +13,17 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 
 /// @title MigrationalProtocolAdapter
 /// @author Anoma Foundation, 2026
-/// @notice The protocol adapter implementation that takes over the state of a chain's immutable protocol adapter. It
-/// starts paused and copies the state in — the commitment tree and the nullifier set — reading every value from the
-/// immutable protocol adapter itself. It refuses to unpause until its commitment tree and its nullifier set hold what
-/// the immutable protocol adapter holds.
+/// @notice The protocol adapter implementation that takes over the state of a chain's legacy immutable protocol
+/// adapter. It starts paused and copies the state in — the commitment tree and the nullifier set — reading every value
+/// from the immutable protocol adapter itself. It refuses to unpause until its commitment tree and its nullifier set
+/// hold what the immutable protocol adapter holds.
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
 contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     using MerkleTree for MerkleTree.Tree;
     using SafeCast for uint256;
 
-    /// @notice The immutable protocol adapter this contract copies its state from.
+    /// @notice The legacy immutable protocol adapter this contract copies its state from.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     address internal immutable _IMMUTABLE_PROTOCOL_ADAPTER;
 
@@ -39,8 +39,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error NullifierBatchLeavesGap(uint256 start);
     error MissingNullifier(bytes32 nullifier);
 
-    /// @notice Reverts unless the immutable protocol adapter is stopped, so that its state cannot change while it is
-    /// read.
+    /// @notice Reverts unless the legacy immutable protocol adapter is stopped, so that its state cannot change while
+    /// it is read.
     modifier whenImmutableProtocolAdapterStopped() {
         _requireImmutableProtocolAdapterStopped();
         _;
@@ -49,8 +49,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     /// @notice The constructor of the implementation, forwarding the verifier route to the base contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router.
     /// @param riscZeroVerifierSelector The selector of the RISC Zero verifier the router must route to.
-    /// @param immutableProtocolAdapter The immutable protocol adapter of this chain, whose state this contract copies
-    /// in.
+    /// @param immutableProtocolAdapter The legacy immutable protocol adapter of this chain, whose state this contract
+    /// copies in.
     /// @custom:oz-upgrades-unsafe-allow constructor state-variable-immutable
     constructor(address riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector, address immutableProtocolAdapter)
         ProtocolAdapter(riscZeroVerifierRouter, riscZeroVerifierSelector)
@@ -97,7 +97,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         $._merkleTree._sides = sides;
         $._merkleTree._zeros = _zeroHashes(treeDepth);
 
-        // The sides are the only value a caller supplies, and this is what binds them to the immutable protocol
+        // The sides are the only value a caller supplies, and this is what binds them to the legacy immutable protocol
         // adapter.
         bytes32 expectedRoot = IImmutableCommitmentTree(_IMMUTABLE_PROTOCOL_ADAPTER).latestCommitmentTreeRoot();
         bytes32 root = $._merkleTree.currentRoot();
@@ -122,8 +122,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         // solhint-disable-next-line gas-strict-inequalities
         require(end <= nullifierCount, NullifierBatchOutOfRange({end: end, nullifierCount: nullifierCount}));
 
-        // The copied nullifiers stay the first ones of the immutable protocol adapter: a later start leaves a gap, an
-        // earlier one repeats a nullifier.
+        // The copied nullifiers stay the first ones of the legacy immutable protocol adapter: a later start leaves a
+        // gap, an earlier one repeats a nullifier.
         require(
             start == 0
                 || _isNullifierContained(
@@ -132,7 +132,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
             NullifierBatchLeavesGap(start)
         );
 
-        // NOTE: The immutable protocol adapter exposes no batch getter and is stopped, so the read belongs in the loop.
+        // NOTE: The legacy immutable protocol adapter exposes no batch getter and is stopped, so the read belongs in
+        // the loop.
         // forge-lint: disable-next-item(calls-loop)
         for (uint256 i = start; i < end; ++i) {
             _addNullifier(IImmutableNullifierSet(_IMMUTABLE_PROTOCOL_ADAPTER).nullifierAtIndex(i));
@@ -159,9 +160,9 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         emit MigrationFinalized();
     }
 
-    /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the immutable
-    /// protocol adapter. The historical roots are the one difference that stays: the immutable protocol adapter keeps
-    /// every root it ever had, this contract keeps two, the empty-tree root and its latest root.
+    /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the legacy
+    /// immutable protocol adapter. The historical roots are the one difference that stays: the immutable protocol
+    /// adapter keeps every root it ever had, this contract keeps two, the empty-tree root and its latest root.
     function _checkStateMigrationIsComplete() internal view {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
@@ -179,8 +180,8 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         require(_isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), MissingHistoricalRoot(SHA256.EMPTY_HASH));
         require(_isCommitmentTreeRootHistorical(expectedRoot), MissingHistoricalRoot(expectedRoot));
 
-        // The copied nullifiers are the first ones of the immutable protocol adapter, so all are in once its last one
-        // is.
+        // The copied nullifiers are the first ones of the legacy immutable protocol adapter, so all are in once its
+        // last one is.
         uint256 nullifierCount = IImmutableNullifierSet(_IMMUTABLE_PROTOCOL_ADAPTER).nullifierCount();
         if (nullifierCount != 0) {
             bytes32 lastNullifier =
@@ -189,7 +190,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         }
     }
 
-    /// @notice Reverts unless the immutable protocol adapter is stopped.
+    /// @notice Reverts unless the legacy immutable protocol adapter is stopped.
     function _requireImmutableProtocolAdapterStopped() internal view {
         require(
             Pausable(_IMMUTABLE_PROTOCOL_ADAPTER).paused(),

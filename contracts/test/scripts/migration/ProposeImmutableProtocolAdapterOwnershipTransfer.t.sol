@@ -10,9 +10,9 @@ import {Parameters} from "../../../script/Parameters.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 import {ImmutableProtocolAdapterMock} from "../../mocks/ImmutableProtocolAdapter.m.sol";
 
-/// @notice Checks the script that proposes to transfer the immutable protocol adapter, against a stand-in owned by a
-/// Safe at the address of the production owner. Outside broadcast mode, the script simulates the Safe executing the
-/// transfer, so the stand-in must end up owned by the deployment wallet.
+/// @notice Checks the script that proposes to transfer the legacy immutable protocol adapter, against a stand-in owned
+/// by a Safe at the address of the production owner. Outside broadcast mode, the script simulates the Safe executing
+/// the transfer, so the stand-in must end up owned by the deployment wallet.
 contract ProposeImmutableProtocolAdapterOwnershipTransferTest is SafeFixture {
     address internal _owner;
     address internal _safe;

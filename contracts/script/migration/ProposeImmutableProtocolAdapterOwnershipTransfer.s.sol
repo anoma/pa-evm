@@ -10,8 +10,8 @@ import {Parameters} from "../Parameters.sol";
 
 /// @title ProposeImmutableProtocolAdapterOwnershipTransfer
 /// @author Anoma Foundation, 2026
-/// @notice A script to propose the transfer of one chain's immutable protocol adapter to the deployment wallet, to the
-/// Safe multisig that owns it. The Safe owners confirm and execute the proposed transfer in the Safe app. The
+/// @notice A script to propose the transfer of one chain's legacy immutable protocol adapter to the deployment wallet,
+/// to the Safe multisig that owns it. The Safe owners confirm and execute the proposed transfer in the Safe app. The
 /// deployment wallet then stops the immutable protocol adapter itself, so the stop and the migration run follow each
 /// other without a Safe transaction between them.
 /// @dev Besides the `Ownable` functions, the owner of the immutable protocol adapter can only call `emergencyStop`, so
@@ -24,8 +24,8 @@ contract ProposeImmutableProtocolAdapterOwnershipTransfer is Script {
 
     Safe.Client internal _safe;
 
-    /// @notice Thrown if the protocol adapter is not an immutable protocol adapter deployment, i.e. not owned by the
-    /// production Safe.
+    /// @notice Thrown if the protocol adapter is not a legacy immutable protocol adapter deployment, i.e. not owned by
+    /// the production Safe.
     error NotAnImmutableProtocolAdapterDeployment(address immutableProtocolAdapter);
 
     /// @notice Thrown if the simulated Safe execution of the transfer fails during a dry run.
@@ -34,7 +34,7 @@ contract ProposeImmutableProtocolAdapterOwnershipTransfer is Script {
     /// @notice Thrown if the simulated transfer left the protocol adapter with another owner.
     error OwnerMismatch(address expected, address actual);
 
-    /// @notice Proposes the transfer to the Safe owning the immutable protocol adapter.
+    /// @notice Proposes the transfer to the Safe owning the legacy immutable protocol adapter.
     /// @dev Without `--broadcast`, the Safe execution of the transfer is simulated instead of proposed.
     /// @param immutableProtocolAdapter The immutable protocol adapter to transfer.
     /// @param proposer The Safe owner or delegate proposing the transaction.

@@ -12,8 +12,8 @@ import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {ImmutableProtocolAdapterMock} from "../../mocks/ImmutableProtocolAdapter.m.sol";
 import {MigrateProtocolAdapterStateMock} from "../../mocks/MigrateProtocolAdapterState.m.sol";
 
-/// @notice Checks the migration run end to end against a stand-in for the immutable protocol adapter, and the check of
-/// a migrated proxy.
+/// @notice Checks the migration run end to end against a stand-in for the legacy immutable protocol adapter, and the
+/// check of a migrated proxy.
 contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);

@@ -16,7 +16,7 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
     /// @dev The local development chain, which has no RISC Zero deployment.
     uint256 internal constant _UNSUPPORTED_CHAIN_ID = 31337;
 
-    /// @dev Arbitrum Sepolia, a supported network that never ran an immutable protocol adapter.
+    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy immutable protocol adapter.
     uint256 internal constant _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER = 421614;
 
     function test_run_deploys_deterministically() public {

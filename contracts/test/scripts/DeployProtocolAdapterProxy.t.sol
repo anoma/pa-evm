@@ -15,7 +15,7 @@ import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 /// @notice Checks the proxy deploy script against a fresh chain. The deployments it records are checked against the
 /// chains in the bindings crate, which owns the record.
 contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
-    /// @dev Arbitrum Sepolia, a supported network that never ran an immutable protocol adapter.
+    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy immutable protocol adapter.
     uint256 internal constant _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER = 421614;
 
     function test_run_succeeds_for_a_staging_deployment() public {
@@ -176,9 +176,9 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         assertEq(script.environmentName({isProduction: true}), "production", "production environment name differs");
     }
 
-    /// @notice Runs the deploy script and checks that the proxy lands at the predicted deterministic address,
-    /// delegates to a deployed implementation, is owned by the environment owner or, if it is migrational, by the
-    /// staging proxy owner, and starts paused on the chain's immutable protocol adapter exactly when it is migrational.
+    /// @notice Runs the deploy script and checks that the proxy lands at the predicted deterministic address, delegates
+    /// to a deployed implementation, is owned by the environment owner or, if it is migrational, by the staging proxy
+    /// owner, and starts paused on the chain's legacy immutable protocol adapter exactly when it is migrational.
     /// @param isProduction Whether to deploy the production or the staging environment proxy.
     /// @param isMigrational Whether to deploy the proxy on the migrational implementation.
     function _expectDeployment(bool isProduction, bool isMigrational) private {

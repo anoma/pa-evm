@@ -15,7 +15,7 @@ import {Parameters} from "./Parameters.sol";
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported
-/// networks. A chain that ran an immutable protocol adapter starts its proxy on the migrational implementation
+/// networks. A chain that ran a legacy immutable protocol adapter starts its proxy on the migrational implementation
 /// instead, which copies its state in.
 /// @custom:security-contact security@anoma.foundation
 contract DeployProtocolAdapterProxy is Script {
@@ -43,8 +43,8 @@ contract DeployProtocolAdapterProxy is Script {
     /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
     /// salt and, for a plain proxy, the owner receiving the authority to pause the protocol adapter and to authorize
     /// upgrades.
-    /// @param isMigrational Whether the proxy starts on the migrational implementation, which begins paused and
-    /// copies in the state of the chain's immutable protocol adapter, instead of the plain implementation. The proxy
+    /// @param isMigrational Whether the proxy starts on the migrational implementation, which begins paused and copies
+    /// in the state of the chain's legacy immutable protocol adapter, instead of the plain implementation. The proxy
     /// address commits to the implementation, so the two land at different addresses. A migrational proxy is owned by
     /// the staging proxy owner in both environments.
     /// @return proxy The protocol adapter proxy contract to interact with.

@@ -131,8 +131,8 @@ async fn expect_source_implementations(environment: Environment) {
 }
 
 /// The migrational implementation this source predicts for the proxy, or `None` if the proxy does not run
-/// one. Only the migrational implementation reports the immutable protocol adapter, its third constructor argument,
-/// so the call fails for any other implementation.
+/// one. Only the migrational implementation reports the legacy immutable protocol adapter, its third
+/// constructor argument, so the call fails for any other implementation.
 async fn migrational_source_implementation(
     adapter: &ProtocolAdapter::ProtocolAdapterInstance<DynProvider>,
     implementation_salt: B256,

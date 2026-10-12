@@ -17,8 +17,8 @@ import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {FinalizeProtocolAdapterStateMigrationMock} from "../../mocks/FinalizeProtocolAdapterStateMigration.m.sol";
 
-/// @notice Checks the completion run against a stand-in for the immutable protocol adapter, after the migration run
-/// copied the state.
+/// @notice Checks the completion run against a stand-in for the legacy immutable protocol adapter, after the migration
+/// run copied the state.
 contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
     function test_run_unpauses_and_leaves_the_proxy_on_the_plain_implementation() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);

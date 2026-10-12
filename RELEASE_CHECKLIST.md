@@ -90,7 +90,7 @@ These apply to all three cases and are done once per session.
   export ETHERSCAN_API_KEY=<KEY>
   ```
 
-- [ ] Select the environment and the implementation the proxy starts on. `IS_PRODUCTION` picks the CREATE2 salt and, for a plain proxy, the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol). `IS_MIGRATIONAL` starts the proxy on the migrational implementation instead of the plain one, owned by the staging proxy owner in both environments; set it to `true` only for a chain that ran an immutable protocol adapter, as [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md) describes. Both are deliberately kept out of `contracts/.env` so that they are a conscious choice per session.
+- [ ] Select the environment and the implementation the proxy starts on. `IS_PRODUCTION` picks the CREATE2 salt and, for a plain proxy, the proxy owner in [`DeployProtocolAdapterProxy.s.sol`](./contracts/script/DeployProtocolAdapterProxy.s.sol). `IS_MIGRATIONAL` starts the proxy on the migrational implementation instead of the plain one, owned by the staging proxy owner in both environments; set it to `true` only for a chain that ran a legacy immutable protocol adapter, as [`MIGRATION_CHECKLIST.md`](./MIGRATION_CHECKLIST.md) describes. Both are deliberately kept out of `contracts/.env` so that they are a conscious choice per session.
 
   ```sh
   export IS_PRODUCTION=false
