@@ -251,16 +251,16 @@ contracts-propose-production-logic-ref-denial deployer proxy proposer logic_refs
         --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the proposal to transfer the legacy immutable protocol adapter (dry-run): simulates the Safe that owns it executing the transfer
-contracts-simulate-immutable-protocol-adapter-ownership-transfer-proposal immutable_protocol_adapter proposer chain *args:
-    cd contracts && forge script script/migration/ProposeImmutableProtocolAdapterOwnershipTransfer.s.sol:ProposeImmutableProtocolAdapterOwnershipTransfer \
-        --sig "run(address,address)" {{immutable_protocol_adapter}} {{proposer}} \
+# Simulate the proposal to transfer the legacy protocol adapter (dry-run): simulates the Safe that owns it executing the transfer
+contracts-simulate-legacy-protocol-adapter-ownership-transfer-proposal legacy_protocol_adapter proposer chain *args:
+    cd contracts && forge script script/migration/ProposeLegacyProtocolAdapterOwnershipTransfer.s.sol:ProposeLegacyProtocolAdapterOwnershipTransfer \
+        --sig "run(address,address)" {{legacy_protocol_adapter}} {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose to the Safe that owns the legacy immutable protocol adapter to transfer it to the deployment wallet (proposer = unlocked deployer)
-contracts-propose-immutable-protocol-adapter-ownership-transfer deployer immutable_protocol_adapter proposer chain *args:
-    cd contracts && forge script script/migration/ProposeImmutableProtocolAdapterOwnershipTransfer.s.sol:ProposeImmutableProtocolAdapterOwnershipTransfer \
-        --sig "run(address,address)" {{immutable_protocol_adapter}} {{proposer}} \
+# Propose to the Safe that owns the legacy protocol adapter to transfer it to the deployment wallet (proposer = unlocked deployer)
+contracts-propose-legacy-protocol-adapter-ownership-transfer deployer legacy_protocol_adapter proposer chain *args:
+    cd contracts && forge script script/migration/ProposeLegacyProtocolAdapterOwnershipTransfer.s.sol:ProposeLegacyProtocolAdapterOwnershipTransfer \
+        --sig "run(address,address)" {{legacy_protocol_adapter}} {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the migration run of one chain as the proxy owner (dry-run): the copy-in, after which the proxy stays paused
@@ -270,7 +270,7 @@ contracts-simulate-migration chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
-# Copy the state of the legacy immutable protocol adapter into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
+# Copy the state of the legacy protocol adapter into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
 contracts-execute-migration deployer chain *args:
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
         --sig "run(bool)" $IS_PRODUCTION \
@@ -289,7 +289,7 @@ contracts-execute-migration-completion deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Check the recorded proxy of one chain against the stopped legacy immutable protocol adapter and the end state of the completion run, reading both from the chain
+# Check the recorded proxy of one chain against the stopped legacy protocol adapter and the end state of the completion run, reading both from the chain
 contracts-check-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \

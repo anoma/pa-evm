@@ -22,10 +22,10 @@ import {MigrationalProtocolAdapter} from "../src/MigrationalProtocolAdapter.sol"
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {TxGen} from "./libs/TxGen.sol";
-import {ImmutableProtocolAdapterMock} from "./mocks/ImmutableProtocolAdapter.m.sol";
+import {LegacyProtocolAdapterMock} from "./mocks/LegacyProtocolAdapter.m.sol";
 import {MigrationalProtocolAdapterZeroHashesMock} from "./mocks/MigrationalProtocolAdapterZeroHashes.m.sol";
 
-/// @dev The legacy immutable protocol adapter is a stand-in with the storage layout of the deployed one. The
+/// @dev The legacy protocol adapter is a stand-in with the storage layout of the deployed one. The
 /// migrational adapter reads every value from it, so the test fills it, stops it, and then checks what the migrational
 /// adapter copies in.
 contract MigrationalProtocolAdapterTest is Test {
@@ -45,7 +45,7 @@ contract MigrationalProtocolAdapterTest is Test {
     RiscZeroVerifierEmergencyStop internal _emergencyStop;
     RiscZeroMockVerifier internal _verifier;
 
-    ImmutableProtocolAdapterMock internal _immutableProtocolAdapter;
+    LegacyProtocolAdapterMock internal _legacyProtocolAdapter;
     MigrationalProtocolAdapter internal _pa;
 
     MerkleTree.Tree internal _grownTree;
@@ -53,16 +53,16 @@ contract MigrationalProtocolAdapterTest is Test {
     function setUp() public {
         (_router, _emergencyStop, _verifier) = new DeployRiscZeroContractsMock().run();
 
-        _immutableProtocolAdapter =
-            _deployImmutableProtocolAdapter({commitments: _COMMITMENT_COUNT, nullifiers: _NULLIFIER_COUNT});
-        _immutableProtocolAdapter.emergencyStop();
+        _legacyProtocolAdapter =
+            _deployLegacyProtocolAdapter({commitments: _COMMITMENT_COUNT, nullifiers: _NULLIFIER_COUNT});
+        _legacyProtocolAdapter.emergencyStop();
 
-        _pa = _deployMigrationalProxy(address(_immutableProtocolAdapter));
+        _pa = _deployMigrationalProxy(address(_legacyProtocolAdapter));
     }
 
     function test_zeroHashes_match_the_zeros_a_grown_tree_stores() public {
         MigrationalProtocolAdapterZeroHashesMock mock = new MigrationalProtocolAdapterZeroHashesMock(
-            address(_router), _verifier.SELECTOR(), address(_immutableProtocolAdapter)
+            address(_router), _verifier.SELECTOR(), address(_legacyProtocolAdapter)
         );
 
         _grownTree.setup();
@@ -78,8 +78,8 @@ contract MigrationalProtocolAdapterTest is Test {
         }
     }
 
-    function test_constructor_reverts_on_a_zero_immutable_protocol_adapter() public {
-        vm.expectRevert(MigrationalProtocolAdapter.ZeroImmutableProtocolAdapterNotAllowed.selector);
+    function test_constructor_reverts_on_a_zero_legacy_protocol_adapter() public {
+        vm.expectRevert(MigrationalProtocolAdapter.ZeroLegacyProtocolAdapterNotAllowed.selector);
         new MigrationalProtocolAdapter(address(_router), _verifier.SELECTOR(), address(0));
     }
 
@@ -94,44 +94,44 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.execute(txn);
     }
 
-    function test_migrateCommitmentTree_reproduces_the_tree_of_the_immutable_protocol_adapter() public {
+    function test_migrateCommitmentTree_reproduces_the_tree_of_the_legacy_protocol_adapter() public {
         vm.expectEmit(address(_pa));
         emit IMigrational.CommitmentTreeMigrated({
-            root: _immutableProtocolAdapter.latestCommitmentTreeRoot(), leafCount: _COMMITMENT_COUNT
+            root: _legacyProtocolAdapter.latestCommitmentTreeRoot(), leafCount: _COMMITMENT_COUNT
         });
         _migrateCommitmentTree();
 
         assertEq(
             _pa.latestCommitmentTreeRoot(),
-            _immutableProtocolAdapter.latestCommitmentTreeRoot(),
-            "latest root differs from the immutable protocol adapter"
+            _legacyProtocolAdapter.latestCommitmentTreeRoot(),
+            "latest root differs from the legacy protocol adapter"
         );
         assertEq(
             _pa.commitmentCount(),
-            _immutableProtocolAdapter.commitmentCount(),
-            "commitment count differs from the immutable protocol adapter"
+            _legacyProtocolAdapter.commitmentCount(),
+            "commitment count differs from the legacy protocol adapter"
         );
         assertEq(
             _pa.commitmentTreeDepth(),
-            _immutableProtocolAdapter.commitmentTreeDepth(),
-            "tree depth differs from the immutable protocol adapter"
+            _legacyProtocolAdapter.commitmentTreeDepth(),
+            "tree depth differs from the legacy protocol adapter"
         );
         assertEq(
             _pa.commitmentTreeCapacity(),
-            _immutableProtocolAdapter.commitmentTreeCapacity(),
-            "capacity differs from the immutable protocol adapter"
+            _legacyProtocolAdapter.commitmentTreeCapacity(),
+            "capacity differs from the legacy protocol adapter"
         );
     }
 
-    function test_migrateCommitmentTree_keeps_the_empty_tree_root_and_the_latest_root_of_the_immutable_protocol_adapter()
+    function test_migrateCommitmentTree_keeps_the_empty_tree_root_and_the_latest_root_of_the_legacy_protocol_adapter()
         public
     {
         _migrateCommitmentTree();
 
         assertTrue(_pa.isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH), "the empty-tree root should stay");
         assertTrue(
-            _pa.isCommitmentTreeRootHistorical(_immutableProtocolAdapter.latestCommitmentTreeRoot()),
-            "the latest root of the immutable protocol adapter is missing"
+            _pa.isCommitmentTreeRootHistorical(_legacyProtocolAdapter.latestCommitmentTreeRoot()),
+            "the latest root of the legacy protocol adapter is missing"
         );
     }
 
@@ -146,9 +146,9 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.unpause();
     }
 
-    function test_unpause_reverts_if_the_latest_root_of_the_immutable_protocol_adapter_is_missing() public {
+    function test_unpause_reverts_if_the_latest_root_of_the_legacy_protocol_adapter_is_missing() public {
         _copyInEverything();
-        bytes32 root = _immutableProtocolAdapter.latestCommitmentTreeRoot();
+        bytes32 root = _legacyProtocolAdapter.latestCommitmentTreeRoot();
         _removeHistoricalRoot(root);
 
         vm.prank(_OWNER);
@@ -158,7 +158,7 @@ contract MigrationalProtocolAdapterTest is Test {
 
     function test_migrateCommitmentTree_emits_the_migrated_root_as_a_commitment_tree_root() public {
         vm.expectEmit(address(_pa));
-        emit ICommitmentTree.CommitmentTreeRootAdded({root: _immutableProtocolAdapter.latestCommitmentTreeRoot()});
+        emit ICommitmentTree.CommitmentTreeRootAdded({root: _legacyProtocolAdapter.latestCommitmentTreeRoot()});
         _migrateCommitmentTree();
     }
 
@@ -179,10 +179,10 @@ contract MigrationalProtocolAdapterTest is Test {
         assertTrue(_pa.isNullifierContained(TxGen.collectNullifiers(txn)[0]), "the transaction did not settle");
     }
 
-    function test_migrateCommitmentTree_reverts_on_sides_that_do_not_reproduce_the_root_of_the_immutable_protocol_adapter()
+    function test_migrateCommitmentTree_reverts_on_sides_that_do_not_reproduce_the_root_of_the_legacy_protocol_adapter()
         public
     {
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
         sides[0] = bytes32(uint256(sides[0]) ^ 1);
 
         vm.prank(_OWNER);
@@ -193,15 +193,15 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_migrateCommitmentTree_reverts_if_the_tree_is_not_empty() public {
         _migrateCommitmentTree();
 
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_OWNER);
         vm.expectRevert(MigrationalProtocolAdapter.CommitmentTreeNotEmpty.selector);
         _pa.migrateCommitmentTree(sides);
     }
 
-    function test_migrateCommitmentTree_reverts_on_an_empty_tree_of_the_immutable_protocol_adapter() public {
-        ImmutableProtocolAdapterMock empty = _deployImmutableProtocolAdapter({commitments: 0, nullifiers: 0});
+    function test_migrateCommitmentTree_reverts_on_an_empty_tree_of_the_legacy_protocol_adapter() public {
+        LegacyProtocolAdapterMock empty = _deployLegacyProtocolAdapter({commitments: 0, nullifiers: 0});
         empty.emergencyStop();
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(empty));
 
@@ -213,7 +213,7 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function test_migrateCommitmentTree_reverts_if_the_leaf_count_exceeds_the_capacity() public {
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
         bytes32[] memory tooFew = new bytes32[](sides.length - 1);
         for (uint256 i = 0; i < tooFew.length; ++i) {
             tooFew[i] = sides[i];
@@ -229,8 +229,8 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.migrateCommitmentTree(tooFew);
     }
 
-    function test_migrateCommitmentTree_reverts_while_the_immutable_protocol_adapter_runs() public {
-        ImmutableProtocolAdapterMock running = _deployImmutableProtocolAdapter({commitments: 1, nullifiers: 0});
+    function test_migrateCommitmentTree_reverts_while_the_legacy_protocol_adapter_runs() public {
+        LegacyProtocolAdapterMock running = _deployLegacyProtocolAdapter({commitments: 1, nullifiers: 0});
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(running));
 
         bytes32[] memory sides = running.commitmentTreeSides();
@@ -238,21 +238,21 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
-                MigrationalProtocolAdapter.ImmutableProtocolAdapterNotStopped.selector, address(running)
+                MigrationalProtocolAdapter.LegacyProtocolAdapterNotStopped.selector, address(running)
             )
         );
         pa.migrateCommitmentTree(sides);
     }
 
     function test_migrateCommitmentTree_reverts_for_an_unauthorized_caller() public {
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER));
         _pa.migrateCommitmentTree(sides);
     }
 
-    function test_migrateNullifierSet_copies_the_batches_at_the_indices_of_the_immutable_protocol_adapter() public {
+    function test_migrateNullifierSet_copies_the_batches_at_the_indices_of_the_legacy_protocol_adapter() public {
         vm.startPrank(_OWNER);
         vm.expectEmit(address(_pa));
         emit IMigrational.NullifierBatchMigrated({start: 0, count: 3});
@@ -265,13 +265,13 @@ contract MigrationalProtocolAdapterTest is Test {
 
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
             assertTrue(
-                _pa.isNullifierContained(_immutableProtocolAdapter.nullifierAtIndex(i)),
-                "a nullifier of the immutable protocol adapter is missing"
+                _pa.isNullifierContained(_legacyProtocolAdapter.nullifierAtIndex(i)),
+                "a nullifier of the legacy protocol adapter is missing"
             );
         }
     }
 
-    function test_migrateNullifierSet_reverts_on_a_batch_beyond_what_the_immutable_protocol_adapter_holds() public {
+    function test_migrateNullifierSet_reverts_on_a_batch_beyond_what_the_legacy_protocol_adapter_holds() public {
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -298,7 +298,7 @@ contract MigrationalProtocolAdapterTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                NullifierSet.PreExistingNullifier.selector, _immutableProtocolAdapter.nullifierAtIndex(copied - 1)
+                NullifierSet.PreExistingNullifier.selector, _legacyProtocolAdapter.nullifierAtIndex(copied - 1)
             )
         );
         _pa.migrateNullifierSet({start: copied - 1, count: 2});
@@ -329,19 +329,18 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 MigrationalProtocolAdapter.MissingNullifier.selector,
-                _immutableProtocolAdapter.nullifierAtIndex(_NULLIFIER_COUNT - 1)
+                _legacyProtocolAdapter.nullifierAtIndex(_NULLIFIER_COUNT - 1)
             )
         );
         _pa.unpause();
         vm.stopPrank();
     }
 
-    function test_unpause_succeeds_for_an_immutable_protocol_adapter_without_nullifiers() public {
-        ImmutableProtocolAdapterMock immutableProtocolAdapter =
-            _deployImmutableProtocolAdapter({commitments: 1, nullifiers: 0});
-        immutableProtocolAdapter.emergencyStop();
-        MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(immutableProtocolAdapter));
-        bytes32[] memory sides = immutableProtocolAdapter.commitmentTreeSides();
+    function test_unpause_succeeds_for_a_legacy_protocol_adapter_without_nullifiers() public {
+        LegacyProtocolAdapterMock legacyProtocolAdapter = _deployLegacyProtocolAdapter({commitments: 1, nullifiers: 0});
+        legacyProtocolAdapter.emergencyStop();
+        MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(legacyProtocolAdapter));
+        bytes32[] memory sides = legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
         pa.migrateCommitmentTree(sides);
@@ -351,7 +350,7 @@ contract MigrationalProtocolAdapterTest is Test {
         assertFalse(pa.paused(), "the protocol adapter should be unpaused");
     }
 
-    function test_unpause_succeeds_once_the_state_matches_the_immutable_protocol_adapter() public {
+    function test_unpause_succeeds_once_the_state_matches_the_legacy_protocol_adapter() public {
         _seedState();
 
         assertFalse(_pa.paused(), "the protocol adapter should be unpaused");
@@ -360,7 +359,7 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_seeding_reverts_once_unpaused() public {
         _seedState();
 
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
         vm.expectRevert(Pausable.ExpectedPause.selector);
@@ -371,7 +370,7 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.stopPrank();
     }
 
-    function test_the_copied_tree_grows_as_the_tree_of_the_immutable_protocol_adapter_would_have() public {
+    function test_the_copied_tree_grows_as_the_tree_of_the_legacy_protocol_adapter_would_have() public {
         _seedState();
 
         (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
@@ -381,20 +380,20 @@ contract MigrationalProtocolAdapterTest is Test {
         });
         _pa.execute(txn);
 
-        // The legacy immutable protocol adapter receives the same commitments in the same order.
+        // The legacy protocol adapter receives the same commitments in the same order.
         for (uint256 i = 0; i < txn.actions.length; ++i) {
             for (uint256 j = 0; j < txn.actions[i].created.length; ++j) {
-                _immutableProtocolAdapter.addCommitment(txn.actions[i].created[j].commitment);
+                _legacyProtocolAdapter.addCommitment(txn.actions[i].created[j].commitment);
             }
         }
 
         assertEq(
             _pa.latestCommitmentTreeRoot(),
-            _immutableProtocolAdapter.latestCommitmentTreeRoot(),
+            _legacyProtocolAdapter.latestCommitmentTreeRoot(),
             "the copied tree grows differently"
         );
         assertEq(
-            _pa.commitmentCount(), _immutableProtocolAdapter.commitmentCount(), "commitment count differs after growth"
+            _pa.commitmentCount(), _legacyProtocolAdapter.commitmentCount(), "commitment count differs after growth"
         );
     }
 
@@ -411,14 +410,13 @@ contract MigrationalProtocolAdapterTest is Test {
         ProtocolAdapter base = ProtocolAdapter(address(_pa));
         assertEq(
             base.latestCommitmentTreeRoot(),
-            _immutableProtocolAdapter.latestCommitmentTreeRoot(),
+            _legacyProtocolAdapter.latestCommitmentTreeRoot(),
             "the root should survive"
         );
         assertEq(base.commitmentCount(), _COMMITMENT_COUNT, "the commitments should survive");
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
             assertTrue(
-                base.isNullifierContained(_immutableProtocolAdapter.nullifierAtIndex(i)),
-                "the nullifiers should survive"
+                base.isNullifierContained(_legacyProtocolAdapter.nullifierAtIndex(i)), "the nullifiers should survive"
             );
         }
         assertFalse(base.paused(), "the adapter should stay unpaused");
@@ -428,38 +426,38 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.migrateNullifierSet({start: 0, count: 1});
     }
 
-    function test_initialize_starts_paused_and_records_the_immutable_protocol_adapter() public view {
+    function test_initialize_starts_paused_and_records_the_legacy_protocol_adapter() public view {
         assertTrue(_pa.paused(), "the migrational adapter should start paused");
         assertEq(
-            _pa.getImmutableProtocolAdapter(),
-            address(_immutableProtocolAdapter),
-            "the recorded immutable protocol adapter differs"
+            _pa.getLegacyProtocolAdapter(),
+            address(_legacyProtocolAdapter),
+            "the recorded legacy protocol adapter differs"
         );
         assertEq(_pa.owner(), _OWNER, "owner differs");
         assertEq(_pa.commitmentCount(), 0, "the tree should start empty");
     }
 
-    /// @notice Deploys a stand-in for the legacy immutable protocol adapter and fills it.
-    function _deployImmutableProtocolAdapter(uint256 commitments, uint256 nullifiers)
+    /// @notice Deploys a stand-in for the legacy protocol adapter and fills it.
+    function _deployLegacyProtocolAdapter(uint256 commitments, uint256 nullifiers)
         internal
-        returns (ImmutableProtocolAdapterMock immutableProtocolAdapter)
+        returns (LegacyProtocolAdapterMock legacyProtocolAdapter)
     {
-        immutableProtocolAdapter = new ImmutableProtocolAdapterMock(address(this));
+        legacyProtocolAdapter = new LegacyProtocolAdapterMock(address(this));
         for (uint256 i = 0; i < commitments; ++i) {
-            immutableProtocolAdapter.addCommitment(keccak256(abi.encode("commitment", i)));
+            legacyProtocolAdapter.addCommitment(keccak256(abi.encode("commitment", i)));
         }
         for (uint256 i = 0; i < nullifiers; ++i) {
-            immutableProtocolAdapter.addNullifier(keccak256(abi.encode("nullifier", i)));
+            legacyProtocolAdapter.addNullifier(keccak256(abi.encode("nullifier", i)));
         }
     }
 
-    /// @notice Deploys a paused migrational proxy bound to the given legacy immutable protocol adapter.
-    function _deployMigrationalProxy(address immutableProtocolAdapter)
+    /// @notice Deploys a paused migrational proxy bound to the given legacy protocol adapter.
+    function _deployMigrationalProxy(address legacyProtocolAdapter)
         internal
         returns (MigrationalProtocolAdapter migrationalProxy)
     {
         Options memory opts;
-        opts.constructorData = abi.encode(_router, _verifier.SELECTOR(), immutableProtocolAdapter);
+        opts.constructorData = abi.encode(_router, _verifier.SELECTOR(), legacyProtocolAdapter);
         migrationalProxy = MigrationalProtocolAdapter(
             Upgrades.deployUUPSProxy(
                 "MigrationalProtocolAdapter.sol", abi.encodeCall(MigrationalProtocolAdapter.initialize, (_OWNER)), opts
@@ -468,7 +466,7 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function _migrateCommitmentTree() internal {
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_OWNER);
         _pa.migrateCommitmentTree(sides);

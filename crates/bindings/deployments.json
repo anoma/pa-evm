@@ -20,7 +20,7 @@
       }
     }
   ],
-  "immutable": [
+  "legacy": [
     {
       "chainId": 11155111,
       "protocolAdapter": "0xf152BBA809d6cba122579cee997A54B8F3FBa417"

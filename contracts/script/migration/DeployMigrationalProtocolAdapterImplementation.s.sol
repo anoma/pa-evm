@@ -14,7 +14,7 @@ import {Parameters} from "../Parameters.sol";
 /// @title DeployMigrationalProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
 /// @notice A script to deploy the migrational protocol adapter implementation on a supported network that runs a
-/// legacy immutable protocol adapter. A proxy on it starts paused, copies its state in, and then upgrades to
+/// legacy protocol adapter. A proxy on it starts paused, copies its state in, and then upgrades to
 /// `ProtocolAdapter`.
 /// @custom:security-contact security@anoma.foundation
 contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Script {
@@ -24,11 +24,11 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
-    /// @notice Thrown if the chain runs no legacy immutable protocol adapter to copy the state from.
-    error NoImmutableProtocolAdapter(uint256 chainId);
+    /// @notice Thrown if the chain runs no legacy protocol adapter to copy the state from.
+    error NoLegacyProtocolAdapter(uint256 chainId);
 
     /// @notice Validates the migrational implementation for upgrade safety and deploys it on a supported network
-    /// that runs a legacy immutable protocol adapter.
+    /// that runs a legacy protocol adapter.
     /// @return implementation The migrational protocol adapter implementation contract.
     function run() public returns (address implementation) {
         bytes memory constructorData;
@@ -45,7 +45,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
             new MigrationalProtocolAdapter{salt: IMPLEMENTATION_SALT}({
                 riscZeroVerifierRouter: address(getRouterData().router),
                 riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR,
-                immutableProtocolAdapter: getImmutableProtocolAdapter(block.chainid)
+                legacyProtocolAdapter: getLegacyProtocolAdapter(block.chainid)
             })
         );
         vm.stopBroadcast();
@@ -59,7 +59,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     }
 
     /// @notice Predicts the deterministic address the migrational implementation of this source version deploys to
-    /// on a supported network that runs a legacy immutable protocol adapter.
+    /// on a supported network that runs a legacy protocol adapter.
     /// @param chainId The chain ID of the network.
     /// @return implementation The predicted implementation contract address.
     /// @return constructorData The constructor arguments the predicted address commits to.
@@ -70,7 +70,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
         constructorData = abi.encode(
             address(data.router),
             RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR,
-            getImmutableProtocolAdapter(chainId)
+            getLegacyProtocolAdapter(chainId)
         );
         // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
         // forge-lint: disable-next-line(encode-packed-collision)
@@ -79,12 +79,12 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
         implementation = vm.computeCreate2Address({salt: IMPLEMENTATION_SALT, initCodeHash: keccak256(initCode)});
     }
 
-    /// @notice Returns the legacy immutable protocol adapter of a chain, as `RecordedDeployments` records it.
+    /// @notice Returns the legacy protocol adapter of a chain, as `RecordedDeployments` records it.
     /// @param chainId The chain ID of the network.
-    /// @return immutableProtocolAdapter The immutable protocol adapter the migrational implementation copies the state
+    /// @return legacyProtocolAdapter The legacy protocol adapter the migrational implementation copies the state
     /// from.
-    function getImmutableProtocolAdapter(uint256 chainId) public pure returns (address immutableProtocolAdapter) {
-        immutableProtocolAdapter = RecordedDeployments.immutableProtocolAdapter(chainId);
-        require(immutableProtocolAdapter != address(0), NoImmutableProtocolAdapter({chainId: chainId}));
+    function getLegacyProtocolAdapter(uint256 chainId) public pure returns (address legacyProtocolAdapter) {
+        legacyProtocolAdapter = RecordedDeployments.legacyProtocolAdapter(chainId);
+        require(legacyProtocolAdapter != address(0), NoLegacyProtocolAdapter({chainId: chainId}));
     }
 }

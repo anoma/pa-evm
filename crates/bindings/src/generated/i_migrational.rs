@@ -7,7 +7,7 @@ interface IMigrational {
     event MigrationFinalized();
     event NullifierBatchMigrated(uint256 start, uint256 count);
 
-    function getImmutableProtocolAdapter() external view returns (address immutableProtocolAdapter);
+    function getLegacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
     function migrateCommitmentTree(bytes32[] memory sides) external;
     function migrateNullifierSet(uint256 start, uint256 count) external;
 }
@@ -18,11 +18,11 @@ interface IMigrational {
 [
   {
     "type": "function",
-    "name": "getImmutableProtocolAdapter",
+    "name": "getLegacyProtocolAdapter",
     "inputs": [],
     "outputs": [
       {
-        "name": "immutableProtocolAdapter",
+        "name": "legacyProtocolAdapter",
         "type": "address",
         "internalType": "address"
       }
@@ -468,21 +468,21 @@ event NullifierBatchMigrated(uint256 start, uint256 count);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `getImmutableProtocolAdapter()` and selector `0x03d5d46d`.
+    /**Function with signature `getLegacyProtocolAdapter()` and selector `0x364f375b`.
 ```solidity
-function getImmutableProtocolAdapter() external view returns (address immutableProtocolAdapter);
+function getLegacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getImmutableProtocolAdapterCall;
+    pub struct getLegacyProtocolAdapterCall;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`getImmutableProtocolAdapter()`](getImmutableProtocolAdapterCall) function.
+    ///Container type for the return parameters of the [`getLegacyProtocolAdapter()`](getLegacyProtocolAdapterCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getImmutableProtocolAdapterReturn {
+    pub struct getLegacyProtocolAdapterReturn {
         #[allow(missing_docs)]
-        pub immutableProtocolAdapter: alloy::sol_types::private::Address,
+        pub legacyProtocolAdapter: alloy::sol_types::private::Address,
     }
     #[allow(
         non_camel_case_types,
@@ -511,16 +511,16 @@ function getImmutableProtocolAdapter() external view returns (address immutableP
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getImmutableProtocolAdapterCall>
+            impl ::core::convert::From<getLegacyProtocolAdapterCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: getImmutableProtocolAdapterCall) -> Self {
+                fn from(value: getLegacyProtocolAdapterCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getImmutableProtocolAdapterCall {
+            for getLegacyProtocolAdapterCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -545,25 +545,25 @@ function getImmutableProtocolAdapter() external view returns (address immutableP
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getImmutableProtocolAdapterReturn>
+            impl ::core::convert::From<getLegacyProtocolAdapterReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: getImmutableProtocolAdapterReturn) -> Self {
-                    (value.immutableProtocolAdapter,)
+                fn from(value: getLegacyProtocolAdapterReturn) -> Self {
+                    (value.legacyProtocolAdapter,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getImmutableProtocolAdapterReturn {
+            for getLegacyProtocolAdapterReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self {
-                        immutableProtocolAdapter: tuple.0,
+                        legacyProtocolAdapter: tuple.0,
                     }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for getImmutableProtocolAdapterCall {
+        impl alloy_sol_types::SolCall for getLegacyProtocolAdapterCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -573,8 +573,8 @@ function getImmutableProtocolAdapter() external view returns (address immutableP
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "getImmutableProtocolAdapter()";
-            const SELECTOR: [u8; 4] = [3u8, 213u8, 212u8, 109u8];
+            const SIGNATURE: &'static str = "getLegacyProtocolAdapter()";
+            const SELECTOR: [u8; 4] = [54u8, 79u8, 55u8, 91u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -599,8 +599,8 @@ function getImmutableProtocolAdapter() external view returns (address immutableP
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: getImmutableProtocolAdapterReturn = r.into();
-                        r.immutableProtocolAdapter
+                        let r: getLegacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
                     })
             }
             #[inline]
@@ -615,8 +615,8 @@ function getImmutableProtocolAdapter() external view returns (address immutableP
                         config,
                     )
                     .map(|r| {
-                        let r: getImmutableProtocolAdapterReturn = r.into();
-                        r.immutableProtocolAdapter
+                        let r: getLegacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
                     })
             }
             #[inline]
@@ -991,7 +991,7 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
     #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum IMigrationalCalls {
         #[allow(missing_docs)]
-        getImmutableProtocolAdapter(getImmutableProtocolAdapterCall),
+        getLegacyProtocolAdapter(getLegacyProtocolAdapterCall),
         #[allow(missing_docs)]
         migrateCommitmentTree(migrateCommitmentTreeCall),
         #[allow(missing_docs)]
@@ -1006,19 +1006,19 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [3u8, 167u8, 253u8, 229u8],
-            [3u8, 213u8, 212u8, 109u8],
+            [54u8, 79u8, 55u8, 91u8],
             [250u8, 131u8, 221u8, 143u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
             ::core::stringify!(migrateNullifierSet),
-            ::core::stringify!(getImmutableProtocolAdapter),
+            ::core::stringify!(getLegacyProtocolAdapter),
             ::core::stringify!(migrateCommitmentTree),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
             <migrateNullifierSetCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <getImmutableProtocolAdapterCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <migrateCommitmentTreeCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -1050,8 +1050,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
-                Self::getImmutableProtocolAdapter(_) => {
-                    <getImmutableProtocolAdapterCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::getLegacyProtocolAdapter(_) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::migrateCommitmentTree(_) => {
                     <migrateCommitmentTreeCall as alloy_sol_types::SolCall>::SELECTOR
@@ -1106,17 +1106,17 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
                     migrateNullifierSet
                 },
                 {
-                    fn getImmutableProtocolAdapter(
+                    fn getLegacyProtocolAdapter(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IMigrationalCalls> {
-                        <getImmutableProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(IMigrationalCalls::getImmutableProtocolAdapter)
+                            .map(IMigrationalCalls::getLegacyProtocolAdapter)
                     }
-                    getImmutableProtocolAdapter
+                    getLegacyProtocolAdapter
                 },
                 {
                     fn migrateCommitmentTree(
@@ -1157,8 +1157,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn abi_encoded_size(&self) -> usize {
             match self {
-                Self::getImmutableProtocolAdapter(inner) => {
-                    <getImmutableProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::getLegacyProtocolAdapter(inner) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -1177,8 +1177,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn abi_encode_raw(&self, out: &mut alloy_sol_types::private::Vec<u8>) {
             match self {
-                Self::getImmutableProtocolAdapter(inner) => {
-                    <getImmutableProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::getLegacyProtocolAdapter(inner) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -1571,11 +1571,11 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, C, N> {
             alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
         }
-        ///Creates a new call builder for the [`getImmutableProtocolAdapter`] function.
-        pub fn getImmutableProtocolAdapter(
+        ///Creates a new call builder for the [`getLegacyProtocolAdapter`] function.
+        pub fn getLegacyProtocolAdapter(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, getImmutableProtocolAdapterCall, N> {
-            self.call_builder(&getImmutableProtocolAdapterCall)
+        ) -> alloy_contract::SolCallBuilder<&P, getLegacyProtocolAdapterCall, N> {
+            self.call_builder(&getLegacyProtocolAdapterCall)
         }
         ///Creates a new call builder for the [`migrateCommitmentTree`] function.
         pub fn migrateCommitmentTree(

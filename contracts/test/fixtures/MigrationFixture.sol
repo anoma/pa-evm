@@ -11,11 +11,11 @@ import {
 import {MigrateProtocolAdapterState} from "../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {FinalizeProtocolAdapterStateMigrationMock} from "../mocks/FinalizeProtocolAdapterStateMigration.m.sol";
-import {ImmutableProtocolAdapterMock} from "../mocks/ImmutableProtocolAdapter.m.sol";
+import {LegacyProtocolAdapterMock} from "../mocks/LegacyProtocolAdapter.m.sol";
 import {MigrateProtocolAdapterStateMock} from "../mocks/MigrateProtocolAdapterState.m.sol";
 import {RiscZeroRouterFixture} from "./RiscZeroRouterFixture.sol";
 
-/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the legacy immutable
+/// @notice A test fixture providing the starting point of a migration: a stopped stand-in for the legacy
 /// protocol adapter, a paused migrational proxy bound to it, and the migration and finalization scripts reading the two
 /// in place of the records. Forge's default sender owns the stand-in and the proxy.
 abstract contract MigrationFixture is RiscZeroRouterFixture {
@@ -23,7 +23,7 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
     /// @dev More than one batch, so the nullifier loop of the migration run is exercised.
     uint256 internal constant _NULLIFIER_COUNT = 450;
 
-    ImmutableProtocolAdapterMock internal _immutableProtocolAdapter;
+    LegacyProtocolAdapterMock internal _legacyProtocolAdapter;
     address internal _proxy;
     MigrateProtocolAdapterState internal _migrationScript;
     FinalizeProtocolAdapterStateMigration internal _finalizationScript;
@@ -34,36 +34,36 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
         // The implementation the completion run upgrades to, at its deterministic address.
         new DeployProtocolAdapterImplementation().run();
 
-        _immutableProtocolAdapter = new ImmutableProtocolAdapterMock(DEFAULT_SENDER);
+        _legacyProtocolAdapter = new LegacyProtocolAdapterMock(DEFAULT_SENDER);
         for (uint256 i = 0; i < _COMMITMENT_COUNT; ++i) {
-            _immutableProtocolAdapter.addCommitment(keccak256(abi.encode("commitment", i)));
+            _legacyProtocolAdapter.addCommitment(keccak256(abi.encode("commitment", i)));
         }
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
-            _immutableProtocolAdapter.addNullifier(keccak256(abi.encode("nullifier", i)));
+            _legacyProtocolAdapter.addNullifier(keccak256(abi.encode("nullifier", i)));
         }
         vm.prank(DEFAULT_SENDER);
-        _immutableProtocolAdapter.emergencyStop();
+        _legacyProtocolAdapter.emergencyStop();
 
-        _proxy = _deployMigrationalProxy(address(_immutableProtocolAdapter));
+        _proxy = _deployMigrationalProxy(address(_legacyProtocolAdapter));
 
         _migrationScript = new MigrateProtocolAdapterStateMock({
-            immutableProtocolAdapter: address(_immutableProtocolAdapter), proxy: _proxy
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: _proxy
         });
         _finalizationScript = new FinalizeProtocolAdapterStateMigrationMock({
-            immutableProtocolAdapter: address(_immutableProtocolAdapter), proxy: _proxy
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: _proxy
         });
     }
 
-    /// @notice Deploys a paused migrational proxy bound to the given legacy immutable protocol adapter.
-    /// @param immutableProtocolAdapter The immutable protocol adapter the proxy copies its state from.
+    /// @notice Deploys a paused migrational proxy bound to the given legacy protocol adapter.
+    /// @param legacyProtocolAdapter The legacy protocol adapter the proxy copies its state from.
     /// @return proxy The proxy address.
-    function _deployMigrationalProxy(address immutableProtocolAdapter) internal returns (address proxy) {
+    function _deployMigrationalProxy(address legacyProtocolAdapter) internal returns (address proxy) {
         // forge-lint: disable-next-line(unused-return)
         (, bytes memory implementationData) = new DeployProtocolAdapterImplementation().predict();
         (address router, bytes4 selector) = abi.decode(implementationData, (address, bytes4));
 
         Options memory opts;
-        opts.constructorData = abi.encode(router, selector, immutableProtocolAdapter);
+        opts.constructorData = abi.encode(router, selector, legacyProtocolAdapter);
         proxy = Upgrades.deployUUPSProxy(
             "MigrationalProtocolAdapter.sol",
             abi.encodeCall(MigrationalProtocolAdapter.initialize, (DEFAULT_SENDER)),

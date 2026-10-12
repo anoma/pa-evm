@@ -9,9 +9,9 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// @title FinalizeProtocolAdapterStateMigration
 /// @author Anoma Foundation, 2026
 /// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. It
-/// unpauses the proxy that `MigrateProtocolAdapterState` copied the state of the legacy immutable protocol adapter
+/// unpauses the proxy that `MigrateProtocolAdapterState` copied the state of the legacy protocol adapter
 /// into, upgrades it from `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation and, in
-/// production, transfers it to the production proxy owner. The unpause compares the copied state against the immutable
+/// production, transfers it to the production proxy owner. The unpause compares the copied state against the legacy
 /// protocol adapter and reverts on a difference, so no run reaches the upgrade with the wrong state. Every step skips
 /// once it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
@@ -20,7 +20,7 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// @custom:security-contact security@anoma.foundation
 contract FinalizeProtocolAdapterStateMigration is MigrationScript {
     /// @notice Unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the production
-    /// proxy owner. The unpause is what checks the copied state against the legacy immutable protocol adapter. Without
+    /// proxy owner. The unpause is what checks the copied state against the legacy protocol adapter. Without
     /// `--broadcast` the run is simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
@@ -29,7 +29,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
     /// @param isProduction Whether to finalize the production or the staging proxy. The production proxy owner
     /// receives a production proxy.
     function run(bool isProduction) public {
-        (address immutableProtocolAdapter, address proxy) = _configuration(isProduction);
+        (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
 
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         address implementation = _requireDeployedImplementation(implementationDeployScript);
@@ -37,7 +37,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
         address owner = protocolAdapter.owner();
 
         if (protocolAdapter.getImplementation() != implementation) {
-            _requireImmutableProtocolAdapter({immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy});
+            _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
 
             if (protocolAdapter.paused()) {
                 vm.broadcast(owner);

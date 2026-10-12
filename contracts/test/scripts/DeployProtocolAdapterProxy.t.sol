@@ -15,8 +15,8 @@ import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
 /// @notice Checks the proxy deploy script against a fresh chain. The deployments it records are checked against the
 /// chains in the bindings crate, which owns the record.
 contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
-    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy immutable protocol adapter.
-    uint256 internal constant _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER = 421614;
+    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy protocol adapter.
+    uint256 internal constant _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER = 421614;
 
     function test_run_succeeds_for_a_staging_deployment() public {
         _deployRiscZeroRouter();
@@ -110,15 +110,15 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         script.run({isProduction: false, isMigrational: false});
     }
 
-    function test_run_reverts_for_a_migrational_deployment_on_a_chain_without_an_immutable_protocol_adapter() public {
-        vm.chainId(_CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER);
+    function test_run_reverts_for_a_migrational_deployment_on_a_chain_without_a_legacy_protocol_adapter() public {
+        vm.chainId(_CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER);
 
         DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                DeployMigrationalProtocolAdapterImplementation.NoImmutableProtocolAdapter.selector,
-                _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER
+                DeployMigrationalProtocolAdapterImplementation.NoLegacyProtocolAdapter.selector,
+                _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER
             )
         );
         script.run({isProduction: false, isMigrational: true});
@@ -178,7 +178,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
 
     /// @notice Runs the deploy script and checks that the proxy lands at the predicted deterministic address, delegates
     /// to a deployed implementation, is owned by the environment owner or, if it is migrational, by the staging proxy
-    /// owner, and starts paused on the chain's legacy immutable protocol adapter exactly when it is migrational.
+    /// owner, and starts paused on the chain's legacy protocol adapter exactly when it is migrational.
     /// @param isProduction Whether to deploy the production or the staging environment proxy.
     /// @param isMigrational Whether to deploy the proxy on the migrational implementation.
     function _expectDeployment(bool isProduction, bool isMigrational) private {
@@ -216,9 +216,9 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
 
         if (isMigrational) {
             assertEq(
-                MigrationalProtocolAdapter(proxy).getImmutableProtocolAdapter(),
-                new DeployMigrationalProtocolAdapterImplementation().getImmutableProtocolAdapter(block.chainid),
-                string.concat(environment, ": proxy records a different immutable protocol adapter")
+                MigrationalProtocolAdapter(proxy).getLegacyProtocolAdapter(),
+                new DeployMigrationalProtocolAdapterImplementation().getLegacyProtocolAdapter(block.chainid),
+                string.concat(environment, ": proxy records a different legacy protocol adapter")
             );
         }
     }
