@@ -6,8 +6,8 @@ import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.s
 /// @notice A mock migrational protocol adapter that exposes `_zeroHashes` to the tests.
 contract MigrationalProtocolAdapterZeroHashesMock is MigrationalProtocolAdapter {
     /// @custom:oz-upgrades-unsafe-allow constructor state-variable-immutable
-    constructor(address riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector, address protocolAdapterV1)
-        MigrationalProtocolAdapter(riscZeroVerifierRouter, riscZeroVerifierSelector, protocolAdapterV1)
+    constructor(address riscZeroVerifierRouter, bytes4 riscZeroVerifierSelector, address immutableProtocolAdapter)
+        MigrationalProtocolAdapter(riscZeroVerifierRouter, riscZeroVerifierSelector, immutableProtocolAdapter)
     {}
 
     /// @notice Returns the empty-subtree roots the migrational protocol adapter writes for a tree of the given depth.

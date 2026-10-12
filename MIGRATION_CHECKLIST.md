@@ -1,19 +1,19 @@
 # Migration Checklist
 
-How to move a chain that ran v1 onto v2 and keep its commitment tree and nullifier set. A chain deployed fresh skips all of this and starts on `ProtocolAdapter`. The plan in `anoma-knowledge-base/galileo-v2-transition-and-versioning.md` sets out the whole move; this file covers the protocol adapter's part.
+How to move a chain from its legacy immutable protocol adapter to the protocol adapter and keep its commitment tree and nullifier set. A chain deployed fresh skips all of this and starts on `ProtocolAdapter`. The plan in `anoma-knowledge-base/galileo-v2-transition-and-versioning.md` sets out the whole move; this file covers the protocol adapter's part.
 
 ## How it works
 
-A chain that ran v1 cannot start v2 empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the v1 state in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) unpauses, upgrades the proxy to `ProtocolAdapter` and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
+A chain that ran a legacy immutable protocol adapter cannot start the protocol adapter empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the state of the immutable protocol adapter in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) unpauses, upgrades the proxy to `ProtocolAdapter` and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
 
-The ERC20 forwarder balances move between the two runs. The kind table on the proxy carries V1 members, which let a V1 resource unwrap from the V2 ERC20 forwarder. A paused proxy executes nothing, so no V1 resource can unwrap before the V2 forwarder holds the V1 tokens.
+The ERC20 forwarder balances move between the two runs. The kind table on the proxy carries members under the label of the legacy immutable ERC20 forwarder, which let an immutable-forwarder resource unwrap from the environment's ERC20 forwarder. A paused proxy executes nothing, so no immutable-forwarder resource can unwrap before the environment's ERC20 forwarder holds the tokens of the immutable ERC20 forwarder.
 
-The migrational implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the v1 protocol adapter is stopped.
+The migrational implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the legacy immutable protocol adapter is stopped.
 
-- `migrateCommitmentTree` writes the tree in one call. The caller supplies the stored sides, the one part of the tree v1 exposes through no getter. The leaf count and the root come from v1, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces v1's root, so a wrong set of sides cannot reach storage.
-- `migrateNullifierSet` copies a batch of nullifiers, reading each one from v1. The caller gives the v1 index the batch starts at. The call reverts unless the batch starts where the copied nullifiers end, so no nullifier can be skipped or copied twice.
+- `migrateCommitmentTree` writes the tree in one call. The caller supplies the stored sides, the one part of the tree that the legacy immutable protocol adapter exposes through no getter. The leaf count and the root come from the immutable protocol adapter, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces the root of the immutable protocol adapter, so a wrong set of sides cannot reach storage.
+- `migrateNullifierSet` copies a batch of nullifiers, reading each one from the legacy immutable protocol adapter. The caller gives the index in the immutable protocol adapter that the batch starts at. The call reverts unless the batch starts where the copied nullifiers end, so no nullifier can be skipped or copied twice.
 
-`unpause` proceeds only once the adapter holds what the stopped v1 adapter holds: the same commitment count, the same latest root, and every nullifier. The batches copy v1's nullifiers in order, so the adapter checks only the last one. The historical roots are the one difference that stays. v1 keeps every root it had. This adapter keeps two: the empty-tree root, which a resource created and consumed in one transaction proves membership against, and v1's latest root.
+`unpause` proceeds only once the adapter holds what the stopped legacy immutable protocol adapter holds: the same commitment count, the same latest root, and every nullifier. The batches copy the nullifiers of the immutable protocol adapter in order, so the adapter checks only the last one. The historical roots are the one difference that stays. The immutable protocol adapter keeps every root it had. This adapter keeps two: the empty-tree root, which a resource created and consumed in one transaction proves membership against, and the latest root of the immutable protocol adapter.
 
 Neither function is closed by the contract. The upgrade to the plain implementation removes them, so a migration must always reach the end of the completion run.
 
@@ -31,7 +31,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-verify-impl <IMPLEMENTATION> <CHAIN>
   ```
 
-- [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's v1 protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `v1` entries in [`deployments.json`](./crates/bindings/deployments.json).
+- [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's legacy immutable protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `immutable` entries in [`deployments.json`](./crates/bindings/deployments.json).
 
   ```sh
   export IS_PRODUCTION=<true|false>
@@ -48,11 +48,11 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-verify-deployment <MIGRATIONAL_IMPLEMENTATION> <PROXY> <CHAIN>
   ```
 
-- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` and the bindings with `just contracts-gen`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the v1 protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
+- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` and the bindings with `just contracts-gen`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the legacy immutable protocol adapter from the regenerated library, so they refuse to start without this record. The kind tables take their chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
 
-- [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's V1 ERC20 forwarder.
+- [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's legacy immutable ERC20 forwarder.
 
-- [ ] Install the chain's kind table commitment on the proxy. Generate the table after the forwarders are recorded, so that it carries the V1 members. The proxy can take the commitment while paused, so install it before the v1 stop. The migration and completion runs do not change it. Simulate, run, and read it back:
+- [ ] Install the chain's kind table commitment on the proxy. Generate the table after the forwarders are recorded, so that it carries the members under the label of the legacy immutable ERC20 forwarder. The proxy can take the commitment while paused, so install it before the stop of the legacy immutable protocol adapter. The migration and completion runs do not change it. Simulate, run, and read it back:
 
   ```sh
   just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TABLE_COMMITMENT> <CHAIN>
@@ -60,40 +60,40 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   cast call <PROXY> "getKindTableCommitment()(bytes32)" --rpc-url <CHAIN>
   ```
 
-- [ ] Deprecate the logic reference that the chain's V1 ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The kind table's V1 members make V1 resources aliases of current ones, in both directions, so without this entry a transaction could create new V1 resources from current ones. V1 resources stay consumable, so they still convert and unwrap. Take the logic reference from the V1 forwarder that the forwarder repository records, and check that the chain's current ERC20 forwarder accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the v1 stop. Simulate, run, and read it back:
+- [ ] Deprecate the logic reference that the chain's legacy immutable ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The members under the label of the immutable ERC20 forwarder make its resources fungible with those of the environment's ERC20 forwarder, in both directions, so without this entry a transaction could convert resources of the environment's ERC20 forwarder into new immutable-forwarder resources. Immutable-forwarder resources stay consumable, so they still convert and unwrap. Take the logic reference from the immutable ERC20 forwarder that the forwarder repository records, and check that the environment's ERC20 forwarder on the chain accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the stop of the legacy immutable protocol adapter. Simulate, run, and read it back:
 
   ```sh
-  just contracts-simulate-staging-logic-ref-denial <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
-  just contracts-execute-staging-logic-ref-denial deployer <PROXY> "[(<V1_LOGIC_REF>,false)]" <CHAIN>
-  cast call <PROXY> "isLogicRefDenied(bytes32,bool)(bool)" <V1_LOGIC_REF> false --rpc-url <CHAIN>
+  just contracts-simulate-staging-logic-ref-denial <PROXY> "[(<IMMUTABLE_ERC20_FORWARDER_LOGIC_REF>,false)]" <CHAIN>
+  just contracts-execute-staging-logic-ref-denial deployer <PROXY> "[(<IMMUTABLE_ERC20_FORWARDER_LOGIC_REF>,false)]" <CHAIN>
+  cast call <PROXY> "isLogicRefDenied(bytes32,bool)(bool)" <IMMUTABLE_ERC20_FORWARDER_LOGIC_REF> false --rpc-url <CHAIN>
   ```
 
 ## Per chain
 
 The stop in step 2 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction before the stop.
 
-1. [ ] Read and record v1's `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount`. They are what the runs are checked against.
+1. [ ] Read and record the `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount` of the legacy immutable protocol adapter. They are what the runs are checked against.
 
-2. [ ] Transfer the v1 protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns v1 on every chain, so the transfer is a Safe transaction. Besides the `Ownable` functions, the owner of v1 can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
-
-   ```sh
-   just contracts-simulate-v1-ownership-transfer-proposal <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
-   just contracts-propose-v1-ownership-transfer deployer <PROTOCOL_ADAPTER_V1> <PROPOSER> <CHAIN>
-   ```
-
-   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). v1 keeps running, so do this before the planned stop and read the new owner back:
+2. [ ] Transfer the legacy immutable protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every immutable protocol adapter, so the transfer is a Safe transaction. Besides the `Ownable` functions, its owner can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
 
    ```sh
-   cast call <PROTOCOL_ADAPTER_V1> "owner()(address)" --rpc-url <CHAIN>
+   just contracts-simulate-immutable-protocol-adapter-ownership-transfer-proposal <IMMUTABLE_PROTOCOL_ADAPTER> <PROPOSER> <CHAIN>
+   just contracts-propose-immutable-protocol-adapter-ownership-transfer deployer <IMMUTABLE_PROTOCOL_ADAPTER> <PROPOSER> <CHAIN>
    ```
 
-   Then stop v1 from the deployment wallet. The stop and the migration run of step 4 follow each other without a Safe transaction between them, which is why the ownership moves at all:
+   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). The legacy immutable protocol adapter keeps running, so do this before the planned stop and read the new owner back:
 
    ```sh
-   cast send <PROTOCOL_ADAPTER_V1> "emergencyStop()" --rpc-url <CHAIN> --account deployer
+   cast call <IMMUTABLE_PROTOCOL_ADAPTER> "owner()(address)" --rpc-url <CHAIN>
    ```
 
-   The stop cannot be undone: v1 has no function that lifts it. Nothing transfers v1 back, and no step needs to.
+   Then stop the legacy immutable protocol adapter from the deployment wallet. The stop and the migration run of step 4 follow each other without a Safe transaction between them, which is why the ownership moves at all:
+
+   ```sh
+   cast send <IMMUTABLE_PROTOCOL_ADAPTER> "emergencyStop()" --rpc-url <CHAIN> --account deployer
+   ```
+
+   The stop cannot be undone: the legacy immutable protocol adapter has no function that lifts it. Nothing transfers it back, and no step needs to.
 
 3. [ ] Simulate the migration run. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
@@ -112,7 +112,7 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
 
    If the run stops early, fix the cause and repeat it. Every step skips once it is done, so the repeat continues where the run stopped. The copy-in stays open until the upgrade lands, and a proxy left half-migrated cannot be replaced at its address.
 
-5. [ ] Move the V1 ERC20 forwarder balances to the V2 ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must stay paused until they moved: the kind table's V1 members let V1 resources unwrap from the V2 forwarder.
+5. [ ] Move the balances of the legacy immutable ERC20 forwarder to the environment's ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must stay paused until they moved: the members under the label of the immutable ERC20 forwarder let immutable-forwarder resources unwrap from the environment's ERC20 forwarder.
 
 6. [ ] Simulate the completion run. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
 
@@ -137,4 +137,4 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
    just contracts-check-migration <CHAIN>
    ```
 
-   It compares the copied state with v1, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy.
+   It compares the copied state with the legacy immutable protocol adapter, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy.
