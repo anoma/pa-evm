@@ -16,8 +16,8 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
     /// @dev The local development chain, which has no RISC Zero deployment.
     uint256 internal constant _UNSUPPORTED_CHAIN_ID = 31337;
 
-    /// @dev Arbitrum Sepolia, a supported network that never ran a v1 protocol adapter.
-    uint256 internal constant _CHAIN_ID_WITHOUT_V1 = 421614;
+    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy protocol adapter.
+    uint256 internal constant _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER = 421614;
 
     function test_run_deploys_deterministically() public {
         _deployRiscZeroRouter();
@@ -26,13 +26,13 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         address implementation = script.run();
 
         SupportedNetworks.Data memory data = getRouterData();
-        address protocolAdapterV1 = script.getProtocolAdapterV1(block.chainid);
+        address legacyProtocolAdapter = script.getLegacyProtocolAdapter(block.chainid);
         address predicted = vm.computeCreate2Address(
             script.IMPLEMENTATION_SALT(),
             keccak256(
                 abi.encodePacked(
                     type(MigrationalProtocolAdapter).creationCode,
-                    abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR, protocolAdapterV1)
+                    abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR, legacyProtocolAdapter)
                 )
             )
         );
@@ -40,9 +40,9 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         assertEq(implementation, predicted, "implementation address differs from the prediction");
         assertGt(implementation.code.length, 0, "implementation is not deployed");
         assertEq(
-            MigrationalProtocolAdapter(implementation).getProtocolAdapterV1(),
-            protocolAdapterV1,
-            "implementation records a different v1 protocol adapter"
+            MigrationalProtocolAdapter(implementation).getLegacyProtocolAdapter(),
+            legacyProtocolAdapter,
+            "implementation records a different legacy protocol adapter"
         );
     }
 
@@ -76,27 +76,28 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         script.predict(_UNSUPPORTED_CHAIN_ID);
     }
 
-    function test_predict_reverts_on_a_chain_without_a_v1_protocol_adapter() public {
+    function test_predict_reverts_on_a_chain_without_a_legacy_protocol_adapter() public {
         DeployMigrationalProtocolAdapterImplementation script = new DeployMigrationalProtocolAdapterImplementation();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                DeployMigrationalProtocolAdapterImplementation.NoProtocolAdapterV1.selector, _CHAIN_ID_WITHOUT_V1
+                DeployMigrationalProtocolAdapterImplementation.NoLegacyProtocolAdapter.selector,
+                _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER
             )
         );
-        script.predict(_CHAIN_ID_WITHOUT_V1);
+        script.predict(_CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER);
     }
 
-    function test_getProtocolAdapterV1_returns_the_recorded_protocol_adapter_of_every_v1_chain() public {
+    function test_getLegacyProtocolAdapter_returns_the_recorded_legacy_protocol_adapter_of_every_chain() public {
         DeployMigrationalProtocolAdapterImplementation script = new DeployMigrationalProtocolAdapterImplementation();
-        RecordedDeployments.DeploymentV1[] memory deployments = RecordedDeployments.v1();
-        assertGt(deployments.length, 0, "no v1 protocol adapter is recorded");
+        RecordedDeployments.LegacyDeployment[] memory deployments = RecordedDeployments.legacy();
+        assertGt(deployments.length, 0, "no legacy protocol adapter is recorded");
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             assertEq(
-                script.getProtocolAdapterV1(deployments[i].chainId),
+                script.getLegacyProtocolAdapter(deployments[i].chainId),
                 deployments[i].protocolAdapter,
-                "the v1 protocol adapter differs from the record"
+                "the legacy protocol adapter differs from the record"
             );
         }
     }

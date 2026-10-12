@@ -13,8 +13,9 @@ import {Parameters} from "../Parameters.sol";
 
 /// @title DeployMigrationalProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
-/// @notice A script to deploy the migrational protocol adapter implementation on a supported network that runs a v1
-/// protocol adapter. A proxy on it starts paused, copies the v1 state in, and then upgrades to `ProtocolAdapter`.
+/// @notice A script to deploy the migrational protocol adapter implementation on a supported network that runs a
+/// legacy protocol adapter. A proxy on it starts paused, copies its state in, and then upgrades to
+/// `ProtocolAdapter`.
 /// @custom:security-contact security@anoma.foundation
 contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
@@ -23,11 +24,11 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
-    /// @notice Thrown if the chain runs no v1 protocol adapter to copy the state from.
-    error NoProtocolAdapterV1(uint256 chainId);
+    /// @notice Thrown if the chain runs no legacy protocol adapter to copy the state from.
+    error NoLegacyProtocolAdapter(uint256 chainId);
 
     /// @notice Validates the migrational implementation for upgrade safety and deploys it on a supported network
-    /// that runs a v1 protocol adapter.
+    /// that runs a legacy protocol adapter.
     /// @return implementation The migrational protocol adapter implementation contract.
     function run() public returns (address implementation) {
         bytes memory constructorData;
@@ -44,7 +45,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
             new MigrationalProtocolAdapter{salt: IMPLEMENTATION_SALT}({
                 riscZeroVerifierRouter: address(getRouterData().router),
                 riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR,
-                protocolAdapterV1: getProtocolAdapterV1(block.chainid)
+                legacyProtocolAdapter: getLegacyProtocolAdapter(block.chainid)
             })
         );
         vm.stopBroadcast();
@@ -58,7 +59,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     }
 
     /// @notice Predicts the deterministic address the migrational implementation of this source version deploys to
-    /// on a supported network that runs a v1 protocol adapter.
+    /// on a supported network that runs a legacy protocol adapter.
     /// @param chainId The chain ID of the network.
     /// @return implementation The predicted implementation contract address.
     /// @return constructorData The constructor arguments the predicted address commits to.
@@ -67,7 +68,9 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
         require(address(data.router) != address(0), UnsupportedNetwork({chainId: chainId}));
 
         constructorData = abi.encode(
-            address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR, getProtocolAdapterV1(chainId)
+            address(data.router),
+            RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR,
+            getLegacyProtocolAdapter(chainId)
         );
         // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
         // forge-lint: disable-next-line(encode-packed-collision)
@@ -76,11 +79,12 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
         implementation = vm.computeCreate2Address({salt: IMPLEMENTATION_SALT, initCodeHash: keccak256(initCode)});
     }
 
-    /// @notice Returns the v1 protocol adapter of a chain, as `RecordedDeployments` records it.
+    /// @notice Returns the legacy protocol adapter of a chain, as `RecordedDeployments` records it.
     /// @param chainId The chain ID of the network.
-    /// @return protocolAdapterV1 The v1 protocol adapter the migrational implementation copies the state from.
-    function getProtocolAdapterV1(uint256 chainId) public pure returns (address protocolAdapterV1) {
-        protocolAdapterV1 = RecordedDeployments.protocolAdapterV1(chainId);
-        require(protocolAdapterV1 != address(0), NoProtocolAdapterV1({chainId: chainId}));
+    /// @return legacyProtocolAdapter The legacy protocol adapter the migrational implementation copies the state
+    /// from.
+    function getLegacyProtocolAdapter(uint256 chainId) public pure returns (address legacyProtocolAdapter) {
+        legacyProtocolAdapter = RecordedDeployments.legacyProtocolAdapter(chainId);
+        require(legacyProtocolAdapter != address(0), NoLegacyProtocolAdapter({chainId: chainId}));
     }
 }

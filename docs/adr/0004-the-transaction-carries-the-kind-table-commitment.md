@@ -4,7 +4,7 @@
 
 ADR-0001 injects the stored kind table commitment into the aggregation journal. A proof made with another kind table then fails with `VerificationFailed()`. This happens each time a prover and the protocol adapter use different kind tables. For example, after the owner stores a new commitment, every proof made with the previous kind table fails, and a prover fails until it loads the new kind table.
 
-The empty kind table has no entries. With it, the compliance circuit computes every kind point by hash to curve, so no two kinds share a kind point. A transaction that balances with the empty kind table therefore also balances with the stored kind table. Only a conversion between kinds that the stored kind table merges needs the stored kind table, for example from V1 forwarder resources to V2 resources.
+The empty kind table has no entries. With it, the compliance circuit computes every kind point by hash to curve, so no two kinds share a kind point. A transaction that balances with the empty kind table therefore also balances with the stored kind table. Only a conversion between kinds that the stored kind table merges needs the stored kind table, for example from resources of the legacy ERC20 forwarder to resources of the environment's ERC20 forwarder.
 
 ## Decision
 

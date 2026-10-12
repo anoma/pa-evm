@@ -7,7 +7,7 @@ interface IMigrational {
     event MigrationFinalized();
     event NullifierBatchMigrated(uint256 start, uint256 count);
 
-    function getProtocolAdapterV1() external view returns (address protocolAdapterV1);
+    function getLegacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
     function migrateCommitmentTree(bytes32[] memory sides) external;
     function migrateNullifierSet(uint256 start, uint256 count) external;
 }
@@ -18,11 +18,11 @@ interface IMigrational {
 [
   {
     "type": "function",
-    "name": "getProtocolAdapterV1",
+    "name": "getLegacyProtocolAdapter",
     "inputs": [],
     "outputs": [
       {
-        "name": "protocolAdapterV1",
+        "name": "legacyProtocolAdapter",
         "type": "address",
         "internalType": "address"
       }
@@ -468,21 +468,21 @@ event NullifierBatchMigrated(uint256 start, uint256 count);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `getProtocolAdapterV1()` and selector `0x368791c9`.
+    /**Function with signature `getLegacyProtocolAdapter()` and selector `0x364f375b`.
 ```solidity
-function getProtocolAdapterV1() external view returns (address protocolAdapterV1);
+function getLegacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getProtocolAdapterV1Call;
+    pub struct getLegacyProtocolAdapterCall;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`getProtocolAdapterV1()`](getProtocolAdapterV1Call) function.
+    ///Container type for the return parameters of the [`getLegacyProtocolAdapter()`](getLegacyProtocolAdapterCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct getProtocolAdapterV1Return {
+    pub struct getLegacyProtocolAdapterReturn {
         #[allow(missing_docs)]
-        pub protocolAdapterV1: alloy::sol_types::private::Address,
+        pub legacyProtocolAdapter: alloy::sol_types::private::Address,
     }
     #[allow(
         non_camel_case_types,
@@ -511,16 +511,16 @@ function getProtocolAdapterV1() external view returns (address protocolAdapterV1
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getProtocolAdapterV1Call>
+            impl ::core::convert::From<getLegacyProtocolAdapterCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: getProtocolAdapterV1Call) -> Self {
+                fn from(value: getLegacyProtocolAdapterCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getProtocolAdapterV1Call {
+            for getLegacyProtocolAdapterCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -545,23 +545,25 @@ function getProtocolAdapterV1() external view returns (address protocolAdapterV1
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<getProtocolAdapterV1Return>
+            impl ::core::convert::From<getLegacyProtocolAdapterReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: getProtocolAdapterV1Return) -> Self {
-                    (value.protocolAdapterV1,)
+                fn from(value: getLegacyProtocolAdapterReturn) -> Self {
+                    (value.legacyProtocolAdapter,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for getProtocolAdapterV1Return {
+            for getLegacyProtocolAdapterReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { protocolAdapterV1: tuple.0 }
+                    Self {
+                        legacyProtocolAdapter: tuple.0,
+                    }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for getProtocolAdapterV1Call {
+        impl alloy_sol_types::SolCall for getLegacyProtocolAdapterCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -571,8 +573,8 @@ function getProtocolAdapterV1() external view returns (address protocolAdapterV1
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "getProtocolAdapterV1()";
-            const SELECTOR: [u8; 4] = [54u8, 135u8, 145u8, 201u8];
+            const SIGNATURE: &'static str = "getLegacyProtocolAdapter()";
+            const SELECTOR: [u8; 4] = [54u8, 79u8, 55u8, 91u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -597,8 +599,8 @@ function getProtocolAdapterV1() external view returns (address protocolAdapterV1
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: getProtocolAdapterV1Return = r.into();
-                        r.protocolAdapterV1
+                        let r: getLegacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
                     })
             }
             #[inline]
@@ -613,8 +615,8 @@ function getProtocolAdapterV1() external view returns (address protocolAdapterV1
                         config,
                     )
                     .map(|r| {
-                        let r: getProtocolAdapterV1Return = r.into();
-                        r.protocolAdapterV1
+                        let r: getLegacyProtocolAdapterReturn = r.into();
+                        r.legacyProtocolAdapter
                     })
             }
             #[inline]
@@ -989,7 +991,7 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
     #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum IMigrationalCalls {
         #[allow(missing_docs)]
-        getProtocolAdapterV1(getProtocolAdapterV1Call),
+        getLegacyProtocolAdapter(getLegacyProtocolAdapterCall),
         #[allow(missing_docs)]
         migrateCommitmentTree(migrateCommitmentTreeCall),
         #[allow(missing_docs)]
@@ -1004,19 +1006,19 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
             [3u8, 167u8, 253u8, 229u8],
-            [54u8, 135u8, 145u8, 201u8],
+            [54u8, 79u8, 55u8, 91u8],
             [250u8, 131u8, 221u8, 143u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
             ::core::stringify!(migrateNullifierSet),
-            ::core::stringify!(getProtocolAdapterV1),
+            ::core::stringify!(getLegacyProtocolAdapter),
             ::core::stringify!(migrateCommitmentTree),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
             <migrateNullifierSetCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::SIGNATURE,
+            <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SIGNATURE,
             <migrateCommitmentTreeCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -1048,8 +1050,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
-                Self::getProtocolAdapterV1(_) => {
-                    <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::SELECTOR
+                Self::getLegacyProtocolAdapter(_) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::migrateCommitmentTree(_) => {
                     <migrateCommitmentTreeCall as alloy_sol_types::SolCall>::SELECTOR
@@ -1104,17 +1106,17 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
                     migrateNullifierSet
                 },
                 {
-                    fn getProtocolAdapterV1(
+                    fn getLegacyProtocolAdapter(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<IMigrationalCalls> {
-                        <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(IMigrationalCalls::getProtocolAdapterV1)
+                            .map(IMigrationalCalls::getLegacyProtocolAdapter)
                     }
-                    getProtocolAdapterV1
+                    getLegacyProtocolAdapter
                 },
                 {
                     fn migrateCommitmentTree(
@@ -1155,8 +1157,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn abi_encoded_size(&self) -> usize {
             match self {
-                Self::getProtocolAdapterV1(inner) => {
-                    <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::getLegacyProtocolAdapter(inner) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -1175,8 +1177,8 @@ function migrateNullifierSet(uint256 start, uint256 count) external;
         #[inline]
         fn abi_encode_raw(&self, out: &mut alloy_sol_types::private::Vec<u8>) {
             match self {
-                Self::getProtocolAdapterV1(inner) => {
-                    <getProtocolAdapterV1Call as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::getLegacyProtocolAdapter(inner) => {
+                    <getLegacyProtocolAdapterCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -1569,11 +1571,11 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, C, N> {
             alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
         }
-        ///Creates a new call builder for the [`getProtocolAdapterV1`] function.
-        pub fn getProtocolAdapterV1(
+        ///Creates a new call builder for the [`getLegacyProtocolAdapter`] function.
+        pub fn getLegacyProtocolAdapter(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, getProtocolAdapterV1Call, N> {
-            self.call_builder(&getProtocolAdapterV1Call)
+        ) -> alloy_contract::SolCallBuilder<&P, getLegacyProtocolAdapterCall, N> {
+            self.call_builder(&getLegacyProtocolAdapterCall)
         }
         ///Creates a new call builder for the [`migrateCommitmentTree`] function.
         pub fn migrateCommitmentTree(

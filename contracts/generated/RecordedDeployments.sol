@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 // forge-lint: disable-next-item(literal-instead-of-constant)
 /// @title RecordedDeployments
 /// @author Anoma Foundation, 2026
-/// @notice The protocol adapter deployments each environment records, and the v1 protocol adapters they copy the state
-/// from.
+/// @notice The protocol adapter deployments each environment records, and the legacy protocol adapters they
+/// copy the state from.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
 /// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
 /// and fails on any diff. The records live with the bindings because that crate publishes them; this library carries
@@ -29,8 +29,8 @@ library RecordedDeployments {
         Proxy proxy;
     }
 
-    /// @notice A v1 protocol adapter, which a migrational proxy on the same chain copies the state from.
-    struct DeploymentV1 {
+    /// @notice A legacy protocol adapter, which a migrational proxy on the same chain copies the state from.
+    struct LegacyDeployment {
         uint256 chainId;
         address protocolAdapter;
     }
@@ -57,11 +57,11 @@ library RecordedDeployments {
         }
     }
 
-    /// @notice Returns the v1 protocol adapter of a chain.
+    /// @notice Returns the legacy protocol adapter of a chain.
     /// @param chainId The chain ID to look for.
-    /// @return protocolAdapter The v1 protocol adapter, or the zero address if the chain ran none.
-    function protocolAdapterV1(uint256 chainId) internal pure returns (address protocolAdapter) {
-        DeploymentV1[] memory deployments = v1();
+    /// @return protocolAdapter The legacy protocol adapter, or the zero address if the chain ran none.
+    function legacyProtocolAdapter(uint256 chainId) internal pure returns (address protocolAdapter) {
+        LegacyDeployment[] memory deployments = legacy();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             if (deployments[i].chainId == chainId) {
@@ -77,8 +77,8 @@ library RecordedDeployments {
         deployments[0] = Deployment({
             chainId: 11155111,
             proxy: Proxy({
-                addr: 0xfeB284cb63781F3163F40C67f6a7823E12A84d29,
-                initialImplementation: 0xb80cdD7459478C833e21C71890b79901B1a4e082,
+                addr: 0x571977F395E29B5442616309869a8528a96aFEF2,
+                initialImplementation: 0x885e6d03CD8eA3d1C03042268c9c990334ea1C4c,
                 initializerData: hex"c4d66de800000000000000000000000061462be56782568376f9cb069382efa72764a407",
                 creationCode: hex"6080604052610284803803806100148161016e565b9283398101604082820312610156578151916001600160a01b03831690818403610156576020810151906001600160401b038211610156570182601f82011215610156578051906001600160401b03821161015a5761007c601f8301601f191660200161016e565b938285526020838301011161015657815f9260208093018387015e8401015281511561014757823b15610135577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b031916821790557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561011e5761010e91610193565b505b604051606490816102208239f35b505034156101105763b398979f60e01b5f5260045ffd5b634c9c8ce360e01b5f5260045260245ffd5b6330a289cf60e21b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b6040519190601f01601f191682016001600160401b0381118382101761015a57604052565b905f8091602081519101845af4808061020c575b156101c75750506040513d81523d5f602083013e60203d82010160405290565b156101ec57639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d156101fd576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101a75750813b15156101a756fe60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000825000a"
             })
@@ -86,8 +86,8 @@ library RecordedDeployments {
         deployments[1] = Deployment({
             chainId: 84532,
             proxy: Proxy({
-                addr: 0x0Ac3ffef2bcC317F60716a9B0fd0aBd2a20C9ECB,
-                initialImplementation: 0xE0ee73102C7a8a04af0530DCEC7a9C46ef13E9C9,
+                addr: 0xdc7396E83A96cc7ebf70c0CEbe6C4785E58eA347,
+                initialImplementation: 0x498C0e88a05072a0e91783208175A365E906c553,
                 initializerData: hex"c4d66de800000000000000000000000061462be56782568376f9cb069382efa72764a407",
                 creationCode: hex"6080604052610284803803806100148161016e565b9283398101604082820312610156578151916001600160a01b03831690818403610156576020810151906001600160401b038211610156570182601f82011215610156578051906001600160401b03821161015a5761007c601f8301601f191660200161016e565b938285526020838301011161015657815f9260208093018387015e8401015281511561014757823b15610135577f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc80546001600160a01b031916821790557fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b5f80a280511561011e5761010e91610193565b505b604051606490816102208239f35b505034156101105763b398979f60e01b5f5260045ffd5b634c9c8ce360e01b5f5260045260245ffd5b6330a289cf60e21b5f5260045ffd5b5f80fd5b634e487b7160e01b5f52604160045260245ffd5b6040519190601f01601f191682016001600160401b0381118382101761015a57604052565b905f8091602081519101845af4808061020c575b156101c75750506040513d81523d5f602083013e60203d82010160405290565b156101ec57639996b31560e01b5f9081526001600160a01b0391909116600452602490fd5b3d156101fd576040513d5f823e3d90fd5b63d6bda27560e01b5f5260045ffd5b503d1515806101a75750813b15156101a756fe60806040525f8073ffffffffffffffffffffffffffffffffffffffff7f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc5416368280378136915af43d5f803e156053573d5ff35b3d5ffdfea164736f6c6343000825000a"
             })
@@ -100,20 +100,21 @@ library RecordedDeployments {
         deployments = new Deployment[](0);
     }
 
-    /// @notice Returns the v1 protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in `addresses.rs`, except
-    /// Aurora, which is deprecated.
-    /// @return deployments The recorded v1 deployments.
-    function v1() internal pure returns (DeploymentV1[] memory deployments) {
-        deployments = new DeploymentV1[](10);
-        deployments[0] = DeploymentV1({chainId: 11155111, protocolAdapter: 0xf152BBA809d6cba122579cee997A54B8F3FBa417});
-        deployments[1] = DeploymentV1({chainId: 1, protocolAdapter: 0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF});
-        deployments[2] = DeploymentV1({chainId: 84532, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
-        deployments[3] = DeploymentV1({chainId: 8453, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
-        deployments[4] = DeploymentV1({chainId: 10, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
-        deployments[5] = DeploymentV1({chainId: 42161, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
-        deployments[6] = DeploymentV1({chainId: 56, protocolAdapter: 0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68});
-        deployments[7] = DeploymentV1({chainId: 143, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
-        deployments[8] = DeploymentV1({chainId: 988, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
-        deployments[9] = DeploymentV1({chainId: 4326, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
+    /// @notice Returns the legacy protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in
+    /// `addresses.rs`, except Aurora, which is deprecated.
+    /// @return deployments The recorded deployments of the legacy protocol adapters.
+    function legacy() internal pure returns (LegacyDeployment[] memory deployments) {
+        deployments = new LegacyDeployment[](10);
+        deployments[0] =
+            LegacyDeployment({chainId: 11155111, protocolAdapter: 0xf152BBA809d6cba122579cee997A54B8F3FBa417});
+        deployments[1] = LegacyDeployment({chainId: 1, protocolAdapter: 0x0eA3B55b68A3f307c8FE3fe66E443247c95F0CfF});
+        deployments[2] = LegacyDeployment({chainId: 84532, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
+        deployments[3] = LegacyDeployment({chainId: 8453, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
+        deployments[4] = LegacyDeployment({chainId: 10, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
+        deployments[5] = LegacyDeployment({chainId: 42161, protocolAdapter: 0x094FCC095323080e71a037b2B1e3519c07dd84F8});
+        deployments[6] = LegacyDeployment({chainId: 56, protocolAdapter: 0xFC44b66a39fe6923Ad8d3c93bFeC369728862B68});
+        deployments[7] = LegacyDeployment({chainId: 143, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
+        deployments[8] = LegacyDeployment({chainId: 988, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
+        deployments[9] = LegacyDeployment({chainId: 4326, protocolAdapter: 0x2D2Fa19aFdbb20DC73737ca5f075cfAE00Cd90C2});
     }
 }
