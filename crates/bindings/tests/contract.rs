@@ -131,7 +131,7 @@ async fn expect_source_implementations(environment: Environment) {
 }
 
 /// The migrational implementation this source predicts for the proxy, or `None` if the proxy does not run
-/// one. Only the migrational implementation reports the legacy immutable protocol adapter, its third
+/// one. Only the migrational implementation reports the legacy protocol adapter, its third
 /// constructor argument, so the call fails for any other implementation.
 async fn migrational_source_implementation(
     adapter: &ProtocolAdapter::ProtocolAdapterInstance<DynProvider>,
@@ -139,8 +139,8 @@ async fn migrational_source_implementation(
     router: Address,
     selector: FixedBytes<4>,
 ) -> Option<Address> {
-    let immutable_protocol_adapter = IMigrational::new(*adapter.address(), adapter.provider())
-        .getImmutableProtocolAdapter()
+    let legacy_protocol_adapter = IMigrational::new(*adapter.address(), adapter.provider())
+        .getLegacyProtocolAdapter()
         .call()
         .await
         .ok()?;
@@ -148,7 +148,7 @@ async fn migrational_source_implementation(
     let constructor_args = MigrationalProtocolAdapter::constructorCall {
         riscZeroVerifierRouter: router,
         riscZeroVerifierSelector: selector,
-        immutableProtocolAdapter: immutable_protocol_adapter,
+        legacyProtocolAdapter: legacy_protocol_adapter,
     }
     .abi_encode();
 

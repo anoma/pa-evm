@@ -6,7 +6,7 @@ Resource Machine** transactions on EVM-compatible chains.
 ## Language
 
 **Protocol Adapter (PA)**:
-The EVM contract that verifies and settles ARM transactions on-chain — checking the compliance, logic, and delta proofs and updating the commitment tree and nullifier set. Use "protocol adapter" (not "verifier" or "settler") for the contract. Without a qualifier, it is the upgradeable protocol adapter of an environment on a chain, behind its proxy; the legacy immutable protocol adapter always carries its qualifier.
+The EVM contract that verifies and settles ARM transactions on-chain — checking the compliance, logic, and delta proofs and updating the commitment tree and nullifier set. Use "protocol adapter" (not "verifier" or "settler") for the contract. Without a qualifier, it is the upgradeable protocol adapter of an environment on a chain, behind its proxy; the legacy protocol adapter always carries its qualifier.
 _Avoid_: v2, PA v2, new adapter, current adapter, protocol adapter proxy
 
 **Anoma Resource Machine (ARM)**:
@@ -68,31 +68,28 @@ The pull request opening one carries the gate proving the environment it targets
 runs that commit's source. Changes only ever flow this way.
 
 **Deployment record**:
-`crates/bindings/deployments.json` — the proxy address of each environment on each
-chain, plus the genesis fields pinning how that address was derived. Written once
-per chain at its first deploy and never edited; what an environment currently runs
-is read from the chain, not from here.
+`crates/bindings/deployments.json` — the proxy address of each environment on each chain, plus the genesis fields pinning how that address was derived, and, under `legacy`, the legacy protocol adapter of each chain that ran one. Written once per chain at its first deploy and never edited, except that a redeployed release candidate replaces its record; what an environment currently runs is read from the chain, not from here. A replaced release-candidate proxy is short-lived and never becomes legacy.
 
-**Immutable protocol adapter**:
-The legacy protocol adapter that cannot be upgraded: one contract, with no kind table, on each chain that ran a protocol adapter before the upgradeable one. No new one is deployed. It is stopped, and the migrational implementation copies its state into the protocol adapter. A text calls it legacy where it first mentions it.
-_Avoid_: v1, PA v1, old adapter, legacy protocol adapter (without "immutable")
+**Legacy protocol adapter**:
+The protocol adapter that a chain ran before its upgradeable protocol adapter: one immutable contract, with no kind table, on each chain that ran one. No new one is deployed. It is stopped, and the migrational implementation copies its state into the protocol adapter.
+_Avoid_: v1, PA v1, old adapter, immutable protocol adapter
 
 **Migrational implementation**:
-`MigrationalProtocolAdapter`, the implementation that the proxy of a chain that ran a legacy immutable protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the immutable protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
+`MigrationalProtocolAdapter`, the implementation that the proxy of a chain that ran a legacy protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the legacy protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
 _Avoid_: transition implementation, migration contract
 
 **Plain implementation**:
 `ProtocolAdapter`, the implementation every chain ends on. Its address is deterministic per chain.
 
 **Copy-in**:
-Writing the state of the legacy immutable protocol adapter into the proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
+Writing the state of the legacy protocol adapter into the proxy: `migrateCommitmentTree` once, then `migrateNullifierSet` per batch. Allowed only while the proxy is paused, and removed by the upgrade to the plain implementation.
 _Avoid_: seeding (the function names say it; the act has its own word), import
 
 **Migration run**:
 One execution of `MigrateProtocolAdapterState.run` for one chain: the copy-in. The proxy stays paused, so the ERC20 forwarder balances move before anyone can transact. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Completion run**:
-One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against the legacy immutable protocol adapter, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against the legacy protocol adapter, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Sides**:
-The stored left-sibling hashes of the commitment tree of the legacy immutable protocol adapter, one per level. The immutable protocol adapter exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.
+The stored left-sibling hashes of the commitment tree of the legacy protocol adapter, one per level. The legacy protocol adapter exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.

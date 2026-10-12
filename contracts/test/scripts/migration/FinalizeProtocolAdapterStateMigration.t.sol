@@ -17,7 +17,7 @@ import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
 import {FinalizeProtocolAdapterStateMigrationMock} from "../../mocks/FinalizeProtocolAdapterStateMigration.m.sol";
 
-/// @notice Checks the completion run against a stand-in for the legacy immutable protocol adapter, after the migration
+/// @notice Checks the completion run against a stand-in for the legacy protocol adapter, after the migration
 /// run copied the state.
 contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
     function test_run_unpauses_and_leaves_the_proxy_on_the_plain_implementation() public {
@@ -78,31 +78,31 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         _finalizationScript.run({isProduction: false});
     }
 
-    function test_run_reverts_for_a_proxy_that_copies_from_another_immutable_protocol_adapter() public {
-        address other = makeAddr("other immutable protocol adapter");
+    function test_run_reverts_for_a_proxy_that_copies_from_another_legacy_protocol_adapter() public {
+        address other = makeAddr("other legacy protocol adapter");
         FinalizeProtocolAdapterStateMigration script =
-            new FinalizeProtocolAdapterStateMigrationMock({immutableProtocolAdapter: other, proxy: _proxy});
+            new FinalizeProtocolAdapterStateMigrationMock({legacyProtocolAdapter: other, proxy: _proxy});
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                MigrationScript.ImmutableProtocolAdapterMismatch.selector, other, address(_immutableProtocolAdapter)
+                MigrationScript.LegacyProtocolAdapterMismatch.selector, other, address(_legacyProtocolAdapter)
             )
         );
         script.run({isProduction: false});
     }
 
-    function test_run_reverts_on_a_chain_that_records_no_immutable_protocol_adapter() public {
+    function test_run_reverts_on_a_chain_that_records_no_legacy_protocol_adapter() public {
         FinalizeProtocolAdapterStateMigration script = new FinalizeProtocolAdapterStateMigration();
         uint256 chainId = 31337;
         vm.chainId(chainId);
 
-        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ImmutableProtocolAdapterNotRecorded.selector, chainId));
+        vm.expectRevert(abi.encodeWithSelector(MigrationScript.LegacyProtocolAdapterNotRecorded.selector, chainId));
         script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_environment_records_no_proxy() public {
         FinalizeProtocolAdapterStateMigration script = new FinalizeProtocolAdapterStateMigrationMock({
-            immutableProtocolAdapter: address(_immutableProtocolAdapter), proxy: address(0)
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: address(0)
         });
 
         vm.expectRevert(
@@ -112,7 +112,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
     }
 
     function test_run_resumes_a_run_that_stopped_after_the_unpause() public {
-        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);

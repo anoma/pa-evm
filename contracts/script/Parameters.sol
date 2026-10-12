@@ -21,6 +21,6 @@ library Parameters {
     address internal constant DEPLOYMENT_WALLET = 0x61462bE56782568376f9cB069382EFa72764a407;
 
     /// @notice The protocol adapter multisig, a Safe that owns the production proxies and every legacy
-    /// immutable protocol adapter.
+    /// protocol adapter.
     address internal constant PA_MULTISIG = 0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10;
 }

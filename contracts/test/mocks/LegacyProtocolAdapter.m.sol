@@ -7,12 +7,12 @@ import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/Enumera
 
 import {MerkleTree} from "../../src/libs/MerkleTree.sol";
 
-/// @notice A stand-in for the legacy immutable protocol adapter, holding its state in the same storage layout and
-/// exposing the getters `MigrateProtocolAdapterState` reads. The immutable protocol adapter inherits
+/// @notice A stand-in for the legacy protocol adapter, holding its state in the same storage layout and
+/// exposing the getters `MigrateProtocolAdapterState` reads. The legacy protocol adapter inherits
 /// `ReentrancyGuardTransient, Ownable, Pausable, CommitmentTree, NullifierSet`; the guard keeps its state in transient
 /// storage, so `Ownable._owner` is slot 0, `Pausable._paused` is slot 1, and the tree follows at slots 2 to 4. The
 /// state variables below reproduce that order.
-contract ImmutableProtocolAdapterMock is Ownable, Pausable {
+contract LegacyProtocolAdapterMock is Ownable, Pausable {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using MerkleTree for MerkleTree.Tree;
 
@@ -52,7 +52,7 @@ contract ImmutableProtocolAdapterMock is Ownable, Pausable {
         treeCapacity = _merkleTree.capacity();
     }
 
-    /// @notice The stored sides of the tree, which the deployed legacy immutable protocol adapter does not expose.
+    /// @notice The stored sides of the tree, which the deployed legacy protocol adapter does not expose.
     function commitmentTreeSides() external view returns (bytes32[] memory sides) {
         sides = _merkleTree._sides;
     }

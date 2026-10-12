@@ -36,14 +36,14 @@ entries() {
     ' "$records"
 }
 
-# Emits the statements that fill the `deployments` array of the legacy immutable protocol adapters.
-immutable_entries() {
+# Emits the statements that fill the `deployments` array of the legacy protocol adapters.
+legacy_entries() {
     jq --exit-status --raw-output '
-        .immutable as $records
-        | "        deployments = new ImmutableDeployment[](\($records | length));",
+        .legacy as $records
+        | "        deployments = new LegacyDeployment[](\($records | length));",
           ( $records
             | to_entries[]
-            | "        deployments[\(.key)] = ImmutableDeployment({",
+            | "        deployments[\(.key)] = LegacyDeployment({",
               "            chainId: \(.value.chainId),",
               "            protocolAdapter: \(.value.protocolAdapter)",
               "        });"
@@ -59,7 +59,7 @@ pragma solidity ^0.8.30;
 // forge-lint: disable-next-item(literal-instead-of-constant)
 /// @title RecordedDeployments
 /// @author Anoma Foundation, 2026
-/// @notice The protocol adapter deployments each environment records, and the legacy immutable protocol adapters they
+/// @notice The protocol adapter deployments each environment records, and the legacy protocol adapters they
 /// copy the state from.
 /// @dev Generated from `crates/bindings/deployments.json`, the single source of truth, which the bindings crate
 /// embeds and checks against the chains. Do not edit by hand: run `just contracts-gen`, which CI reruns
@@ -84,8 +84,8 @@ library RecordedDeployments {
         Proxy proxy;
     }
 
-    /// @notice A legacy immutable protocol adapter, which a migrational proxy on the same chain copies the state from.
-    struct ImmutableDeployment {
+    /// @notice A legacy protocol adapter, which a migrational proxy on the same chain copies the state from.
+    struct LegacyDeployment {
         uint256 chainId;
         address protocolAdapter;
     }
@@ -112,11 +112,11 @@ library RecordedDeployments {
         }
     }
 
-    /// @notice Returns the legacy immutable protocol adapter of a chain.
+    /// @notice Returns the legacy protocol adapter of a chain.
     /// @param chainId The chain ID to look for.
-    /// @return protocolAdapter The immutable protocol adapter, or the zero address if the chain ran none.
-    function immutableProtocolAdapter(uint256 chainId) internal pure returns (address protocolAdapter) {
-        ImmutableDeployment[] memory deployments = immutableDeployments();
+    /// @return protocolAdapter The legacy protocol adapter, or the zero address if the chain ran none.
+    function legacyProtocolAdapter(uint256 chainId) internal pure returns (address protocolAdapter) {
+        LegacyDeployment[] memory deployments = legacy();
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             if (deployments[i].chainId == chainId) {
@@ -145,13 +145,13 @@ SOLIDITY
     cat <<'SOLIDITY'
     }
 
-    /// @notice Returns the legacy immutable protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in
+    /// @notice Returns the legacy protocol adapters that `anoma-pa-evm-bindings` 2.3.0 records in
     /// `addresses.rs`, except Aurora, which is deprecated.
-    /// @return deployments The recorded deployments of the immutable protocol adapters.
-    function immutableDeployments() internal pure returns (ImmutableDeployment[] memory deployments) {
+    /// @return deployments The recorded deployments of the legacy protocol adapters.
+    function legacy() internal pure returns (LegacyDeployment[] memory deployments) {
 SOLIDITY
 
-    immutable_entries
+    legacy_entries
 
     cat <<'SOLIDITY'
     }

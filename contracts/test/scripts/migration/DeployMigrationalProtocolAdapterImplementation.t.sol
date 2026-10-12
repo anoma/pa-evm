@@ -16,8 +16,8 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
     /// @dev The local development chain, which has no RISC Zero deployment.
     uint256 internal constant _UNSUPPORTED_CHAIN_ID = 31337;
 
-    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy immutable protocol adapter.
-    uint256 internal constant _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER = 421614;
+    /// @dev Arbitrum Sepolia, a supported network that never ran a legacy protocol adapter.
+    uint256 internal constant _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER = 421614;
 
     function test_run_deploys_deterministically() public {
         _deployRiscZeroRouter();
@@ -26,15 +26,13 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         address implementation = script.run();
 
         SupportedNetworks.Data memory data = getRouterData();
-        address immutableProtocolAdapter = script.getImmutableProtocolAdapter(block.chainid);
+        address legacyProtocolAdapter = script.getLegacyProtocolAdapter(block.chainid);
         address predicted = vm.computeCreate2Address(
             script.IMPLEMENTATION_SALT(),
             keccak256(
                 abi.encodePacked(
                     type(MigrationalProtocolAdapter).creationCode,
-                    abi.encode(
-                        data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR, immutableProtocolAdapter
-                    )
+                    abi.encode(data.router, RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR, legacyProtocolAdapter)
                 )
             )
         );
@@ -42,9 +40,9 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         assertEq(implementation, predicted, "implementation address differs from the prediction");
         assertGt(implementation.code.length, 0, "implementation is not deployed");
         assertEq(
-            MigrationalProtocolAdapter(implementation).getImmutableProtocolAdapter(),
-            immutableProtocolAdapter,
-            "implementation records a different immutable protocol adapter"
+            MigrationalProtocolAdapter(implementation).getLegacyProtocolAdapter(),
+            legacyProtocolAdapter,
+            "implementation records a different legacy protocol adapter"
         );
     }
 
@@ -78,28 +76,28 @@ contract DeployMigrationalProtocolAdapterImplementationTest is RiscZeroRouterFix
         script.predict(_UNSUPPORTED_CHAIN_ID);
     }
 
-    function test_predict_reverts_on_a_chain_without_an_immutable_protocol_adapter() public {
+    function test_predict_reverts_on_a_chain_without_a_legacy_protocol_adapter() public {
         DeployMigrationalProtocolAdapterImplementation script = new DeployMigrationalProtocolAdapterImplementation();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                DeployMigrationalProtocolAdapterImplementation.NoImmutableProtocolAdapter.selector,
-                _CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER
+                DeployMigrationalProtocolAdapterImplementation.NoLegacyProtocolAdapter.selector,
+                _CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER
             )
         );
-        script.predict(_CHAIN_ID_WITHOUT_IMMUTABLE_PROTOCOL_ADAPTER);
+        script.predict(_CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER);
     }
 
-    function test_getImmutableProtocolAdapter_returns_the_recorded_immutable_protocol_adapter_of_every_chain() public {
+    function test_getLegacyProtocolAdapter_returns_the_recorded_legacy_protocol_adapter_of_every_chain() public {
         DeployMigrationalProtocolAdapterImplementation script = new DeployMigrationalProtocolAdapterImplementation();
-        RecordedDeployments.ImmutableDeployment[] memory deployments = RecordedDeployments.immutableDeployments();
-        assertGt(deployments.length, 0, "no immutable protocol adapter is recorded");
+        RecordedDeployments.LegacyDeployment[] memory deployments = RecordedDeployments.legacy();
+        assertGt(deployments.length, 0, "no legacy protocol adapter is recorded");
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             assertEq(
-                script.getImmutableProtocolAdapter(deployments[i].chainId),
+                script.getLegacyProtocolAdapter(deployments[i].chainId),
                 deployments[i].protocolAdapter,
-                "the immutable protocol adapter differs from the record"
+                "the legacy protocol adapter differs from the record"
             );
         }
     }

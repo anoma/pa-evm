@@ -2,8 +2,8 @@
 pragma solidity ^0.8.30;
 
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
-import {ICommitmentTree as IImmutableCommitmentTree} from "anoma-pa-evm-1.1.0/src/interfaces/ICommitmentTree.sol";
-import {INullifierSet as IImmutableNullifierSet} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
+import {ICommitmentTree as ILegacyCommitmentTree} from "anoma-pa-evm-1.1.0/src/interfaces/ICommitmentTree.sol";
+import {INullifierSet as ILegacyNullifierSet} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
@@ -15,7 +15,7 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
-/// @notice A script to copy one chain's state from the stopped legacy immutable protocol adapter into a proxy running
+/// @notice A script to copy one chain's state from the stopped legacy protocol adapter into a proxy running
 /// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
 /// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
 /// unpauses, upgrades the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
@@ -26,36 +26,36 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// `--account` alone forge runs it as its default sender.
 /// @custom:security-contact security@anoma.foundation
 contract MigrateProtocolAdapterState is MigrationScript {
-    /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the legacy immutable protocol adapter.
+    /// @notice The storage slot of `_merkleTree._nextLeafIndex` in the legacy protocol adapter.
     /// `ReentrancyGuardTransient` holds no persistent state, and `Ownable._owner` and `Pausable._paused` are 20 and 1
     /// bytes, so they share slot 0 and the tree starts at slot 1.
     /// @dev Checked against `commitmentCount()` before anything is read from it.
-    uint256 internal constant _IMMUTABLE_PROTOCOL_ADAPTER_NEXT_LEAF_INDEX_SLOT = 1;
+    uint256 internal constant _LEGACY_PROTOCOL_ADAPTER_NEXT_LEAF_INDEX_SLOT = 1;
 
-    /// @notice The storage slot of `_merkleTree._sides` in the legacy immutable protocol adapter, the one part of the
+    /// @notice The storage slot of `_merkleTree._sides` in the legacy protocol adapter, the one part of the
     /// tree it does not expose through a getter.
     /// @dev Checked against `commitmentTreeDepth()` before anything is read from it.
-    uint256 internal constant _IMMUTABLE_PROTOCOL_ADAPTER_SIDES_SLOT = 2;
+    uint256 internal constant _LEGACY_PROTOCOL_ADAPTER_SIDES_SLOT = 2;
 
-    /// @notice The number of nullifiers read from the legacy immutable protocol adapter and written to the proxy per
+    /// @notice The number of nullifiers read from the legacy protocol adapter and written to the proxy per
     /// transaction. Adding one nullifier costs two fresh storage writes, about 45000 gas, so a batch of this size
     /// costs roughly 9 million — a third of a 30 million block. A chain holding 8000 nullifiers therefore takes 40
     /// transactions.
     uint256 public constant NULLIFIERS_PER_BATCH = 200;
 
-    /// @notice Thrown if a storage slot of the legacy immutable protocol adapter does not hold what its public getter
+    /// @notice Thrown if a storage slot of the legacy protocol adapter does not hold what its public getter
     /// reports, i.e. if its storage layout is not the one this script reads.
     error UnexpectedStorageLayout(uint256 slot, uint256 expected, uint256 actual);
 
-    /// @notice Thrown if the copied commitment tree does not reproduce the latest root of the legacy immutable protocol
+    /// @notice Thrown if the copied commitment tree does not reproduce the latest root of the legacy protocol
     /// adapter.
     error CommitmentTreeRootMismatch(bytes32 expected, bytes32 actual);
 
-    /// @notice Thrown if the copied commitment tree holds a different number of commitments than the legacy immutable
+    /// @notice Thrown if the copied commitment tree holds a different number of commitments than the legacy
     /// protocol adapter.
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
 
-    /// @notice Thrown if a nullifier of the legacy immutable protocol adapter is absent from the copied set.
+    /// @notice Thrown if a nullifier of the legacy protocol adapter is absent from the copied set.
     error MissingNullifier(bytes32 nullifier);
 
     /// @notice Thrown if the proxy does not run the plain implementation.
@@ -67,7 +67,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice Thrown if the proxy has another owner than the expected one.
     error OwnerMismatch(address expected, address actual);
 
-    /// @notice Copies the state of the legacy immutable protocol adapter into the proxy. The proxy stays paused, so no
+    /// @notice Copies the state of the legacy protocol adapter into the proxy. The proxy stays paused, so no
     /// transaction can use the kind table before the ERC20 forwarder balances move. Without `--broadcast` the run is
     /// simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
@@ -76,58 +76,54 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
     /// @param isProduction Whether to copy the state into the production or the staging proxy.
     function run(bool isProduction) public {
-        (address immutableProtocolAdapter, address proxy) = _configuration(isProduction);
+        (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
         address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
 
         if (protocolAdapter.getImplementation() != implementation) {
-            _requireImmutableProtocolAdapter({immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy});
+            _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
 
             if (protocolAdapter.paused()) {
-                _migrateCommitmentTree({immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy});
-                _migrateNullifierSet({immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy});
+                _migrateCommitmentTree({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
+                _migrateNullifierSet({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
             }
         }
     }
 
-    /// @notice Checks a migrated proxy against the stopped legacy immutable protocol adapter and against the end state
+    /// @notice Checks a migrated proxy against the stopped legacy protocol adapter and against the end state
     /// of the migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has
     /// broadcast, because that script only ever sees the simulated state.
     /// @param isProduction Whether to check the production or the staging proxy. The production proxy owner must own a
     /// production proxy.
     function verify(bool isProduction) public {
-        (address immutableProtocolAdapter, address proxy) = _configuration(isProduction);
-        _check({immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy});
+        (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
+        _check({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
         _checkEndState({proxy: proxy, isProduction: isProduction});
     }
 
-    /// @notice Copies the commitment tree of the legacy immutable protocol adapter into the proxy, unless an earlier
+    /// @notice Copies the commitment tree of the legacy protocol adapter into the proxy, unless an earlier
     /// run did. The tree's sides come from its storage, since it exposes no getter for them; the slot is checked
     /// against its own getters first, and the proxy rejects sides that do not reproduce the root.
-    /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
+    /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
-    function _migrateCommitmentTree(address immutableProtocolAdapter, address proxy) internal {
+    function _migrateCommitmentTree(address legacyProtocolAdapter, address proxy) internal {
         // The proxy refuses to write a tree twice.
         if (ICommitmentTree(proxy).commitmentCount() != 0) {
             return;
         }
 
-        uint256 leafCount = IImmutableCommitmentTree(immutableProtocolAdapter).commitmentCount();
-        uint8 treeDepth = IImmutableCommitmentTree(immutableProtocolAdapter).commitmentTreeDepth();
+        uint256 leafCount = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentCount();
+        uint8 treeDepth = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentTreeDepth();
 
         _checkSlot({
-            target: immutableProtocolAdapter,
-            slot: _IMMUTABLE_PROTOCOL_ADAPTER_NEXT_LEAF_INDEX_SLOT,
-            expected: leafCount
+            target: legacyProtocolAdapter, slot: _LEGACY_PROTOCOL_ADAPTER_NEXT_LEAF_INDEX_SLOT, expected: leafCount
         });
-        _checkSlot({
-            target: immutableProtocolAdapter, slot: _IMMUTABLE_PROTOCOL_ADAPTER_SIDES_SLOT, expected: treeDepth
-        });
+        _checkSlot({target: legacyProtocolAdapter, slot: _LEGACY_PROTOCOL_ADAPTER_SIDES_SLOT, expected: treeDepth});
 
         bytes32[] memory sides = new bytes32[](treeDepth);
-        uint256 firstElementSlot = uint256(keccak256(abi.encode(_IMMUTABLE_PROTOCOL_ADAPTER_SIDES_SLOT)));
+        uint256 firstElementSlot = uint256(keccak256(abi.encode(_LEGACY_PROTOCOL_ADAPTER_SIDES_SLOT)));
         for (uint256 i = 0; i < treeDepth; ++i) {
-            sides[i] = vm.load({target: immutableProtocolAdapter, slot: bytes32(firstElementSlot + i)});
+            sides[i] = vm.load({target: legacyProtocolAdapter, slot: bytes32(firstElementSlot + i)});
         }
 
         address owner = MigrationalProtocolAdapter(proxy).owner();
@@ -136,19 +132,17 @@ contract MigrateProtocolAdapterState is MigrationScript {
     }
 
     /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction, from the first one that an
-    /// earlier run did not copy. The proxy reads each batch from the legacy immutable protocol adapter itself and
+    /// earlier run did not copy. The proxy reads each batch from the legacy protocol adapter itself and
     /// rejects a batch that does not start where the copied nullifiers end, so a batch can neither be skipped nor
     /// repeated.
-    /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
+    /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
-    function _migrateNullifierSet(address immutableProtocolAdapter, address proxy) internal {
-        uint256 total = IImmutableNullifierSet(immutableProtocolAdapter).nullifierCount();
+    function _migrateNullifierSet(address legacyProtocolAdapter, address proxy) internal {
+        uint256 total = ILegacyNullifierSet(legacyProtocolAdapter).nullifierCount();
         address owner = MigrationalProtocolAdapter(proxy).owner();
 
         for (
-            uint256 migrated = _migratedNullifierCount({
-                immutableProtocolAdapter: immutableProtocolAdapter, proxy: proxy
-            });
+            uint256 migrated = _migratedNullifierCount({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
             migrated < total;
             migrated += NULLIFIERS_PER_BATCH
         ) {
@@ -183,41 +177,41 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks the proxy against the stopped legacy immutable protocol adapter: the latest root, the commitment
+    /// @notice Checks the proxy against the stopped legacy protocol adapter: the latest root, the commitment
     /// count, and every nullifier. Reverts on the first difference.
-    /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
+    /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
-    function _check(address immutableProtocolAdapter, address proxy) internal view {
-        bytes32 expectedRoot = IImmutableCommitmentTree(immutableProtocolAdapter).latestCommitmentTreeRoot();
+    function _check(address legacyProtocolAdapter, address proxy) internal view {
+        bytes32 expectedRoot = ILegacyCommitmentTree(legacyProtocolAdapter).latestCommitmentTreeRoot();
         bytes32 actualRoot = ICommitmentTree(proxy).latestCommitmentTreeRoot();
         require(actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot}));
 
-        uint256 expectedCount = IImmutableCommitmentTree(immutableProtocolAdapter).commitmentCount();
+        uint256 expectedCount = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentCount();
         uint256 actualCount = ICommitmentTree(proxy).commitmentCount();
         require(actualCount == expectedCount, CommitmentCountMismatch({expected: expectedCount, actual: actualCount}));
 
-        uint256 nullifierCount = IImmutableNullifierSet(immutableProtocolAdapter).nullifierCount();
+        uint256 nullifierCount = ILegacyNullifierSet(legacyProtocolAdapter).nullifierCount();
         for (uint256 i = 0; i < nullifierCount; ++i) {
-            bytes32 nullifier = IImmutableNullifierSet(immutableProtocolAdapter).nullifierAtIndex(i);
+            bytes32 nullifier = ILegacyNullifierSet(legacyProtocolAdapter).nullifierAtIndex(i);
             require(INullifierSet(proxy).isNullifierContained(nullifier), MissingNullifier(nullifier));
         }
     }
 
-    /// @notice Returns the number of nullifiers of the legacy immutable protocol adapter that the proxy holds. The
+    /// @notice Returns the number of nullifiers of the legacy protocol adapter that the proxy holds. The
     /// proxy holds its first nullifiers, so a binary search over its indices finds where they end.
-    /// @param immutableProtocolAdapter The stopped immutable protocol adapter.
+    /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     /// @return count The number of copied nullifiers, which is also the index of the next one to copy.
-    function _migratedNullifierCount(address immutableProtocolAdapter, address proxy)
+    function _migratedNullifierCount(address legacyProtocolAdapter, address proxy)
         internal
         view
         returns (uint256 count)
     {
-        uint256 end = IImmutableNullifierSet(immutableProtocolAdapter).nullifierCount();
+        uint256 end = ILegacyNullifierSet(legacyProtocolAdapter).nullifierCount();
 
         while (count < end) {
             uint256 middle = Math.average(count, end);
-            bytes32 nullifier = IImmutableNullifierSet(immutableProtocolAdapter).nullifierAtIndex(middle);
+            bytes32 nullifier = ILegacyNullifierSet(legacyProtocolAdapter).nullifierAtIndex(middle);
 
             if (INullifierSet(proxy).isNullifierContained(nullifier)) {
                 count = middle + 1;
@@ -227,9 +221,9 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks that a storage slot of the legacy immutable protocol adapter holds what its public getter
+    /// @notice Checks that a storage slot of the legacy protocol adapter holds what its public getter
     /// reports, which pins the layout this script reads the tree sides from.
-    /// @param target The immutable protocol adapter.
+    /// @param target The legacy protocol adapter.
     /// @param slot The storage slot to read.
     /// @param expected The value the matching getter reports.
     function _checkSlot(address target, uint256 slot, uint256 expected) internal view {
