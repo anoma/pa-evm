@@ -9,11 +9,11 @@ import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
+import {ImmutableProtocolAdapterMock} from "../../mocks/ImmutableProtocolAdapter.m.sol";
 import {MigrateProtocolAdapterStateMock} from "../../mocks/MigrateProtocolAdapterState.m.sol";
-import {ProtocolAdapterV1Mock} from "../../mocks/ProtocolAdapterV1.m.sol";
 
-/// @notice Checks the migration run end to end against a stand-in for the v1 protocol adapter, and the check of a
-/// migrated proxy.
+/// @notice Checks the migration run end to end against a stand-in for the immutable protocol adapter, and the check of
+/// a migrated proxy.
 contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
@@ -22,11 +22,24 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
 
         _migrationScript.run({isProduction: false});
 
-        assertEq(pa.latestCommitmentTreeRoot(), _v1.latestCommitmentTreeRoot(), "the root differs from v1");
-        assertEq(pa.commitmentCount(), _COMMITMENT_COUNT, "the commitment count differs from v1");
-        assertEq(pa.commitmentTreeDepth(), _v1.commitmentTreeDepth(), "the tree depth differs from v1");
+        assertEq(
+            pa.latestCommitmentTreeRoot(),
+            _immutableProtocolAdapter.latestCommitmentTreeRoot(),
+            "the root differs from the immutable protocol adapter"
+        );
+        assertEq(
+            pa.commitmentCount(), _COMMITMENT_COUNT, "the commitment count differs from the immutable protocol adapter"
+        );
+        assertEq(
+            pa.commitmentTreeDepth(),
+            _immutableProtocolAdapter.commitmentTreeDepth(),
+            "the tree depth differs from the immutable protocol adapter"
+        );
         for (uint256 i = 0; i < _NULLIFIER_COUNT; ++i) {
-            assertTrue(pa.isNullifierContained(_v1.nullifierAtIndex(i)), "a nullifier of v1 is missing");
+            assertTrue(
+                pa.isNullifierContained(_immutableProtocolAdapter.nullifierAtIndex(i)),
+                "a nullifier of the immutable protocol adapter is missing"
+            );
         }
 
         assertTrue(pa.paused(), "the proxy should stay paused");
@@ -39,40 +52,47 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         assertEq(pa.owner(), DEFAULT_SENDER, "the run should not change the owner");
     }
 
-    function test_run_reverts_if_the_v1_protocol_adapter_is_still_running() public {
-        ProtocolAdapterV1Mock running = new ProtocolAdapterV1Mock(DEFAULT_SENDER);
+    function test_run_reverts_if_the_immutable_protocol_adapter_is_still_running() public {
+        ImmutableProtocolAdapterMock running = new ImmutableProtocolAdapterMock(DEFAULT_SENDER);
         running.addCommitment(keccak256("commitment"));
         address proxy = _deployMigrationalProxy(address(running));
         MigrateProtocolAdapterState script =
-            new MigrateProtocolAdapterStateMock({protocolAdapterV1: address(running), proxy: proxy});
+            new MigrateProtocolAdapterStateMock({immutableProtocolAdapter: address(running), proxy: proxy});
 
         vm.expectRevert(
-            abi.encodeWithSelector(MigrationalProtocolAdapter.ProtocolAdapterV1NotStopped.selector, address(running))
+            abi.encodeWithSelector(
+                MigrationalProtocolAdapter.ImmutableProtocolAdapterNotStopped.selector, address(running)
+            )
         );
         script.run({isProduction: false});
     }
 
-    function test_run_reverts_for_a_proxy_that_copies_from_another_v1_protocol_adapter() public {
-        address other = makeAddr("other v1 protocol adapter");
+    function test_run_reverts_for_a_proxy_that_copies_from_another_immutable_protocol_adapter() public {
+        address other = makeAddr("other immutable protocol adapter");
         MigrateProtocolAdapterState script =
-            new MigrateProtocolAdapterStateMock({protocolAdapterV1: other, proxy: _proxy});
+            new MigrateProtocolAdapterStateMock({immutableProtocolAdapter: other, proxy: _proxy});
 
-        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterV1Mismatch.selector, other, address(_v1)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationScript.ImmutableProtocolAdapterMismatch.selector, other, address(_immutableProtocolAdapter)
+            )
+        );
         script.run({isProduction: false});
     }
 
-    function test_run_reverts_on_a_chain_that_records_no_v1_protocol_adapter() public {
+    function test_run_reverts_on_a_chain_that_records_no_immutable_protocol_adapter() public {
         MigrateProtocolAdapterState script = new MigrateProtocolAdapterState();
         uint256 chainId = 31337;
         vm.chainId(chainId);
 
-        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ProtocolAdapterV1NotRecorded.selector, chainId));
+        vm.expectRevert(abi.encodeWithSelector(MigrationScript.ImmutableProtocolAdapterNotRecorded.selector, chainId));
         script.run({isProduction: false});
     }
 
     function test_run_reverts_if_the_environment_records_no_proxy() public {
-        MigrateProtocolAdapterState script =
-            new MigrateProtocolAdapterStateMock({protocolAdapterV1: address(_v1), proxy: address(0)});
+        MigrateProtocolAdapterState script = new MigrateProtocolAdapterStateMock({
+            immutableProtocolAdapter: address(_immutableProtocolAdapter), proxy: address(0)
+        });
 
         vm.expectRevert(
             abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", block.chainid)
@@ -99,7 +119,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     }
 
     function test_run_resumes_a_run_that_stopped_after_the_commitment_tree() public {
-        bytes32[] memory sides = _v1.commitmentTreeSides();
+        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
         vm.prank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
 
@@ -114,7 +134,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_resumes_a_run_that_stopped_inside_the_nullifier_set() public {
         uint256 copied = _migrationScript.NULLIFIERS_PER_BATCH() + 1;
         assertLt(copied, _NULLIFIER_COUNT, "the earlier run should leave nullifiers to copy");
-        bytes32[] memory sides = _v1.commitmentTreeSides();
+        bytes32[] memory sides = _immutableProtocolAdapter.commitmentTreeSides();
         vm.startPrank(DEFAULT_SENDER);
         MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
         MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: copied});

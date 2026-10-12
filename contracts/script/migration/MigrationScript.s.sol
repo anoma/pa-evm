@@ -10,27 +10,28 @@ import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that move one chain's state from the stopped v1 protocol adapter into the v2 proxy.
-/// Both come from the recorded deployments, so `--rpc-url` alone names the chain.
+/// @notice The base of the scripts that move one chain's state from the stopped immutable protocol adapter into the
+/// proxy. Both come from the recorded deployments, so `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract MigrationScript is Script {
-    /// @notice Thrown if the chain records no v1 protocol adapter, i.e. it has no state to migrate.
-    error ProtocolAdapterV1NotRecorded(uint256 chainId);
+    /// @notice Thrown if the chain records no immutable protocol adapter, i.e. it has no state to migrate.
+    error ImmutableProtocolAdapterNotRecorded(uint256 chainId);
 
     /// @notice Thrown if the environment records no proxy for the chain, i.e. the state has no destination.
     error DeploymentNotRecorded(string environment, uint256 chainId);
 
-    /// @notice Thrown if the migrational proxy copies its state from another v1 protocol adapter than the recorded one.
-    error ProtocolAdapterV1Mismatch(address expected, address actual);
+    /// @notice Thrown if the migrational proxy copies its state from another immutable protocol adapter than the
+    /// recorded one.
+    error ImmutableProtocolAdapterMismatch(address expected, address actual);
 
-    /// @notice Returns the chain's recorded v1 protocol adapter and the environment's recorded proxy, and reverts
-    /// unless both are recorded.
+    /// @notice Returns the chain's recorded immutable protocol adapter and the environment's recorded proxy, and
+    /// reverts unless both are recorded.
     /// @param isProduction Whether to read the production or the staging proxy.
-    /// @return protocolAdapterV1 The v1 protocol adapter, which holds the state.
-    /// @return proxy The v2 protocol adapter proxy, which receives it.
-    function _configuration(bool isProduction) internal returns (address protocolAdapterV1, address proxy) {
-        (protocolAdapterV1, proxy) = _recordedDeployments(isProduction);
-        require(protocolAdapterV1 != address(0), ProtocolAdapterV1NotRecorded(block.chainid));
+    /// @return immutableProtocolAdapter The immutable protocol adapter, which holds the state.
+    /// @return proxy The proxy of the protocol adapter, which receives it.
+    function _configuration(bool isProduction) internal returns (address immutableProtocolAdapter, address proxy) {
+        (immutableProtocolAdapter, proxy) = _recordedDeployments(isProduction);
+        require(immutableProtocolAdapter != address(0), ImmutableProtocolAdapterNotRecorded(block.chainid));
 
         if (proxy == address(0)) {
             // A `require` would create the script on every call: it evaluates the error arguments first.
@@ -57,27 +58,28 @@ abstract contract MigrationScript is Script {
     /// @notice Returns what the records hold for the chain `--rpc-url` names.
     /// @dev Tests override it: the records are compiled into the script, so they cannot name a test deployment.
     /// @param isProduction Whether to read the production or the staging proxy.
-    /// @return protocolAdapterV1 The recorded v1 protocol adapter, or the zero address if the chain records none.
+    /// @return immutableProtocolAdapter The recorded immutable protocol adapter, or the zero address if the chain
+    /// records none.
     /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
     function _recordedDeployments(bool isProduction)
         internal
         view
         virtual
-        returns (address protocolAdapterV1, address proxy)
+        returns (address immutableProtocolAdapter, address proxy)
     {
-        protocolAdapterV1 = RecordedDeployments.protocolAdapterV1(block.chainid);
+        immutableProtocolAdapter = RecordedDeployments.immutableProtocolAdapter(block.chainid);
         proxy = RecordedDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid});
     }
 
-    /// @notice Reverts unless the proxy copies its state from the recorded v1 protocol adapter. Only the migrational
-    /// implementation has the getter, so the call also rejects any other proxy.
-    /// @param protocolAdapterV1 The v1 protocol adapter the records name.
-    /// @param proxy The v2 protocol adapter proxy.
-    function _requireProtocolAdapterV1(address protocolAdapterV1, address proxy) internal view {
-        address copiedFrom = MigrationalProtocolAdapter(proxy).getProtocolAdapterV1();
+    /// @notice Reverts unless the proxy copies its state from the recorded immutable protocol adapter. Only the
+    /// migrational implementation has the getter, so the call also rejects any other proxy.
+    /// @param immutableProtocolAdapter The immutable protocol adapter the records name.
+    /// @param proxy The proxy of the protocol adapter.
+    function _requireImmutableProtocolAdapter(address immutableProtocolAdapter, address proxy) internal view {
+        address copiedFrom = MigrationalProtocolAdapter(proxy).getImmutableProtocolAdapter();
         require(
-            copiedFrom == protocolAdapterV1,
-            ProtocolAdapterV1Mismatch({expected: protocolAdapterV1, actual: copiedFrom})
+            copiedFrom == immutableProtocolAdapter,
+            ImmutableProtocolAdapterMismatch({expected: immutableProtocolAdapter, actual: copiedFrom})
         );
     }
 }

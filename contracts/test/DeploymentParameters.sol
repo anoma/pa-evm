@@ -34,7 +34,7 @@ contract DeploymentParameters {
     }
 
     /// @notice Returns the protocol adapter multisig.
-    /// @return multisig The Safe that owns the production proxies and v1.
+    /// @return multisig The Safe that owns the production proxies and the immutable protocol adapter on every chain.
     function PA_MULTISIG() external pure returns (address multisig) {
         multisig = Parameters.PA_MULTISIG;
     }
