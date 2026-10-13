@@ -33,7 +33,7 @@ them into a single proof.
 The public statement the aggregation proof attests to — the compliance verifying key, the kind table commitment, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
 
 **Kind table commitment**:
-The SHA-256 commitment of a kind table. The PA stores one, which its owner sets, and accepts a transaction proven against the stored kind table or against the empty kind table, whose commitment is `sha256("")`.
+The Merkle root of a kind table. The PA stores one, which its owner sets, and accepts a transaction proven against the stored kind table or against the empty kind table, whose root is the padding leaf `sha256("EMPTY")`.
 
 **Unit Delta**:
 The elliptic-curve point carrying the delta value of an action's compliance

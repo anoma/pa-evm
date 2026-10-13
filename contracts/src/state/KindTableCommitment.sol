@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
 import {IKindTableCommitment} from "../interfaces/IKindTableCommitment.sol";
+import {SHA256} from "../libs/SHA256.sol";
 
 /// @title KindTableCommitment
 /// @author Anoma Foundation, 2026
@@ -17,9 +18,8 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     }
 
     /// @inheritdoc IKindTableCommitment
-    /// @dev Note that this is not `SHA256.EMPTY_HASH`.
-    bytes32 public constant override EMPTY_KIND_TABLE_COMMITMENT =
-        0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855;
+    /// @dev The Merkle root of a tree without entries is its padding leaf, `SHA256.EMPTY_HASH`.
+    bytes32 public constant override EMPTY_KIND_TABLE_COMMITMENT = SHA256.EMPTY_HASH;
 
     // keccak256(abi.encode(uint256(keccak256("anoma.storage.KindTableCommitment")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 internal constant _KIND_TABLE_COMMITMENT_STORAGE_SLOT =
@@ -58,7 +58,7 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     function _authorizeKindTableCommitmentChange() internal virtual;
 
     /// @notice Sets the kind table commitment and emits the `KindTableCommitmentUpdated` event.
-    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
+    /// @param newKindTableCommitment The commitment (Merkle root) of the new kind table.
     function _setKindTableCommitment(bytes32 newKindTableCommitment) internal {
         require(newKindTableCommitment != bytes32(0), ZeroKindTableCommitmentNotAllowed());
 
@@ -68,7 +68,7 @@ abstract contract KindTableCommitment is IKindTableCommitment, Initializable {
     }
 
     /// @notice Returns the stored kind table commitment.
-    /// @return kindTableCommitment The commitment (SHA-256 hash) of the current kind table.
+    /// @return kindTableCommitment The commitment (Merkle root) of the current kind table.
     function _getKindTableCommitment() internal view returns (bytes32 kindTableCommitment) {
         kindTableCommitment = _getKindTableCommitmentStorage()._kindTableCommitment;
     }

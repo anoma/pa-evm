@@ -245,9 +245,10 @@ library TxGen {
         }
     }
 
-    /// @dev The commitment of the empty kind table, matching the protocol adapter's initialization default.
+    /// @dev The commitment of the empty kind table, its Merkle root: the padding leaf, matching the protocol adapter's
+    /// initialization default.
     function emptyKindTableCommitment() internal pure returns (bytes32 commitmentOfEmptyTable) {
-        commitmentOfEmptyTable = sha256("");
+        commitmentOfEmptyTable = sha256("EMPTY");
     }
 
     function transactionId(IProtocolAdapter.Transaction memory txn) internal pure returns (bytes32 id) {

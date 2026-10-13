@@ -8,7 +8,7 @@ The empty kind table has no entries. With it, the compliance circuit computes ev
 
 ## Decision
 
-The transaction carries the commitment of the kind table that its aggregation proof is proven against, in `Transaction.kindTableCommitment`. The protocol adapter accepts two values: the stored commitment and the commitment of the empty kind table, `sha256("")`. It checks the value before it processes the actions, so before any forwarder call and before the proof checks. On any other value, it reverts with `UnacceptedKindTableCommitment(kindTableCommitment)`. The aggregation journal embeds the carried commitment.
+The transaction carries the commitment of the kind table that its aggregation proof is proven against, in `Transaction.kindTableCommitment`. The protocol adapter accepts two values: the stored commitment and the commitment of the empty kind table, its padding leaf `sha256("EMPTY")`. It checks the value before it processes the actions, so before any forwarder call and before the proof checks. On any other value, it reverts with `UnacceptedKindTableCommitment(kindTableCommitment)`. The aggregation journal embeds the carried commitment.
 
 The compliance and aggregation verifying keys stay injected, as ADR-0001 decides.
 

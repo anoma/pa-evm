@@ -14,7 +14,7 @@ contract ExecuteKindTableUpdate is StagingScript {
     /// @notice Updates the kind table commitment as the proxy owner. Without `--broadcast`, the update is simulated
     /// locally.
     /// @param proxy The staging environment protocol adapter proxy to update.
-    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
+    /// @param newKindTableCommitment The commitment (Merkle root) of the new kind table.
     function run(address proxy, bytes32 newKindTableCommitment) public {
         address owner = _stagingOwner({proxy: proxy});
 

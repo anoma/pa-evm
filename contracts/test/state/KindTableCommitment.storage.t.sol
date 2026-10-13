@@ -11,7 +11,7 @@ contract KindTableCommitmentStorageTest is Test, KindTableCommitmentMock {
         assertEq(_KIND_TABLE_COMMITMENT_STORAGE_SLOT, SlotDerivation.erc7201Slot("anoma.storage.KindTableCommitment"));
     }
 
-    function test_empty_kind_table_commitment_is_the_hash_of_empty_bytes() public pure {
-        assertEq(EMPTY_KIND_TABLE_COMMITMENT, sha256(""));
+    function test_empty_kind_table_commitment_is_the_padding_leaf() public pure {
+        assertEq(EMPTY_KIND_TABLE_COMMITMENT, sha256("EMPTY"));
     }
 }

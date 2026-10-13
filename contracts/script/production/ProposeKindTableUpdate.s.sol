@@ -13,7 +13,7 @@ contract ProposeKindTableUpdate is ProductionScript {
     /// @notice Proposes the kind table update to the Safe owning the proxy.
     /// @param proxy The production environment protocol adapter proxy to update.
     /// @param proposer The Safe owner or delegate proposing the transaction.
-    /// @param newKindTableCommitment The commitment (SHA-256 hash) of the new kind table.
+    /// @param newKindTableCommitment The commitment (Merkle root) of the new kind table.
     function run(address proxy, address proposer, bytes32 newKindTableCommitment) public {
         _propose({
             proxy: proxy,
