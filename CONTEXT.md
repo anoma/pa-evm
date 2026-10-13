@@ -22,7 +22,7 @@ A bundle of consumed and created resources proven together — one compliance un
 plus the per-resource logic proofs.
 
 **Transaction**:
-A set of actions plus a delta proof, an aggregation proof and the commitment of the kind table that the aggregation proof is proven against, submitted to the PA's `execute` function.
+A set of actions plus a delta proof, an aggregation proof and the root of the kind table that the aggregation proof is proven against, submitted to the PA's `execute` function.
 
 **Compliance / Logic / Delta**:
 The three proof kinds the PA verifies — compliance for resource bookkeeping, logic
@@ -30,9 +30,9 @@ for each resource's application rules, delta for value balance. Aggregation fold
 them into a single proof.
 
 **Aggregation journal**:
-The public statement the aggregation proof attests to — the compliance verifying key, the kind table commitment, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
+The public statement the aggregation proof attests to — the compliance verifying key, the kind table root, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
 
-**Kind table commitment**:
+**Kind table root**:
 The Merkle root of a kind table. The PA stores one, which its owner sets, and accepts a transaction proven against the stored kind table or against the empty kind table, whose root is the padding leaf `sha256("EMPTY")`.
 
 **Unit Delta**:

@@ -17,7 +17,7 @@ import {MigrateProtocolAdapterStateMock} from "../../mocks/MigrateProtocolAdapte
 contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
-        bytes32 kindTableCommitment = pa.getKindTableCommitment();
+        bytes32 kindTableRoot = pa.getKindTableRoot();
         address migrationalImplementation = pa.getImplementation();
 
         _migrationScript.run({isProduction: false});
@@ -46,9 +46,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         assertEq(
             pa.getImplementation(), migrationalImplementation, "the proxy should keep the migrational implementation"
         );
-        assertEq(
-            pa.getKindTableCommitment(), kindTableCommitment, "the run should not change the kind table commitment"
-        );
+        assertEq(pa.getKindTableRoot(), kindTableRoot, "the run should not change the kind table root");
         assertEq(pa.owner(), DEFAULT_SENDER, "the run should not change the owner");
     }
 

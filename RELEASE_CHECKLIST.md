@@ -414,22 +414,22 @@ For changes that touch only the bindings crate and leave `VERSION` alone.
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
-## Updating the Kind Table Commitment
+## Updating the Kind Table Root
 
-Not a release. The kind table commitment is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved.
+Not a release. The kind table root is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved.
 
 For **staging**:
 
 - [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <PROXY> <COMMITMENT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-kind-table-update deployer <PROXY> <COMMITMENT> <CHAIN>
+  just contracts-execute-staging-kind-table-update deployer <PROXY> <ROOT> <CHAIN>
   ```
 
 For **production**:
@@ -437,13 +437,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the update, by running
 
   ```sh
-  just contracts-simulate-production-kind-table-proposal <PROXY> <PROPOSER> <COMMITMENT> <CHAIN>
+  just contracts-simulate-production-kind-table-proposal <PROXY> <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-kind-table-update deployer <PROXY> <PROPOSER> <COMMITMENT> <CHAIN>
+  just contracts-propose-production-kind-table-update deployer <PROXY> <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
