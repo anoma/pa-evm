@@ -11,13 +11,13 @@ library Aggregation {
     /// @notice Converts the actions to the RISC Zero journal of the aggregation instance.
     /// @param actions The actions to encode.
     /// @param complianceKey The compliance circuit verifying key to embed.
-    /// @param kindTableCommitment The kind table commitment to embed.
+    /// @param kindTableRoot The kind table root to embed.
     /// @return journal The resulting RISC Zero journal.
-    function toJournal(IProtocolAdapter.Action[] calldata actions, bytes32 complianceKey, bytes32 kindTableCommitment)
+    function toJournal(IProtocolAdapter.Action[] calldata actions, bytes32 complianceKey, bytes32 kindTableRoot)
         internal
         pure
         returns (bytes memory journal)
     {
-        journal = abi.encode(complianceKey, kindTableCommitment, actions);
+        journal = abi.encode(complianceKey, kindTableRoot, actions);
     }
 }

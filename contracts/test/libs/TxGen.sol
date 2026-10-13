@@ -169,9 +169,7 @@ library TxGen {
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
-        txn = transactionAggregation({
-            mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
-        });
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTableRoot: emptyKindTableRoot()});
     }
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
@@ -191,9 +189,7 @@ library TxGen {
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
-        txn = transactionAggregation({
-            mockVerifier: mockVerifier, txn: txn, kindTableCommitment: emptyKindTableCommitment()
-        });
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTableRoot: emptyKindTableRoot()});
     }
 
     /// @dev Assembles the transaction and its delta proof.
@@ -213,24 +209,24 @@ library TxGen {
         }
 
         txn = IProtocolAdapter.Transaction({
-            actions: actions, deltaProof: proof, aggregationProof: "", kindTableCommitment: emptyKindTableCommitment()
+            actions: actions, deltaProof: proof, aggregationProof: "", kindTableRoot: emptyKindTableRoot()
         });
     }
 
-    /// @dev Mock-proves the aggregation against a kind table: the transaction carries its commitment, and the seal
+    /// @dev Mock-proves the aggregation against a kind table: the transaction carries its root, and the seal
     /// commits to the journal the protocol adapter reconstructs with it and the compliance key.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         IProtocolAdapter.Transaction memory txn,
-        bytes32 kindTableCommitment
+        bytes32 kindTableRoot
     ) internal view returns (IProtocolAdapter.Transaction memory aggregatedTxn) {
         aggregatedTxn = txn;
 
-        aggregatedTxn.kindTableCommitment = kindTableCommitment;
+        aggregatedTxn.kindTableRoot = kindTableRoot;
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
             imageId: VerifyingKeys._BATCH_AGGREGATION_EVM,
-            journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTableCommitment, txn.actions))
+            journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTableRoot, txn.actions))
         }).seal;
     }
 
@@ -245,9 +241,9 @@ library TxGen {
         }
     }
 
-    /// @dev The commitment of the empty kind table, matching the protocol adapter's initialization default.
-    function emptyKindTableCommitment() internal pure returns (bytes32 commitmentOfEmptyTable) {
-        commitmentOfEmptyTable = sha256("");
+    /// @dev The root of the empty kind table: its padding leaf, matching the protocol adapter's initialization default.
+    function emptyKindTableRoot() internal pure returns (bytes32 rootOfEmptyTable) {
+        rootOfEmptyTable = sha256("EMPTY");
     }
 
     function transactionId(IProtocolAdapter.Transaction memory txn) internal pure returns (bytes32 id) {

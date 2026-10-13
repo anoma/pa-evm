@@ -89,7 +89,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTableCommitment|ERC1967Proxy|DeploymentParameters)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTableRoot|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -170,35 +170,35 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging kind table update (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-kind-table-update proxy commitment chain *args:
+contracts-simulate-staging-kind-table-update proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
-        --sig "run(address,bytes32)" {{proxy}} {{commitment}} \
+        --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging kind table update as the proxy owner
-contracts-execute-staging-kind-table-update deployer proxy commitment chain *args:
+contracts-execute-staging-kind-table-update deployer proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
-        --sig "run(address,bytes32)" {{proxy}} {{commitment}} \
+        --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production kind table update proposal (dry-run): simulates the Safe executing the update
-contracts-simulate-production-kind-table-proposal proxy proposer commitment chain *args:
+contracts-simulate-production-kind-table-proposal proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
+        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose updating the production kind table commitment to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-kind-table-update deployer proxy proposer commitment chain *args:
+# Propose updating the production kind table root to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-kind-table-update deployer proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{commitment}} \
+        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # A pause or a logic ref denial deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
