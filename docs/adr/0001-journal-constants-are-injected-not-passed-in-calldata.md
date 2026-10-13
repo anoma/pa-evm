@@ -1,6 +1,6 @@
 # Journal constants are injected, not passed in calldata
 
-ADR-0004 replaces the kind table part of this decision: the transaction carries the kind table commitment. The verifying keys stay injected.
+ADR-0004 replaces the kind table part of this decision: the transaction carries the kind table root. The verifying keys stay injected.
 
 ## Context
 
@@ -14,13 +14,13 @@ are not per-transaction data:
 ```rust
 pub struct AggregationInstance {
     pub compliance_key: Digest,          // the compliance circuit VK
-    pub kind_table_commitment: Digest,   // SHA-256 over the supported kinds
+    pub kind_table_root: Digest,   // SHA-256 over the supported kinds
     pub actions: Vec<ActionAggregated>,
 }
 ```
 
 The aggregation guest verifies each action's compliance proof against
-`compliance_key`, and `kind_table_commitment` appears inside every
+`compliance_key`, and `kind_table_root` appears inside every
 `ComplianceInstance` as well.
 
 Two ways to obtain them when encoding the journal on chain:
@@ -35,8 +35,8 @@ Two ways to obtain them when encoding the journal on chain:
 
 **Injection.** Neither value is part of the `Transaction` calldata.
 
-- `kindTableCommitment` is protocol adapter storage, rotated by the
-  owner-protected `setKindTableCommitment`. The commitment changes whenever a
+- `kindTableRoot` is protocol adapter storage, rotated by the
+  owner-protected `setKindTableRoot`. The root changes whenever a
   token is added to the set of supported resources, so it must be mutable
   without an implementation upgrade.
 - The compliance and aggregation verifying keys are compile-time constants
@@ -49,14 +49,14 @@ The protocol adapter therefore accepts exactly one kind table — the current on
 is not rejected by a check; it is simply unencodable, and its journal digest
 will not match.
 
-`getKindTableCommitment` exposes the mutable half, so a client can read what the
+`getKindTableRoot` exposes the mutable half, so a client can read what the
 deployed adapter expects and compare it off chain. The keys are readable from
 the verified source.
 
 ## Consequences
 
 - Wrong values surface as an opaque `VerificationFailed()` from the RISC Zero
-  router rather than as a specific error. Reading the commitment back is the
+  router rather than as a specific error. Reading the root back is the
   intended remedy: a client diffs its own against the deployed one before
   spending gas.
 - The Solidity structs deliberately do not mirror the Rust instances 1:1, which

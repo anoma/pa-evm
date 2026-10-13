@@ -39,7 +39,7 @@ interface IProtocolAdapter {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
-        bytes32 kindTableCommitment;
+        bytes32 kindTableRoot;
     }
 
     event ActionExecuted(bytes32 actionTreeRoot, bytes32[] nullifiers, bytes32[] consumedLogicRefs, bytes32[] commitments, bytes32[] createdLogicRefs);
@@ -328,7 +328,7 @@ interface IProtocolAdapter {
             "internalType": "bytes"
           },
           {
-            "name": "kindTableCommitment",
+            "name": "kindTableRoot",
             "type": "bytes32",
             "internalType": "bytes32"
           }
@@ -609,7 +609,7 @@ interface IProtocolAdapter {
             "internalType": "bytes"
           },
           {
-            "name": "kindTableCommitment",
+            "name": "kindTableRoot",
             "type": "bytes32",
             "internalType": "bytes32"
           }
@@ -2566,7 +2566,7 @@ struct ExpirableBlob { DeletionCriterion deletionCriterion; bytes blob; }
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**```solidity
-struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; bytes32 kindTableCommitment; }
+struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof; bytes32 kindTableRoot; }
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
@@ -2580,7 +2580,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
         #[allow(missing_docs)]
         pub aggregationProof: alloy::sol_types::private::Bytes,
         #[allow(missing_docs)]
-        pub kindTableCommitment: alloy::sol_types::private::FixedBytes<32>,
+        pub kindTableRoot: alloy::sol_types::private::FixedBytes<32>,
     }
     #[allow(
         non_camel_case_types,
@@ -2626,7 +2626,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     value.actions,
                     value.deltaProof,
                     value.aggregationProof,
-                    value.kindTableCommitment,
+                    value.kindTableRoot,
                 )
             }
         }
@@ -2638,7 +2638,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     actions: tuple.0,
                     deltaProof: tuple.1,
                     aggregationProof: tuple.2,
-                    kindTableCommitment: tuple.3,
+                    kindTableRoot: tuple.3,
                 }
             }
         }
@@ -2662,7 +2662,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     ),
                     <alloy::sol_types::sol_data::FixedBytes<
                         32,
-                    > as alloy_sol_types::SolType>::tokenize(&self.kindTableCommitment),
+                    > as alloy_sol_types::SolType>::tokenize(&self.kindTableRoot),
                 )
             }
             #[inline]
@@ -2737,7 +2737,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
             #[inline]
             fn eip712_root_type() -> alloy_sol_types::private::Cow<'static, str> {
                 alloy_sol_types::private::Cow::Borrowed(
-                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof,bytes32 kindTableCommitment)",
+                    "Transaction(Action[] actions,bytes deltaProof,bytes aggregationProof,bytes32 kindTableRoot)",
                 )
             }
             #[inline]
@@ -2768,9 +2768,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                         .0,
                     <alloy::sol_types::sol_data::FixedBytes<
                         32,
-                    > as alloy_sol_types::SolType>::eip712_data_word(
-                            &self.kindTableCommitment,
-                        )
+                    > as alloy_sol_types::SolType>::eip712_data_word(&self.kindTableRoot)
                         .0,
                 ]
                     .concat()
@@ -2795,7 +2793,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                     + <alloy::sol_types::sol_data::FixedBytes<
                         32,
                     > as alloy_sol_types::EventTopic>::topic_preimage_length(
-                        &rust.kindTableCommitment,
+                        &rust.kindTableRoot,
                     )
             }
             #[inline]
@@ -2823,7 +2821,7 @@ struct Transaction { Action[] actions; bytes deltaProof; bytes aggregationProof;
                 <alloy::sol_types::sol_data::FixedBytes<
                     32,
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(
-                    &rust.kindTableCommitment,
+                    &rust.kindTableRoot,
                     out,
                 );
             }

@@ -17,7 +17,7 @@ import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
-import {KindTableCommitment} from "./state/KindTableCommitment.sol";
+import {KindTableRoot} from "./state/KindTableRoot.sol";
 import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
@@ -37,14 +37,14 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet,
     LogicRefDenylist,
-    KindTableCommitment
+    KindTableRoot
 {
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.10";
+    string public constant override VERSION = "2.0.0-rc.11";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -78,7 +78,7 @@ contract ProtocolAdapter is
 
     /// @notice Initializes the protocol adapter contract.
     /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
-    /// to authorize upgrades, to set the kind table commitment, and to deny logic references.
+    /// to authorize upgrades, to set the kind table root, and to deny logic references.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -148,10 +148,7 @@ contract ProtocolAdapter is
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
         require(actionCount != 0, EmptyTransactionNotAllowed());
 
-        require(
-            _isKindTableCommitmentAccepted(transaction.kindTableCommitment),
-            UnacceptedKindTableCommitment(transaction.kindTableCommitment)
-        );
+        require(_isKindTableRootAccepted(transaction.kindTableRoot), UnacceptedKindTableRoot(transaction.kindTableRoot));
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
@@ -352,7 +349,7 @@ contract ProtocolAdapter is
         __CommitmentTree_init();
         __NullifierSet_init();
         __LogicRefDenylist_init();
-        __KindTableCommitment_init();
+        __KindTableRoot_init();
 
         // Sanity check that the verifier is not paused already.
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
@@ -362,8 +359,8 @@ contract ProtocolAdapter is
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-    /// @notice Allows only the owner to set the kind table commitment.
-    function _authorizeKindTableCommitmentChange() internal override onlyOwner {}
+    /// @notice Allows only the owner to set the kind table root.
+    function _authorizeKindTableRootChange() internal override onlyOwner {}
 
     /// @notice Allows only the owner to add logic references to the denylists.
     function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
@@ -389,12 +386,10 @@ contract ProtocolAdapter is
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
         // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
-        // commitment the transaction carries.
+        // root the transaction carries.
         bytes32 journalDigest = sha256(
             transaction.actions
-                .toJournal({
-                    complianceKey: VerifyingKeys._COMPLIANCE, kindTableCommitment: transaction.kindTableCommitment
-                })
+                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableRoot: transaction.kindTableRoot})
         );
 
         // Process the aggregation proof.
