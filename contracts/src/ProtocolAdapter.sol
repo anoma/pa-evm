@@ -88,46 +88,10 @@ contract ProtocolAdapter is
         __ProtocolAdapter_init(initialOwner);
     }
 
-    /// @inheritdoc IProtocolAdapter
-    function execute(Transaction calldata transaction) external override {
-        _execute(transaction);
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function pause() external override onlyOwner {
-        _pause();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function unpause() external override onlyOwner {
-        _unpause();
-    }
-
-    /// @inheritdoc IImplementation
-    function getImplementation() external view override returns (address current) {
-        current = ERC1967Utils.getImplementation();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function paused() public view override(IProtocolAdapter, PausableUpgradeable) returns (bool isPaused) {
-        isPaused = super.paused();
-    }
-
-    /// @inheritdoc IProtocolAdapter
-    function riscZeroVerifierPaused() public view override returns (bool isPaused) {
-        isPaused = PausableUpgradeable(
-                address(RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).getVerifier(RISC_ZERO_VERIFIER_SELECTOR))
-            )
-            .paused();
-    }
-
-    /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively.
-    /// @param transaction The transaction to execute.
-    /// @dev This function reverts while the protocol adapter is paused.
     // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
-    // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
-    function _execute(Transaction calldata transaction) internal nonReentrant whenNotPaused {
+    // slither-disable-start reentrancy-no-eth,reentrancy-benign
+    /// @inheritdoc IProtocolAdapter
+    function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
 
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
@@ -170,6 +134,36 @@ contract ProtocolAdapter is
         emit TransactionExecuted({transactionId: transactionId});
     }
 
+    // slither-disable-end reentrancy-no-eth,reentrancy-benign
+
+    /// @inheritdoc IProtocolAdapter
+    function pause() external override onlyOwner {
+        _pause();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function unpause() external override onlyOwner {
+        _unpause();
+    }
+
+    /// @inheritdoc IImplementation
+    function getImplementation() external view override returns (address current) {
+        current = ERC1967Utils.getImplementation();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function paused() public view override(IProtocolAdapter, PausableUpgradeable) returns (bool isPaused) {
+        isPaused = super.paused();
+    }
+
+    /// @inheritdoc IProtocolAdapter
+    function riscZeroVerifierPaused() public view override returns (bool isPaused) {
+        isPaused = PausableUpgradeable(
+                address(RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).getVerifier(RISC_ZERO_VERIFIER_SELECTOR))
+            )
+            .paused();
+    }
+
     /// @notice Processes an action by
     /// * checking the logic references of the consumed and created resources against the denylists,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
@@ -181,7 +175,7 @@ contract ProtocolAdapter is
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
     // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
-    // modifier on the calling `_execute`.
+    // modifier on the calling `execute` function.
     // slither-disable-next-line reentrancy-no-eth
     function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
         uint256 consumedCount = action.consumed.length;
