@@ -70,11 +70,9 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 ## Per chain
 
-The stop in step 2 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction before the stop.
+The stop in step 1 leaves users unable to transact, and the unpause in step 7 lets them transact again. Prepare every transaction that can run before the stop. Steps 2 to 7 run after it, and step 5 needs a transaction of the forwarder multisig.
 
-1. [ ] Read and record the `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount` of the legacy protocol adapter. They are what the runs are checked against.
-
-2. [ ] Transfer the legacy protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the transfer is a Safe transaction. Besides the `Ownable` functions, its owner can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
+1. [ ] Transfer the legacy protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the transfer is a Safe transaction. Besides the `Ownable` functions, its owner can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
 
    ```sh
    just contracts-simulate-legacy-protocol-adapter-ownership-transfer-proposal <LEGACY_PROTOCOL_ADAPTER> <PROPOSER> <CHAIN>
@@ -94,6 +92,8 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
    ```
 
    The stop cannot be undone: the legacy protocol adapter has no function that lifts it. Nothing transfers it back, and no step needs to.
+
+2. [ ] Read and record the `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount` of the stopped legacy protocol adapter. They do not change after the stop. Use them to plan the migration run and to compare its result.
 
 3. [ ] Simulate the migration run. `IS_PRODUCTION` selects the environment whose recorded proxy the runs and the check act on:
 
