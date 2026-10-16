@@ -1,6 +1,6 @@
 # Resource Kind Migration — Specification & Architecture
 
-This document specifies how resource owners move their resources from one kind to another: the soft migration moves them away from a circuit that is still trusted, and the hard migration away from a circuit with a flaw. It states what the protocol adapter provides for each, and what the application must add. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md) and in the kind tables' [`CONTEXT.md`](https://github.com/anoma/risc0-kind-tables/blob/next/CONTEXT.md). The one-time state migration and asset migration of a chain are a different process: [`01-state-migration.md`](./01-state-migration.md#2-three-kinds-of-migration) separates the three. The ERC20 forwarder's part of a hard migration is in its [`02-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/02-hard-migration.md).
+This document specifies how resource owners move their resources from one kind to another: the soft migration moves them away from a circuit that is still trusted, and the hard migration away from a circuit with a flaw. It states what the protocol adapter provides for each, and what the application must add. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md) and in the kind tables' [`CONTEXT.md`](https://github.com/anoma/risc0-kind-tables/blob/next/CONTEXT.md). The one-time state migration and asset migration of a chain are a different process: [`01-state-migration.md`](./01-state-migration.md#2-three-kinds-of-migration) separates the three. The ERC20 forwarder's part of a hard migration is in its [`03-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/03-hard-migration.md).
 
 ## 1. Purpose
 
@@ -144,7 +144,7 @@ In production, steps 1, 2, 4 and 5 are transactions of the PA Safe, and step 3 i
 
 ### Status
 
-The hard migration of ERC20 resources is a draft. The ERC20 forwarder's [`02-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/02-hard-migration.md) specifies its two parts: the forwarder `EmergencyMigratingERC20Forwarder`, and the emergency-migrating ERC20 circuit (`47ab0d90…`), which can be logic B because it has the migrate call. The active version 2.0.0-rc.1 (`51c2403f…`) has no migrate call. No environment runs either part.
+The hard migration of ERC20 resources is a draft. The ERC20 forwarder's [`03-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/03-hard-migration.md) specifies its two parts: the forwarder `EmergencyMigratingERC20Forwarder`, and the emergency-migrating ERC20 circuit (`47ab0d90…`), which can be logic B because it has the migrate call. The active version 2.0.0-rc.1 (`51c2403f…`) has no migrate call. No environment runs either part.
 
 ## 6. Soft and hard migration compared
 
