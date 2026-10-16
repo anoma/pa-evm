@@ -1,6 +1,6 @@
 # Migration Checklist
 
-How to move a chain from its legacy protocol adapter to the protocol adapter and keep its commitment tree and nullifier set. A chain deployed fresh skips all of this and starts on `ProtocolAdapter`. The plan in `anoma-knowledge-base/galileo-v2-transition-and-versioning.md` sets out the whole move; this file covers the protocol adapter's part.
+How to move a chain from its legacy protocol adapter to the protocol adapter and keep its commitment tree and nullifier set. A chain deployed fresh skips all of this and starts on `ProtocolAdapter`. [`docs/01-state-migration.md`](./docs/01-state-migration.md) explains the whole move and the order of its steps; this file covers the protocol adapter's part.
 
 ## How it works
 
