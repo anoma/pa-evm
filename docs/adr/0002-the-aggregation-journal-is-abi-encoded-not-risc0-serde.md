@@ -41,4 +41,4 @@ reconstruction is a single native builtin that solc guarantees canonical.
 - `abi.encode` is location-agnostic, so the journal builds identically whether
   the actions come from memory or calldata.
 - `aggregation_instance.rs` holds the two encodings to each other: a seal minted
-  over the Rust-built instance must pass `simulateExecute`.
+  over the Rust-built instance must pass an `eth_call` of `execute`.

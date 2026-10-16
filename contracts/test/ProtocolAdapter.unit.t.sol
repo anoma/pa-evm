@@ -156,11 +156,6 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(_emptyTx);
     }
 
-    function test_simulateExecute_reverts_on_the_empty_transaction() public {
-        vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
-        _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
-    }
-
     function test_RISC_ZERO_VERIFIER_ROUTER_returns_the_router_address() public view {
         assertEq(_pa.RISC_ZERO_VERIFIER_ROUTER(), address(_router), "router address should match");
     }

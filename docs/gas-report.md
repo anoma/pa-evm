@@ -1,34 +1,33 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          4147522 |           19470 |        |        |        |         |
+|                                          3299211 |           15511 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
-| EMPTY_KIND_TABLE_ROOT                            |             640 |    640 |    640 |    640 |      11 |
-| RISC_ZERO_VERIFIER_ROUTER                        |             378 |    378 |    378 |    378 |       1 |
-| RISC_ZERO_VERIFIER_SELECTOR                      |             712 |    712 |    712 |    712 |       2 |
-| UPGRADE_INTERFACE_VERSION                        |             846 |    846 |    846 |    846 |       2 |
-| VERSION                                          |            1107 |   1107 |   1107 |   1107 |       3 |
-| commitmentCount                                  |             765 |   1765 |   1765 |   2765 |      12 |
-| denyLogicRefs                                    |             752 |  31505 |  28890 |  53030 |      12 |
-| execute                                          |            2874 | 131433 | 163030 | 328293 |      35 |
-| getImplementation                                |             639 |    805 |    639 |   2639 |      12 |
-| getKindTableRoot                                 |            2677 |   2677 |   2677 |   2677 |       2 |
-| initialize                                       |            3108 | 150457 | 152979 | 152979 |     111 |
-| isLogicRefDenied                                 |            2490 |   2493 |   2493 |   2497 |      12 |
-| isNullifierContained                             |            2802 |   2802 |   2802 |   2802 |    2712 |
-| latestCommitmentTreeRoot                         |            7011 |  12463 |   9745 |  17912 |      15 |
-| migrateNullifierSet                              |             745 |    745 |    745 |    745 |       2 |
-| owner                                            |             547 |   2359 |   2547 |   2547 |      32 |
-| pause                                            |            2556 |  21639 |  25842 |  25842 |      12 |
-| paused                                           |            2443 |   2443 |   2443 |   2443 |      15 |
-| proxiableUUID                                    |             333 |    333 |    333 |    333 |      11 |
-| riscZeroVerifierPaused                           |           10978 |  10978 |  10978 |  10978 |       5 |
-| setKindTableRoot                                 |             341 |   6733 |   8466 |   8466 |       7 |
-| simulateExecute                                  |            3194 | 184860 | 176012 | 401357 |      10 |
-| transferOwnership                                |            5528 |   5528 |   5528 |   5528 |       3 |
-| unpause                                          |            2380 |   6419 |   8439 |   8439 |       3 |
-| upgradeToAndCall                                 |            3059 |   8853 |   3288 |  24045 |       5 |
+| EMPTY_KIND_TABLE_ROOT                            |             602 |    602 |    602 |    602 |      10 |
+| RISC_ZERO_VERIFIER_ROUTER                        |             363 |    363 |    363 |    363 |       1 |
+| RISC_ZERO_VERIFIER_SELECTOR                      |             674 |    674 |    674 |    674 |       2 |
+| UPGRADE_INTERFACE_VERSION                        |             804 |    804 |    804 |    804 |       2 |
+| VERSION                                          |            1063 |   1063 |   1063 |   1063 |       3 |
+| commitmentCount                                  |             727 |   1727 |   1727 |   2727 |      12 |
+| denyLogicRefs                                    |             725 |  31727 |  28875 |  53015 |      11 |
+| execute                                          |            2849 | 151205 | 169549 | 420076 |      41 |
+| getImplementation                                |             601 |    767 |    601 |   2601 |      12 |
+| getKindTableRoot                                 |            2639 |   2639 |   2639 |   2639 |       2 |
+| initialize                                       |            3057 | 150294 | 152910 | 152910 |     107 |
+| isLogicRefDenied                                 |            2451 |   2454 |   2454 |   2458 |      12 |
+| isNullifierContained                             |            2761 |   2761 |   2761 |   2761 |    2712 |
+| latestCommitmentTreeRoot                         |            6959 |  12350 |   9665 |  17736 |      15 |
+| migrateNullifierSet                              |             696 |    696 |    696 |    696 |       2 |
+| owner                                            |             532 |   2344 |   2532 |   2532 |      32 |
+| pause                                            |            2529 |  21622 |  25827 |  25827 |      12 |
+| paused                                           |            2428 |   2428 |   2428 |   2428 |      15 |
+| proxiableUUID                                    |             318 |    318 |    318 |    318 |      11 |
+| riscZeroVerifierPaused                           |           10963 |  10963 |  10963 |  10963 |       5 |
+| setKindTableRoot                                 |             314 |   6706 |   8439 |   8439 |       7 |
+| transferOwnership                                |            5475 |   5475 |   5475 |   5475 |       3 |
+| unpause                                          |            2353 |   6400 |   8424 |   8424 |       3 |
+| upgradeToAndCall                                 |            3044 |   8823 |   3258 |  24000 |       5 |
 
 | src/examples/BlockTimeForwarder.sol:BlockTimeForwarder Contract |                 |     |        |     |         |
 |-----------------------------------------------------------------|-----------------|-----|--------|-----|---------|

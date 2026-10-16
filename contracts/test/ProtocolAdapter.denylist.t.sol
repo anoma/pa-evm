@@ -188,19 +188,6 @@ contract ProtocolAdapterDenylistTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_simulateExecute_reverts_if_a_resource_carries_a_denied_logic_ref() public {
-        IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].consumed[0].logicRef = _DENIED_LOGIC_REF;
-        txn = _reaggregate(txn);
-
-        _deny(_DENIED_LOGIC_REF);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(LogicRefDenylist.ResourceWithDeniedLogicRef.selector, _DENIED_LOGIC_REF, true)
-        );
-        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
-    }
-
     function test_execute_settles_resources_of_logic_refs_that_are_not_denied() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 2});
 
@@ -225,8 +212,9 @@ contract ProtocolAdapterDenylistTest is Test {
 
     /// @dev Checks that the transaction settles before a denylist changes, so that a later revert is the denylist's.
     function _expectSettlement(IProtocolAdapter.Transaction memory txn) internal {
-        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
-        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
+        uint256 snapshot = vm.snapshotState();
+        _mockPa.execute(txn);
+        vm.revertToState(snapshot);
     }
 
     function _transaction(uint256 actionCount) internal returns (IProtocolAdapter.Transaction memory txn) {

@@ -56,7 +56,6 @@ interface IProtocolAdapter {
     function pause() external;
     function paused() external view returns (bool isPaused);
     function riscZeroVerifierPaused() external view returns (bool isPaused);
-    function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
     function unpause() external;
 }
 ```
@@ -370,259 +369,6 @@ interface IProtocolAdapter {
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "simulateExecute",
-    "inputs": [
-      {
-        "name": "transaction",
-        "type": "tuple",
-        "internalType": "struct IProtocolAdapter.Transaction",
-        "components": [
-          {
-            "name": "actions",
-            "type": "tuple[]",
-            "internalType": "struct IProtocolAdapter.Action[]",
-            "components": [
-              {
-                "name": "consumed",
-                "type": "tuple[]",
-                "internalType": "struct IProtocolAdapter.Consumed[]",
-                "components": [
-                  {
-                    "name": "nullifier",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "commitmentTreeRoot",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct IProtocolAdapter.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "created",
-                "type": "tuple[]",
-                "internalType": "struct IProtocolAdapter.Created[]",
-                "components": [
-                  {
-                    "name": "commitment",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "logicRef",
-                    "type": "bytes32",
-                    "internalType": "bytes32"
-                  },
-                  {
-                    "name": "appData",
-                    "type": "tuple",
-                    "internalType": "struct IProtocolAdapter.AppData",
-                    "components": [
-                      {
-                        "name": "resourcePayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "discoveryPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "externalPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "applicationPayload",
-                        "type": "tuple[]",
-                        "internalType": "struct IProtocolAdapter.ExpirableBlob[]",
-                        "components": [
-                          {
-                            "name": "deletionCriterion",
-                            "type": "uint8",
-                            "internalType": "enum IProtocolAdapter.DeletionCriterion"
-                          },
-                          {
-                            "name": "blob",
-                            "type": "bytes",
-                            "internalType": "bytes"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "unitDelta",
-                "type": "tuple",
-                "internalType": "struct IProtocolAdapter.Delta",
-                "components": [
-                  {
-                    "name": "x",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  },
-                  {
-                    "name": "y",
-                    "type": "uint256",
-                    "internalType": "uint256"
-                  }
-                ]
-              },
-              {
-                "name": "actionTreeRoot",
-                "type": "bytes32",
-                "internalType": "bytes32"
-              }
-            ]
-          },
-          {
-            "name": "deltaProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "aggregationProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          },
-          {
-            "name": "kindTableRoot",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          }
-        ]
-      },
-      {
-        "name": "skipRiscZeroProofVerification",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -4676,179 +4422,6 @@ function riscZeroVerifierPaused() external view returns (bool isPaused);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)` and selector `0xa600458b`.
-```solidity
-function simulateExecute(Transaction memory transaction, bool skipRiscZeroProofVerification) external;
-```*/
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct simulateExecuteCall {
-        #[allow(missing_docs)]
-        pub transaction: <Transaction as alloy::sol_types::SolType>::RustType,
-        #[allow(missing_docs)]
-        pub skipRiscZeroProofVerification: bool,
-    }
-    ///Container type for the return parameters of the [`simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)`](simulateExecuteCall) function.
-    #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
-    #[derive(Clone)]
-    pub struct simulateExecuteReturn {}
-    #[allow(
-        non_camel_case_types,
-        non_snake_case,
-        clippy::pub_underscore_fields,
-        clippy::style
-    )]
-    const _: () = {
-        use alloy::sol_types as alloy_sol_types;
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = (
-                Transaction,
-                alloy::sol_types::sol_data::Bool,
-            );
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = (
-                <Transaction as alloy::sol_types::SolType>::RustType,
-                bool,
-            );
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<simulateExecuteCall> for UnderlyingRustTuple<'_> {
-                fn from(value: simulateExecuteCall) -> Self {
-                    (value.transaction, value.skipRiscZeroProofVerification)
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>> for simulateExecuteCall {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {
-                        transaction: tuple.0,
-                        skipRiscZeroProofVerification: tuple.1,
-                    }
-                }
-            }
-        }
-        {
-            #[doc(hidden)]
-            #[allow(dead_code)]
-            type UnderlyingSolTuple<'a> = ();
-            #[doc(hidden)]
-            type UnderlyingRustTuple<'a> = ();
-            #[cfg(test)]
-            #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
-                match _t {
-                    alloy_sol_types::private::AssertTypeEq::<
-                        <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
-                    >(_) => {}
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<simulateExecuteReturn>
-            for UnderlyingRustTuple<'_> {
-                fn from(value: simulateExecuteReturn) -> Self {
-                    ()
-                }
-            }
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for simulateExecuteReturn {
-                fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self {}
-                }
-            }
-        }
-        impl simulateExecuteReturn {
-            fn _tokenize(
-                &self,
-            ) -> <simulateExecuteCall as alloy_sol_types::SolCall>::ReturnToken<'_> {
-                ()
-            }
-        }
-        #[automatically_derived]
-        impl alloy_sol_types::SolCall for simulateExecuteCall {
-            type Parameters<'a> = (Transaction, alloy::sol_types::sol_data::Bool);
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            type Return = simulateExecuteReturn;
-            type ReturnTuple<'a> = ();
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "simulateExecute((((bytes32,bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(bytes32,bytes32,((uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[],(uint8,bytes)[]))[],(uint256,uint256),bytes32)[],bytes,bytes,bytes32),bool)";
-            const SELECTOR: [u8; 4] = [166u8, 0u8, 69u8, 139u8];
-            #[inline]
-            fn new<'a>(
-                tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
-                tuple.into()
-            }
-            #[inline]
-            fn tokenize(&self) -> Self::Token<'_> {
-                (
-                    <Transaction as alloy_sol_types::SolType>::tokenize(
-                        &self.transaction,
-                    ),
-                    <alloy::sol_types::sol_data::Bool as alloy_sol_types::SolType>::tokenize(
-                        &self.skipRiscZeroProofVerification,
-                    ),
-                )
-            }
-            #[inline]
-            fn tokenize_returns(ret: &Self::Return) -> Self::ReturnToken<'_> {
-                simulateExecuteReturn::_tokenize(ret)
-            }
-            #[inline]
-            fn abi_decode_returns(data: &[u8]) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data)
-                    .map(Into::into)
-            }
-            #[inline]
-            fn abi_decode_returns_with_config(
-                data: &[u8],
-                config: alloy_sol_types::abi::AbiDecoderConfig,
-            ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence_with_config(
-                        data,
-                        config,
-                    )
-                    .map(Into::into)
-            }
-            #[inline]
-            fn abi_decode_returns_validate(
-                data: &[u8],
-            ) -> alloy_sol_types::Result<Self::Return> {
-                Self::abi_decode_returns_with_config(
-                    data,
-                    alloy_sol_types::abi::AbiDecoderConfig::new().validate(true),
-                )
-            }
-        }
-    };
-    #[derive(serde::Serialize, serde::Deserialize)]
-    #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `unpause()` and selector `0x3f4ba83a`.
 ```solidity
 function unpause() external;
@@ -5015,8 +4588,6 @@ function unpause() external;
         #[allow(missing_docs)]
         riscZeroVerifierPaused(riscZeroVerifierPausedCall),
         #[allow(missing_docs)]
-        simulateExecute(simulateExecuteCall),
-        #[allow(missing_docs)]
         unpause(unpauseCall),
     }
     impl IProtocolAdapterCalls {
@@ -5033,7 +4604,6 @@ function unpause() external;
             [107u8, 240u8, 160u8, 75u8],
             [132u8, 86u8, 203u8, 89u8],
             [146u8, 57u8, 172u8, 12u8],
-            [166u8, 0u8, 69u8, 139u8],
             [227u8, 90u8, 93u8, 47u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
@@ -5044,7 +4614,6 @@ function unpause() external;
             ::core::stringify!(RISC_ZERO_VERIFIER_ROUTER),
             ::core::stringify!(pause),
             ::core::stringify!(execute),
-            ::core::stringify!(simulateExecute),
             ::core::stringify!(RISC_ZERO_VERIFIER_SELECTOR),
         ];
         /// The signatures in the same order as `SELECTORS`.
@@ -5055,7 +4624,6 @@ function unpause() external;
             <RISC_ZERO_VERIFIER_ROUTERCall as alloy_sol_types::SolCall>::SIGNATURE,
             <pauseCall as alloy_sol_types::SolCall>::SIGNATURE,
             <executeCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <simulateExecuteCall as alloy_sol_types::SolCall>::SIGNATURE,
             <RISC_ZERO_VERIFIER_SELECTORCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
         /// Returns the signature for the given selector, if known.
@@ -5083,7 +4651,7 @@ function unpause() external;
     impl alloy_sol_types::SolInterface for IProtocolAdapterCalls {
         const NAME: &'static str = "IProtocolAdapterCalls";
         const MIN_DATA_LENGTH: usize = 0usize;
-        const COUNT: usize = 8usize;
+        const COUNT: usize = 7usize;
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
@@ -5098,9 +4666,6 @@ function unpause() external;
                 Self::paused(_) => <pausedCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::riscZeroVerifierPaused(_) => {
                     <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::SELECTOR
-                }
-                Self::simulateExecute(_) => {
-                    <simulateExecuteCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::unpause(_) => <unpauseCall as alloy_sol_types::SolCall>::SELECTOR,
             }
@@ -5215,19 +4780,6 @@ function unpause() external;
                     execute
                 },
                 {
-                    fn simulateExecute(
-                        data: &[u8],
-                        config: alloy_sol_types::abi::AbiDecoderConfig,
-                    ) -> alloy_sol_types::Result<IProtocolAdapterCalls> {
-                        <simulateExecuteCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
-                                data,
-                                config,
-                            )
-                            .map(IProtocolAdapterCalls::simulateExecute)
-                    }
-                    simulateExecute
-                },
-                {
                     fn RISC_ZERO_VERIFIER_SELECTOR(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
@@ -5290,11 +4842,6 @@ function unpause() external;
                         inner,
                     )
                 }
-                Self::simulateExecute(inner) => {
-                    <simulateExecuteCall as alloy_sol_types::SolCall>::abi_encoded_size(
-                        inner,
-                    )
-                }
                 Self::unpause(inner) => {
                     <unpauseCall as alloy_sol_types::SolCall>::abi_encoded_size(inner)
                 }
@@ -5326,12 +4873,6 @@ function unpause() external;
                 }
                 Self::riscZeroVerifierPaused(inner) => {
                     <riscZeroVerifierPausedCall as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
-                }
-                Self::simulateExecute(inner) => {
-                    <simulateExecuteCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -5927,19 +5468,6 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             &self,
         ) -> alloy_contract::SolCallBuilder<&P, riscZeroVerifierPausedCall, N> {
             self.call_builder(&riscZeroVerifierPausedCall)
-        }
-        ///Creates a new call builder for the [`simulateExecute`] function.
-        pub fn simulateExecute(
-            &self,
-            transaction: <Transaction as alloy::sol_types::SolType>::RustType,
-            skipRiscZeroProofVerification: bool,
-        ) -> alloy_contract::SolCallBuilder<&P, simulateExecuteCall, N> {
-            self.call_builder(
-                &simulateExecuteCall {
-                    transaction,
-                    skipRiscZeroProofVerification,
-                },
-            )
         }
         ///Creates a new call builder for the [`unpause`] function.
         pub fn unpause(&self) -> alloy_contract::SolCallBuilder<&P, unpauseCall, N> {
