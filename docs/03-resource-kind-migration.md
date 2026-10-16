@@ -1,6 +1,6 @@
 # Resource Kind Migration — Specification & Architecture
 
-This document specifies how resource owners move their resources from one kind to another: the soft migration moves them away from a circuit that is still trusted, and the hard migration away from a circuit with a flaw. It states what the protocol adapter provides for each, and what the application must add. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md) and in the kind tables' [`CONTEXT.md`](https://github.com/anoma/risc0-kind-tables/blob/next/CONTEXT.md). The one-time state migration and asset migration of a chain are a different process: [`01-upgrades-and-state-migration.md`](./01-upgrades-and-state-migration.md#1-three-kinds-of-migration) separates the three. The ERC20 forwarder's part of a hard migration is in its [`02-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/02-hard-migration.md).
+This document specifies how resource owners move their resources from one kind to another: the soft migration moves them away from a circuit that is still trusted, and the hard migration away from a circuit with a flaw. It states what the protocol adapter provides for each, and what the application must add. The domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md) and in the kind tables' [`CONTEXT.md`](https://github.com/anoma/risc0-kind-tables/blob/next/CONTEXT.md). The one-time state migration and asset migration of a chain are a different process: [`01-state-migration.md`](./01-state-migration.md#2-three-kinds-of-migration) separates the three. The ERC20 forwarder's part of a hard migration is in its [`02-hard-migration.md`](https://github.com/anoma/anomapay-erc20-forwarder/blob/next/docs/02-hard-migration.md).
 
 ## 1. Purpose
 
@@ -79,7 +79,7 @@ Version A stays in the kind table as long as resources of version A can exist (R
 
 A chain that ran a legacy protocol adapter has legacy-forwarder resources. Their logic ref is `bc1232…`, circuit version 1.0.0, and their label names the legacy ERC20 forwarder. After the asset migration, the ERC20 forwarder holds their tokens (R1). The kind table makes each of them an alias of the active version under the label of the ERC20 forwarder, for each token whose `soft_migrate_from_legacy_forwarder` is `true` in the kind tables' `tokens.json`.
 
-The owner of the protocol adapter deprecates `bc1232…` before the protocol adapter starts to execute transactions. The members make the two kinds fungible in both directions, so without the deprecation a transaction could convert resources of the ERC20 forwarder into new legacy-forwarder resources. The ERC20 forwarder accepts another logic ref, `51c2403f…`, so no wrap creates resources of `bc1232…`. A chain deployed fresh has no legacy-forwarder resources and skips this case. [`01-upgrades-and-state-migration.md`](./01-upgrades-and-state-migration.md#steps-of-a-state-migration) gives the order of these steps within the state migration.
+The owner of the protocol adapter deprecates `bc1232…` before the protocol adapter starts to execute transactions. The members make the two kinds fungible in both directions, so without the deprecation a transaction could convert resources of the ERC20 forwarder into new legacy-forwarder resources. The ERC20 forwarder accepts another logic ref, `51c2403f…`, so no wrap creates resources of `bc1232…`. A chain deployed fresh has no legacy-forwarder resources and skips this case. [`01-state-migration.md`](./01-state-migration.md#5-steps) gives the order of these steps within the state migration.
 
 ### What the prover needs
 
@@ -130,6 +130,8 @@ A flaw in logic A can let a person create a resource of kind A that no wrap back
 - After a **possible exploit**, forged and correct resources are under the same roots, and no proof separates them. The hard migration moves both. The loss between the exploit and the denial is not recovered.
 
 ### Steps after a flaw
+
+These steps are the response to a flaw in a resource logic in [`02-upgrades.md`](./02-upgrades.md#5-forced-upgrades).
 
 1. Pause the protocol adapter. It executes no transaction from then on.
 2. Deny logic A.
