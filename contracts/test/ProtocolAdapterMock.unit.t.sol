@@ -568,7 +568,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_simulateExecute_reverts_on_invalid_aggregation_proof_if_proof_verification_is_not_skipped() public {
+    function test_execute_reverts_on_an_invalid_aggregation_proof() public {
         (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: 0,
@@ -580,33 +580,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.aggregationProof = proof;
 
         vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
-        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
-    }
-
-    function test_simulateExecute_reverts_with_Simulated_if_proof_verification_is_not_skipped() public {
-        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
-
-        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
-        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: false});
-    }
-
-    function test_simulateExecute_skips_the_verification_of_an_invalid_aggregation_proof() public {
-        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
-
-        bytes memory proof = txn.aggregationProof;
-        proof[5] = _flipBits(proof[5]);
-        txn.aggregationProof = proof;
-
-        vm.expectPartialRevert(ProtocolAdapter.Simulated.selector, address(_mockPa));
-        _mockPa.simulateExecute({transaction: txn, skipRiscZeroProofVerification: true});
+        _mockPa.execute(txn);
     }
 
     function _exampleResourceAndEmptyAppData(uint256 nonce)

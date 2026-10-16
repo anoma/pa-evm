@@ -60,7 +60,6 @@ contract ProtocolAdapter is
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierPaused();
-    error Simulated(uint256 gasUsed);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
     /// @param riscZeroVerifierRouter The RISC Zero verifier router contract address.
@@ -89,19 +88,53 @@ contract ProtocolAdapter is
         __ProtocolAdapter_init(initialOwner);
     }
 
+    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
+    // slither-disable-start reentrancy-no-eth,reentrancy-benign
     /// @inheritdoc IProtocolAdapter
-    function execute(Transaction calldata transaction) external override {
-        _execute({transaction: transaction, skipRiscZeroProofVerification: false});
+    function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
+        uint256 actionCount = transaction.actions.length;
+
+        // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
+        require(actionCount != 0, EmptyTransactionNotAllowed());
+
+        require(_isKindTableRootAccepted(transaction.kindTableRoot), UnacceptedKindTableRoot(transaction.kindTableRoot));
+
+        bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
+        Delta memory transactionDelta = DeltaProof.zero();
+        bytes32 updatedCommitmentTreeRoot = bytes32(0);
+
+        for (uint256 i = 0; i < actionCount; ++i) {
+            Action calldata action = transaction.actions[i];
+
+            bytes32 newRoot = _processAction(action);
+            if (newRoot != bytes32(0)) {
+                updatedCommitmentTreeRoot = newRoot;
+            }
+
+            // Add the action delta to the transaction delta.
+            transactionDelta = transactionDelta.add(action.unitDelta);
+
+            actionTreeRoots[i] = action.actionTreeRoot;
+        }
+
+        // Verify the delta and aggregation proofs. The empty transaction is rejected above,
+        // so both proofs are guaranteed to be checked.
+        bytes32 transactionId = _verifyGlobalProofs({
+            transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
+        });
+
+        // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
+        // so there is no new root to store.
+        if (updatedCommitmentTreeRoot != bytes32(0)) {
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
+        }
+
+        // NOTE: The event ordering is protected by the `nonReentrant` modifier.
+        // slither-disable-next-line reentrancy-events
+        emit TransactionExecuted({transactionId: transactionId});
     }
 
-    /// @inheritdoc IProtocolAdapter
-    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external override {
-        uint256 gasStart = gasleft();
-
-        _execute({transaction: transaction, skipRiscZeroProofVerification: skipRiscZeroProofVerification});
-
-        revert Simulated({gasUsed: gasStart - gasleft()});
-    }
+    // slither-disable-end reentrancy-no-eth,reentrancy-benign
 
     /// @inheritdoc IProtocolAdapter
     function pause() external override onlyOwner {
@@ -131,63 +164,6 @@ contract ProtocolAdapter is
             .paused();
     }
 
-    /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively.
-    /// @param transaction The transaction to execute.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @dev This function reverts while the protocol adapter is paused.
-    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
-    // slither-disable-next-line reentrancy-no-eth,reentrancy-benign
-    function _execute(Transaction calldata transaction, bool skipRiscZeroProofVerification)
-        internal
-        nonReentrant
-        whenNotPaused
-    {
-        uint256 actionCount = transaction.actions.length;
-
-        // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
-        require(actionCount != 0, EmptyTransactionNotAllowed());
-
-        require(_isKindTableRootAccepted(transaction.kindTableRoot), UnacceptedKindTableRoot(transaction.kindTableRoot));
-
-        bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
-        Delta memory transactionDelta = DeltaProof.zero();
-        bytes32 updatedCommitmentTreeRoot = bytes32(0);
-
-        for (uint256 i = 0; i < actionCount; ++i) {
-            Action calldata action = transaction.actions[i];
-
-            bytes32 newRoot = _processAction(action);
-            if (newRoot != bytes32(0)) {
-                updatedCommitmentTreeRoot = newRoot;
-            }
-
-            // Add the action delta to the transaction delta.
-            transactionDelta = transactionDelta.add(action.unitDelta);
-
-            actionTreeRoots[i] = action.actionTreeRoot;
-        }
-
-        // Verify the delta and aggregation proofs. The empty transaction is rejected above,
-        // so both proofs are guaranteed to be checked.
-        bytes32 transactionId = _verifyGlobalProofs({
-            transaction: transaction,
-            actionTreeRoots: actionTreeRoots,
-            transactionDelta: transactionDelta,
-            skipRiscZeroProofVerification: skipRiscZeroProofVerification
-        });
-
-        // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
-        // so there is no new root to store.
-        if (updatedCommitmentTreeRoot != bytes32(0)) {
-            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
-        }
-
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier.
-        // slither-disable-next-line reentrancy-events
-        emit TransactionExecuted({transactionId: transactionId});
-    }
-
     /// @notice Processes an action by
     /// * checking the logic references of the consumed and created resources against the denylists,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
@@ -199,7 +175,7 @@ contract ProtocolAdapter is
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
     // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
-    // modifier on the calling `_execute`.
+    // modifier on the calling `execute` function.
     // slither-disable-next-line reentrancy-no-eth
     function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
         uint256 consumedCount = action.consumed.length;
@@ -371,13 +347,11 @@ contract ProtocolAdapter is
     /// @param transaction The transaction to verify the proofs for.
     /// @param actionTreeRoots The action tree roots as ordered in the transaction.
     /// @param transactionDelta The transaction delta obtained from summing the action deltas.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
     /// @return transactionId The delta verifying key doubling as the transaction ID.
     function _verifyGlobalProofs(
         Transaction calldata transaction,
         bytes32[] memory actionTreeRoots,
-        Delta memory transactionDelta,
-        bool skipRiscZeroProofVerification
+        Delta memory transactionDelta
     ) internal view returns (bytes32 transactionId) {
         // The delta proof signs the Keccak-256 hash of the concatenated action tree roots.
         transactionId = DeltaProof.computeVerifyingKey(actionTreeRoots);
@@ -396,28 +370,20 @@ contract ProtocolAdapter is
         _processRiscZeroProof({
             verifyingKey: VerifyingKeys._BATCH_AGGREGATION_EVM,
             instance: journalDigest,
-            proof: transaction.aggregationProof,
-            skipVerification: skipRiscZeroProofVerification
+            proof: transaction.aggregationProof
         });
     }
 
-    /// @notice Processes a RISC Zero proof by checking its selector and verifying it. Optionally, the verification call
-    /// can be skipped, which is used in the `simulateExecute` entry point.
+    /// @notice Processes a RISC Zero proof by checking its selector and verifying it.
     /// @param verifyingKey The image ID of the program to be proven.
     /// @param instance The public inputs to the proof, i.e. the digest of the journal.
     /// @param proof The proof to be verified.
-    /// @param skipVerification Whether to skip proof verification or not.
-    function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof, bool skipVerification)
-        internal
-        view
-    {
+    function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
         _checkSelector(bytes4(proof[0:4]));
 
-        if (!skipVerification) {
-            RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
-                seal: proof, imageId: verifyingKey, journalDigest: instance
-            });
-        }
+        RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
+            seal: proof, imageId: verifyingKey, journalDigest: instance
+        });
     }
 
     /// @notice Checks that a RISC Zero verifier selector matches the one the protocol adapter is associated with.

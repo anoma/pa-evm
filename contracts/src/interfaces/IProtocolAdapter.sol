@@ -144,12 +144,6 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
-    /// @notice Simulates a transaction and returns the gas after reverting.
-    /// @param transaction The transaction to simulate execution for.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @dev This transaction will always revert.
-    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
-
     /// @notice Pauses the protocol adapter, so that no transaction executes until `unpause`.
     function pause() external;
 
