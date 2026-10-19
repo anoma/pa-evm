@@ -40,8 +40,11 @@ impl ProtocolAdapter {
             .context("the transaction must be aggregated")?;
 
         for (action_idx, action) in aggregation.instance.actions.iter().enumerate() {
-            for (resource_idx, consumed) in action.consumed_publics.iter().enumerate() {
-                let consumed_root = B256::from_slice(consumed.commitment_tree_root.as_bytes());
+            for (resource_idx, resource) in action.resource_publics.iter().enumerate() {
+                let Some(root) = resource.commitment_tree_root else {
+                    continue;
+                };
+                let consumed_root = B256::from_slice(root.as_bytes());
                 let is_historical = self
                     .pa
                     .isCommitmentTreeRootHistorical(consumed_root)
@@ -49,14 +52,13 @@ impl ProtocolAdapter {
                     .await
                     .with_context(|| {
                         format!(
-                            "failed to check the root of action {action_idx} consumed resource \
-                             {resource_idx}"
+                            "failed to check the root of action {action_idx} resource {resource_idx}"
                         )
                     })?;
 
                 anyhow::ensure!(
                     is_historical,
-                    "the commitment tree root of action {action_idx} consumed resource {resource_idx} \
+                    "the commitment tree root of action {action_idx} resource {resource_idx} \
                      is not a historical root of the PA: root={consumed_root:?}, \
                      pa_latest={pa_root:?}"
                 );

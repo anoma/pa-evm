@@ -172,7 +172,7 @@ contract MigrationalProtocolAdapterTest is Test {
             nonce: 0,
             configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
         });
-        assertEq(txn.actions[0].consumed[0].commitmentTreeRoot, SHA256.EMPTY_HASH, "the fixture uses another root");
+        assertEq(txn.actions[0].resourceData[0].commitmentTreeRoot, SHA256.EMPTY_HASH, "the fixture uses another root");
 
         _pa.execute(txn);
 
@@ -381,10 +381,9 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.execute(txn);
 
         // The legacy protocol adapter receives the same commitments in the same order.
-        for (uint256 i = 0; i < txn.actions.length; ++i) {
-            for (uint256 j = 0; j < txn.actions[i].created.length; ++j) {
-                _legacyProtocolAdapter.addCommitment(txn.actions[i].created[j].commitment);
-            }
+        bytes32[] memory commitments = TxGen.collectCommitments(txn);
+        for (uint256 i = 0; i < commitments.length; ++i) {
+            _legacyProtocolAdapter.addCommitment(commitments[i]);
         }
 
         assertEq(

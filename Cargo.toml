@@ -29,3 +29,9 @@ tokio = { version = "1.53.1", features = ["rt-multi-thread"] }
 
 anoma-pa-evm-bindings = { path = "crates/bindings" }
 anoma-pa-evm-integration-test = { path = "crates/integration-test" }
+
+[patch.crates-io]
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", rev = "a53d41063edb77d97e924920c3a28d9862b55670" }
+anoma-rm-core = { git = "https://github.com/anoma/arm-risc0", rev = "ba22c6bd2ab101832e02fd71fd09a68bb350f3b4" }
+anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", rev = "ba22c6bd2ab101832e02fd71fd09a68bb350f3b4" }
+anoma-rm-risc0-gadgets = { git = "https://github.com/anoma/arm-risc0", rev = "ba22c6bd2ab101832e02fd71fd09a68bb350f3b4" }

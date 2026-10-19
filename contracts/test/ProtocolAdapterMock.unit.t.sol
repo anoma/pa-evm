@@ -178,6 +178,74 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @dev The resource data is built as consumed 0, consumed 1, created 0, created 1.
+    function test_execute_calls_the_forwarders_in_the_order_of_the_resource_data() public {
+        (IProtocolAdapter.Transaction memory txn, address[] memory forwarders) =
+            _carrierTransaction({consumedCount: 2, createdCount: 2});
+
+        uint256[] memory order = _order(2, 1, 0, 3);
+        txn = _reorderFirstAction(txn, order);
+
+        for (uint256 i = 0; i < order.length; ++i) {
+            _expectForwarderCall(forwarders[order[i]]);
+        }
+        _mockPa.execute(txn);
+    }
+
+    /// @dev The resource data is built as consumed 0, consumed 1, created 0, created 1.
+    function test_execute_emits_the_tags_in_the_order_of_the_resource_data() public {
+        (IProtocolAdapter.Transaction memory txn,) = _carrierTransaction({consumedCount: 2, createdCount: 2});
+        IProtocolAdapter.PublicResourceData[] memory built = txn.actions[0].resourceData;
+
+        txn = _reorderFirstAction(txn, _order(3, 1, 2, 0));
+
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ActionExecuted({
+            actionTreeRoot: txn.actions[0].actionTreeRoot,
+            nullifiers: _pair(built[1].tag, built[0].tag),
+            consumedLogicRefs: _pair(_CARRIER_LOGIC_REF, _CARRIER_LOGIC_REF),
+            commitments: _pair(built[3].tag, built[2].tag),
+            createdLogicRefs: _pair(_CARRIER_LOGIC_REF, _CARRIER_LOGIC_REF)
+        });
+        _mockPa.execute(txn);
+    }
+
+    /// @dev The resource data is built as consumed 0, created 0, created 1.
+    function test_execute_adds_the_commitments_in_the_order_of_the_resource_data() public {
+        (IProtocolAdapter.Transaction memory txn,) = _carrierTransaction({consumedCount: 1, createdCount: 2});
+        IProtocolAdapter.PublicResourceData[] memory built = txn.actions[0].resourceData;
+
+        uint256[] memory order = new uint256[](3);
+        (order[0], order[1], order[2]) = (2, 0, 1);
+        txn = _reorderFirstAction(txn, order);
+
+        _mockPa.execute(txn);
+
+        CommitmentTreeMock expectedTree = CommitmentTreeMock(
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
+        );
+        expectedTree.addCommitment(built[2].tag);
+        expectedTree.addCommitmentTreeRoot(expectedTree.addCommitment(built[1].tag));
+
+        assertEq(_mockPa.latestCommitmentTreeRoot(), expectedTree.latestCommitmentTreeRoot());
+    }
+
+    /// @dev The aggregation proof covers the commitment tree root, so the zero root cannot turn a consumed resource
+    /// into a created resource.
+    function test_execute_reverts_if_the_zero_root_relabels_a_consumed_resource_as_created() public {
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
+        });
+        txn.actions[0].resourceData[0].commitmentTreeRoot = bytes32(0);
+
+        vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
+        _mockPa.execute(txn);
+    }
+
     /// @dev `TxGen.expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
     /// execution exercises both deletion criteria per payload kind.
     function test_execute_emits_the_persistent_app_data_blobs_only() public {
@@ -188,7 +256,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
         IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
-        bytes32 tag = txn.actions[0].created[0].commitment;
+        bytes32 tag = TxGen.actionCommitments(txn.actions[0])[0];
         bytes memory persistent = TxGen.expirableBlobs()[1].blob;
 
         vm.expectEmit(address(_mockPa));
@@ -342,7 +410,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         (IProtocolAdapter.Transaction memory tx1,) =
             vm.transaction({mockVerifier: _mockVerifier, nonce: 0, configs: configs});
-        bytes32 preExistingNf = tx1.actions[0].consumed[0].nullifier;
+        bytes32 preExistingNf = TxGen.actionNullifiers(tx1.actions[0])[0];
         _mockPa.execute(tx1);
 
         vm.expectRevert(
@@ -359,8 +427,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         uint8 resourceIndex,
         bytes32 fakeRoot
     ) public {
-        // Assume the proposed commitment tree root is not a historical root.
+        // Assume the proposed commitment tree root is not a historical root. The zero root marks a created resource.
         vm.assume(!_mockPa.isCommitmentTreeRootHistorical(fakeRoot));
+        vm.assume(fakeRoot != bytes32(0));
 
         // Choose a random consumed resource among the actions.
         (actionCount, resourcePairCount, actionIndex, resourceIndex) =
@@ -374,8 +443,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
             })
         });
 
-        // Assign the proposed commitment tree root into the transaction.
-        txn.actions[actionIndex].consumed[resourceIndex].commitmentTreeRoot = fakeRoot;
+        // Assign the proposed commitment tree root into the transaction. The consumed resources come first.
+        txn.actions[actionIndex].resourceData[resourceIndex].commitmentTreeRoot = fakeRoot;
 
         vm.expectRevert(abi.encodeWithSelector(CommitmentTree.NonExistingRoot.selector, fakeRoot));
         _mockPa.execute(txn);
@@ -423,8 +492,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
             })
         });
 
-        bytes32 originalLogicRef = txn.actions[actionIndex].consumed[resourceIndex].logicRef;
-        txn.actions[actionIndex].consumed[resourceIndex].logicRef = SHA256.hash(originalLogicRef, nonce);
+        bytes32 originalLogicRef = txn.actions[actionIndex].resourceData[resourceIndex].logicRef;
+        txn.actions[actionIndex].resourceData[resourceIndex].logicRef = SHA256.hash(originalLogicRef, nonce);
 
         vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
         _mockPa.execute(txn);
@@ -583,6 +652,75 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @dev Builds a transaction of one action in which every resource calls its own forwarder. The resource data holds
+    /// the consumed resources, then the created resources, and `forwarders` lists their forwarders in this order. Each
+    /// consumed resource has quantity `createdCount` and each created resource quantity `consumedCount`, so the action
+    /// balances.
+    function _carrierTransaction(uint128 consumedCount, uint128 createdCount)
+        private
+        returns (IProtocolAdapter.Transaction memory txn, address[] memory forwarders)
+    {
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: new TxGen.ResourceAndAppData[](consumedCount),
+            created: new TxGen.ResourceAndAppData[](createdCount)
+        });
+
+        forwarders = new address[](consumedCount + createdCount);
+        for (uint256 i = 0; i < forwarders.length; ++i) {
+            forwarders[i] =
+                address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+            if (i < consumedCount) {
+                resourceLists[0].consumed[i] =
+                    _carrierResourceAndAppData({nonce: i, forwarder: forwarders[i], quantity: createdCount});
+            } else {
+                resourceLists[0].created[i - consumedCount] =
+                    _carrierResourceAndAppData({nonce: i, forwarder: forwarders[i], quantity: consumedCount});
+            }
+        }
+
+        txn = vm.transaction(_mockVerifier, resourceLists);
+    }
+
+    function _expectForwarderCall(address forwarder) private {
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: forwarder, input: _input, output: EXPECTED_OUTPUT
+        });
+    }
+
+    /// @dev Reorders the resource data of the first action. The action tree root covers the order, so the delta proof
+    /// and the aggregation proof are made again.
+    function _reorderFirstAction(IProtocolAdapter.Transaction memory txn, uint256[] memory order)
+        private
+        returns (IProtocolAdapter.Transaction memory reorderedTxn)
+    {
+        IProtocolAdapter.PublicResourceData[] memory resourceData = txn.actions[0].resourceData;
+        IProtocolAdapter.PublicResourceData[] memory reordered = new IProtocolAdapter.PublicResourceData[](order.length);
+        for (uint256 i = 0; i < order.length; ++i) {
+            reordered[i] = resourceData[order[i]];
+        }
+        txn.actions[0].resourceData = reordered;
+        txn.actions[0].actionTreeRoot = TxGen.computeActionTreeRoot(reordered);
+
+        reorderedTxn = vm.transactionFromActions(txn.actions);
+        reorderedTxn = TxGen.transactionAggregation({
+            mockVerifier: _mockVerifier, txn: reorderedTxn, kindTreeRoot: TxGen.emptyKindTreeRoot()
+        });
+    }
+
+    function _carrierResourceAndAppData(uint256 nonce, address forwarder, uint128 quantity)
+        private
+        view
+        returns (TxGen.ResourceAndAppData memory data)
+    {
+        address[] memory fwdList = new address[](1);
+        fwdList[0] = forwarder;
+
+        data = _exampleCarrierResourceAndAppData({nonce: nonce, fwdList: fwdList})[0];
+        data.resource.quantity = quantity;
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
@@ -670,5 +808,19 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @dev Flips all bits of a seal byte to invalidate the proof it belongs to.
     function _flipBits(bytes1 sealByte) private pure returns (bytes1 flipped) {
         flipped = sealByte ^ bytes1(0xff);
+    }
+
+    function _order(uint256 first, uint256 second, uint256 third, uint256 fourth)
+        private
+        pure
+        returns (uint256[] memory order)
+    {
+        order = new uint256[](4);
+        (order[0], order[1], order[2], order[3]) = (first, second, third, fourth);
+    }
+
+    function _pair(bytes32 first, bytes32 second) private pure returns (bytes32[] memory pair) {
+        pair = new bytes32[](2);
+        (pair[0], pair[1]) = (first, second);
     }
 }
