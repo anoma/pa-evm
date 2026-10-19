@@ -169,56 +169,63 @@ contract ProtocolAdapter is
     /// * executing external forwarder calls,
     /// * emitting the app data blobs based on their deletion criterion, and
     /// * emitting the `ActionExecuted` event.
+    /// It processes the resources in the order of `action.resources`.
     /// @param action The action to process.
     /// @return addedCommitments Whether the action added commitments to the commitment tree.
     // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
     // modifier on the calling `execute` function.
     // slither-disable-next-line reentrancy-no-eth
     function _processAction(Action calldata action) internal returns (bool addedCommitments) {
-        uint256 consumedCount = action.consumed.length;
-        bytes32[] memory nullifiers = new bytes32[](consumedCount);
-        bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
+        ResourceInstance[] calldata resources = action.resources;
+        uint256 resourceCount = resources.length;
 
-        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
-        for (uint256 i = 0; i < consumedCount; ++i) {
-            Consumed calldata consumed = action.consumed[i];
-
-            _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
-
-            require(
-                _isCommitmentTreeRootHistorical(consumed.commitmentTreeRoot),
-                NonExistingRoot(consumed.commitmentTreeRoot)
-            );
-
-            // The function reverts if a repeating nullifier is added to the set.
-            _addNullifier(consumed.nullifier);
-
-            _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
-            _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
-
-            nullifiers[i] = consumed.nullifier;
-            consumedLogicRefs[i] = consumed.logicRef;
+        uint256 consumedCount = 0;
+        for (uint256 i = 0; i < resourceCount; ++i) {
+            if (resources[i].consumed) {
+                ++consumedCount;
+            }
         }
 
-        uint256 createdCount = action.created.length;
-        bytes32[] memory commitments = new bytes32[](createdCount);
-        bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
+        bytes32[] memory nullifiers = new bytes32[](consumedCount);
+        bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
+        bytes32[] memory commitments = new bytes32[](resourceCount - consumedCount);
+        bytes32[] memory createdLogicRefs = new bytes32[](resourceCount - consumedCount);
 
-        for (uint256 i = 0; i < createdCount; ++i) {
-            Created calldata created = action.created[i];
+        uint256 consumedIndex = 0;
+        uint256 createdIndex = 0;
 
-            _checkLogicRefNotDenied({logicRef: created.logicRef, consumed: false});
+        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
+        for (uint256 i = 0; i < resourceCount; ++i) {
+            ResourceInstance calldata resource = resources[i];
+            bool consumed = resource.consumed;
 
-            // `_addCommitment` does not error if a repeating leaf is added to the tree.
-            // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
-            _addCommitment(created.commitment);
-            addedCommitments = true;
+            _checkLogicRefNotDenied({logicRef: resource.logicRef, consumed: consumed});
 
-            _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
-            _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
+            if (consumed) {
+                require(
+                    _isCommitmentTreeRootHistorical(resource.commitmentTreeRoot),
+                    NonExistingRoot(resource.commitmentTreeRoot)
+                );
 
-            commitments[i] = created.commitment;
-            createdLogicRefs[i] = created.logicRef;
+                // The function reverts if a repeating nullifier is added to the set.
+                _addNullifier(resource.tag);
+
+                nullifiers[consumedIndex] = resource.tag;
+                consumedLogicRefs[consumedIndex] = resource.logicRef;
+                ++consumedIndex;
+            } else {
+                // `_addCommitment` does not error if a repeating leaf is added to the tree.
+                // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
+                _addCommitment(resource.tag);
+                addedCommitments = true;
+
+                commitments[createdIndex] = resource.tag;
+                createdLogicRefs[createdIndex] = resource.logicRef;
+                ++createdIndex;
+            }
+
+            _executeForwarderCalls({carrierLogicRef: resource.logicRef, appData: resource.appData});
+            _emitAppDataBlobs({tag: resource.tag, appData: resource.appData});
         }
 
         // NOTE: The event ordering is protected by the `nonReentrant` modifier.
@@ -236,9 +243,9 @@ contract ProtocolAdapter is
     /// @param carrierLogicRef The logic reference of the carrier resource making the calls.
     /// @param appData The application data of the carrier resource containing the external payload.
     function _executeForwarderCalls(bytes32 carrierLogicRef, AppData calldata appData) internal {
-        uint256 nCalls = appData.externalPayload.length;
+        uint256 callCount = appData.externalPayload.length;
 
-        for (uint256 i = 0; i < nCalls; ++i) {
+        for (uint256 i = 0; i < callCount; ++i) {
             _executeForwarderCall({carrierLogicRef: carrierLogicRef, callBlob: appData.externalPayload[i].blob});
         }
     }

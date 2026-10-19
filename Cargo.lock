@@ -1069,8 +1069,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-testkit"
-version = "1.0.0-rc.3"
-source = "git+https://github.com/anoma/pa-testkit?tag=v1.0.0-rc.3#b75cc7b63b67fb07b84163dfb254757027d6600a"
+version = "1.0.0-rc.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed9fb12caf145f4754efed1d9993c97c087bed87634c6271072a2311faaf4b03"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
@@ -1100,8 +1101,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-core"
-version = "2.0.0-rc.7.1"
-source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
+version = "2.0.0-rc.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4409999061217d37a71e7c7c9f7d8e17974879ffbeb9abb6fbe5cfec320f19dd"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1113,8 +1115,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0"
-version = "2.0.0-rc.7.1"
-source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
+version = "2.0.0-rc.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b40b4594f038609c2cb4196b3668b64843e0cfd53d9e61113b0f8fb387a1a468"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -1135,8 +1138,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0-gadgets"
-version = "2.0.0-rc.7.1"
-source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
+version = "2.0.0-rc.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "032dcdc983752661371c5f19e37b15959c837f29a6dab9fe83531569842469d2"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",
@@ -5629,7 +5633,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -5642,7 +5646,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.119",

@@ -49,8 +49,9 @@ library TxGen {
         ResourceAndAppData[] created;
     }
 
-    /// @dev Builds an action from resource lists. The action delta is the sum of the per-resource deltas — the caller
-    /// is responsible for quantity balance across the transaction.
+    /// @dev Builds an action from resource lists, with the consumed resources before the created ones in `resources`.
+    /// The action delta is the sum of the per-resource deltas — the caller is responsible for quantity balance
+    /// across the transaction.
     function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
         internal
         returns (IProtocolAdapter.Action memory action)
@@ -58,14 +59,15 @@ library TxGen {
         uint256 consumedCount = consumed.length;
         uint256 createdCount = created.length;
 
-        IProtocolAdapter.Consumed[] memory consumedData = new IProtocolAdapter.Consumed[](consumedCount);
-        IProtocolAdapter.Created[] memory createdData = new IProtocolAdapter.Created[](createdCount);
+        IProtocolAdapter.ResourceInstance[] memory resources =
+            new IProtocolAdapter.ResourceInstance[](consumedCount + createdCount);
 
         IProtocolAdapter.Delta memory actionDelta;
 
         for (uint256 i = 0; i < consumedCount; ++i) {
-            consumedData[i] = IProtocolAdapter.Consumed({
-                nullifier: nullifier(consumed[i].resource, 0),
+            resources[i] = IProtocolAdapter.ResourceInstance({
+                consumed: true,
+                tag: nullifier(consumed[i].resource, 0),
                 logicRef: consumed[i].resource.logicRef,
                 commitmentTreeRoot: initialRoot(),
                 appData: consumed[i].appData
@@ -77,16 +79,18 @@ library TxGen {
                     kind: kind(consumed[i].resource),
                     quantity: consumed[i].resource.quantity,
                     consumed: true,
-                    valueCommitmentRandomness: valueCommitmentRandomness(consumedData[i].nullifier)
+                    valueCommitmentRandomness: valueCommitmentRandomness(resources[i].tag)
                 })
             );
             actionDelta = (i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
         }
 
         for (uint256 i = 0; i < createdCount; ++i) {
-            createdData[i] = IProtocolAdapter.Created({
-                commitment: commitment(created[i].resource),
+            resources[consumedCount + i] = IProtocolAdapter.ResourceInstance({
+                consumed: false,
+                tag: commitment(created[i].resource),
                 logicRef: created[i].resource.logicRef,
+                commitmentTreeRoot: bytes32(0),
                 appData: created[i].appData
             });
 
@@ -96,17 +100,14 @@ library TxGen {
                     kind: kind(created[i].resource),
                     quantity: created[i].resource.quantity,
                     consumed: false,
-                    valueCommitmentRandomness: valueCommitmentRandomness(createdData[i].commitment)
+                    valueCommitmentRandomness: valueCommitmentRandomness(resources[consumedCount + i].tag)
                 })
             );
             actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
         }
 
         action = IProtocolAdapter.Action({
-            consumed: consumedData,
-            created: createdData,
-            unitDelta: actionDelta,
-            actionTreeRoot: computeActionTreeRoot(consumedData, createdData)
+            resources: resources, unitDelta: actionDelta, actionTreeRoot: computeActionTreeRoot(resources)
         });
     }
 
@@ -220,14 +221,12 @@ library TxGen {
         IProtocolAdapter.Transaction memory txn,
         bytes32 kindTreeRoot
     ) internal view returns (IProtocolAdapter.Transaction memory aggregatedTxn) {
-        aggregatedTxn = txn;
+        bytes32 journalDigest = sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTreeRoot, txn.actions));
 
+        aggregatedTxn = txn;
         aggregatedTxn.kindTreeRoot = kindTreeRoot;
         aggregatedTxn.aggregationProof =
-        mockVerifier.mockProve({
-            imageId: VerifyingKeys._BATCH_AGGREGATION_EVM,
-            journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTreeRoot, txn.actions))
-        }).seal;
+        mockVerifier.mockProve({imageId: VerifyingKeys._BATCH_AGGREGATION_EVM, journalDigest: journalDigest}).seal;
     }
 
     function generateActionConfigs(uint256 actionCount, uint256 consumedCount, uint256 createdCount)
@@ -259,7 +258,7 @@ library TxGen {
 
     function countResources(IProtocolAdapter.Action[] memory actions) internal pure returns (uint256 resourceCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
-            resourceCount += actions[i].consumed.length + actions[i].created.length;
+            resourceCount += actions[i].resources.length;
         }
     }
 
@@ -269,18 +268,9 @@ library TxGen {
         returns (uint256 summedRandomness)
     {
         for (uint256 i = 0; i < actions.length; ++i) {
-            for (uint256 j = 0; j < actions[i].consumed.length; ++j) {
+            for (uint256 j = 0; j < actions[i].resources.length; ++j) {
                 summedRandomness = addmod(
-                    summedRandomness,
-                    valueCommitmentRandomness(actions[i].consumed[j].nullifier),
-                    DeltaGen.SECP256K1_ORDER
-                );
-            }
-            for (uint256 j = 0; j < actions[i].created.length; ++j) {
-                summedRandomness = addmod(
-                    summedRandomness,
-                    valueCommitmentRandomness(actions[i].created[j].commitment),
-                    DeltaGen.SECP256K1_ORDER
+                    summedRandomness, valueCommitmentRandomness(actions[i].resources[j].tag), DeltaGen.SECP256K1_ORDER
                 );
             }
         }
@@ -295,9 +285,9 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            IProtocolAdapter.Consumed[] memory consumed = txn.actions[i].consumed;
-            for (uint256 j = 0; j < consumed.length; ++j) {
-                nullifiers[n++] = consumed[j].nullifier;
+            bytes32[] memory actionTags = actionNullifiers(txn.actions[i]);
+            for (uint256 j = 0; j < actionTags.length; ++j) {
+                nullifiers[n++] = actionTags[j];
             }
         }
     }
@@ -311,22 +301,22 @@ library TxGen {
 
         uint256 n = 0;
         for (uint256 i = 0; i < txn.actions.length; ++i) {
-            IProtocolAdapter.Created[] memory created = txn.actions[i].created;
-            for (uint256 j = 0; j < created.length; ++j) {
-                commitments[n++] = created[j].commitment;
+            bytes32[] memory actionTags = actionCommitments(txn.actions[i]);
+            for (uint256 j = 0; j < actionTags.length; ++j) {
+                commitments[n++] = actionTags[j];
             }
         }
     }
 
     function countConsumed(IProtocolAdapter.Action[] memory actions) internal pure returns (uint256 consumedCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
-            consumedCount += actions[i].consumed.length;
+            consumedCount += actionNullifiers(actions[i]).length;
         }
     }
 
     function countCreated(IProtocolAdapter.Action[] memory actions) internal pure returns (uint256 createdCount) {
         for (uint256 i = 0; i < actions.length; ++i) {
-            createdCount += actions[i].created.length;
+            createdCount += actionCommitments(actions[i]).length;
         }
     }
 
@@ -335,10 +325,7 @@ library TxGen {
         pure
         returns (bytes32[] memory nullifiers)
     {
-        nullifiers = new bytes32[](action.consumed.length);
-        for (uint256 i = 0; i < action.consumed.length; ++i) {
-            nullifiers[i] = action.consumed[i].nullifier;
-        }
+        (nullifiers,) = actionTagsAndLogicRefs({action: action, consumed: true});
     }
 
     function actionConsumedLogicRefs(IProtocolAdapter.Action memory action)
@@ -346,10 +333,7 @@ library TxGen {
         pure
         returns (bytes32[] memory logicRefs)
     {
-        logicRefs = new bytes32[](action.consumed.length);
-        for (uint256 i = 0; i < action.consumed.length; ++i) {
-            logicRefs[i] = action.consumed[i].logicRef;
-        }
+        (, logicRefs) = actionTagsAndLogicRefs({action: action, consumed: true});
     }
 
     function actionCommitments(IProtocolAdapter.Action memory action)
@@ -357,10 +341,7 @@ library TxGen {
         pure
         returns (bytes32[] memory commitments)
     {
-        commitments = new bytes32[](action.created.length);
-        for (uint256 i = 0; i < action.created.length; ++i) {
-            commitments[i] = action.created[i].commitment;
-        }
+        (commitments,) = actionTagsAndLogicRefs({action: action, consumed: false});
     }
 
     function actionCreatedLogicRefs(IProtocolAdapter.Action memory action)
@@ -368,9 +349,33 @@ library TxGen {
         pure
         returns (bytes32[] memory logicRefs)
     {
-        logicRefs = new bytes32[](action.created.length);
-        for (uint256 i = 0; i < action.created.length; ++i) {
-            logicRefs[i] = action.created[i].logicRef;
+        (, logicRefs) = actionTagsAndLogicRefs({action: action, consumed: false});
+    }
+
+    /// @dev The tags and logic references of the consumed or the created resources of an action, in the order of
+    /// `resources`, as the protocol adapter emits them.
+    function actionTagsAndLogicRefs(IProtocolAdapter.Action memory action, bool consumed)
+        internal
+        pure
+        returns (bytes32[] memory tags, bytes32[] memory logicRefs)
+    {
+        uint256 count = 0;
+        for (uint256 i = 0; i < action.resources.length; ++i) {
+            if (action.resources[i].consumed == consumed) {
+                ++count;
+            }
+        }
+
+        tags = new bytes32[](count);
+        logicRefs = new bytes32[](count);
+
+        uint256 n = 0;
+        for (uint256 i = 0; i < action.resources.length; ++i) {
+            if (action.resources[i].consumed == consumed) {
+                tags[n] = action.resources[i].tag;
+                logicRefs[n] = action.resources[i].logicRef;
+                ++n;
+            }
         }
     }
 
@@ -433,20 +438,15 @@ library TxGen {
         root = SHA256.EMPTY_HASH;
     }
 
-    /// @dev The action tree leaves are the consumed nullifiers followed by the created commitments — the canonical
-    /// tag order.
-    function computeActionTreeRoot(
-        IProtocolAdapter.Consumed[] memory consumed,
-        IProtocolAdapter.Created[] memory created
-    ) internal pure returns (bytes32 root) {
-        bytes32[] memory tags = new bytes32[](consumed.length + created.length);
-
-        uint256 n = 0;
-        for (uint256 i = 0; i < consumed.length; ++i) {
-            tags[n++] = consumed[i].nullifier;
-        }
-        for (uint256 i = 0; i < created.length; ++i) {
-            tags[n++] = created[i].commitment;
+    /// @dev The action tree leaves are the tags in the order of the resources.
+    function computeActionTreeRoot(IProtocolAdapter.ResourceInstance[] memory resources)
+        internal
+        pure
+        returns (bytes32 root)
+    {
+        bytes32[] memory tags = new bytes32[](resources.length);
+        for (uint256 i = 0; i < resources.length; ++i) {
+            tags[i] = resources[i].tag;
         }
 
         root = tags.computeRoot();
