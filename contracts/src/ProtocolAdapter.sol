@@ -164,13 +164,9 @@ contract ProtocolAdapter is
             .paused();
     }
 
-    /// @notice Processes an action by
-    /// * checking the logic references of the consumed and created resources against the denylists,
-    /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
-    /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
-    /// * executing external forwarder calls,
-    /// * emitting the app data blobs based on their deletion criterion, and
-    /// * emitting the `ActionExecuted` event.
+    /// @notice Processes the resources of an action in the order consumed 0, created 0, consumed 1, created 1, and so
+    /// on, then the remaining consumed resources, then the remaining created resources, and emits the
+    /// `ActionExecuted` event.
     /// @param action The action to process.
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
@@ -179,45 +175,45 @@ contract ProtocolAdapter is
     // slither-disable-next-line reentrancy-no-eth
     function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
         uint256 consumedCount = action.consumed.length;
+        uint256 createdCount = action.created.length;
+        uint256 pairCount = consumedCount < createdCount ? consumedCount : createdCount;
+
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
         bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
 
-        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
-        for (uint256 i = 0; i < consumedCount; ++i) {
+        bytes32[] memory commitments = new bytes32[](createdCount);
+        bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
+
+        // Process the pairs.
+        for (uint256 i = 0; i < pairCount; ++i) {
+            Consumed calldata consumed = action.consumed[i];
+            Created calldata created = action.created[i];
+
+            _processConsumed(consumed);
+            updatedCommitmentTreeRoot = _processCreated(created);
+
+            nullifiers[i] = consumed.nullifier;
+            consumedLogicRefs[i] = consumed.logicRef;
+
+            commitments[i] = created.commitment;
+            createdLogicRefs[i] = created.logicRef;
+        }
+
+        // Process the remaining consumed resources, if any.
+        for (uint256 i = pairCount; i < consumedCount; ++i) {
             Consumed calldata consumed = action.consumed[i];
 
-            _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
-
-            require(
-                _isCommitmentTreeRootHistorical(consumed.commitmentTreeRoot),
-                NonExistingRoot(consumed.commitmentTreeRoot)
-            );
-
-            // The function reverts if a repeating nullifier is added to the set.
-            _addNullifier(consumed.nullifier);
-
-            _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
-            _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
+            _processConsumed(consumed);
 
             nullifiers[i] = consumed.nullifier;
             consumedLogicRefs[i] = consumed.logicRef;
         }
 
-        uint256 createdCount = action.created.length;
-        bytes32[] memory commitments = new bytes32[](createdCount);
-        bytes32[] memory createdLogicRefs = new bytes32[](createdCount);
-
-        for (uint256 i = 0; i < createdCount; ++i) {
+        // Process the remaining created resources, if any.
+        for (uint256 i = pairCount; i < createdCount; ++i) {
             Created calldata created = action.created[i];
 
-            _checkLogicRefNotDenied({logicRef: created.logicRef, consumed: false});
-
-            // `_addCommitment` does not error if a repeating leaf is added to the tree.
-            // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
-            updatedCommitmentTreeRoot = _addCommitment(created.commitment);
-
-            _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
-            _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
+            updatedCommitmentTreeRoot = _processCreated(created);
 
             commitments[i] = created.commitment;
             createdLogicRefs[i] = created.logicRef;
@@ -232,6 +228,39 @@ contract ProtocolAdapter is
             commitments: commitments,
             createdLogicRefs: createdLogicRefs
         });
+    }
+
+    /// @notice Processes a consumed resource by checking its logic reference against the denylist, checking that its
+    /// commitment tree root is a historical root, adding its nullifier to the nullifier set, executing its forwarder
+    /// calls, and emitting its app data blobs.
+    /// @param consumed The public data of the consumed resource.
+    function _processConsumed(Consumed calldata consumed) internal {
+        _checkLogicRefNotDenied({logicRef: consumed.logicRef, consumed: true});
+
+        require(
+            _isCommitmentTreeRootHistorical(consumed.commitmentTreeRoot), NonExistingRoot(consumed.commitmentTreeRoot)
+        );
+
+        // The function reverts if a repeating nullifier is added to the set.
+        _addNullifier(consumed.nullifier);
+
+        _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
+        _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
+    }
+
+    /// @notice Processes a created resource by checking its logic reference against the denylist, adding its
+    /// commitment to the commitment tree, executing its forwarder calls, and emitting its app data blobs.
+    /// @param created The public data of the created resource.
+    /// @return updatedCommitmentTreeRoot The commitment tree root after the commitment is added.
+    function _processCreated(Created calldata created) internal returns (bytes32 updatedCommitmentTreeRoot) {
+        _checkLogicRefNotDenied({logicRef: created.logicRef, consumed: false});
+
+        // `_addCommitment` does not error if a repeating leaf is added to the tree.
+        // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
+        updatedCommitmentTreeRoot = _addCommitment(created.commitment);
+
+        _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
+        _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
     }
 
     /// @notice Processes forwarder calls by verifying and executing them.

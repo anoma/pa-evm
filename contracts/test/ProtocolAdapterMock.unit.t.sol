@@ -178,6 +178,42 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_calls_the_forwarders_in_the_order_consumed_0_created_0_consumed_1_created_1_consumed_2()
+        public
+    {
+        (
+            IProtocolAdapter.Transaction memory txn,
+            address[] memory consumedForwarders,
+            address[] memory createdForwarders
+        ) = _carrierTransaction({consumedCount: 3, createdCount: 2});
+
+        _expectForwarderCall(consumedForwarders[0]);
+        _expectForwarderCall(createdForwarders[0]);
+        _expectForwarderCall(consumedForwarders[1]);
+        _expectForwarderCall(createdForwarders[1]);
+        _expectForwarderCall(consumedForwarders[2]);
+
+        _mockPa.execute(txn);
+    }
+
+    function test_execute_calls_the_forwarders_in_the_order_consumed_0_created_0_consumed_1_created_1_created_2()
+        public
+    {
+        (
+            IProtocolAdapter.Transaction memory txn,
+            address[] memory consumedForwarders,
+            address[] memory createdForwarders
+        ) = _carrierTransaction({consumedCount: 2, createdCount: 3});
+
+        _expectForwarderCall(consumedForwarders[0]);
+        _expectForwarderCall(createdForwarders[0]);
+        _expectForwarderCall(consumedForwarders[1]);
+        _expectForwarderCall(createdForwarders[1]);
+        _expectForwarderCall(createdForwarders[2]);
+
+        _mockPa.execute(txn);
+    }
+
     /// @dev `TxGen.expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
     /// execution exercises both deletion criteria per payload kind.
     function test_execute_emits_the_persistent_app_data_blobs_only() public {
@@ -583,6 +619,52 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    /// @dev Builds a transaction of one action in which every consumed and created resource calls its own forwarder.
+    /// Each consumed resource has quantity `createdCount` and each created resource quantity `consumedCount`, so the
+    /// action balances.
+    function _carrierTransaction(uint128 consumedCount, uint128 createdCount)
+        private
+        returns (
+            IProtocolAdapter.Transaction memory txn,
+            address[] memory consumedForwarders,
+            address[] memory createdForwarders
+        )
+    {
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: new TxGen.ResourceAndAppData[](consumedCount),
+            created: new TxGen.ResourceAndAppData[](createdCount)
+        });
+
+        consumedForwarders = new address[](consumedCount);
+        for (uint256 i = 0; i < consumedCount; ++i) {
+            consumedForwarders[i] = _newCarrierForwarder();
+            resourceLists[0].consumed[i] =
+                _carrierResourceAndAppData({nonce: i, forwarder: consumedForwarders[i], quantity: createdCount});
+        }
+
+        createdForwarders = new address[](createdCount);
+        for (uint256 i = 0; i < createdCount; ++i) {
+            createdForwarders[i] = _newCarrierForwarder();
+            resourceLists[0].created[i] = _carrierResourceAndAppData({
+                nonce: consumedCount + i, forwarder: createdForwarders[i], quantity: consumedCount
+            });
+        }
+
+        txn = vm.transaction(_mockVerifier, resourceLists);
+    }
+
+    function _newCarrierForwarder() private returns (address forwarder) {
+        forwarder = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+    }
+
+    function _expectForwarderCall(address forwarder) private {
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({
+            untrustedForwarder: forwarder, input: _input, output: EXPECTED_OUTPUT
+        });
+    }
+
     function _exampleResourceAndEmptyAppData(uint256 nonce)
         private
         view
@@ -646,6 +728,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
             });
         }
         data[0].appData.externalPayload = externalBlobs;
+    }
+
+    function _carrierResourceAndAppData(uint256 nonce, address forwarder, uint128 quantity)
+        private
+        view
+        returns (TxGen.ResourceAndAppData memory data)
+    {
+        address[] memory fwdList = new address[](1);
+        fwdList[0] = forwarder;
+
+        data = _exampleCarrierResourceAndAppData({nonce: nonce, fwdList: fwdList})[0];
+        data.resource.quantity = quantity;
     }
 
     function _bindParameters(uint8 actionCount, uint8 resourcePairCount, uint8 actionIndex, uint8 resourceIndex)
