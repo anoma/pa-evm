@@ -12,13 +12,13 @@ flowchart LR
     plain[ProtocolAdapter,<br/>plain implementation]
     router[RISC Zero router]
 
-    wallet -->|upgradeToAndCall, pause, unpause,<br/>setKindTableRoot, denyLogicRefs,<br/>transferOwnership| proxy
+    wallet -->|upgradeToAndCall, pause, unpause,<br/>setKindTreeRoot, denyLogicRefs,<br/>transferOwnership| proxy
     pasafe -->|the same calls,<br/>as Safe transactions| proxy
     proxy -->|runs the code of| plain
     plain -->|verifies the proofs through| router
 ```
 
-- **Protocol adapter.** An ERC-1967 proxy in the UUPS pattern. Each upgrade keeps its address, its commitment tree, its nullifier set, its kind table root and its denylists. Its address comes from CREATE2. The address depends on the salt of its environment and on the deployment code, which contains the first implementation and the first owner. On a migrated chain, the protocol adapter starts on the migrational implementation. So its address is different from the address on a chain without a state migration.
+- **Protocol adapter.** An ERC-1967 proxy in the UUPS pattern. Each upgrade keeps its address, its commitment tree, its nullifier set, its kind tree root and its denylists. Its address comes from CREATE2. The address depends on the salt of its environment and on the deployment code, which contains the first implementation and the first owner. On a migrated chain, the protocol adapter starts on the migrational implementation. So its address is different from the address on a chain without a state migration.
 - **Plain implementation.** `ProtocolAdapter`. Its code contains its version (`VERSION`), the address of the RISC Zero router and the verifier selector. It also contains the verifying keys of the compliance circuit and the aggregation circuit. So each change of these values needs an upgrade. Both environments deploy the implementation with the same CREATE2 salt. So they use the same implementation of a version on a chain.
 - **RISC Zero router.** A contract that sends each proof to a RISC Zero verifier contract. The first four bytes of a proof, the **verifier selector**, select the verifier. The protocol adapter accepts only proofs with its own verifier selector.
 
@@ -26,7 +26,7 @@ The owner of the protocol adapter can do these actions:
 
 - upgrade it (`upgradeToAndCall`),
 - pause it and lift the pause (`pause`, `unpause`),
-- set the kind table root (`setKindTableRoot`),
+- set the kind tree root (`setKindTreeRoot`),
 - deprecate or deny logic refs (`denyLogicRefs`),
 - transfer the ownership.
 
@@ -87,12 +87,12 @@ These actions do not change the version. So they need no promotion, no tag and n
 
 | Action | Effect | Staging | Production |
 | --- | --- | --- | --- |
-| Set the kind table root | Transactions use the new kind table or the empty kind table. A transaction with a proof for the old kind table reverts with `UnacceptedKindTableRoot`. | `contracts-execute-staging-kind-table-update` | `contracts-propose-production-kind-table-update` |
+| Set the kind tree root | Transactions use the new kind table or the empty kind table. A transaction with a proof for the old kind table reverts with `UnacceptedKindTreeRoot`. | `contracts-execute-staging-kind-table-update` | `contracts-propose-production-kind-table-update` |
 | Pause | The protocol adapter executes no transaction. | `contracts-execute-staging-pause` | `contracts-propose-production-pause` |
 | Lift the pause | The protocol adapter executes transactions again. | The deployment wallet calls `unpause()` with the Foundry command `cast send`. | The signers create a Safe transaction that calls `unpause()`. No command proposes it. |
 | Deprecate or deny a logic ref | As the overview defines. [`03-resource-kind-migration.md`](./03-resource-kind-migration.md#3-the-denylists) explains the denylists. | `contracts-execute-staging-logic-ref-denial` | `contracts-propose-production-logic-ref-denial` |
 
-The kind tables repository publishes one kind table root for each chain and environment. Its promotion gate fails until each protocol adapter of the environment stores the published root.
+The kind tables repository publishes one kind tree root for each chain and environment. Its promotion gate fails until each protocol adapter of the environment stores the published root.
 
 ## 5. Response to a flaw
 
@@ -118,7 +118,7 @@ In production, each action of the owner is a Safe transaction, so it waits for t
 - **The owner can change every rule.** An upgrade replaces all code. So the owner can change how the protocol adapter reads and writes its state. In production, the PA Safe signers decide each upgrade.
 - **The PA Safe signers respond to a flaw in time.** Each response, except the emergency stop of a RISC Zero verifier, is a Safe transaction.
 - **The owner of the RISC Zero router and the guardians act correctly.** They select the verifier of each verifier selector, and they can stop a verifier.
-- **The kind table root decides which kinds are fungible.** So the owner sets only roots that the kind tables repository published ([`03-resource-kind-migration.md`](./03-resource-kind-migration.md#2-the-kind-table)).
+- **The kind tree root decides which kinds are fungible.** So the owner sets only roots that the kind tables repository published ([`03-resource-kind-migration.md`](./03-resource-kind-migration.md#2-the-kind-table)).
 - **An upgrade can remove a denylist entry.** No function removes an entry, but a new implementation can change the denylists.
 
 ## 7. Parameters
@@ -128,6 +128,6 @@ In production, each action of the owner is a Safe transaction, so it waits for t
 | `Parameters.PROXY_SALT_STAGING` | `"ProtocolAdapterProxyStaging"` | CREATE2 salt of the staging protocol adapters |
 | `Parameters.PROXY_SALT_PRODUCTION` | `"ProtocolAdapterProxyProduction"` | CREATE2 salt of the production protocol adapters |
 | `Parameters.IMPLEMENTATION_SALT` | `"ProtocolAdapterImpl"` | CREATE2 salt of the implementations, in both environments |
-| `EMPTY_KIND_TABLE_ROOT` | `0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06`, which is `sha256("EMPTY")` | Root of the empty kind table, which the protocol adapter always accepts |
+| `EMPTY_KIND_TREE_ROOT` | `0xcc1d2f838445db7aec431df9ee8a871f40e7aa5e064fc056633ef8c60fab7b06`, which is `sha256("EMPTY")` | Tree root of the empty kind table, which the protocol adapter always accepts |
 
 The [overview](./00-galileo-upgrade.md#accounts-and-controls) gives the addresses of the deployment wallet and the PA Safe. The deployment record, [`crates/bindings/deployments.json`](../crates/bindings/deployments.json), lists the protocol adapters of each environment.
