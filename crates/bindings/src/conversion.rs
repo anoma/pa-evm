@@ -108,7 +108,7 @@ impl From<Transaction> for IProtocolAdapter::Transaction {
                 .collect(),
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: Bytes::from(encode_seal(&aggregation.proof).unwrap()),
-            kindTableRoot: B256::from_slice(aggregation.instance.kind_table_root.as_bytes()),
+            kindTreeRoot: B256::from_slice(aggregation.instance.kind_table_root.as_bytes()),
         }
     }
 }

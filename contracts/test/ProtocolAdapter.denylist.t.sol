@@ -232,7 +232,7 @@ contract ProtocolAdapterDenylistTest is Test {
         returns (IProtocolAdapter.Transaction memory aggregatedTxn)
     {
         aggregatedTxn = TxGen.transactionAggregation({
-            mockVerifier: _mockVerifier, txn: txn, kindTableRoot: _mockPa.EMPTY_KIND_TABLE_ROOT()
+            mockVerifier: _mockVerifier, txn: txn, kindTreeRoot: _mockPa.EMPTY_KIND_TREE_ROOT()
         });
     }
 

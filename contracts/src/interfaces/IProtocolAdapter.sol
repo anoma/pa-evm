@@ -18,13 +18,13 @@ interface IProtocolAdapter {
     /// @param deltaProof The proof for the transaction delta value.
     /// @param aggregationProof The recursive proof of all compliance and resource logics in the transaction — the only
     /// RISC Zero proof being verified.
-    /// @param kindTableRoot The root of the kind table the aggregation proof is proven against: the stored root or
-    /// the root of the empty kind table.
+    /// @param kindTreeRoot The root of the kind tree the aggregation proof is proven against: the stored root or
+    /// the root of the empty kind tree.
     struct Transaction {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
-        bytes32 kindTableRoot;
+        bytes32 kindTreeRoot;
     }
 
     /// @notice The action object providing context separation between non-intersecting sets of resources. An action

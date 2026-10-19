@@ -18,16 +18,16 @@ The unit of ARM state. Created and consumed by actions; committed to the commitm
 A bundle of consumed and created resources proven together — one compliance unit plus the per-resource logic proofs.
 
 **Transaction**:
-A set of actions plus a delta proof, an aggregation proof and the root of the kind table that the aggregation proof is proven against, submitted to the PA's `execute` function.
+A set of actions plus a delta proof, an aggregation proof and the root of the kind tree that the aggregation proof is proven against, submitted to the PA's `execute` function.
 
 **Compliance / Logic / Delta**:
 The three proof kinds the PA verifies — compliance for resource bookkeeping, logic for each resource's application rules, delta for value balance. Aggregation folds them into a single proof.
 
 **Aggregation journal**:
-The public statement the aggregation proof attests to — the compliance verifying key, the kind table root, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
+The public statement the aggregation proof attests to — the compliance verifying key, the kind tree root, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
 
-**Kind table root**:
-The Merkle root of a kind table. The PA stores one, which its owner sets, and accepts a transaction proven against the stored kind table or against the empty kind table, whose root is the padding leaf `sha256("EMPTY")`.
+**Kind tree root**:
+The root of the Merkle tree over a kind table. The PA stores one, which its owner sets, and accepts a transaction proven against the stored kind table or against the empty kind table, whose tree root is the padding leaf `sha256("EMPTY")`.
 
 **Unit Delta**:
 The elliptic-curve point carrying the delta value of an action's compliance unit — one per action, summed across the transaction and checked against the delta proof.

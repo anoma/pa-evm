@@ -9,7 +9,7 @@ import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 
 /// @notice Checks the staging-only kind table update script.
 contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
-    bytes32 internal constant _NEW_KIND_TABLE_ROOT = keccak256("new kind table root");
+    bytes32 internal constant _NEW_KIND_TREE_ROOT = keccak256("new kind tree root");
 
     address internal _stagingProxy;
     address internal _productionProxy;
@@ -23,13 +23,13 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
         (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
     }
 
-    function test_run_sets_the_kind_table_root() public {
-        new ExecuteKindTableUpdate().run({proxy: _stagingProxy, newKindTableRoot: _NEW_KIND_TABLE_ROOT});
+    function test_run_sets_the_kind_tree_root() public {
+        new ExecuteKindTableUpdate().run({proxy: _stagingProxy, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
 
         assertEq(
-            ProtocolAdapter(_stagingProxy).getKindTableRoot(),
-            _NEW_KIND_TABLE_ROOT,
-            "the proxy holds another kind table root"
+            ProtocolAdapter(_stagingProxy).getKindTreeRoot(),
+            _NEW_KIND_TREE_ROOT,
+            "the proxy holds another kind tree root"
         );
     }
 
@@ -37,6 +37,6 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
         ExecuteKindTableUpdate script = new ExecuteKindTableUpdate();
 
         vm.expectRevert(abi.encodeWithSelector(StagingScript.NotAStagingDeployment.selector, _productionProxy));
-        script.run({proxy: _productionProxy, newKindTableRoot: _NEW_KIND_TABLE_ROOT});
+        script.run({proxy: _productionProxy, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
     }
 }
