@@ -17,7 +17,7 @@ import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
-import {KindTableRoot} from "./state/KindTableRoot.sol";
+import {KindTreeRoot} from "./state/KindTreeRoot.sol";
 import {LogicRefDenylist} from "./state/LogicRefDenylist.sol";
 import {NullifierSet} from "./state/NullifierSet.sol";
 
@@ -37,7 +37,7 @@ contract ProtocolAdapter is
     CommitmentTree,
     NullifierSet,
     LogicRefDenylist,
-    KindTableRoot
+    KindTreeRoot
 {
     using Aggregation for Action[];
     using DeltaProof for bytes;
@@ -77,7 +77,7 @@ contract ProtocolAdapter is
 
     /// @notice Initializes the protocol adapter contract.
     /// @param initialOwner The account receiving ownership, and with it the authority to pause the protocol adapter,
-    /// to authorize upgrades, to set the kind table root, and to deny logic references.
+    /// to authorize upgrades, to set the kind tree root, and to deny logic references.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -97,7 +97,7 @@ contract ProtocolAdapter is
         // Reject the empty transaction so that the delta and aggregation proofs are verified unconditionally.
         require(actionCount != 0, EmptyTransactionNotAllowed());
 
-        require(_isKindTableRootAccepted(transaction.kindTableRoot), UnacceptedKindTableRoot(transaction.kindTableRoot));
+        require(_isKindTreeRootAccepted(transaction.kindTreeRoot), UnacceptedKindTreeRoot(transaction.kindTreeRoot));
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
@@ -325,7 +325,7 @@ contract ProtocolAdapter is
         __CommitmentTree_init();
         __NullifierSet_init();
         __LogicRefDenylist_init();
-        __KindTableRoot_init();
+        __KindTreeRoot_init();
 
         // Sanity check that the verifier is not paused already.
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
@@ -335,8 +335,8 @@ contract ProtocolAdapter is
     // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 
-    /// @notice Allows only the owner to set the kind table root.
-    function _authorizeKindTableRootChange() internal override onlyOwner {}
+    /// @notice Allows only the owner to set the kind tree root.
+    function _authorizeKindTreeRootChange() internal override onlyOwner {}
 
     /// @notice Allows only the owner to add logic references to the denylists.
     function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
@@ -363,7 +363,7 @@ contract ProtocolAdapter is
         // root the transaction carries.
         bytes32 journalDigest = sha256(
             transaction.actions
-                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTableRoot: transaction.kindTableRoot})
+                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTreeRoot: transaction.kindTreeRoot})
         );
 
         // Process the aggregation proof.

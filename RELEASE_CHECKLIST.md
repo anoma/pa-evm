@@ -414,9 +414,9 @@ For changes that touch only the bindings crate and leave `VERSION` alone.
 
   and check the result. If everything is correct, remove the `--dry-run` flag and publish the package.
 
-## Updating the Kind Table Root
+## Updating the Kind Tree Root
 
-Not a release. The kind table root is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved.
+Not a release. The kind tree root is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved.
 
 For **staging**:
 

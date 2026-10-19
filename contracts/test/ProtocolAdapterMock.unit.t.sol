@@ -329,7 +329,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             actions: new IProtocolAdapter.Action[](0),
             deltaProof: "",
             aggregationProof: "",
-            kindTableRoot: _mockPa.EMPTY_KIND_TABLE_ROOT()
+            kindTreeRoot: _mockPa.EMPTY_KIND_TREE_ROOT()
         });
 
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_mockPa));
