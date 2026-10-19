@@ -13,7 +13,7 @@ In this document, the **old logic** is the resource logic of the resources that 
 
 ## 2. The kind table
 
-The protocol adapter stores one kind table root, which its owner sets. Each transaction states the root of the kind table that its proofs use. The protocol adapter accepts two roots: the stored root, and the root of the empty kind table, which has no entries ([ADR-0004](./adr/0004-the-transaction-carries-the-kind-table-root.md)). It reverts a transaction with another root. A transaction that balances with the empty kind table also balances with the stored kind table. So a kind table can make kinds fungible, but it cannot block a kind. Only a conversion needs the stored kind table.
+The protocol adapter stores one kind tree root, which its owner sets. Each transaction states the kind tree root of the kind table that its proofs use. The protocol adapter accepts two roots: the stored root, and the tree root of the empty kind table, which has no entries ([ADR-0004](./adr/0004-the-transaction-carries-the-kind-tree-root.md)). It reverts a transaction with another root. A transaction that balances with the empty kind table also balances with the stored kind table. So a kind table can make kinds fungible, but it cannot block a kind. Only a conversion needs the stored kind table.
 
 The kind tables repository makes the kind tables and publishes their roots. Its [ADR-0008](https://github.com/anoma/risc0-kind-tables/blob/next/docs/adr/0008-kinds-follow-the-forwarder.md) gives two rules for each kind table:
 
@@ -59,7 +59,7 @@ sequenceDiagram
     User->>Prover: Unwrap an old resource
     Prover->>Prover: Make the proofs with the stored kind table:<br/>consume the old resource (old logic),<br/>create an ephemeral resource of a new kind (new logic)
     Prover->>PA: execute(transaction)
-    PA->>PA: Accept the kind table root, check<br/>the denylists, add the nullifier
+    PA->>PA: Accept the kind tree root, check<br/>the denylists, add the nullifier
     PA->>Fwd: forwardCall(new logic ref, unwrap)
     Fwd->>User: Transfer the tokens
     PA->>PA: Verify the delta proof and the aggregation proof<br/>(a failure reverts the whole transaction)
@@ -70,7 +70,7 @@ sequenceDiagram
 A new version of the ERC20 resource logic replaces the active version. The resources of both versions have the label ref of the ERC20 forwarder. So one forwarder holds their tokens (R1).
 
 1. The kind tables repository lists the new version as active. The old version stays in the list. Each kind of the old version gets the kind point of the kind of the new version with the same label ref.
-2. The owner of each protocol adapter sets the new kind table root, first in staging, then in production.
+2. The owner of each protocol adapter sets the new kind tree root, first in staging, then in production.
 3. The owner of the ERC20 forwarder upgrades it, so that it accepts the logic ref of the new version. At the same time, the AnomaPay backend starts to create resources of the new version. A wrap or an unwrap that the backend proved for the old version reverts after the upgrade. The backend then proves it again for the new version.
 4. The owner of each protocol adapter deprecates the logic ref of the old version. After this, a transaction that creates a resource of the old version reverts. So this step occurs only when the backend no longer creates resources of the old version.
 
@@ -89,7 +89,7 @@ The ERC20 forwarder accepts another logic ref, `51c2403f…`. So no wrap creates
 
 ### What the prover needs
 
-A conversion needs the stored kind table, because only that kind table makes the kinds fungible. Other transactions can use the empty kind table, which stays valid when the owner sets a new root. A transaction with a proof for a kind table that the protocol adapter does not store reverts with `UnacceptedKindTableRoot`. So a prover uses a new kind table only after the protocol adapter stores its root. Before that, the prover uses the old stored kind table or the empty kind table.
+A conversion needs the stored kind table, because only that kind table makes the kinds fungible. Other transactions can use the empty kind table, which stays valid when the owner sets a new root. A transaction with a proof for a kind table that the protocol adapter does not store reverts with `UnacceptedKindTreeRoot`. So a prover uses a new kind table only after the protocol adapter stores its root. Before that, the prover uses the old stored kind table or the empty kind table.
 
 A prover proves the consumption of a resource with the circuit that the logic ref of the resource identifies. It proves the creation of a resource with the circuit of the active version. So the prover keeps the circuit of the old logic while old resources can exist. For legacy-forwarder resources, that is the circuit of version 1.0.0.
 
@@ -135,7 +135,7 @@ The owner of the protocol adapter pauses it and denies the old logic. The owner 
 | Balance of quantities | The kind table gives the old kind and the new kind the same kind point. So the delta proof balances the old resource against the new resource. | The new logic requires that the quantity of the trigger is equal to the total of the old resources. The delta proof balances the trigger against the new resources. |
 | Nullifier of an old resource | In the nullifier set of the protocol adapter | In the storage of the application |
 | Kind table | Each old kind has the kind point of a new kind. | The entries of the old kinds stay, but no transaction can use them. |
-| Contract changes | A new kind table root, a forwarder that accepts the new logic, and the deprecation of the old logic | The denial of the old logic, an upgrade of the application, and a new kind table root. After the upgrade, the forwarder accepts the new logic. |
+| Contract changes | A new kind tree root, a forwarder that accepts the new logic, and the deprecation of the old logic | The denial of the old logic, an upgrade of the application, and a new kind tree root. After the upgrade, the forwarder accepts the new logic. |
 | Status | In use for the legacy-forwarder resources on Sepolia, in staging | Draft |
 
 ## 7. Trust assumptions

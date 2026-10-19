@@ -25,7 +25,7 @@ flowchart LR
 
     pasafe -->|transferOwnership| legacy
     wallet -->|emergencyStop| legacy
-    wallet -->|setKindTableRoot, denyLogicRefs,<br/>migrateCommitmentTree, migrateNullifierSet,<br/>unpause, upgradeToAndCall, transferOwnership| proxy
+    wallet -->|setKindTreeRoot, denyLogicRefs,<br/>migrateCommitmentTree, migrateNullifierSet,<br/>unpause, upgradeToAndCall, transferOwnership| proxy
     proxy -->|runs the code of, during<br/>the state migration| migrational
     proxy -.->|runs the code of, after<br/>the state migration| plain
     migrational -->|reads the commitment tree<br/>and the nullifier set| legacy
@@ -83,7 +83,7 @@ The Galileo upgrade of a migrated chain has these steps. Steps 10 and 12 are the
 | 2 | Deploy the protocol adapter on the migrational implementation. The environment variable `IS_MIGRATIONAL=true` selects this implementation. The protocol adapter starts paused. | Deployment wallet |
 | 3 | Add the protocol adapter to the deployment record, and publish a new version of the bindings. The scripts and the kind tables repository read its address from the deployment record. | — |
 | 4 | Deploy the ERC20 forwarder and the generic call forwarder for the protocol adapter, and add them to the deployment records of their repositories. The deployment record of the ERC20 forwarder also lists the legacy ERC20 forwarder of the chain. | Deployment wallet |
-| 5 | Set the kind table root. The kind table contains the legacy-forwarder entries. | Deployment wallet |
+| 5 | Set the kind tree root. The kind table contains the legacy-forwarder entries. | Deployment wallet |
 | 6 | Deprecate the logic ref of the legacy ERC20 forwarder with `denyLogicRefs([(logicRef, false)])`. The value `false` selects the list for created resources. | Deployment wallet |
 | 7 | Transfer the ownership of the legacy protocol adapter to the deployment wallet. The legacy protocol adapter continues to execute transactions. So this step can occur days before step 8. | PA Safe |
 | 8 | Stop the legacy protocol adapter with `emergencyStop()`. From this step, users cannot transact. | Deployment wallet |
@@ -105,7 +105,7 @@ sequenceDiagram
     Note over PASafe,Fwd: Before the stop
     Wallet->>Proxy: Deploy on MigrationalProtocolAdapter (paused)
     Wallet->>Fwd: Deploy for the protocol adapter
-    Wallet->>Proxy: setKindTableRoot (with the legacy-forwarder entries)
+    Wallet->>Proxy: setKindTreeRoot (with the legacy-forwarder entries)
     Wallet->>Proxy: denyLogicRefs (deprecate the legacy logic ref)
     PASafe->>Legacy: transferOwnership(deployment wallet)
     end

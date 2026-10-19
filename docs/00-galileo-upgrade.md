@@ -44,7 +44,7 @@ A chain gets the Galileo upgrade once. After it, each change of the code of the 
 - **Label ref.** The hash of the data that separates resources with the same resource logic. For an ERC20 resource, the data are the address of a forwarder and the address of a token. So the label ref of an ERC20 resource names one forwarder and one token.
 - **Kind.** The hash of the logic ref and the label ref of a resource. The commitment covers both refs, so the kind of a resource never changes.
 - **Kind point.** A point on an elliptic curve. The compliance circuit multiplies the kind point of each resource by its quantity, and the delta proof adds the results. Without a kind table entry, the compliance circuit calculates the kind point from the kind. Then two different kinds have different kind points.
-- **Kind table.** A list of entries. Each entry gives one kind the kind point of another kind. Two kinds with the same kind point are **fungible**. A transaction can then consume a resource of one kind and create a resource of the other kind. Such a transaction is a **conversion**. The protocol adapter stores the **kind table root**, a hash over all entries. The **kind tables repository**, [anoma/risc0-kind-tables](https://github.com/anoma/risc0-kind-tables), makes the kind tables and publishes their roots.
+- **Kind table.** A list of entries. Each entry gives one kind the kind point of another kind. Two kinds with the same kind point are **fungible**. A transaction can then consume a resource of one kind and create a resource of the other kind. Such a transaction is a **conversion**. The protocol adapter stores the **kind tree root**, the root of a Merkle tree over all entries. The **kind tables repository**, [anoma/risc0-kind-tables](https://github.com/anoma/risc0-kind-tables), makes the kind tables and publishes their roots.
 
 ### Contracts and applications
 
@@ -83,7 +83,7 @@ A chain gets the Galileo upgrade once. After it, each change of the code of the 
 
 | Part | Before the Galileo upgrade | After the Galileo upgrade |
 | --- | --- | --- |
-| Protocol adapter | An immutable contract. Its owner can stop it, and nothing lifts the stop. | A proxy that its owner can upgrade and pause. It stores a kind table root and has two denylists. |
+| Protocol adapter | An immutable contract. Its owner can stop it, and nothing lifts the stop. | A proxy that its owner can upgrade and pause. It stores a kind tree root and has two denylists. |
 | State of the protocol adapter | The commitment tree and the nullifier set of the legacy protocol adapter | The commitment tree and the nullifier set, copied once. The older roots are not copied. |
 | ERC20 forwarder | An immutable contract that accepts calls only from the legacy protocol adapter | A proxy at a new address. So its resources have new label refs. |
 | Tokens | In the legacy ERC20 forwarder | In the ERC20 forwarder, after one move |
@@ -121,7 +121,7 @@ The Galileo upgrade of a migrated chain has these parts. The numbers are the num
 ```mermaid
 flowchart TD
     deploy[Steps 1 to 4: deploy the protocol adapter on the migrational implementation, paused,<br/>and the two forwarders, and add them to the deployment records]
-    prepare[Steps 5 and 6: set the kind table root, and deprecate<br/>the logic ref of the legacy ERC20 forwarder]
+    prepare[Steps 5 and 6: set the kind tree root, and deprecate<br/>the logic ref of the legacy ERC20 forwarder]
     transfer[Step 7: the PA Safe transfers the ownership<br/>of the legacy protocol adapter to the deployment wallet]
     stop[Step 8: the deployment wallet stops the legacy protocol adapter.<br/>From this step, users cannot transact.]
     state[Steps 9 and 10: the state migration copies<br/>the commitment tree and the nullifier set]
@@ -132,7 +132,7 @@ flowchart TD
     deploy --> prepare --> transfer --> stop --> state --> assets --> complete --> soft
 ```
 
-In production, the team does steps 8 to 12 on all migrated chains in one planned period without transactions. On a chain without a state migration, the team deploys the protocol adapter on the plain implementation, and the two forwarders. Then it sets the kind table root. That chain has no other steps.
+In production, the team does steps 8 to 12 on all migrated chains in one planned period without transactions. On a chain without a state migration, the team deploys the protocol adapter on the plain implementation, and the two forwarders. Then it sets the kind tree root. That chain has no other steps.
 
 ## 6. Documents
 
