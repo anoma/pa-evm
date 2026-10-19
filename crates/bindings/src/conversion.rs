@@ -1,7 +1,5 @@
 use alloy::primitives::{B256, Bytes, U256};
-use anoma_rm_risc0::aggregation_instance::{
-    ActionAggregated, ConsumedResourceAggregated, CreatedResourceAggregated,
-};
+use anoma_rm_risc0::aggregation_instance::{ActionAggregated, ResourceAggregated};
 use anoma_rm_risc0::logic_instance::{AppData, ExpirableBlob};
 use anoma_rm_risc0::proving_system::encode_seal;
 use anoma_rm_risc0::transaction::{Delta as ArmDelta, Transaction};
@@ -45,23 +43,14 @@ impl From<AppData> for IProtocolAdapter::AppData {
     }
 }
 
-impl From<ConsumedResourceAggregated> for IProtocolAdapter::Consumed {
-    fn from(consumed: ConsumedResourceAggregated) -> Self {
+impl From<ResourceAggregated> for IProtocolAdapter::PublicResourceData {
+    fn from(resource: ResourceAggregated) -> Self {
         Self {
-            nullifier: B256::from_slice(consumed.resource_nullifier.as_bytes()),
-            logicRef: B256::from_slice(consumed.resource_logic_ref.as_bytes()),
-            commitmentTreeRoot: B256::from_slice(consumed.commitment_tree_root.as_bytes()),
-            appData: consumed.app_data.into(),
-        }
-    }
-}
-
-impl From<CreatedResourceAggregated> for IProtocolAdapter::Created {
-    fn from(created: CreatedResourceAggregated) -> Self {
-        Self {
-            commitment: B256::from_slice(created.resource_commitment.as_bytes()),
-            logicRef: B256::from_slice(created.resource_logic_ref.as_bytes()),
-            appData: created.app_data.into(),
+            consumed: resource.is_consumed(),
+            tag: B256::from_slice(resource.resource_tag.as_bytes()),
+            logicRef: B256::from_slice(resource.resource_logic_ref.as_bytes()),
+            commitmentTreeRoot: B256::from_slice(resource.commitment_tree_root.as_bytes()),
+            appData: resource.app_data.into(),
         }
     }
 }
@@ -74,15 +63,10 @@ impl From<ActionAggregated> for IProtocolAdapter::Action {
                 y: U256::from_be_slice(words_to_bytes(&action.delta_y)),
             },
             actionTreeRoot: B256::from_slice(action.action_tree_root.as_bytes()),
-            consumed: action
-                .consumed_publics
+            resources: action
+                .resource_publics
                 .into_iter()
-                .map(IProtocolAdapter::Consumed::from)
-                .collect(),
-            created: action
-                .created_publics
-                .into_iter()
-                .map(IProtocolAdapter::Created::from)
+                .map(IProtocolAdapter::PublicResourceData::from)
                 .collect(),
         }
     }

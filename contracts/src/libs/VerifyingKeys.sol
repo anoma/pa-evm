@@ -8,9 +8,9 @@ pragma solidity ^0.8.30;
 /// @custom:security-contact security@anoma.foundation
 library VerifyingKeys {
     /// @notice The compliance circuit verifying key (`anoma-rm-risc0` `COMPLIANCE_VK`).
-    bytes32 internal constant _COMPLIANCE = 0xbc4edaeea98f6501547cba34cf94d8b59631e7f86cf1a47119ba6f17c29a517c;
+    bytes32 internal constant _COMPLIANCE = 0x6771d2b47a3c3f40a1a2e635b2ddf0db3159e95856879e4e8d0a665025b0026b;
 
     /// @notice The batch aggregation circuit verifying key (`anoma-rm-risc0` `BATCH_AGGREGATION_EVM_VK`).
     bytes32 internal constant _BATCH_AGGREGATION_EVM =
-        0x35082a39ecba805a1ca4fdac7eb364b20afce2abf14413ebd910233332ee45c9;
+        0x4be0b1459541c8b1245ac28441392d5ca1667e04c23d336088af09da89ac5242;
 }

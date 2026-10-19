@@ -23,6 +23,10 @@ contract ProtocolAdapterDenylistTest is Test {
     bytes32 internal constant _DENIED_LOGIC_REF = bytes32(uint256(0xdead));
     bytes32 internal constant _DEPRECATED_LOGIC_REF = bytes32(uint256(0xdeca));
 
+    /// @dev The positions of the consumed and the created resource in the resources of each action.
+    uint256 internal constant _CONSUMED = 0;
+    uint256 internal constant _CREATED = 1;
+
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
     ProtocolAdapter internal _mockPa;
@@ -75,7 +79,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_reverts_if_a_created_resource_carries_a_deprecated_logic_ref() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[0].resources[_CREATED].logicRef = _DEPRECATED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _expectSettlement(txn);
@@ -89,7 +93,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_consumes_a_resource_that_carries_a_deprecated_logic_ref() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].consumed[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[0].resources[_CONSUMED].logicRef = _DEPRECATED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _deprecate(_DEPRECATED_LOGIC_REF);
@@ -101,8 +105,8 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_rolls_back_if_a_later_action_creates_a_deprecated_resource() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 3});
-        txn.actions[0].consumed[0].logicRef = _DEPRECATED_LOGIC_REF;
-        txn.actions[2].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[0].resources[_CONSUMED].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[2].resources[_CREATED].logicRef = _DEPRECATED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _expectSettlement(txn);
@@ -128,7 +132,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_reverts_if_a_deprecated_creation_is_relabelled_without_a_new_proof() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[0].resources[_CREATED].logicRef = _DEPRECATED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _expectSettlement(txn);
@@ -139,21 +143,26 @@ contract ProtocolAdapterDenylistTest is Test {
         );
         _mockPa.execute(txn);
 
-        txn.actions[0].created[0].logicRef = txn.actions[0].consumed[0].logicRef;
+        txn.actions[0].resources[_CREATED].logicRef = txn.actions[0].resources[_CONSUMED].logicRef;
         vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
         _mockPa.execute(txn);
-        txn.actions[0].created[0].logicRef = _DEPRECATED_LOGIC_REF;
+        txn.actions[0].resources[_CREATED].logicRef = _DEPRECATED_LOGIC_REF;
 
-        IProtocolAdapter.Consumed memory consumed = txn.actions[0].consumed[0];
-        IProtocolAdapter.Created memory created = txn.actions[0].created[0];
-        txn.actions[0].consumed[0] = IProtocolAdapter.Consumed({
-            nullifier: created.commitment,
+        IProtocolAdapter.PublicResourceData memory consumed = txn.actions[0].resources[_CONSUMED];
+        IProtocolAdapter.PublicResourceData memory created = txn.actions[0].resources[_CREATED];
+        txn.actions[0].resources[_CONSUMED] = IProtocolAdapter.PublicResourceData({
+            consumed: true,
+            tag: created.tag,
             logicRef: created.logicRef,
             commitmentTreeRoot: consumed.commitmentTreeRoot,
             appData: created.appData
         });
-        txn.actions[0].created[0] = IProtocolAdapter.Created({
-            commitment: consumed.nullifier, logicRef: consumed.logicRef, appData: consumed.appData
+        txn.actions[0].resources[_CREATED] = IProtocolAdapter.PublicResourceData({
+            consumed: false,
+            tag: consumed.tag,
+            logicRef: consumed.logicRef,
+            commitmentTreeRoot: bytes32(0),
+            appData: consumed.appData
         });
 
         vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
@@ -162,7 +171,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_reverts_if_a_consumed_resource_carries_a_denied_logic_ref() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 1});
-        txn.actions[0].consumed[0].logicRef = _DENIED_LOGIC_REF;
+        txn.actions[0].resources[_CONSUMED].logicRef = _DENIED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _expectSettlement(txn);
@@ -176,7 +185,7 @@ contract ProtocolAdapterDenylistTest is Test {
 
     function test_execute_reverts_if_a_later_action_carries_a_denied_logic_ref() public {
         IProtocolAdapter.Transaction memory txn = _transaction({actionCount: 3});
-        txn.actions[2].created[0].logicRef = _DENIED_LOGIC_REF;
+        txn.actions[2].resources[_CREATED].logicRef = _DENIED_LOGIC_REF;
         txn = _reaggregate(txn);
 
         _expectSettlement(txn);
