@@ -335,6 +335,28 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(30, 10, 20)});
     }
 
+    /// @dev Only the generic call carries constraints. The unwrap and the wrap keep the three-field blob of the logics
+    /// that predate the constraints, and the swap still runs unwrap, generic call, wrap.
+    function test_execute_orders_a_swap_by_the_constraints_of_the_generic_call_alone() public {
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](3);
+        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0]; // the sold tokens
+        consumed[1] = _carrier({nonce: 1, callId: 10})[0]; // the generic call
+        consumed[2] = _carrier({nonce: 2, callId: 20})[0]; // the wrap of the bought tokens
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](3);
+        created[0] = _carrier({nonce: 3, callId: 30})[0]; // the unwrap of the sold tokens
+        created[1] = _exampleResourceAndEmptyAppData({nonce: 4})[0]; // the bought tokens
+        created[2] = _exampleResourceAndEmptyAppData({nonce: 5})[0]; // the change
+
+        consumed[2].appData.externalPayload[0].blob = _threeFieldBlob(20);
+        created[0].appData.externalPayload[0].blob = _threeFieldBlob(30);
+        _constrain({
+            data: consumed[1], afterTags: _tags(_commitment(created[0])), beforeTags: _tags(_nullifier(consumed[2]))
+        });
+
+        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(30, 10, 20)});
+    }
+
     /// @dev The call of the first consumed resource reads the nullifier of the second one, which the loop adds later.
     /// A call that ran before the nullifier is added would return false and make the transaction revert.
     function test_execute_runs_the_calls_after_adding_the_nullifiers_of_all_consumed_resources() public {
@@ -355,16 +377,17 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(_transaction(consumed, created));
     }
 
-    /// @dev The old encoding has no tag lists, so the words where the protocol adapter reads their offsets belong to
-    /// the input of the call.
-    function test_execute_reverts_on_a_forwarder_call_in_the_encoding_without_tag_lists() public {
+    /// @dev Logics that predate the ordering constraints emit the old encoding, which has no tag lists. Its call runs
+    /// without constraints.
+    function test_execute_runs_a_forwarder_call_in_the_encoding_without_tag_lists() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
         created[0].appData.externalPayload[0].blob = abi.encode(address(_fwd), _input, EXPECTED_OUTPUT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        vm.expectRevert();
+        vm.expectEmit(address(_mockPa));
+        emit IProtocolAdapter.ForwarderCallExecuted({untrustedForwarder: _fwd, input: _input, output: EXPECTED_OUTPUT});
         _mockPa.execute(txn);
     }
 
@@ -944,6 +967,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
             afterTags: afterTags,
             beforeTags: beforeTags
         });
+    }
+
+    /// @notice Encodes a call that increments `callId` as `abi.encode(address, bytes, bytes)`, without constraints.
+    function _threeFieldBlob(uint256 callId) private view returns (bytes memory blob) {
+        blob = abi.encode(
+            address(_fwd),
+            abi.encode(_fwdTarget, abi.encodeCall(ForwarderTargetExample.increment, (callId))),
+            abi.encode(callId + 1)
+        );
     }
 
     function _nullifier(TxGen.ResourceAndAppData memory data) private pure returns (bytes32 tag) {

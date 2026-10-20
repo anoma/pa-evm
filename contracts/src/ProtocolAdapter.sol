@@ -68,6 +68,13 @@ contract ProtocolAdapter is
         bytes32[] beforeTags;
     }
 
+    /// @notice The position of the offset of `input` in an encoded forwarder call, which is its second word.
+    uint256 internal constant _INPUT_OFFSET_POSITION = 32;
+
+    /// @notice The offset of `input` in `abi.encode(address, bytes, bytes)`, the format of a forwarder call without
+    /// ordering constraints that logics predating the constraints emit. The offset is 0xa0 with the two tag lists.
+    uint256 internal constant _THREE_FIELD_CALL_INPUT_OFFSET = 0x60;
+
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
 
@@ -332,7 +339,7 @@ contract ProtocolAdapter is
     function _runForwarderCallsOfResource(bytes32 carrierLogicRef, ExpirableBlob[] calldata externalPayload) internal {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
-            // `_hasOrderingConstraints` checked that the two tag lists after these fields are empty.
+            // `_hasOrderingConstraints` checked that the two tag lists after these fields are empty or absent.
             (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
                 abi.decode(externalPayload[i].blob, (address, bytes, bytes));
             _runForwarderCall({
@@ -589,13 +596,19 @@ contract ProtocolAdapter is
         carrier.calls = new ForwarderCall[](callCount);
         for (uint256 i = 0; i < callCount; ++i) {
             ForwarderCall memory forwarderCall = carrier.calls[i];
+            bytes calldata blob = externalPayload[i].blob;
+            if (_isThreeFieldCall(blob)) {
+                (forwarderCall.untrustedForwarder, forwarderCall.input, forwarderCall.expectedOutput) =
+                    abi.decode(blob, (address, bytes, bytes));
+                continue;
+            }
             (
                 forwarderCall.untrustedForwarder,
                 forwarderCall.input,
                 forwarderCall.expectedOutput,
                 forwarderCall.afterTags,
                 forwarderCall.beforeTags
-            ) = abi.decode(externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
+            ) = abi.decode(blob, (address, bytes, bytes, bytes32[], bytes32[]));
             constraintCount += forwarderCall.afterTags.length + forwarderCall.beforeTags.length;
         }
     }
@@ -691,7 +704,8 @@ contract ProtocolAdapter is
 
     /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
     /// @dev Reads only the lengths of `afterTags` and `beforeTags`, whose offsets are the fourth and fifth words of
-    /// the encoded call. The slicing reverts if the blob is too short or an offset points outside it.
+    /// the encoded call. A call without the two tag lists carries no constraints. The slicing reverts if the blob is
+    /// too short or an offset points outside it.
     /// @param externalPayload The external payload of the resource.
     /// @return constrained Whether a call has an `afterTags` or a `beforeTags` entry.
     function _hasOrderingConstraints(ExpirableBlob[] calldata externalPayload)
@@ -702,10 +716,21 @@ contract ProtocolAdapter is
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             bytes calldata blob = externalPayload[i].blob;
+            if (_isThreeFieldCall(blob)) {
+                continue;
+            }
             if (_wordAt(blob, _wordAt(blob, 96)) != 0 || _wordAt(blob, _wordAt(blob, 128)) != 0) {
                 return true;
             }
         }
+    }
+
+    /// @notice Returns whether a forwarder call is encoded without the two tag lists.
+    /// @dev The offset of `input` is the size of the head of the encoded call.
+    /// @param blob The encoded call.
+    /// @return threeField Whether the call is `abi.encode(address, bytes, bytes)`.
+    function _isThreeFieldCall(bytes calldata blob) internal pure returns (bool threeField) {
+        threeField = _wordAt(blob, _INPUT_OFFSET_POSITION) == _THREE_FIELD_CALL_INPUT_OFFSET;
     }
 
     /// @notice Returns the 32-byte word of a blob at an offset.
