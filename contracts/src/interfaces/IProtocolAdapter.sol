@@ -74,9 +74,8 @@ interface IProtocolAdapter {
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
     /// @param externalPayload A list of blobs for encoding data connected with external calls. Each blob encodes one
-    /// forwarder call as `abi.encode(address forwarder, bytes input, bytes output, bytes32[] afterTags,
-    /// bytes32[] beforeTags)`: the call runs after the calls of the resources in `afterTags` and before the calls of
-    /// the resources in `beforeTags`.
+    /// forwarder call as `abi.encode(address untrustedForwarder, bytes input, bytes expectedOutput,
+    /// bytes32[] afterTags, bytes32[] beforeTags)`, with the ordering constraints that `execute` describes.
     /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;
@@ -144,10 +143,13 @@ interface IProtocolAdapter {
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
     /// set, respectively, and by running the forwarder calls of its resources.
-    /// @dev The forwarder calls run after the state changes of all actions and after the proofs. Each call runs after
-    /// the calls of the resources in its `afterTags` and before the calls of the resources in its `beforeTags`, and
-    /// the calls of a resource keep their order. Of the calls that can run next, the first in the order of the actions
-    /// runs, with the consumed resources of an action before its created resources.
+    /// @dev The forwarder calls run after the nullifiers and commitments of all actions are added and after the
+    /// proofs. The calls of a resource run together and in their order: after the calls of each resource that one of
+    /// them names in `afterTags`, and before the calls of each resource that one of them names in `beforeTags`. Of the
+    /// resources whose calls can run next, the first in the order of the actions goes first, with the consumed
+    /// resources of an action before its created resources. A tag of a resource without calls constrains nothing, and
+    /// so does a `beforeTags` entry that is no tag of the transaction. The transaction reverts if an `afterTags` entry
+    /// is no tag of the transaction, or if no order meets the constraints.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
