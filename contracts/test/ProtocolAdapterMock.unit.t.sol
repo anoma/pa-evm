@@ -285,6 +285,30 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _assertCallOrder({txn: _transaction(consumed, created), expected: _values(30, 10, 20)});
     }
 
+    /// @dev Only the generic call carries constraints. The unwrap and the wrap keep the three-field blob of the logics
+    /// that predate the constraints, and the swap still runs unwrap, generic call, wrap.
+    function test_execute_orders_a_swap_by_the_constraints_of_the_generic_call_alone() public {
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](3);
+        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0]; // the sold tokens
+        consumed[1] = _carrier(1, 10)[0]; // the generic call
+        consumed[2] = _carrier(2, 20)[0]; // the wrap of the bought tokens
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](3);
+        created[0] = _carrier(3, 30)[0]; // the unwrap of the sold tokens
+        created[1] = _exampleResourceAndEmptyAppData({nonce: 4})[0]; // the bought tokens
+        created[2] = _exampleResourceAndEmptyAppData({nonce: 5})[0]; // the change
+
+        consumed[2].appData.externalPayload[0].blob = _unconstrainedBlob(20);
+        created[0].appData.externalPayload[0].blob = _unconstrainedBlob(30);
+        consumed[1].appData.externalPayload[0].blob = _callBlob({
+            value: 10,
+            afterTags: _tags(TxGen.commitment(created[0].resource)),
+            beforeTags: _tags(TxGen.nullifier(consumed[2].resource, 0))
+        });
+
+        _assertCallOrder({txn: _transaction(consumed, created), expected: _values(30, 10, 20)});
+    }
+
     /// @dev The call of the first consumed resource reads the nullifier of the second one, which the loop adds later.
     function test_execute_runs_the_calls_after_adding_the_nullifiers_of_all_resources() public {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](2);
@@ -846,6 +870,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
             afterTags: afterTags,
             beforeTags: beforeTags
         });
+    }
+
+    /// @notice Encodes a call that increments `value` in the three-field format, without constraints.
+    function _unconstrainedBlob(uint256 value) private view returns (bytes memory blob) {
+        blob = abi.encode(
+            address(_fwd),
+            abi.encode(_fwdTarget, abi.encodeCall(ForwarderTargetExample.increment, (value))),
+            abi.encode(value + 1)
+        );
     }
 
     function _nullifier(TxGen.ResourceAndAppData[] memory data) private pure returns (bytes32 tag) {

@@ -74,9 +74,10 @@ interface IProtocolAdapter {
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
     /// @param externalPayload A list of blobs for encoding data connected with external calls. Each blob encodes one
-    /// forwarder call as `abi.encode(address forwarder, bytes input, bytes output, bytes32[] afterTags,
-    /// bytes32[] beforeTags)`: the call runs after the calls of the resources in `afterTags` and before the calls of
-    /// the resources in `beforeTags`.
+    /// forwarder call as `abi.encode(address forwarder, bytes input, bytes output)`, or as `abi.encode(address
+    /// forwarder, bytes input, bytes output, bytes32[] afterTags, bytes32[] beforeTags)` to constrain its order: the
+    /// call runs after the calls of the resources in `afterTags` and before the calls of the resources in
+    /// `beforeTags`.
     /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;

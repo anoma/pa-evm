@@ -71,6 +71,9 @@ contract ProtocolAdapter is
         uint256 callCount;
     }
 
+    /// @notice The size of the head of `abi.encode(address, bytes, bytes)`, which is the offset of its `input`.
+    uint256 internal constant _UNCONSTRAINED_CALL_HEAD = 0x60;
+
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
 
@@ -472,26 +475,28 @@ contract ProtocolAdapter is
 
         uint256 blobCount = appData.externalPayload.length;
         for (uint256 i = 0; i < blobCount; ++i) {
-            (
-                address untrustedForwarder,
-                bytes memory input,
-                bytes memory expectedOutput,
-                bytes32[] memory afterTags,
-                bytes32[] memory beforeTags
-            ) = abi.decode(appData.externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
-
             // The arrays hold zeroed structs already, so the fields are written in place.
             uint256 index = collected.callCount++;
             ForwarderCallOrder.Constraints memory constraints = collected.constraints[index];
             constraints.tag = tag;
-            constraints.afterTags = afterTags;
-            constraints.beforeTags = beforeTags;
-
             ForwarderCall memory forwarderCall = collected.calls[index];
             forwarderCall.carrierLogicRef = carrierLogicRef;
-            forwarderCall.untrustedForwarder = untrustedForwarder;
-            forwarderCall.input = input;
-            forwarderCall.expectedOutput = expectedOutput;
+
+            // The offset of `input` tells the two encodings apart: three head words for a call without constraints,
+            // five for a call with them. Logics that predate the constraints keep working unchanged.
+            bytes calldata blob = appData.externalPayload[i].blob;
+            if (uint256(bytes32(blob[32:64])) == _UNCONSTRAINED_CALL_HEAD) {
+                (forwarderCall.untrustedForwarder, forwarderCall.input, forwarderCall.expectedOutput) =
+                    abi.decode(blob, (address, bytes, bytes));
+            } else {
+                (
+                    forwarderCall.untrustedForwarder,
+                    forwarderCall.input,
+                    forwarderCall.expectedOutput,
+                    constraints.afterTags,
+                    constraints.beforeTags
+                ) = abi.decode(blob, (address, bytes, bytes, bytes32[], bytes32[]));
+            }
         }
     }
 }
