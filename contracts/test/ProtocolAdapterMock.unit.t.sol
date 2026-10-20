@@ -222,7 +222,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        vm.expectRevert(abi.encodeWithSelector(ProtocolAdapter.AfterTagNotInTransaction.selector, tagNotInTransaction));
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrder.AfterTagNotInTransaction.selector, tagNotInTransaction)
+        );
         _mockPa.execute(txn);
     }
 
