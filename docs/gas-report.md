@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3920958 |           18390 |        |        |        |         |
+|                                          3919566 |           18384 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             316 |    316 |    316 |    316 |      10 |
@@ -11,7 +11,7 @@
 | VERSION                                          |            1073 |   1073 |   1073 |   1073 |       3 |
 | commitmentCount                                  |             709 |   1709 |   1709 |   2709 |      12 |
 | denyLogicRefs                                    |             718 |  31709 |  28856 |  52996 |      11 |
-| execute                                          |            2884 | 188398 | 195642 | 434238 |      58 |
+| execute                                          |            2884 | 188396 | 195642 | 434215 |      58 |
 | getImplementation                                |             627 |    793 |    627 |   2627 |      12 |
 | getKindTreeRoot                                  |            2841 |   2841 |   2841 |   2841 |       2 |
 | initialize                                       |            3052 | 150665 | 152923 | 152923 |     124 |

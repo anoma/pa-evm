@@ -43,37 +43,9 @@ contract ProtocolAdapter is
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
-
-    /// @notice A resource with forwarder calls in its external payload.
-    /// @param tag The tag of the resource.
-    /// @param logicRef The logic reference of the resource.
-    /// @param calls The forwarder calls of the resource, in the order of its external payload.
-    struct Carrier {
-        bytes32 tag;
-        bytes32 logicRef;
-        ForwarderCall[] calls;
-    }
-
-    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its carrier.
-    /// @param untrustedForwarder The forwarder contract to call.
-    /// @param input The input of the call.
-    /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the resources whose calls run before the calls of the carrier.
-    /// @param beforeTags The tags of the resources whose calls run after the calls of the carrier.
-    struct ForwarderCall {
-        address untrustedForwarder;
-        bytes input;
-        bytes expectedOutput;
-        bytes32[] afterTags;
-        bytes32[] beforeTags;
-    }
-
-    /// @notice The position of the offset of `input` in an encoded forwarder call, which is its second word.
-    uint256 internal constant _INPUT_OFFSET_POSITION = 32;
-
-    /// @notice The offset of `input` in `abi.encode(address, bytes, bytes)`, the format of a forwarder call without
-    /// ordering constraints that logics predating the constraints emit. The offset is 0xa0 with the two tag lists.
-    uint256 internal constant _THREE_FIELD_CALL_INPUT_OFFSET = 0x60;
+    using ForwarderCallOrder for Action[];
+    using ForwarderCallOrder for ExpirableBlob[];
+    using ForwarderCallOrder for ForwarderCallOrder.Carrier[];
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
@@ -90,7 +62,6 @@ contract ProtocolAdapter is
     error ZeroRiscZeroVerifierSelectorNotAllowed();
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-    error AfterTagNotInTransaction(bytes32 tag);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierPaused();
 
@@ -250,7 +221,7 @@ contract ProtocolAdapter is
             if (externalPayload.length != 0) {
                 ++carrierCount;
                 if (!hasOrderingConstraints) {
-                    hasOrderingConstraints = _hasOrderingConstraints(externalPayload);
+                    hasOrderingConstraints = externalPayload.hasOrderingConstraints();
                 }
             }
             _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
@@ -276,7 +247,7 @@ contract ProtocolAdapter is
             if (externalPayload.length != 0) {
                 ++carrierCount;
                 if (!hasOrderingConstraints) {
-                    hasOrderingConstraints = _hasOrderingConstraints(externalPayload);
+                    hasOrderingConstraints = externalPayload.hasOrderingConstraints();
                 }
             }
             _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
@@ -339,7 +310,8 @@ contract ProtocolAdapter is
     function _runForwarderCallsOfResource(bytes32 carrierLogicRef, ExpirableBlob[] calldata externalPayload) internal {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
-            // `_hasOrderingConstraints` checked that the two tag lists after these fields are empty or absent.
+            // `ForwarderCallOrder.hasOrderingConstraints` checked that the two tag lists after these fields are empty
+            // or absent.
             (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
                 abi.decode(externalPayload[i].blob, (address, bytes, bytes));
             _runForwarderCall({
@@ -355,24 +327,14 @@ contract ProtocolAdapter is
     /// @param actions The actions of the transaction.
     /// @param carrierCount The number of resources that carry forwarder calls.
     function _runForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 carrierCount) internal {
-        (Carrier[] memory carriers, uint256 constraintCount) =
-            _decodeCarriers({actions: actions, carrierCount: carrierCount});
-
-        // Each ordering constraint adds at most one edge.
-        uint256[] memory predecessors = new uint256[](constraintCount);
-        uint256[] memory successors = new uint256[](constraintCount);
-        uint256 edgeCount = _addConstraintEdges({
-            actions: actions, carriers: carriers, predecessors: predecessors, successors: successors
-        });
-        uint256[] memory orderedIndices = ForwarderCallOrder.order({
-            carrierCount: carrierCount, predecessors: predecessors, successors: successors, edgeCount: edgeCount
-        });
+        (ForwarderCallOrder.Carrier[] memory carriers, uint256 constraintCount) = actions.decodeCarriers(carrierCount);
+        uint256[] memory orderedIndices = carriers.order({actions: actions, constraintCount: constraintCount});
 
         for (uint256 position = 0; position < carrierCount; ++position) {
-            Carrier memory carrier = carriers[orderedIndices[position]];
+            ForwarderCallOrder.Carrier memory carrier = carriers[orderedIndices[position]];
             uint256 callCount = carrier.calls.length;
             for (uint256 i = 0; i < callCount; ++i) {
-                ForwarderCall memory forwarderCall = carrier.calls[i];
+                ForwarderCallOrder.ForwarderCall memory forwarderCall = carrier.calls[i];
                 _runForwarderCall({
                     carrierLogicRef: carrier.logicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,
@@ -527,217 +489,5 @@ contract ProtocolAdapter is
             selector == RISC_ZERO_VERIFIER_SELECTOR,
             RiscZeroVerifierSelectorMismatch({expected: RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
         );
-    }
-
-    /// @notice Decodes the forwarder calls of the carriers of a transaction, in the order of the actions, with the
-    /// consumed resources of an action before its created resources.
-    /// @param actions The actions of the transaction.
-    /// @param carrierCount The number of resources that carry forwarder calls.
-    /// @return carriers The resources that carry forwarder calls, with their decoded calls.
-    /// @return constraintCount The number of `afterTags` and `beforeTags` entries of all calls.
-    function _decodeCarriers(Action[] calldata actions, uint256 carrierCount)
-        internal
-        pure
-        returns (Carrier[] memory carriers, uint256 constraintCount)
-    {
-        carriers = new Carrier[](carrierCount);
-        uint256 carrierIndex = 0;
-
-        uint256 actionCount = actions.length;
-        for (uint256 i = 0; i < actionCount; ++i) {
-            Consumed[] calldata consumedResources = actions[i].consumed;
-            uint256 consumedCount = consumedResources.length;
-            for (uint256 j = 0; j < consumedCount; ++j) {
-                Consumed calldata consumed = consumedResources[j];
-                ExpirableBlob[] calldata externalPayload = consumed.appData.externalPayload;
-                if (externalPayload.length != 0) {
-                    constraintCount += _decodeCarrier({
-                        carrier: carriers[carrierIndex++],
-                        tag: consumed.nullifier,
-                        logicRef: consumed.logicRef,
-                        externalPayload: externalPayload
-                    });
-                }
-            }
-
-            Created[] calldata createdResources = actions[i].created;
-            uint256 createdCount = createdResources.length;
-            for (uint256 j = 0; j < createdCount; ++j) {
-                Created calldata created = createdResources[j];
-                ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
-                if (externalPayload.length != 0) {
-                    constraintCount += _decodeCarrier({
-                        carrier: carriers[carrierIndex++],
-                        tag: created.commitment,
-                        logicRef: created.logicRef,
-                        externalPayload: externalPayload
-                    });
-                }
-            }
-        }
-    }
-
-    /// @notice Writes the tag and the logic reference of a carrier and decodes its forwarder calls.
-    /// @param carrier The carrier to fill.
-    /// @param tag The tag of the resource.
-    /// @param logicRef The logic reference of the resource.
-    /// @param externalPayload The external payload of the resource.
-    /// @return constraintCount The number of `afterTags` and `beforeTags` entries of the calls.
-    function _decodeCarrier(
-        Carrier memory carrier,
-        bytes32 tag,
-        bytes32 logicRef,
-        ExpirableBlob[] calldata externalPayload
-    ) internal pure returns (uint256 constraintCount) {
-        carrier.tag = tag;
-        carrier.logicRef = logicRef;
-
-        uint256 callCount = externalPayload.length;
-        carrier.calls = new ForwarderCall[](callCount);
-        for (uint256 i = 0; i < callCount; ++i) {
-            ForwarderCall memory forwarderCall = carrier.calls[i];
-            bytes calldata blob = externalPayload[i].blob;
-            if (_isThreeFieldCall(blob)) {
-                (forwarderCall.untrustedForwarder, forwarderCall.input, forwarderCall.expectedOutput) =
-                    abi.decode(blob, (address, bytes, bytes));
-                continue;
-            }
-            (
-                forwarderCall.untrustedForwarder,
-                forwarderCall.input,
-                forwarderCall.expectedOutput,
-                forwarderCall.afterTags,
-                forwarderCall.beforeTags
-            ) = abi.decode(blob, (address, bytes, bytes, bytes32[], bytes32[]));
-            constraintCount += forwarderCall.afterTags.length + forwarderCall.beforeTags.length;
-        }
-    }
-
-    /// @notice Writes one edge for each ordering constraint that names a carrier, and checks that each `afterTags`
-    /// entry names a resource of the transaction.
-    /// @param actions The actions of the transaction.
-    /// @param carriers The carriers of the transaction.
-    /// @param predecessors The carrier at the start of each edge.
-    /// @param successors The carrier at the end of each edge.
-    /// @return edgeCount The number of edges.
-    function _addConstraintEdges(
-        Action[] calldata actions,
-        Carrier[] memory carriers,
-        uint256[] memory predecessors,
-        uint256[] memory successors
-    ) internal pure returns (uint256 edgeCount) {
-        uint256 carrierCount = carriers.length;
-
-        for (uint256 carrierIndex = 0; carrierIndex < carrierCount; ++carrierIndex) {
-            ForwarderCall[] memory calls = carriers[carrierIndex].calls;
-            uint256 callCount = calls.length;
-
-            for (uint256 c = 0; c < callCount; ++c) {
-                bytes32[] memory afterTags = calls[c].afterTags;
-                uint256 afterTagCount = afterTags.length;
-                for (uint256 a = 0; a < afterTagCount; ++a) {
-                    bytes32 afterTag = afterTags[a];
-                    uint256 predecessor = _carrierIndexOf({carriers: carriers, tag: afterTag});
-                    if (predecessor == carrierCount) {
-                        // A resource without calls has no calls to wait for.
-                        require(
-                            _isTagOfTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
-                        );
-                        continue;
-                    }
-                    predecessors[edgeCount] = predecessor;
-                    successors[edgeCount] = carrierIndex;
-                    ++edgeCount;
-                }
-
-                bytes32[] memory beforeTags = calls[c].beforeTags;
-                uint256 beforeTagCount = beforeTags.length;
-                for (uint256 b = 0; b < beforeTagCount; ++b) {
-                    uint256 successor = _carrierIndexOf({carriers: carriers, tag: beforeTags[b]});
-                    if (successor != carrierCount) {
-                        predecessors[edgeCount] = carrierIndex;
-                        successors[edgeCount] = successor;
-                        ++edgeCount;
-                    }
-                }
-            }
-        }
-    }
-
-    /// @notice Returns the index of the carrier with a tag.
-    /// @param carriers The carriers of the transaction.
-    /// @param tag The tag to look for.
-    /// @return index The index of the carrier, or the number of carriers if no carrier has the tag.
-    function _carrierIndexOf(Carrier[] memory carriers, bytes32 tag) internal pure returns (uint256 index) {
-        uint256 carrierCount = carriers.length;
-        for (index = 0; index < carrierCount; ++index) {
-            if (carriers[index].tag == tag) {
-                return index;
-            }
-        }
-    }
-
-    /// @notice Returns whether a tag is the nullifier or the commitment of a resource of a transaction.
-    /// @param actions The actions of the transaction.
-    /// @param tag The tag to look for.
-    /// @return found Whether a resource of the transaction has the tag.
-    function _isTagOfTransaction(Action[] calldata actions, bytes32 tag) internal pure returns (bool found) {
-        uint256 actionCount = actions.length;
-        for (uint256 i = 0; i < actionCount; ++i) {
-            Consumed[] calldata consumedResources = actions[i].consumed;
-            uint256 consumedCount = consumedResources.length;
-            for (uint256 j = 0; j < consumedCount; ++j) {
-                if (consumedResources[j].nullifier == tag) {
-                    return true;
-                }
-            }
-
-            Created[] calldata createdResources = actions[i].created;
-            uint256 createdCount = createdResources.length;
-            for (uint256 j = 0; j < createdCount; ++j) {
-                if (createdResources[j].commitment == tag) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
-    /// @dev Reads only the lengths of `afterTags` and `beforeTags`, whose offsets are the fourth and fifth words of
-    /// the encoded call. A call without the two tag lists carries no constraints. The slicing reverts if the blob is
-    /// too short or an offset points outside it.
-    /// @param externalPayload The external payload of the resource.
-    /// @return constrained Whether a call has an `afterTags` or a `beforeTags` entry.
-    function _hasOrderingConstraints(ExpirableBlob[] calldata externalPayload)
-        internal
-        pure
-        returns (bool constrained)
-    {
-        uint256 callCount = externalPayload.length;
-        for (uint256 i = 0; i < callCount; ++i) {
-            bytes calldata blob = externalPayload[i].blob;
-            if (_isThreeFieldCall(blob)) {
-                continue;
-            }
-            if (_wordAt(blob, _wordAt(blob, 96)) != 0 || _wordAt(blob, _wordAt(blob, 128)) != 0) {
-                return true;
-            }
-        }
-    }
-
-    /// @notice Returns whether a forwarder call is encoded without the two tag lists.
-    /// @dev The offset of `input` is the size of the head of the encoded call.
-    /// @param blob The encoded call.
-    /// @return threeField Whether the call is `abi.encode(address, bytes, bytes)`.
-    function _isThreeFieldCall(bytes calldata blob) internal pure returns (bool threeField) {
-        threeField = _wordAt(blob, _INPUT_OFFSET_POSITION) == _THREE_FIELD_CALL_INPUT_OFFSET;
-    }
-
-    /// @notice Returns the 32-byte word of a blob at an offset.
-    /// @param blob The blob to read from.
-    /// @param offset The offset of the word in the blob.
-    /// @return word The word.
-    function _wordAt(bytes calldata blob, uint256 offset) internal pure returns (uint256 word) {
-        word = uint256(bytes32(blob[offset:offset + 32]));
     }
 }
