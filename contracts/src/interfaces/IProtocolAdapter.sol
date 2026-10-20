@@ -73,7 +73,10 @@ interface IProtocolAdapter {
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
-    /// @param externalPayload A list of blobs for encoding data connected with external calls.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls. Each blob encodes one
+    /// forwarder call as `abi.encode(address forwarder, bytes input, bytes output, bytes32[] afterTags,
+    /// bytes32[] beforeTags)`: the call runs after the calls of the resources in `afterTags` and before the calls of
+    /// the resources in `beforeTags`.
     /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;
@@ -140,7 +143,11 @@ interface IProtocolAdapter {
     event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively.
+    /// set, respectively, and by running the forwarder calls of its resources.
+    /// @dev The forwarder calls run after the state changes of all actions and after the proofs. Each call runs after
+    /// the calls of the resources in its `afterTags` and before the calls of the resources in its `beforeTags`, and
+    /// the calls of a resource keep their order. Of the calls that can run next, the first in the order of the actions
+    /// runs, with the consumed resources of an action before its created resources.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

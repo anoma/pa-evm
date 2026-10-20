@@ -5,8 +5,6 @@ import {ERC1967Utils} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967U
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
-import {SlotDerivation} from "@openzeppelin-contracts-5.7.0/utils/SlotDerivation.sol";
-import {TransientSlot} from "@openzeppelin-contracts-5.7.0/utils/TransientSlot.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
 import {IForwarder} from "anoma-forwarder-bases-3.0.1/src/interfaces/IForwarder.sol";
@@ -17,6 +15,7 @@ import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/R
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
+import {ForwarderCallOrder} from "./libs/ForwarderCallOrder.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {KindTreeRoot} from "./state/KindTreeRoot.sol";
@@ -44,14 +43,33 @@ contract ProtocolAdapter is
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
-    using SlotDerivation for bytes32;
-    using TransientSlot for bytes32;
-    using TransientSlot for TransientSlot.BooleanSlot;
 
-    /// @custom:storage-location erc7201:anoma.transient.executedTags
-    // keccak256(abi.encode(uint256(keccak256("anoma.transient.executedTags")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT =
-        0xbccb4bbf45432d45b62b97fb819d12e33a455a94a96eb5366402dbe8c8056c00;
+    /// @notice A forwarder call from the external payload of a resource.
+    /// @param carrierLogicRef The logic reference of the resource carrying the call.
+    /// @param untrustedForwarder The forwarder contract to call.
+    /// @param input The input of the call.
+    /// @param expectedOutput The output that the call must return.
+    struct ForwarderCall {
+        bytes32 carrierLogicRef;
+        address untrustedForwarder;
+        bytes input;
+        bytes expectedOutput;
+    }
+
+    /// @notice The tags and the forwarder calls of the resources of a transaction, in the order of the actions, with
+    /// the consumed resources of an action before its created resources.
+    /// @param tags The tags of all resources.
+    /// @param tagCount The number of tags collected so far.
+    /// @param constraints The constraints of the forwarder calls.
+    /// @param calls The forwarder calls, at the indices of their constraints.
+    /// @param callCount The number of forwarder calls collected so far.
+    struct CollectedCalls {
+        bytes32[] tags;
+        uint256 tagCount;
+        ForwarderCallOrder.Constraints[] constraints;
+        ForwarderCall[] calls;
+        uint256 callCount;
+    }
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
@@ -68,8 +86,6 @@ contract ProtocolAdapter is
     error ZeroRiscZeroVerifierSelectorNotAllowed();
     error EmptyTransactionNotAllowed();
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
-    error MustRunAfter(bytes32 tag);
-    error MustRunBefore(bytes32 tag);
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
     error RiscZeroVerifierPaused();
 
@@ -114,11 +130,12 @@ contract ProtocolAdapter is
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
         bytes32 updatedCommitmentTreeRoot = bytes32(0);
+        CollectedCalls memory collected = _allocateCollectedCalls(transaction.actions);
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            bytes32 newRoot = _processAction(action);
+            bytes32 newRoot = _processAction({action: action, collected: collected});
             if (newRoot != bytes32(0)) {
                 updatedCommitmentTreeRoot = newRoot;
             }
@@ -134,6 +151,9 @@ contract ProtocolAdapter is
         bytes32 transactionId = _verifyGlobalProofs({
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
         });
+
+        // Run the forwarder calls after the state changes of all actions and after the proofs.
+        _executeForwarderCalls(collected);
 
         // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
         // so there is no new root to store.
@@ -180,16 +200,17 @@ contract ProtocolAdapter is
     /// * checking the logic references of the consumed and created resources against the denylists,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
-    /// * executing external forwarder calls,
+    /// * collecting the tags and the forwarder calls of the resources,
     /// * emitting the app data blobs based on their deletion criterion, and
     /// * emitting the `ActionExecuted` event.
     /// @param action The action to process.
+    /// @param collected The tags and forwarder calls collected so far, to which the action adds its own.
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
-    // NOTE: The nullifier and commitment writes around the forwarder calls are protected by the `nonReentrant`
-    // modifier on the calling `execute` function.
-    // slither-disable-next-line reentrancy-no-eth
-    function _processAction(Action calldata action) internal returns (bytes32 updatedCommitmentTreeRoot) {
+    function _processAction(Action calldata action, CollectedCalls memory collected)
+        internal
+        returns (bytes32 updatedCommitmentTreeRoot)
+    {
         uint256 consumedCount = action.consumed.length;
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
         bytes32[] memory consumedLogicRefs = new bytes32[](consumedCount);
@@ -208,9 +229,13 @@ contract ProtocolAdapter is
             // The function reverts if a repeating nullifier is added to the set.
             _addNullifier(consumed.nullifier);
 
-            _executeForwarderCalls({carrierLogicRef: consumed.logicRef, appData: consumed.appData});
+            _collectResource({
+                tag: consumed.nullifier,
+                carrierLogicRef: consumed.logicRef,
+                appData: consumed.appData,
+                collected: collected
+            });
             _emitAppDataBlobs({tag: consumed.nullifier, appData: consumed.appData});
-            _markExecuted(consumed.nullifier);
 
             nullifiers[i] = consumed.nullifier;
             consumedLogicRefs[i] = consumed.logicRef;
@@ -229,16 +254,18 @@ contract ProtocolAdapter is
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
             updatedCommitmentTreeRoot = _addCommitment(created.commitment);
 
-            _executeForwarderCalls({carrierLogicRef: created.logicRef, appData: created.appData});
+            _collectResource({
+                tag: created.commitment,
+                carrierLogicRef: created.logicRef,
+                appData: created.appData,
+                collected: collected
+            });
             _emitAppDataBlobs({tag: created.commitment, appData: created.appData});
-            _markExecuted(created.commitment);
 
             commitments[i] = created.commitment;
             createdLogicRefs[i] = created.logicRef;
         }
 
-        // NOTE: The event ordering is protected by the `nonReentrant` modifier.
-        // slither-disable-next-line reentrancy-events
         emit ActionExecuted({
             actionTreeRoot: action.actionTreeRoot,
             nullifiers: nullifiers,
@@ -248,54 +275,39 @@ contract ProtocolAdapter is
         });
     }
 
-    /// @notice Processes forwarder calls by verifying and executing them.
-    /// @param carrierLogicRef The logic reference of the carrier resource making the calls.
-    /// @param appData The application data of the carrier resource containing the external payload.
-    function _executeForwarderCalls(bytes32 carrierLogicRef, AppData calldata appData) internal {
-        uint256 nCalls = appData.externalPayload.length;
+    /// @notice Executes the collected forwarder calls in the order that their constraints set.
+    /// @param collected The tags and forwarder calls of the transaction.
+    function _executeForwarderCalls(CollectedCalls memory collected) internal {
+        uint256[] memory sequence = ForwarderCallOrder.order({tags: collected.tags, calls: collected.constraints});
+        uint256 callCount = sequence.length;
 
-        for (uint256 i = 0; i < nCalls; ++i) {
-            _executeForwarderCall({carrierLogicRef: carrierLogicRef, callBlob: appData.externalPayload[i].blob});
+        for (uint256 i = 0; i < callCount; ++i) {
+            _executeForwarderCall(collected.calls[sequence[i]]);
         }
     }
 
     /// @notice Executes a call to a an external, untrusted forwarder contract.
-    /// @param carrierLogicRef The logic reference of the carrier resource.
-    /// @param callBlob The blob containing the external call instruction.
+    /// @param forwarderCall The call to execute.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
     /// the associated carrier resource logic.
-    function _executeForwarderCall(bytes32 carrierLogicRef, bytes calldata callBlob) internal {
-        (
-            address untrustedForwarder,
-            bytes memory input,
-            bytes memory expectedOutput,
-            bytes32[] memory afterTags,
-            bytes32[] memory beforeTags
-        ) = abi.decode(callBlob, (address, bytes, bytes, bytes32[], bytes32[]));
-
-        _checkOrdering({afterTags: afterTags, beforeTags: beforeTags});
-
-        // NOTE: Each action carries its own forwarder call, so the call belongs inside the loop over the actions.
+    function _executeForwarderCall(ForwarderCall memory forwarderCall) internal {
+        // NOTE: Each resource carries its own forwarder calls, so the call belongs inside the loop over the calls.
         // forge-lint: disable-next-item(calls-loop)
-        bytes memory actualOutput =
-            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
+        bytes memory actualOutput = IForwarder(forwarderCall.untrustedForwarder).forwardCall({
+            logicRef: forwarderCall.carrierLogicRef, input: forwarderCall.input
+        });
 
-        // NOTE: Reverting inside the loop is intended: one invalid action aborts the whole transaction.
+        // NOTE: Reverting inside the loop is intended: one invalid call aborts the whole transaction.
         require(
-            keccak256(actualOutput) == keccak256(expectedOutput),
-            ForwarderCallOutputMismatch({expected: expectedOutput, actual: actualOutput})
+            keccak256(actualOutput) == keccak256(forwarderCall.expectedOutput),
+            ForwarderCallOutputMismatch({expected: forwarderCall.expectedOutput, actual: actualOutput})
         );
 
         // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
         // slither-disable-next-line reentrancy-events
-        emit ForwarderCallExecuted({untrustedForwarder: untrustedForwarder, input: input, output: actualOutput});
-    }
-
-    /// @notice Marks the calls of a tag as run. Every resource is marked, because a resource without calls is
-    /// still a valid reference for a constraint.
-    /// @param tag The tag of the resource.
-    function _markExecuted(bytes32 tag) internal {
-        _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT.deriveMapping(tag).asBoolean().tstore(true);
+        emit ForwarderCallExecuted({
+            untrustedForwarder: forwarderCall.untrustedForwarder, input: forwarderCall.input, output: actualOutput
+        });
     }
 
     /// @notice Emits app data blobs together with the associated resource tag based on their deletion criterion.
@@ -306,8 +318,6 @@ contract ProtocolAdapter is
         uint256 n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == DeletionCriterion.Never) {
-                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
-                // slither-disable-next-line reentrancy-events
                 emit ResourcePayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
@@ -316,8 +326,6 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == DeletionCriterion.Never) {
-                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
-                // slither-disable-next-line reentrancy-events
                 emit DiscoveryPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
@@ -326,8 +334,6 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == DeletionCriterion.Never) {
-                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
-                // slither-disable-next-line reentrancy-events
                 emit ExternalPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
@@ -336,8 +342,6 @@ contract ProtocolAdapter is
         n = payload.length;
         for (uint256 i = 0; i < n; ++i) {
             if (payload[i].deletionCriterion == DeletionCriterion.Never) {
-                // NOTE: The event ordering is protected by the `nonReentrant` modifier on the `execute` function.
-                // slither-disable-next-line reentrancy-events
                 emit ApplicationPayload({tag: tag, index: i, blob: payload[i].blob});
             }
         }
@@ -368,28 +372,6 @@ contract ProtocolAdapter is
 
     /// @notice Allows only the owner to add logic references to the denylists.
     function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
-
-    /// @notice Checks the ordering constraints of a call against the resources whose calls have run already. The
-    /// adapter checks the order it receives; the sender arranges the resources and actions to satisfy it.
-    /// @param afterTags The tags whose calls must have run already.
-    /// @param beforeTags The tags whose calls must not have run yet.
-    function _checkOrdering(bytes32[] memory afterTags, bytes32[] memory beforeTags) internal view {
-        for (uint256 i = 0; i < afterTags.length; ++i) {
-            require(_hasExecuted(afterTags[i]), MustRunAfter(afterTags[i]));
-        }
-
-        // A tag that is absent from the transaction was never marked, so a `beforeTags` entry naming one passes.
-        for (uint256 i = 0; i < beforeTags.length; ++i) {
-            require(!_hasExecuted(beforeTags[i]), MustRunBefore(beforeTags[i]));
-        }
-    }
-
-    /// @notice Returns whether the calls of a tag have run in this transaction.
-    /// @param tag The tag of the resource.
-    /// @return executed Whether the calls of the resource have run.
-    function _hasExecuted(bytes32 tag) internal view returns (bool executed) {
-        executed = _EXECUTED_TAGS_TRANSIENT_STORAGE_SLOT.deriveMapping(tag).asBoolean().tload();
-    }
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
@@ -443,5 +425,73 @@ contract ProtocolAdapter is
             selector == RISC_ZERO_VERIFIER_SELECTOR,
             RiscZeroVerifierSelectorMismatch({expected: RISC_ZERO_VERIFIER_SELECTOR, actual: selector})
         );
+    }
+
+    /// @notice Allocates the arrays for the tags and the forwarder calls of a transaction.
+    /// @param actions The actions of the transaction.
+    /// @return collected The empty collection.
+    function _allocateCollectedCalls(Action[] calldata actions)
+        internal
+        pure
+        returns (CollectedCalls memory collected)
+    {
+        uint256 resourceCount = 0;
+        uint256 callCount = 0;
+        uint256 actionCount = actions.length;
+
+        for (uint256 i = 0; i < actionCount; ++i) {
+            Consumed[] calldata consumed = actions[i].consumed;
+            Created[] calldata created = actions[i].created;
+            resourceCount += consumed.length + created.length;
+
+            for (uint256 j = 0; j < consumed.length; ++j) {
+                callCount += consumed[j].appData.externalPayload.length;
+            }
+            for (uint256 j = 0; j < created.length; ++j) {
+                callCount += created[j].appData.externalPayload.length;
+            }
+        }
+
+        collected.tags = new bytes32[](resourceCount);
+        collected.constraints = new ForwarderCallOrder.Constraints[](callCount);
+        collected.calls = new ForwarderCall[](callCount);
+    }
+
+    /// @notice Collects the tag of a resource and the forwarder calls in its external payload.
+    /// @param tag The tag of the resource.
+    /// @param carrierLogicRef The logic reference of the resource.
+    /// @param appData The application data of the resource.
+    /// @param collected The collection to add the tag and the calls to.
+    function _collectResource(
+        bytes32 tag,
+        bytes32 carrierLogicRef,
+        AppData calldata appData,
+        CollectedCalls memory collected
+    ) internal pure {
+        collected.tags[collected.tagCount++] = tag;
+
+        uint256 blobCount = appData.externalPayload.length;
+        for (uint256 i = 0; i < blobCount; ++i) {
+            (
+                address untrustedForwarder,
+                bytes memory input,
+                bytes memory expectedOutput,
+                bytes32[] memory afterTags,
+                bytes32[] memory beforeTags
+            ) = abi.decode(appData.externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
+
+            // The arrays hold zeroed structs already, so the fields are written in place.
+            uint256 index = collected.callCount++;
+            ForwarderCallOrder.Constraints memory constraints = collected.constraints[index];
+            constraints.tag = tag;
+            constraints.afterTags = afterTags;
+            constraints.beforeTags = beforeTags;
+
+            ForwarderCall memory forwarderCall = collected.calls[index];
+            forwarderCall.carrierLogicRef = carrierLogicRef;
+            forwarderCall.untrustedForwarder = untrustedForwarder;
+            forwarderCall.input = input;
+            forwarderCall.expectedOutput = expectedOutput;
+        }
     }
 }
