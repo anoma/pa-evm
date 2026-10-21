@@ -26,23 +26,7 @@ library ForwarderCallOrder {
         bytes32 resourceTag;
         bytes32 resourceLogicRef;
         uint256 actionIndex;
-        ForwarderCall[] calls;
-    }
-
-    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
-    /// @param untrustedForwarder The forwarder contract to call.
-    /// @param input The input of the call.
-    /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the resources whose calls are executed before the calls of the call list of this
-    /// call.
-    /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
-    /// call.
-    struct ForwarderCall {
-        address untrustedForwarder;
-        bytes input;
-        bytes expectedOutput;
-        bytes32[] afterTags;
-        bytes32[] beforeTags;
+        IProtocolAdapter.ForwarderCall[] calls;
     }
 
     /// @notice The position of the offset of `afterTags` in an encoded forwarder call, which is its fourth word.
@@ -173,9 +157,9 @@ library ForwarderCallOrder {
         callList.resourceLogicRef = resourceLogicRef;
 
         uint256 callCount = externalPayload.length;
-        callList.calls = new ForwarderCall[](callCount);
+        callList.calls = new IProtocolAdapter.ForwarderCall[](callCount);
         for (uint256 i = 0; i < callCount; ++i) {
-            ForwarderCall memory forwarderCall = callList.calls[i];
+            IProtocolAdapter.ForwarderCall memory forwarderCall = callList.calls[i];
             (
                 forwarderCall.untrustedForwarder,
                 forwarderCall.input,
@@ -201,11 +185,11 @@ library ForwarderCallOrder {
         constraints.successors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
-            ForwarderCall[] memory calls = callLists[callListIndex].calls;
+            IProtocolAdapter.ForwarderCall[] memory calls = callLists[callListIndex].calls;
             uint256 callCount = calls.length;
 
             for (uint256 c = 0; c < callCount; ++c) {
-                ForwarderCall memory forwarderCall = calls[c];
+                IProtocolAdapter.ForwarderCall memory forwarderCall = calls[c];
                 bytes32[] memory afterTags = forwarderCall.afterTags;
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {

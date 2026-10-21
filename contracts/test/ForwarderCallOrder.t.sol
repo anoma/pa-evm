@@ -78,7 +78,7 @@ contract ForwarderCallOrderTest is Test {
         callLists[0].resourceTag = keccak256("a resource of the first action");
         callLists[1].resourceTag = keccak256("a resource of the last action");
         callLists[1].actionIndex = actionCount - 1;
-        callLists[0].calls = new ForwarderCallOrder.ForwarderCall[](1);
+        callLists[0].calls = new IProtocolAdapter.ForwarderCall[](1);
         callLists[0].calls[0].afterTags = new bytes32[](1);
         callLists[0].calls[0].afterTags[0] = callLists[1].resourceTag;
 

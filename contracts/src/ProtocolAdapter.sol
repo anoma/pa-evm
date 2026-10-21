@@ -336,7 +336,7 @@ contract ProtocolAdapter is
             ForwarderCallOrder.CallList memory callList = callLists[orderedIndices[position]];
             uint256 callCount = callList.calls.length;
             for (uint256 i = 0; i < callCount; ++i) {
-                ForwarderCallOrder.ForwarderCall memory forwarderCall = callList.calls[i];
+                ForwarderCall memory forwarderCall = callList.calls[i];
                 _executeForwarderCall({
                     logicRef: callList.resourceLogicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,

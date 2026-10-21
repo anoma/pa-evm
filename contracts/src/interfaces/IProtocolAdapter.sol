@@ -92,6 +92,22 @@ interface IProtocolAdapter {
         bytes blob;
     }
 
+    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
+    /// @param untrustedForwarder The forwarder contract to call.
+    /// @param input The input of the call.
+    /// @param expectedOutput The output that the call must return.
+    /// @param afterTags The tags of the resources whose calls are executed before the calls of the call list of this
+    /// call.
+    /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
+    /// call.
+    struct ForwarderCall {
+        address untrustedForwarder;
+        bytes input;
+        bytes expectedOutput;
+        bytes32[] afterTags;
+        bytes32[] beforeTags;
+    }
+
     /// @notice Emitted when a transaction is executed.
     /// @param transactionId The Keccak-256 hash of the concatenated action tree roots — the message the delta proof
     /// signs, unique per transaction and known to the sender before submission.
