@@ -145,9 +145,16 @@ library ForwarderCallOrder {
         uint256[] memory successors,
         uint256 edgeCount
     ) internal pure returns (uint256[] memory orderedIndices) {
+        // The edges out of each carrier form a list: `lastEdge` holds one more than the index of the last edge out of
+        // a carrier, and `previousEdge` one more than the index of the edge out of the same carrier before an edge.
+        // Zero ends the list.
         uint256[] memory incomingEdgeCounts = new uint256[](carrierCount);
+        uint256[] memory lastEdge = new uint256[](carrierCount);
+        uint256[] memory previousEdge = new uint256[](edgeCount);
         for (uint256 e = 0; e < edgeCount; ++e) {
             ++incomingEdgeCounts[successors[e]];
+            previousEdge[e] = lastEdge[predecessors[e]];
+            lastEdge[predecessors[e]] = e + 1;
         }
 
         orderedIndices = new uint256[](carrierCount);
@@ -158,10 +165,8 @@ library ForwarderCallOrder {
             // No edge from a carrier that is not in the order ends at one that is, so no decrement reaches this value.
             incomingEdgeCounts[ready] = _ORDERED;
             orderedIndices[position] = ready;
-            for (uint256 e = 0; e < edgeCount; ++e) {
-                if (predecessors[e] == ready) {
-                    --incomingEdgeCounts[successors[e]];
-                }
+            for (uint256 e = lastEdge[ready]; e != 0; e = previousEdge[e - 1]) {
+                --incomingEdgeCounts[successors[e - 1]];
             }
         }
     }
