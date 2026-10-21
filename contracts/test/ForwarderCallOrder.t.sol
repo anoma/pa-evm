@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
+import {DirectedGraph} from "../src/libs/DirectedGraph.sol";
 import {ForwarderCallOrder} from "../src/libs/ForwarderCallOrder.sol";
 
 contract ForwarderCallOrderTest is Test {
@@ -16,12 +17,35 @@ contract ForwarderCallOrderTest is Test {
         constrained = ForwarderCallOrder.hasOrderingConstraints(externalPayload);
     }
 
+    /// @notice Passes the actions in calldata, where the protocol adapter reads them.
+    function orderInCalldata(ForwarderCallOrder.CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
+        external
+        pure
+        returns (uint256[] memory orderedIndices)
+    {
+        orderedIndices = ForwarderCallOrder.order(callLists, actions);
+    }
+
     /// @dev The offsets of the tag lists are the fourth and fifth words of the encoded call.
     function test_hasOrderingConstraints_reverts_on_a_blob_too_short_for_the_tag_list_offsets() public {
         IProtocolAdapter.ExpirableBlob[] memory externalPayload = _payload(new bytes(3 * 32));
 
         vm.expectRevert();
         this.hasOrderingConstraintsInCalldata(externalPayload);
+    }
+
+    function test_order_reverts_on_more_call_lists_than_a_graph_has_nodes() public {
+        uint256 callListCount = DirectedGraph.MAX_NODE_COUNT + 1;
+
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrder.TooManyCallCarryingResources.selector, callListCount));
+        this.orderInCalldata(new ForwarderCallOrder.CallList[](callListCount), new IProtocolAdapter.Action[](0));
+    }
+
+    function test_order_reverts_on_more_actions_than_a_graph_has_nodes() public {
+        uint256 actionCount = DirectedGraph.MAX_NODE_COUNT + 1;
+
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrder.TooManyActions.selector, actionCount));
+        this.orderInCalldata(new ForwarderCallOrder.CallList[](0), new IProtocolAdapter.Action[](actionCount));
     }
 
     function testFuzz_hasOrderingConstraints_agrees_with_the_lengths_of_the_tag_lists(
@@ -39,6 +63,20 @@ contract ForwarderCallOrderTest is Test {
             afterTagCount + beforeTagCount != 0,
             "constrained if a tag list is not empty"
         );
+    }
+
+    /// @dev The call lists carry no calls, so their order is the order of their indices.
+    function test_order_accepts_as_many_call_lists_and_actions_as_a_graph_has_nodes() public view {
+        uint256 maxNodeCount = DirectedGraph.MAX_NODE_COUNT;
+
+        uint256[] memory orderedIndices = this.orderInCalldata(
+            new ForwarderCallOrder.CallList[](maxNodeCount), new IProtocolAdapter.Action[](maxNodeCount)
+        );
+
+        assertEq(orderedIndices.length, maxNodeCount, "number of ordered call lists");
+        for (uint256 position = 0; position < maxNodeCount; ++position) {
+            assertEq(orderedIndices[position], position, "ordered call list");
+        }
     }
 
     function _payload(bytes memory blob)

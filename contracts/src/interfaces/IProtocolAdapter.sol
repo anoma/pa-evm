@@ -150,7 +150,8 @@ interface IProtocolAdapter {
     /// actions. Of the actions whose calls can run next, the first goes first, and within an action, of the resources
     /// whose calls can run next, the first goes first, with the consumed resources before the created resources. A tag
     /// of a resource without calls constrains nothing. The transaction reverts if an `afterTags` or `beforeTags` entry
-    /// is no tag of the transaction, or if no order meets the constraints.
+    /// is no tag of the transaction, or if no order meets the constraints. A transaction with ordering constraints can
+    /// have at most 256 call-carrying resources and at most 256 actions.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

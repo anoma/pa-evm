@@ -327,9 +327,8 @@ contract ProtocolAdapter is
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     function _runForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
-        (ForwarderCallOrder.CallList[] memory callLists, uint256 constraintCount) =
-            actions.decodeCallLists(callListCount);
-        uint256[] memory orderedIndices = callLists.order({actions: actions, constraintCount: constraintCount});
+        ForwarderCallOrder.CallList[] memory callLists = actions.decodeCallLists(callListCount);
+        uint256[] memory orderedIndices = callLists.order(actions);
 
         for (uint256 position = 0; position < callListCount; ++position) {
             ForwarderCallOrder.CallList memory callList = callLists[orderedIndices[position]];

@@ -10,6 +10,14 @@ contract DirectedGraphTest is Test {
     using DirectedGraph for DirectedGraph.Graph;
     using LibPRNG for LibPRNG.PRNG;
 
+    function test_hasEdges_returns_false_for_a_graph_without_edges() public pure {
+        assertFalse(_graph({nodeCount: 3, predecessors: _list(), successors: _list()}).hasEdges(), "has edges");
+    }
+
+    function test_hasEdges_returns_true_for_a_graph_with_an_edge() public pure {
+        assertTrue(_graph({nodeCount: 3, predecessors: _list(2), successors: _list(1)}).hasEdges(), "has edges");
+    }
+
     function test_topologicalSort_reports_edges_that_form_a_cycle() public pure {
         (bool isAcyclic,) =
             _graph({nodeCount: 3, predecessors: _list(0, 1, 2), successors: _list(1, 2, 0)}).topologicalSort();
@@ -36,21 +44,26 @@ contract DirectedGraphTest is Test {
         assertEq(_sort({nodeCount: 3, predecessors: _list(1), successors: _list(0)}), _list(1, 0, 2), "sorted nodes");
     }
 
-    function test_topologicalSort_counts_each_of_two_equal_edges() public pure {
+    function test_topologicalSort_sorts_two_equal_edges_like_one() public pure {
         assertEq(_sort({nodeCount: 2, predecessors: _list(1, 1), successors: _list(0, 0)}), _list(1, 0), "sorted nodes");
     }
 
-    /// @dev The memory of the second edge holds zeros, which would read as an edge from node 0 to itself.
-    function test_topologicalSort_reads_only_the_added_edges() public pure {
-        DirectedGraph.Graph memory graph = DirectedGraph.Graph({
-            nodeCount: 2, predecessors: new uint256[](2), successors: new uint256[](2), edgeCount: 0
-        });
-        graph.addEdge({predecessor: 1, successor: 0});
+    /// @dev Each node waits for the node above it, so the highest node, whose bit is the last bit of a bitmap, comes
+    /// first.
+    function test_topologicalSort_sorts_a_graph_of_the_maximum_node_count() public pure {
+        uint256 nodeCount = DirectedGraph.MAX_NODE_COUNT;
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
+        for (uint256 node = 0; node + 1 < nodeCount; ++node) {
+            graph.addEdge({predecessor: node + 1, successor: node});
+        }
 
         (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
 
         assertTrue(isAcyclic, "the edges form no cycle");
-        assertEq(sortedNodes, _list(1, 0), "sorted nodes");
+        assertEq(sortedNodes.length, nodeCount, "number of sorted nodes");
+        for (uint256 position = 0; position < nodeCount; ++position) {
+            assertEq(sortedNodes[position], nodeCount - 1 - position, "sorted node");
+        }
     }
 
     function test_topologicalSort_returns_no_nodes_for_a_graph_without_nodes() public pure {
@@ -59,10 +72,10 @@ contract DirectedGraphTest is Test {
 
     /// @dev Draws a rank for each node and adds edges that agree with the ranks, so that the graph has no cycle.
     function testFuzz_topologicalSort_puts_the_predecessor_of_every_edge_before_its_successor(
-        uint8 nodeCount,
+        uint16 nodeCount,
         uint256 seed
     ) public pure {
-        nodeCount = uint8(bound(nodeCount, 1, 16));
+        nodeCount = uint16(bound(nodeCount, 1, DirectedGraph.MAX_NODE_COUNT));
         LibPRNG.PRNG memory prng = LibPRNG.PRNG({state: seed});
 
         uint256[] memory ranks = new uint256[](nodeCount);
@@ -71,20 +84,19 @@ contract DirectedGraphTest is Test {
         }
         prng.shuffle(ranks);
 
-        uint256 drawCount = 2 * nodeCount;
-        DirectedGraph.Graph memory graph = DirectedGraph.Graph({
-            nodeCount: nodeCount,
-            predecessors: new uint256[](drawCount),
-            successors: new uint256[](drawCount),
-            edgeCount: 0
-        });
+        uint256 drawCount = 2 * uint256(nodeCount);
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
+        uint256[] memory predecessors = new uint256[](drawCount);
+        uint256[] memory successors = new uint256[](drawCount);
+        uint256 edgeCount = 0;
         for (uint256 d = 0; d < drawCount; ++d) {
             uint256 first = prng.uniform(nodeCount);
             uint256 second = prng.uniform(nodeCount);
             if (ranks[first] != ranks[second]) {
-                (uint256 predecessor, uint256 successor) =
+                (predecessors[edgeCount], successors[edgeCount]) =
                     ranks[first] < ranks[second] ? (first, second) : (second, first);
-                graph.addEdge({predecessor: predecessor, successor: successor});
+                graph.addEdge({predecessor: predecessors[edgeCount], successor: successors[edgeCount]});
+                ++edgeCount;
             }
         }
 
@@ -99,12 +111,8 @@ contract DirectedGraphTest is Test {
             seen[sortedNodes[position]] = true;
             positions[sortedNodes[position]] = position;
         }
-        for (uint256 e = 0; e < graph.edgeCount; ++e) {
-            assertLt(
-                positions[graph.predecessors[e]],
-                positions[graph.successors[e]],
-                "a predecessor comes before its successor"
-            );
+        for (uint256 e = 0; e < edgeCount; ++e) {
+            assertLt(positions[predecessors[e]], positions[successors[e]], "a predecessor comes before its successor");
         }
     }
 
@@ -125,9 +133,14 @@ contract DirectedGraphTest is Test {
         returns (DirectedGraph.Graph memory graph)
     {
         assertEq(predecessors.length, successors.length, "one predecessor and one successor for each edge");
-        graph = DirectedGraph.Graph({
-            nodeCount: nodeCount, predecessors: predecessors, successors: successors, edgeCount: predecessors.length
-        });
+        graph = _graphWithoutEdges(nodeCount);
+        for (uint256 e = 0; e < predecessors.length; ++e) {
+            graph.addEdge({predecessor: predecessors[e], successor: successors[e]});
+        }
+    }
+
+    function _graphWithoutEdges(uint256 nodeCount) private pure returns (DirectedGraph.Graph memory graph) {
+        graph = DirectedGraph.Graph({predecessors: new uint256[](nodeCount), successors: new uint256[](nodeCount)});
     }
 
     function _list() private pure returns (uint256[] memory list) {
