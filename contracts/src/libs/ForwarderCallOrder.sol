@@ -7,6 +7,7 @@ import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
+/// @dev The order is a topological sort with Kahn's algorithm, in `orderByEdges`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
     /// @notice The forwarder calls in the external payload of a resource. They run together and in their order.
@@ -194,6 +195,7 @@ library ForwarderCallOrder {
     /// @notice Orders the items, which are call lists or actions, so that the predecessor of each edge comes before its
     /// successor. An edge is a pair of items whose forwarder calls run in this order. Of the items that wait for no
     /// other item, the item with the lowest index comes next.
+    /// @dev Kahn's algorithm. Taking the ready item with the lowest index at each step makes the order unique.
     /// @param itemCount The number of items.
     /// @param predecessors The item at the start of each edge.
     /// @param successors The item at the end of each edge.
