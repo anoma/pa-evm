@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 import {DirectedGraph} from "../libs/DirectedGraph.sol";
 
-/// @title ForwarderCallOrder
+/// @title ForwarderCallOrdering
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
@@ -13,7 +13,7 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// list of the earlier action to each call list of the later one, so that the calls of an action are executed together.
 /// `order` sorts the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
-library ForwarderCallOrder {
+library ForwarderCallOrdering {
     using DirectedGraph for DirectedGraph.Graph;
 
     /// @notice The forwarder calls in the external payload of a resource. They are executed together and in their
