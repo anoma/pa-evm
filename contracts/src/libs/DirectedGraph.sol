@@ -32,16 +32,27 @@ library DirectedGraph {
         graph.successors[predecessor] = graph.successors[predecessor]._add(successor);
     }
 
-    /// @notice Returns whether a graph has an edge.
+    /// @notice Adds an edge from each node in a range to each node in another range. A range holds the nodes from its
+    /// start up to its end, without the end.
     /// @param graph The graph.
-    /// @return found Whether a node has a successor.
-    function hasEdges(Graph memory graph) internal pure returns (bool found) {
-        uint256[] memory successors = graph.successors;
-        uint256 nodeCount = successors.length;
-        for (uint256 node = 0; node < nodeCount; ++node) {
-            if (successors[node] != 0) {
-                return true;
-            }
+    /// @param predecessorStart The first node at the start of the edges.
+    /// @param predecessorEnd The node after the last node at the start of the edges.
+    /// @param successorStart The first node at the end of the edges.
+    /// @param successorEnd The node after the last node at the end of the edges.
+    function addEdges(
+        Graph memory graph,
+        uint256 predecessorStart,
+        uint256 predecessorEnd,
+        uint256 successorStart,
+        uint256 successorEnd
+    ) internal pure {
+        uint256 predecessorSet = _range(predecessorStart, predecessorEnd);
+        uint256 successorSet = _range(successorStart, successorEnd);
+        for (uint256 node = predecessorStart; node < predecessorEnd; ++node) {
+            graph.successors[node] = graph.successors[node]._union(successorSet);
+        }
+        for (uint256 node = successorStart; node < successorEnd; ++node) {
+            graph.predecessors[node] = graph.predecessors[node]._union(predecessorSet);
         }
     }
 
@@ -110,6 +121,22 @@ library DirectedGraph {
     /// @return node The node.
     function _lowest(uint256 set) internal pure returns (uint256 node) {
         node = LibBit.ffs(set);
+    }
+
+    /// @notice Returns the nodes that are in one set or in another.
+    /// @param set The first set, as a bitmap.
+    /// @param other The second set, as a bitmap.
+    /// @return result The nodes of both sets.
+    function _union(uint256 set, uint256 other) internal pure returns (uint256 result) {
+        result = set | other;
+    }
+
+    /// @notice Returns the nodes of a range, which must not be empty.
+    /// @param start The first node of the range.
+    /// @param end The node after the last node of the range.
+    /// @return set The set, as a bitmap.
+    function _range(uint256 start, uint256 end) internal pure returns (uint256 set) {
+        set = (type(uint256).max >> (MAX_NODE_COUNT - end)) & ~((1 << start) - 1);
     }
 
     /// @notice Returns whether each node of a set is also in another set.
