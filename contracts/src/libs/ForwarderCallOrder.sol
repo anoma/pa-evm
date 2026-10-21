@@ -49,6 +49,12 @@ library ForwarderCallOrder {
     /// @notice The incoming edge count of an item that is in the order.
     uint256 private constant _ORDERED = type(uint256).max;
 
+    /// @notice The position of the offset of `afterTags` in an encoded forwarder call, which is its fourth word.
+    uint256 private constant _AFTER_TAGS_OFFSET_POSITION = 3 * 32;
+
+    /// @notice The position of the offset of `beforeTags` in an encoded forwarder call, which is its fifth word.
+    uint256 private constant _BEFORE_TAGS_OFFSET_POSITION = 4 * 32;
+
     /// @notice Thrown if an `afterTags` entry names no resource of the transaction.
     error AfterTagNotInTransaction(bytes32 tag);
 
@@ -59,8 +65,8 @@ library ForwarderCallOrder {
     error CyclicConstraints();
 
     /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
-    /// @dev Reads only the lengths of `afterTags` and `beforeTags`, whose offsets are the fourth and fifth words of
-    /// the encoded call. The slicing reverts if the blob is too short or an offset points outside it.
+    /// @dev Reads only the lengths of `afterTags` and `beforeTags`. The slicing reverts if the blob is too short or an
+    /// offset points outside it.
     /// @param externalPayload The external payload of the resource.
     /// @return constrained Whether a call has an `afterTags` or a `beforeTags` entry.
     function hasOrderingConstraints(IProtocolAdapter.ExpirableBlob[] calldata externalPayload)
@@ -71,7 +77,10 @@ library ForwarderCallOrder {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             bytes calldata blob = externalPayload[i].blob;
-            if (_wordAt(blob, _wordAt(blob, 96)) != 0 || _wordAt(blob, _wordAt(blob, 128)) != 0) {
+            if (
+                _wordAt(blob, _wordAt(blob, _AFTER_TAGS_OFFSET_POSITION)) != 0
+                    || _wordAt(blob, _wordAt(blob, _BEFORE_TAGS_OFFSET_POSITION)) != 0
+            ) {
                 return true;
             }
         }
