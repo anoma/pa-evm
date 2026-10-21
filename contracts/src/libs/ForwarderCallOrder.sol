@@ -7,7 +7,8 @@ import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
-/// @dev The order is a topological sort with Kahn's algorithm, in `orderByEdges`.
+/// @dev `order` builds two graphs from the ordering constraints, one whose nodes are the call lists and one whose
+/// nodes are the actions, and sorts both topologically with Kahn's algorithm.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
     /// @notice The forwarder calls in the external payload of a resource. They run together and in their order.
@@ -36,19 +37,22 @@ library ForwarderCallOrder {
         bytes32[] beforeTags;
     }
 
-    /// @notice Edges between call lists or between actions. An edge is a pair of items whose forwarder calls run in
-    /// this order.
-    /// @param predecessors The item at the start of each edge.
-    /// @param successors The item at the end of each edge.
-    /// @param count The number of edges.
-    struct Edges {
+    /// @notice A directed graph whose nodes are either the call lists or the actions of a transaction. Each node is the
+    /// index of a call list or of an action. An edge from a predecessor to a successor means that the forwarder calls
+    /// of the predecessor run before those of the successor.
+    /// @param nodeCount The number of nodes.
+    /// @param predecessors The node at the start of each edge.
+    /// @param successors The node at the end of each edge.
+    /// @param edgeCount The number of edges, in the first entries of `predecessors` and `successors`.
+    struct Graph {
+        uint256 nodeCount;
         uint256[] predecessors;
         uint256[] successors;
-        uint256 count;
+        uint256 edgeCount;
     }
 
-    /// @notice The incoming edge count of an item that is in the order.
-    uint256 private constant _ORDERED = type(uint256).max;
+    /// @notice The value that marks a sorted node in place of its in-degree, so that the node is never ready again.
+    uint256 private constant _SORTED = type(uint256).max;
 
     /// @notice The position of the offset of `afterTags` in an encoded forwarder call, which is its fourth word.
     uint256 private constant _AFTER_TAGS_OFFSET_POSITION = 3 * 32;
@@ -150,36 +154,34 @@ library ForwarderCallOrder {
         pure
         returns (uint256[] memory orderedIndices)
     {
-        // Each ordering constraint adds at most one edge.
-        Edges memory callListEdges =
-            Edges({predecessors: new uint256[](constraintCount), successors: new uint256[](constraintCount), count: 0});
-        Edges memory actionEdges =
-            Edges({predecessors: new uint256[](constraintCount), successors: new uint256[](constraintCount), count: 0});
-        _addEdges({callLists: callLists, actions: actions, callListEdges: callListEdges, actionEdges: actionEdges});
-
         uint256 callListCount = callLists.length;
-        uint256[] memory callListOrder = orderByEdges({
-            itemCount: callListCount,
-            predecessors: callListEdges.predecessors,
-            successors: callListEdges.successors,
-            edgeCount: callListEdges.count
-        });
 
-        // The call lists of an action have lower indices than those of later actions, and their edges stay within an
-        // action, so without edges between actions their order runs the actions one after another.
-        if (actionEdges.count == 0) {
+        // Each ordering constraint adds at most one edge.
+        Graph memory callListGraph = Graph({
+            nodeCount: callListCount,
+            predecessors: new uint256[](constraintCount),
+            successors: new uint256[](constraintCount),
+            edgeCount: 0
+        });
+        Graph memory actionGraph = Graph({
+            nodeCount: actions.length,
+            predecessors: new uint256[](constraintCount),
+            successors: new uint256[](constraintCount),
+            edgeCount: 0
+        });
+        _addEdges({callLists: callLists, actions: actions, callListGraph: callListGraph, actionGraph: actionGraph});
+
+        uint256[] memory callListOrder = topologicalSort(callListGraph);
+
+        // Call lists of earlier actions have lower indices, and the edges of `callListGraph` stay within an action, so
+        // without edges in `actionGraph`, `callListOrder` already lists the call lists action by action.
+        if (actionGraph.edgeCount == 0) {
             return callListOrder;
         }
 
-        uint256[] memory actionOrder = orderByEdges({
-            itemCount: actions.length,
-            predecessors: actionEdges.predecessors,
-            successors: actionEdges.successors,
-            edgeCount: actionEdges.count
-        });
+        uint256[] memory actionOrder = topologicalSort(actionGraph);
 
-        // The edges between call lists stay within an action, so their order restricted to an action is the order of
-        // the call lists of that action.
+        // The edges of `callListGraph` stay within an action, so each action keeps its call lists in sorted order.
         orderedIndices = new uint256[](callListCount);
         uint256 position = 0;
         uint256 actionCount = actionOrder.length;
@@ -192,37 +194,35 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Orders the items, which are call lists or actions, so that the predecessor of each edge comes before its
-    /// successor. An edge is a pair of items whose forwarder calls run in this order. Of the items that wait for no
-    /// other item, the item with the lowest index comes next.
-    /// @dev Kahn's algorithm. Taking the ready item with the lowest index at each step makes the order unique.
-    /// @param itemCount The number of items.
-    /// @param predecessors The item at the start of each edge.
-    /// @param successors The item at the end of each edge.
-    /// @param edgeCount The number of edges in `predecessors` and `successors`.
-    /// @return orderedIndices The indices of the items, in the order in which their calls run.
-    function orderByEdges(
-        uint256 itemCount,
-        uint256[] memory predecessors,
-        uint256[] memory successors,
-        uint256 edgeCount
-    ) internal pure returns (uint256[] memory orderedIndices) {
-        uint256[] memory incomingEdgeCounts = new uint256[](itemCount);
+    /// @notice Sorts the nodes of a graph topologically: the predecessor of each edge comes before its successor. Of
+    /// the nodes that wait for no other node, the node with the lowest index comes next.
+    /// @dev Kahn's algorithm. The in-degree of a node is the number of edges to it from nodes that are not sorted yet,
+    /// and a node is ready when its in-degree is zero. Taking the ready node with the lowest index at each step makes
+    /// the order unique.
+    /// @param graph The graph to sort.
+    /// @return sortedNodes The nodes, in topological order.
+    function topologicalSort(Graph memory graph) internal pure returns (uint256[] memory sortedNodes) {
+        uint256 nodeCount = graph.nodeCount;
+        uint256[] memory predecessors = graph.predecessors;
+        uint256[] memory successors = graph.successors;
+        uint256 edgeCount = graph.edgeCount;
+
+        uint256[] memory inDegrees = new uint256[](nodeCount);
         for (uint256 e = 0; e < edgeCount; ++e) {
-            ++incomingEdgeCounts[successors[e]];
+            ++inDegrees[successors[e]];
         }
 
-        orderedIndices = new uint256[](itemCount);
-        for (uint256 position = 0; position < itemCount; ++position) {
-            uint256 ready = _firstReady(incomingEdgeCounts);
-            require(ready != itemCount, CyclicConstraints());
+        sortedNodes = new uint256[](nodeCount);
+        for (uint256 position = 0; position < nodeCount; ++position) {
+            uint256 node = _firstReadyNode(inDegrees);
+            require(node != nodeCount, CyclicConstraints());
 
-            // No edge from an item that is not in the order ends at one that is, so no decrement reaches this value.
-            incomingEdgeCounts[ready] = _ORDERED;
-            orderedIndices[position] = ready;
+            // Each edge from this node ends at a node that is not sorted yet, so no decrement reaches this value.
+            inDegrees[node] = _SORTED;
+            sortedNodes[position] = node;
             for (uint256 e = 0; e < edgeCount; ++e) {
-                if (predecessors[e] == ready) {
-                    --incomingEdgeCounts[successors[e]];
+                if (predecessors[e] == node) {
+                    --inDegrees[successors[e]];
                 }
             }
         }
@@ -258,17 +258,17 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Writes one edge for each ordering constraint that names the resource of a call list, and checks that
-    /// each `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// @notice Adds an edge for each ordering constraint that names the resource of a call list, and checks that each
+    /// `afterTags` and `beforeTags` entry names a resource of the transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param callListEdges The edges between call lists of one action.
-    /// @param actionEdges The edges between actions.
+    /// @param callListGraph The graph whose nodes are the call lists.
+    /// @param actionGraph The graph whose nodes are the actions.
     function _addEdges(
         CallList[] memory callLists,
         IProtocolAdapter.Action[] calldata actions,
-        Edges memory callListEdges,
-        Edges memory actionEdges
+        Graph memory callListGraph,
+        Graph memory actionGraph
     ) private pure {
         uint256 callListCount = callLists.length;
 
@@ -291,8 +291,8 @@ library ForwarderCallOrder {
                     }
                     _addEdge({
                         callLists: callLists,
-                        callListEdges: callListEdges,
-                        actionEdges: actionEdges,
+                        callListGraph: callListGraph,
+                        actionGraph: actionGraph,
                         predecessor: predecessor,
                         successor: callListIndex
                     });
@@ -313,8 +313,8 @@ library ForwarderCallOrder {
                     }
                     _addEdge({
                         callLists: callLists,
-                        callListEdges: callListEdges,
-                        actionEdges: actionEdges,
+                        callListGraph: callListGraph,
+                        actionGraph: actionGraph,
                         predecessor: callListIndex,
                         successor: successor
                     });
@@ -323,29 +323,29 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Writes the edge between two call lists if they belong to one action, and else the edge between their
-    /// actions.
+    /// @notice Adds an edge between two call lists to `callListGraph` if they belong to one action, and else an edge
+    /// between their actions to `actionGraph`.
     /// @param callLists The call lists of the transaction.
-    /// @param callListEdges The edges between call lists of one action.
-    /// @param actionEdges The edges between actions.
-    /// @param predecessor The call list whose calls run first.
-    /// @param successor The call list whose calls run second.
+    /// @param callListGraph The graph whose nodes are the call lists.
+    /// @param actionGraph The graph whose nodes are the actions.
+    /// @param predecessor The call list whose calls run before those of `successor`.
+    /// @param successor The call list whose calls run after those of `predecessor`.
     function _addEdge(
         CallList[] memory callLists,
-        Edges memory callListEdges,
-        Edges memory actionEdges,
+        Graph memory callListGraph,
+        Graph memory actionGraph,
         uint256 predecessor,
         uint256 successor
     ) private pure {
-        Edges memory edges = callListEdges;
+        Graph memory graph = callListGraph;
         uint256 predecessorAction = callLists[predecessor].actionIndex;
         uint256 successorAction = callLists[successor].actionIndex;
         if (predecessorAction != successorAction) {
-            (edges, predecessor, successor) = (actionEdges, predecessorAction, successorAction);
+            (graph, predecessor, successor) = (actionGraph, predecessorAction, successorAction);
         }
-        edges.predecessors[edges.count] = predecessor;
-        edges.successors[edges.count] = successor;
-        ++edges.count;
+        graph.predecessors[graph.edgeCount] = predecessor;
+        graph.successors[graph.edgeCount] = successor;
+        ++graph.edgeCount;
     }
 
     /// @notice Returns the index of the call list of the resource with a tag.
@@ -390,14 +390,14 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Returns the lowest index of an item that is not in the order and waits for no other item.
-    /// @param incomingEdgeCounts The number of edges to each item from items that are not in the order.
-    /// @return ready The index of the item, or the number of items if no item is ready.
-    function _firstReady(uint256[] memory incomingEdgeCounts) private pure returns (uint256 ready) {
-        uint256 itemCount = incomingEdgeCounts.length;
-        for (ready = 0; ready < itemCount; ++ready) {
-            if (incomingEdgeCounts[ready] == 0) {
-                return ready;
+    /// @notice Returns the ready node with the lowest index.
+    /// @param inDegrees The in-degree of each node, or `_SORTED` for a sorted node.
+    /// @return node The node, or the number of nodes if no node is ready.
+    function _firstReadyNode(uint256[] memory inDegrees) private pure returns (uint256 node) {
+        uint256 nodeCount = inDegrees.length;
+        for (node = 0; node < nodeCount; ++node) {
+            if (inDegrees[node] == 0) {
+                return node;
             }
         }
     }

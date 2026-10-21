@@ -27,14 +27,14 @@ contract ForwarderCallOrderTest is Test {
         this.hasOrderingConstraintsInCalldata(externalPayload);
     }
 
-    function test_orderByEdges_reverts_on_edges_that_form_a_cycle() public {
+    function test_topologicalSort_reverts_on_edges_that_form_a_cycle() public {
         vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
-        _order({itemCount: 3, predecessors: _list(0, 1, 2), successors: _list(1, 2, 0)});
+        _sort({nodeCount: 3, predecessors: _list(0, 1, 2), successors: _list(1, 2, 0)});
     }
 
-    function test_orderByEdges_reverts_on_an_edge_from_an_item_to_itself() public {
+    function test_topologicalSort_reverts_on_an_edge_from_a_node_to_itself() public {
         vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
-        _order({itemCount: 2, predecessors: _list(1), successors: _list(1)});
+        _sort({nodeCount: 2, predecessors: _list(1), successors: _list(1)});
     }
 
     function testFuzz_hasOrderingConstraints_agrees_with_the_lengths_of_the_tag_lists(
@@ -54,91 +54,95 @@ contract ForwarderCallOrderTest is Test {
         );
     }
 
-    function test_orderByEdges_keeps_the_order_of_items_without_edges() public pure {
-        assertEq(_order({itemCount: 3, predecessors: _list(), successors: _list()}), _list(0, 1, 2), "order");
+    function test_topologicalSort_sorts_a_graph_without_edges_by_index() public pure {
+        assertEq(_sort({nodeCount: 3, predecessors: _list(), successors: _list()}), _list(0, 1, 2), "sorted nodes");
     }
 
-    function test_orderByEdges_puts_the_predecessor_of_an_edge_before_its_successor() public pure {
-        assertEq(_order({itemCount: 3, predecessors: _list(2), successors: _list(0)}), _list(1, 2, 0), "order");
+    function test_topologicalSort_puts_the_predecessor_of_an_edge_before_its_successor() public pure {
+        assertEq(_sort({nodeCount: 3, predecessors: _list(2), successors: _list(0)}), _list(1, 2, 0), "sorted nodes");
     }
 
-    /// @dev Once item 1 is in the order, items 0 and 2 both wait for no item, and 0 has the lower index.
-    function test_orderByEdges_takes_the_ready_item_with_the_lowest_index() public pure {
-        assertEq(_order({itemCount: 3, predecessors: _list(1), successors: _list(0)}), _list(1, 0, 2), "order");
+    /// @dev Once node 1 is sorted, nodes 0 and 2 are both ready, and 0 has the lower index.
+    function test_topologicalSort_takes_the_ready_node_with_the_lowest_index() public pure {
+        assertEq(_sort({nodeCount: 3, predecessors: _list(1), successors: _list(0)}), _list(1, 0, 2), "sorted nodes");
     }
 
-    function test_orderByEdges_counts_each_of_two_equal_edges() public pure {
-        assertEq(_order({itemCount: 2, predecessors: _list(1, 1), successors: _list(0, 0)}), _list(1, 0), "order");
+    function test_topologicalSort_counts_each_of_two_equal_edges() public pure {
+        assertEq(_sort({nodeCount: 2, predecessors: _list(1, 1), successors: _list(0, 0)}), _list(1, 0), "sorted nodes");
     }
 
-    /// @dev The protocol adapter sizes the edge lists by the number of constraints, so their tail holds zeros that
-    /// would read as an edge from item 0 to itself.
-    function test_orderByEdges_reads_only_the_first_edge_count_entries() public pure {
-        uint256[] memory orderedIndices = ForwarderCallOrder.orderByEdges({
-            itemCount: 2, predecessors: _list(1, 0), successors: _list(0, 0), edgeCount: 1
-        });
+    /// @dev `order` sizes `predecessors` and `successors` by the number of constraints, so their tail holds zeros that
+    /// would read as an edge from node 0 to itself.
+    function test_topologicalSort_reads_only_the_first_edge_count_entries() public pure {
+        uint256[] memory sortedNodes = ForwarderCallOrder.topologicalSort(
+            ForwarderCallOrder.Graph({nodeCount: 2, predecessors: _list(1, 0), successors: _list(0, 0), edgeCount: 1})
+        );
 
-        assertEq(orderedIndices, _list(1, 0), "order");
+        assertEq(sortedNodes, _list(1, 0), "sorted nodes");
     }
 
-    function test_orderByEdges_returns_an_empty_order_for_no_items() public pure {
-        assertEq(_order({itemCount: 0, predecessors: _list(), successors: _list()}).length, 0, "order length");
+    function test_topologicalSort_returns_no_nodes_for_a_graph_without_nodes() public pure {
+        assertEq(_sort({nodeCount: 0, predecessors: _list(), successors: _list()}).length, 0, "number of sorted nodes");
     }
 
-    /// @dev Draws a rank for each item and adds edges that agree with the ranks, so that an order exists.
-    function testFuzz_orderByEdges_puts_the_predecessor_of_every_edge_before_its_successor(
-        uint8 itemCount,
+    /// @dev Draws a rank for each node and adds edges that agree with the ranks, so that the graph has no cycle.
+    function testFuzz_topologicalSort_puts_the_predecessor_of_every_edge_before_its_successor(
+        uint8 nodeCount,
         uint256 seed
     ) public pure {
-        itemCount = uint8(bound(itemCount, 1, 16));
+        nodeCount = uint8(bound(nodeCount, 1, 16));
         LibPRNG.PRNG memory prng = LibPRNG.PRNG({state: seed});
 
-        uint256[] memory ranks = new uint256[](itemCount);
-        for (uint256 i = 0; i < itemCount; ++i) {
+        uint256[] memory ranks = new uint256[](nodeCount);
+        for (uint256 i = 0; i < nodeCount; ++i) {
             ranks[i] = i;
         }
         prng.shuffle(ranks);
 
-        uint256 edgeCount = 2 * itemCount;
-        uint256[] memory predecessors = new uint256[](edgeCount);
-        uint256[] memory successors = new uint256[](edgeCount);
-        uint256 written = 0;
-        for (uint256 e = 0; e < edgeCount; ++e) {
-            uint256 first = prng.uniform(itemCount);
-            uint256 second = prng.uniform(itemCount);
+        uint256 drawCount = 2 * nodeCount;
+        uint256[] memory predecessors = new uint256[](drawCount);
+        uint256[] memory successors = new uint256[](drawCount);
+        uint256 edgeCount = 0;
+        for (uint256 d = 0; d < drawCount; ++d) {
+            uint256 first = prng.uniform(nodeCount);
+            uint256 second = prng.uniform(nodeCount);
             if (ranks[first] != ranks[second]) {
-                (predecessors[written], successors[written]) =
+                (predecessors[edgeCount], successors[edgeCount]) =
                     ranks[first] < ranks[second] ? (first, second) : (second, first);
-                ++written;
+                ++edgeCount;
             }
         }
 
-        uint256[] memory orderedIndices = ForwarderCallOrder.orderByEdges({
-            itemCount: itemCount, predecessors: predecessors, successors: successors, edgeCount: written
-        });
+        uint256[] memory sortedNodes = ForwarderCallOrder.topologicalSort(
+            ForwarderCallOrder.Graph({
+                nodeCount: nodeCount, predecessors: predecessors, successors: successors, edgeCount: edgeCount
+            })
+        );
 
-        uint256[] memory positions = new uint256[](itemCount);
-        bool[] memory seen = new bool[](itemCount);
-        assertEq(orderedIndices.length, itemCount, "every item is in the order");
-        for (uint256 position = 0; position < itemCount; ++position) {
-            assertFalse(seen[orderedIndices[position]], "no item is in the order twice");
-            seen[orderedIndices[position]] = true;
-            positions[orderedIndices[position]] = position;
+        uint256[] memory positions = new uint256[](nodeCount);
+        bool[] memory seen = new bool[](nodeCount);
+        assertEq(sortedNodes.length, nodeCount, "every node is sorted");
+        for (uint256 position = 0; position < nodeCount; ++position) {
+            assertFalse(seen[sortedNodes[position]], "no node is sorted twice");
+            seen[sortedNodes[position]] = true;
+            positions[sortedNodes[position]] = position;
         }
-        for (uint256 e = 0; e < written; ++e) {
+        for (uint256 e = 0; e < edgeCount; ++e) {
             assertLt(positions[predecessors[e]], positions[successors[e]], "a predecessor comes before its successor");
         }
     }
 
-    function _order(uint256 itemCount, uint256[] memory predecessors, uint256[] memory successors)
+    function _sort(uint256 nodeCount, uint256[] memory predecessors, uint256[] memory successors)
         private
         pure
-        returns (uint256[] memory orderedIndices)
+        returns (uint256[] memory sortedNodes)
     {
         assertEq(predecessors.length, successors.length, "one predecessor and one successor for each edge");
-        orderedIndices = ForwarderCallOrder.orderByEdges({
-            itemCount: itemCount, predecessors: predecessors, successors: successors, edgeCount: predecessors.length
-        });
+        sortedNodes = ForwarderCallOrder.topologicalSort(
+            ForwarderCallOrder.Graph({
+                nodeCount: nodeCount, predecessors: predecessors, successors: successors, edgeCount: predecessors.length
+            })
+        );
     }
 
     function _payload(bytes memory blob)
