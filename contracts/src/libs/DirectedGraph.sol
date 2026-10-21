@@ -8,6 +8,8 @@ import {LibBit} from "solady-0.1.26/src/utils/LibBit.sol";
 /// @notice A library for directed graphs whose nodes are indices, and for their topological sort.
 /// @custom:security-contact security@anoma.foundation
 library DirectedGraph {
+    using DirectedGraph for uint256;
+
     /// @notice A directed graph. Each node is an index below the length of `predecessors` and `successors`, which is
     /// at most `MAX_NODE_COUNT`. A bitmap holds a set of nodes: its bit n is set if node n is in the set. An edge
     /// from a predecessor to a successor means that the predecessor comes before the successor.
@@ -26,9 +28,8 @@ library DirectedGraph {
     /// @param predecessor The node at the start of the edge.
     /// @param successor The node at the end of the edge.
     function addEdge(Graph memory graph, uint256 predecessor, uint256 successor) internal pure {
-        // `x |= 1 << n` sets bit n of `x`: node n joins the set.
-        graph.predecessors[successor] |= 1 << predecessor;
-        graph.successors[predecessor] |= 1 << successor;
+        graph.predecessors[successor] = graph.predecessors[successor]._add(predecessor);
+        graph.successors[predecessor] = graph.successors[predecessor]._add(successor);
     }
 
     /// @notice Returns whether a graph has an edge.
@@ -60,7 +61,7 @@ library DirectedGraph {
         for (uint256 node = 0; node < nodeCount; ++node) {
             // A node without predecessors is ready.
             if (predecessors[node] == 0) {
-                readyBitmap |= 1 << node;
+                readyBitmap = readyBitmap._add(node);
             }
         }
 
@@ -71,24 +72,51 @@ library DirectedGraph {
             if (readyBitmap == 0) {
                 return (false, sortedNodes);
             }
-            // `LibBit.ffs` returns the index of the lowest set bit: the ready node with the lowest index.
-            uint256 node = LibBit.ffs(readyBitmap);
-            // `x &= ~(1 << n)` clears bit n of `x`: the node leaves the ready set and joins the sorted set.
-            readyBitmap &= ~(1 << node);
-            sortedBitmap |= 1 << node;
+            uint256 node = readyBitmap._lowest();
+            readyBitmap = readyBitmap._remove(node);
+            sortedBitmap = sortedBitmap._add(node);
             sortedNodes[position] = node;
 
-            // Takes the successors one by one, from the lowest bit, and clears each bit after use.
             uint256 remainingSuccessors = successors[node];
             while (remainingSuccessors != 0) {
-                uint256 successor = LibBit.ffs(remainingSuccessors);
-                remainingSuccessors &= ~(1 << successor);
-                // `& ~sortedBitmap` clears the sorted predecessors, so a zero result means that all are sorted.
-                if ((predecessors[successor] & ~sortedBitmap) == 0) {
-                    readyBitmap |= 1 << successor;
+                uint256 successor = remainingSuccessors._lowest();
+                remainingSuccessors = remainingSuccessors._remove(successor);
+                if (predecessors[successor]._isSubsetOf(sortedBitmap)) {
+                    readyBitmap = readyBitmap._add(successor);
                 }
             }
         }
         isAcyclic = true;
+    }
+
+    /// @notice Returns a set with a node added.
+    /// @param set The set, as a bitmap.
+    /// @param node The node to add.
+    /// @return result The set with the node.
+    function _add(uint256 set, uint256 node) internal pure returns (uint256 result) {
+        result = set | (1 << node);
+    }
+
+    /// @notice Returns a set without a node.
+    /// @param set The set, as a bitmap.
+    /// @param node The node to remove.
+    /// @return result The set without the node.
+    function _remove(uint256 set, uint256 node) internal pure returns (uint256 result) {
+        result = set & ~(1 << node);
+    }
+
+    /// @notice Returns the node with the lowest index in a set, or 256 for the empty set.
+    /// @param set The set, as a bitmap.
+    /// @return node The node.
+    function _lowest(uint256 set) internal pure returns (uint256 node) {
+        node = LibBit.ffs(set);
+    }
+
+    /// @notice Returns whether each node of a set is also in another set.
+    /// @param set The set to check, as a bitmap.
+    /// @param superset The other set, as a bitmap.
+    /// @return isSubset Whether `superset` holds each node of `set`.
+    function _isSubsetOf(uint256 set, uint256 superset) internal pure returns (bool isSubset) {
+        isSubset = (set & ~superset) == 0;
     }
 }
