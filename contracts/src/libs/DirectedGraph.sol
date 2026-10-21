@@ -10,14 +10,14 @@ import {LibBit} from "solady-0.1.26/src/utils/LibBit.sol";
 library DirectedGraph {
     using DirectedGraph for uint256;
 
-    /// @notice A directed graph. Each node is an index below the length of `predecessors` and `successors`, which is
+    /// @notice A directed graph. Each node is an index below the length of `inNeighbors` and `outNeighbors`, which is
     /// at most `MAX_NODE_COUNT`. A bitmap holds a set of nodes: its bit n is set if node n is in the set. An edge
-    /// from a predecessor to a successor means that the predecessor comes before the successor.
-    /// @param predecessors The predecessors of each node, as a bitmap.
-    /// @param successors The successors of each node, as a bitmap.
+    /// from a source to a target means that the source comes before the target.
+    /// @param inNeighbors The in-neighbors of each node, which have an edge to it, as a bitmap.
+    /// @param outNeighbors The out-neighbors of each node, to which it has an edge, as a bitmap.
     struct Graph {
-        uint256[] predecessors;
-        uint256[] successors;
+        uint256[] inNeighbors;
+        uint256[] outNeighbors;
     }
 
     /// @notice The maximum number of nodes of a graph, which is the number of bits of a bitmap.
@@ -25,53 +25,53 @@ library DirectedGraph {
 
     /// @notice Adds an edge to a graph.
     /// @param graph The graph.
-    /// @param predecessor The node at the start of the edge.
-    /// @param successor The node at the end of the edge.
-    function addEdge(Graph memory graph, uint256 predecessor, uint256 successor) internal pure {
-        graph.predecessors[successor] = graph.predecessors[successor]._add(predecessor);
-        graph.successors[predecessor] = graph.successors[predecessor]._add(successor);
+    /// @param source The node at the start of the edge.
+    /// @param target The node at the end of the edge.
+    function addEdge(Graph memory graph, uint256 source, uint256 target) internal pure {
+        graph.inNeighbors[target] = graph.inNeighbors[target]._add(source);
+        graph.outNeighbors[source] = graph.outNeighbors[source]._add(target);
     }
 
     /// @notice Adds an edge from each node in a range to each node in another range. A range holds the nodes from its
     /// start up to its end, without the end.
     /// @param graph The graph.
-    /// @param predecessorStart The first node at the start of the edges.
-    /// @param predecessorEnd The node after the last node at the start of the edges.
-    /// @param successorStart The first node at the end of the edges.
-    /// @param successorEnd The node after the last node at the end of the edges.
+    /// @param sourceStart The first node at the start of the edges.
+    /// @param sourceEnd The node after the last node at the start of the edges.
+    /// @param targetStart The first node at the end of the edges.
+    /// @param targetEnd The node after the last node at the end of the edges.
     function addEdges(
         Graph memory graph,
-        uint256 predecessorStart,
-        uint256 predecessorEnd,
-        uint256 successorStart,
-        uint256 successorEnd
+        uint256 sourceStart,
+        uint256 sourceEnd,
+        uint256 targetStart,
+        uint256 targetEnd
     ) internal pure {
-        uint256 predecessorSet = _range(predecessorStart, predecessorEnd);
-        uint256 successorSet = _range(successorStart, successorEnd);
-        for (uint256 node = predecessorStart; node < predecessorEnd; ++node) {
-            graph.successors[node] = graph.successors[node]._union(successorSet);
+        uint256 sourceSet = _range(sourceStart, sourceEnd);
+        uint256 targetSet = _range(targetStart, targetEnd);
+        for (uint256 node = sourceStart; node < sourceEnd; ++node) {
+            graph.outNeighbors[node] = graph.outNeighbors[node]._union(targetSet);
         }
-        for (uint256 node = successorStart; node < successorEnd; ++node) {
-            graph.predecessors[node] = graph.predecessors[node]._union(predecessorSet);
+        for (uint256 node = targetStart; node < targetEnd; ++node) {
+            graph.inNeighbors[node] = graph.inNeighbors[node]._union(sourceSet);
         }
     }
 
-    /// @notice Sorts the nodes of a graph topologically: the predecessor of each edge comes before its successor. A
-    /// node is ready when all its predecessors are sorted. Of the ready nodes, the one with the lowest index comes
+    /// @notice Sorts the nodes of a graph topologically: the source of each edge comes before its target. A node
+    /// is ready when all its in-neighbors are sorted. Of the ready nodes, the one with the lowest index comes
     /// next, so the order is unique.
     /// @dev Kahn's algorithm.
     /// @param graph The graph to sort.
     /// @return isAcyclic Whether the edges form no cycle, so that a topological order exists.
     /// @return sortedNodes The nodes in topological order, if `isAcyclic` is true.
     function topologicalSort(Graph memory graph) internal pure returns (bool isAcyclic, uint256[] memory sortedNodes) {
-        uint256[] memory predecessors = graph.predecessors;
-        uint256[] memory successors = graph.successors;
-        uint256 nodeCount = predecessors.length;
+        uint256[] memory inNeighbors = graph.inNeighbors;
+        uint256[] memory outNeighbors = graph.outNeighbors;
+        uint256 nodeCount = inNeighbors.length;
 
         uint256 readyBitmap = 0;
         for (uint256 node = 0; node < nodeCount; ++node) {
-            // A node without predecessors is ready.
-            if (predecessors[node] == 0) {
+            // A node without in-neighbors is ready.
+            if (inNeighbors[node] == 0) {
                 readyBitmap = readyBitmap._add(node);
             }
         }
@@ -88,12 +88,12 @@ library DirectedGraph {
             sortedBitmap = sortedBitmap._add(node);
             sortedNodes[position] = node;
 
-            uint256 remainingSuccessors = successors[node];
-            while (remainingSuccessors != 0) {
-                uint256 successor = remainingSuccessors._lowest();
-                remainingSuccessors = remainingSuccessors._remove(successor);
-                if (predecessors[successor]._isSubsetOf(sortedBitmap)) {
-                    readyBitmap = readyBitmap._add(successor);
+            uint256 remainingOutNeighbors = outNeighbors[node];
+            while (remainingOutNeighbors != 0) {
+                uint256 outNeighbor = remainingOutNeighbors._lowest();
+                remainingOutNeighbors = remainingOutNeighbors._remove(outNeighbor);
+                if (inNeighbors[outNeighbor]._isSubsetOf(sortedBitmap)) {
+                    readyBitmap = readyBitmap._add(outNeighbor);
                 }
             }
         }
