@@ -123,19 +123,16 @@ contract ProtocolAdapter is
                 }
             }
 
-            // Add the action delta to the transaction delta.
             transactionDelta = transactionDelta.add(action.unitDelta);
 
             actionTreeRoots[i] = action.actionTreeRoot;
         }
 
-        // Verify the delta and aggregation proofs. The empty transaction is rejected above,
-        // so both proofs are guaranteed to be checked.
         bytes32 transactionId = _verifyGlobalProofs({
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
         });
 
-        // Run the forwarder calls after the state changes of all actions and after the proofs.
+        // Execute the forwarder calls after the state changes of all actions and after the proofs.
         if (callListCount != 0) {
             _executeForwarderCalls({
                 actions: transaction.actions,
@@ -267,8 +264,13 @@ contract ProtocolAdapter is
         });
     }
 
-    /// @notice Executes the forwarder calls of a transaction. Without ordering constraints, the calls run in the order
-    /// of the actions, with the consumed resources of an action before its created resources.
+    /// @notice Executes the forwarder calls of a transaction.
+    /// @dev Executes the calls of one resource together and in their order: after the calls of each resource that their
+    /// `afterTags` name, and before the calls of each resource that their `beforeTags` name. Also executes the calls of
+    /// one action together. Of the resources whose calls can come next, takes the first in the transaction, with the
+    /// consumed resources of an action before its created resources. Ignores a tag of a resource without calls. With
+    /// ordering constraints, it reverts if a tag in `afterTags` or `beforeTags` belongs to no resource of the
+    /// transaction, if no order meets the constraints, or if more than 256 resources carry calls.
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     /// @param hasOrderingConstraints Whether a forwarder call carries ordering constraints.

@@ -42,14 +42,14 @@ Two lists of logic refs, one for consumed and one for created resources: a trans
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA drives to enact EVM side effects on behalf of an action. Each lives in its own repo.
 
 **Forwarder call**:
-A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA runs the forwarder calls of a transaction after the nullifiers and commitments of all actions are added and after the proofs.
+A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA executes the forwarder calls of a transaction after the nullifiers and commitments of all actions are added and after the proofs.
 
 **Call-carrying resource**:
 A resource with forwarder calls in its external payload.
 _Avoid_: carrier
 
 **Call list**:
-The forwarder calls of a call-carrying resource, in the order of its external payload. The PA runs the calls of a call list together and in their order, and the call lists of an action together.
+The forwarder calls of a call-carrying resource, in the order of its external payload. The PA executes the calls of a call list together and in their order, and the call lists of an action together.
 
 **Ordering constraint**:
 An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of a resource, which is the nullifier of a consumed resource or the commitment of a created resource, whose calls run before (`afterTags`) or after (`beforeTags`) the calls of the call-carrying resource. Without ordering constraints, the calls run in the order of the actions, with the consumed resources of an action before its created resources.
