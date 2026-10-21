@@ -131,10 +131,8 @@ library ForwarderCallOrder {
     }
 
     /// @notice Orders the call lists so that their forwarder calls meet the ordering constraints, and checks that
-    /// each `afterTags` and `beforeTags` entry names a resource of the transaction. The calls of an action run
-    /// together: a constraint between two call lists of one action orders the call lists, and a constraint between
-    /// call lists of two actions orders the actions. Of the actions that can run next, the first runs, and so does the
-    /// first call list within an action.
+    /// each `afterTags` and `beforeTags` entry names a resource of the transaction. The NatSpec of
+    /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
     /// @return orderedIndices The indices of `callLists`, in the order in which their calls run.
