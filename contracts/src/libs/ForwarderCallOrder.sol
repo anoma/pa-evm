@@ -12,10 +12,12 @@ library ForwarderCallOrder {
     /// @notice A resource with forwarder calls in its external payload.
     /// @param tag The tag of the resource.
     /// @param logicRef The logic reference of the resource.
+    /// @param action The index of the action of the resource.
     /// @param calls The forwarder calls of the resource, in the order of its external payload.
     struct Carrier {
         bytes32 tag;
         bytes32 logicRef;
+        uint256 action;
         ForwarderCall[] calls;
     }
 
@@ -31,6 +33,16 @@ library ForwarderCallOrder {
         bytes expectedOutput;
         bytes32[] afterTags;
         bytes32[] beforeTags;
+    }
+
+    /// @notice Edges between carriers or between actions. An edge is a pair whose forwarder calls run in this order.
+    /// @param predecessors The carrier or action at the start of each edge.
+    /// @param successors The carrier or action at the end of each edge.
+    /// @param count The number of edges.
+    struct Edges {
+        uint256[] predecessors;
+        uint256[] successors;
+        uint256 count;
     }
 
     /// @notice The incoming edge count of a carrier that is in the order.
@@ -86,8 +98,10 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Consumed calldata consumed = consumedResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = consumed.appData.externalPayload;
                 if (externalPayload.length != 0) {
+                    Carrier memory carrier = carriers[carrierIndex++];
+                    carrier.action = i;
                     constraintCount += _decodeCarrier({
-                        carrier: carriers[carrierIndex++],
+                        carrier: carrier,
                         tag: consumed.nullifier,
                         logicRef: consumed.logicRef,
                         externalPayload: externalPayload
@@ -101,8 +115,10 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Created calldata created = createdResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
                 if (externalPayload.length != 0) {
+                    Carrier memory carrier = carriers[carrierIndex++];
+                    carrier.action = i;
                     constraintCount += _decodeCarrier({
-                        carrier: carriers[carrierIndex++],
+                        carrier: carrier,
                         tag: created.commitment,
                         logicRef: created.logicRef,
                         externalPayload: externalPayload
@@ -113,7 +129,10 @@ library ForwarderCallOrder {
     }
 
     /// @notice Orders the carriers so that their forwarder calls meet the ordering constraints, and checks that each
-    /// `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// `afterTags` and `beforeTags` entry names a resource of the transaction. The calls of an action run together: a
+    /// constraint between two carriers of one action orders the carriers, and a constraint between carriers of two
+    /// actions orders the actions. Of the actions that can run next, the first runs, and so does the first carrier
+    /// within an action.
     /// @param carriers The carriers of the transaction.
     /// @param actions The actions of the transaction.
     /// @param constraintCount The number of `afterTags` and `beforeTags` entries of all calls.
@@ -124,19 +143,50 @@ library ForwarderCallOrder {
         returns (uint256[] memory orderedIndices)
     {
         // Each ordering constraint adds at most one edge.
-        uint256[] memory predecessors = new uint256[](constraintCount);
-        uint256[] memory successors = new uint256[](constraintCount);
-        uint256 edgeCount =
-            _addEdges({carriers: carriers, actions: actions, predecessors: predecessors, successors: successors});
+        Edges memory carrierEdges =
+            Edges({predecessors: new uint256[](constraintCount), successors: new uint256[](constraintCount), count: 0});
+        Edges memory actionEdges =
+            Edges({predecessors: new uint256[](constraintCount), successors: new uint256[](constraintCount), count: 0});
+        _addEdges({carriers: carriers, actions: actions, carrierEdges: carrierEdges, actionEdges: actionEdges});
 
-        orderedIndices = orderByEdges({
-            carrierCount: carriers.length, predecessors: predecessors, successors: successors, edgeCount: edgeCount
+        uint256 carrierCount = carriers.length;
+        uint256[] memory carrierOrder = orderByEdges({
+            carrierCount: carrierCount,
+            predecessors: carrierEdges.predecessors,
+            successors: carrierEdges.successors,
+            edgeCount: carrierEdges.count
         });
+
+        // The carriers of an action have lower indices than those of later actions, and the carrier edges stay within
+        // an action, so without edges between actions the carrier order runs the actions one after another already.
+        if (actionEdges.count == 0) {
+            return carrierOrder;
+        }
+
+        uint256[] memory actionOrder = orderByEdges({
+            carrierCount: actions.length,
+            predecessors: actionEdges.predecessors,
+            successors: actionEdges.successors,
+            edgeCount: actionEdges.count
+        });
+
+        // The carrier edges stay within an action, so the carrier order restricted to an action is the order of the
+        // carriers of that action.
+        orderedIndices = new uint256[](carrierCount);
+        uint256 position = 0;
+        uint256 actionCount = actionOrder.length;
+        for (uint256 i = 0; i < actionCount; ++i) {
+            for (uint256 k = 0; k < carrierCount; ++k) {
+                if (carriers[carrierOrder[k]].action == actionOrder[i]) {
+                    orderedIndices[position++] = carrierOrder[k];
+                }
+            }
+        }
     }
 
     /// @notice Orders the carriers so that the predecessor of each edge comes before its successor. An edge is a pair
     /// of carriers whose forwarder calls run in this order. Of the carriers that wait for no other carrier, the
-    /// carrier with the lowest index comes next.
+    /// carrier with the lowest index comes next. `order` also orders the actions with it.
     /// @param carrierCount The number of carriers.
     /// @param predecessors The carrier at the start of each edge.
     /// @param successors The carrier at the end of each edge.
@@ -203,15 +253,14 @@ library ForwarderCallOrder {
     /// and `beforeTags` entry names a resource of the transaction.
     /// @param carriers The carriers of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param predecessors The carrier at the start of each edge.
-    /// @param successors The carrier at the end of each edge.
-    /// @return edgeCount The number of edges.
+    /// @param carrierEdges The edges between carriers of one action.
+    /// @param actionEdges The edges between actions.
     function _addEdges(
         Carrier[] memory carriers,
         IProtocolAdapter.Action[] calldata actions,
-        uint256[] memory predecessors,
-        uint256[] memory successors
-    ) private pure returns (uint256 edgeCount) {
+        Edges memory carrierEdges,
+        Edges memory actionEdges
+    ) private pure {
         uint256 carrierCount = carriers.length;
 
         for (uint256 carrierIndex = 0; carrierIndex < carrierCount; ++carrierIndex) {
@@ -231,9 +280,13 @@ library ForwarderCallOrder {
                         );
                         continue;
                     }
-                    predecessors[edgeCount] = predecessor;
-                    successors[edgeCount] = carrierIndex;
-                    ++edgeCount;
+                    _addEdge({
+                        carriers: carriers,
+                        carrierEdges: carrierEdges,
+                        actionEdges: actionEdges,
+                        predecessor: predecessor,
+                        successor: carrierIndex
+                    });
                 }
 
                 bytes32[] memory beforeTags = calls[c].beforeTags;
@@ -249,12 +302,41 @@ library ForwarderCallOrder {
                         );
                         continue;
                     }
-                    predecessors[edgeCount] = carrierIndex;
-                    successors[edgeCount] = successor;
-                    ++edgeCount;
+                    _addEdge({
+                        carriers: carriers,
+                        carrierEdges: carrierEdges,
+                        actionEdges: actionEdges,
+                        predecessor: carrierIndex,
+                        successor: successor
+                    });
                 }
             }
         }
+    }
+
+    /// @notice Writes the edge between two carriers if they belong to one action, and else the edge between their
+    /// actions.
+    /// @param carriers The carriers of the transaction.
+    /// @param carrierEdges The edges between carriers of one action.
+    /// @param actionEdges The edges between actions.
+    /// @param predecessor The carrier whose calls run first.
+    /// @param successor The carrier whose calls run second.
+    function _addEdge(
+        Carrier[] memory carriers,
+        Edges memory carrierEdges,
+        Edges memory actionEdges,
+        uint256 predecessor,
+        uint256 successor
+    ) private pure {
+        Edges memory edges = carrierEdges;
+        uint256 predecessorAction = carriers[predecessor].action;
+        uint256 successorAction = carriers[successor].action;
+        if (predecessorAction != successorAction) {
+            (edges, predecessor, successor) = (actionEdges, predecessorAction, successorAction);
+        }
+        edges.predecessors[edges.count] = predecessor;
+        edges.successors[edges.count] = successor;
+        ++edges.count;
     }
 
     /// @notice Returns the index of the carrier with a tag.

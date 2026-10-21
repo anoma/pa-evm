@@ -145,11 +145,12 @@ interface IProtocolAdapter {
     /// set, respectively, and by running the forwarder calls of its resources.
     /// @dev The forwarder calls run after the nullifiers and commitments of all actions are added and after the
     /// proofs. The calls of a resource run together and in their order: after the calls of each resource that one of
-    /// them names in `afterTags`, and before the calls of each resource that one of them names in `beforeTags`. Of the
-    /// resources whose calls can run next, the first in the order of the actions goes first, with the consumed
-    /// resources of an action before its created resources. A tag of a resource without calls constrains nothing. The
-    /// transaction reverts if an `afterTags` or `beforeTags` entry is no tag of the transaction, or if no order meets
-    /// the constraints.
+    /// them names in `afterTags`, and before the calls of each resource that one of them names in `beforeTags`. The
+    /// calls of an action run together too, so a constraint that names a resource of another action orders the two
+    /// actions. Of the actions whose calls can run next, the first goes first, and within an action, of the resources
+    /// whose calls can run next, the first goes first, with the consumed resources before the created resources. A tag
+    /// of a resource without calls constrains nothing. The transaction reverts if an `afterTags` or `beforeTags` entry
+    /// is no tag of the transaction, or if no order meets the constraints.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
