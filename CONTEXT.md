@@ -45,7 +45,7 @@ An application contract (e.g. the ERC20 or generic-call forwarder) that the PA d
 A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA runs the forwarder calls of a transaction after the nullifiers and commitments of all actions are added and after the proofs.
 
 **Carrier**:
-A resource with forwarder calls. The PA runs the calls of a carrier together and in their order.
+A resource with forwarder calls. The PA runs the calls of a carrier together and in their order, and the calls of the carriers of an action together.
 
 **Ordering constraint**:
 An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of a resource, which is the nullifier of a consumed resource or the commitment of a created resource, whose calls run before (`afterTags`) or after (`beforeTags`) the calls of the carrier. Without ordering constraints, the calls run in the order of the actions, with the consumed resources of an action before its created resources.

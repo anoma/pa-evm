@@ -304,8 +304,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @dev A constraint can name a resource of a later action. Of the calls that can run next, the first in the
-    /// order of the actions runs.
+    /// @dev A constraint can name a resource of a later action. The calls of an action run together, so the whole
+    /// second action runs first.
     function test_execute_orders_the_calls_across_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
         resourceLists[0] =
@@ -318,12 +318,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
             beforeTags: _noTags()
         });
 
-        _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(2, 3, 4, 1)});
+        _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(3, 4, 1, 2)});
     }
 
     /// @dev The call of the second action must run after the first call of the first action and before its second
-    /// call.
-    function test_execute_interleaves_the_calls_of_two_actions() public {
+    /// call. The calls of an action run together, so no order meets these constraints.
+    function test_execute_reverts_on_constraints_that_interleave_the_calls_of_two_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
         resourceLists[0] =
             TxGen.ResourceLists({consumed: _carrier({nonce: 0, callId: 1}), created: _carrier({nonce: 1, callId: 2})});
@@ -336,7 +336,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
             beforeTags: _tags(_commitment(resourceLists[0].created[0]))
         });
 
-        _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(1, 3, 2)});
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
+        _mockPa.execute(txn);
     }
 
     /// @dev A swap needs the unwrap (created) before the generic call and the wrap (both consumed). The two lists
