@@ -289,7 +289,7 @@ contract ProtocolAdapter is
             for (uint256 j = 0; j < consumedCount; ++j) {
                 Consumed calldata consumed = consumedResources[j];
                 _runForwarderCallsOfResource({
-                    carrierLogicRef: consumed.logicRef, externalPayload: consumed.appData.externalPayload
+                    logicRef: consumed.logicRef, externalPayload: consumed.appData.externalPayload
                 });
             }
 
@@ -298,26 +298,23 @@ contract ProtocolAdapter is
             for (uint256 j = 0; j < createdCount; ++j) {
                 Created calldata created = createdResources[j];
                 _runForwarderCallsOfResource({
-                    carrierLogicRef: created.logicRef, externalPayload: created.appData.externalPayload
+                    logicRef: created.logicRef, externalPayload: created.appData.externalPayload
                 });
             }
         }
     }
 
     /// @notice Decodes and runs the forwarder calls of a resource, which carry no ordering constraints.
-    /// @param carrierLogicRef The logic reference of the resource.
+    /// @param logicRef The logic reference of the call-carrying resource.
     /// @param externalPayload The external payload of the resource.
-    function _runForwarderCallsOfResource(bytes32 carrierLogicRef, ExpirableBlob[] calldata externalPayload) internal {
+    function _runForwarderCallsOfResource(bytes32 logicRef, ExpirableBlob[] calldata externalPayload) internal {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             // `ForwarderCallOrder.hasOrderingConstraints` checked that the two tag lists after these fields are empty.
             (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
                 abi.decode(externalPayload[i].blob, (address, bytes, bytes));
             _runForwarderCall({
-                carrierLogicRef: carrierLogicRef,
-                untrustedForwarder: untrustedForwarder,
-                input: input,
-                expectedOutput: expectedOutput
+                logicRef: logicRef, untrustedForwarder: untrustedForwarder, input: input, expectedOutput: expectedOutput
             });
         }
     }
@@ -335,7 +332,7 @@ contract ProtocolAdapter is
             for (uint256 i = 0; i < callCount; ++i) {
                 ForwarderCallOrder.ForwarderCall memory forwarderCall = carrier.calls[i];
                 _runForwarderCall({
-                    carrierLogicRef: carrier.logicRef,
+                    logicRef: carrier.logicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,
                     input: forwarderCall.input,
                     expectedOutput: forwarderCall.expectedOutput
@@ -345,22 +342,21 @@ contract ProtocolAdapter is
     }
 
     /// @notice Runs a call to an external, untrusted forwarder contract.
-    /// @param carrierLogicRef The logic reference of the carrier resource.
+    /// @param logicRef The logic reference of the call-carrying resource.
     /// @param untrustedForwarder The forwarder contract to call.
     /// @param input The input of the call.
     /// @param expectedOutput The output that the call must return.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
     /// the associated carrier resource logic.
     function _runForwarderCall(
-        bytes32 carrierLogicRef,
+        bytes32 logicRef,
         address untrustedForwarder,
         bytes memory input,
         bytes memory expectedOutput
     ) internal {
         // NOTE: Each resource carries its own forwarder calls, so the call belongs inside the loop over the calls.
         // forge-lint: disable-next-item(calls-loop)
-        bytes memory actualOutput =
-            IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
+        bytes memory actualOutput = IForwarder(untrustedForwarder).forwardCall({logicRef: logicRef, input: input});
 
         // NOTE: Reverting inside the loop is intended: one invalid call aborts the whole transaction.
         require(
