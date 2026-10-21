@@ -8,9 +8,9 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
-/// @dev `order` builds two graphs from the ordering constraints, one whose nodes are the call lists and one whose
-/// nodes are the actions. An edge means that the calls of its predecessor run before those of its successor. `order`
-/// sorts both graphs with `DirectedGraph.topologicalSort`.
+/// @dev `order` splits the ordering constraints into two graphs: the constraints within actions, whose nodes are the
+/// call lists, and the constraints across actions, whose nodes are the actions. An edge means that the calls of its
+/// predecessor run before those of its successor. `order` sorts both graphs with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
     using DirectedGraph for DirectedGraph.Graph;
@@ -151,26 +151,31 @@ library ForwarderCallOrder {
         require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
         require(actionCount <= DirectedGraph.MAX_NODE_COUNT, TooManyActions(actionCount));
 
-        DirectedGraph.Graph memory callListGraph =
+        DirectedGraph.Graph memory constraintsWithinActions =
             DirectedGraph.Graph({predecessors: new uint256[](callListCount), successors: new uint256[](callListCount)});
-        DirectedGraph.Graph memory actionGraph =
+        DirectedGraph.Graph memory constraintsAcrossActions =
             DirectedGraph.Graph({predecessors: new uint256[](actionCount), successors: new uint256[](actionCount)});
-        _addEdges({callLists: callLists, actions: actions, callListGraph: callListGraph, actionGraph: actionGraph});
+        _addEdges({
+            callLists: callLists,
+            actions: actions,
+            constraintsWithinActions: constraintsWithinActions,
+            constraintsAcrossActions: constraintsAcrossActions
+        });
 
-        (bool isAcyclic, uint256[] memory callListOrder) = callListGraph.topologicalSort();
+        (bool isAcyclic, uint256[] memory callListOrder) = constraintsWithinActions.topologicalSort();
         require(isAcyclic, CyclicConstraints());
 
-        // Call lists of earlier actions have lower indices, and the edges of `callListGraph` stay within an action, so
-        // without edges in `actionGraph`, `callListOrder` already lists the call lists action by action.
-        if (!actionGraph.hasEdges()) {
+        // Call lists of earlier actions have lower indices, so without constraints across actions, `callListOrder`
+        // already lists the call lists action by action.
+        if (!constraintsAcrossActions.hasEdges()) {
             return callListOrder;
         }
 
         uint256[] memory actionOrder;
-        (isAcyclic, actionOrder) = actionGraph.topologicalSort();
+        (isAcyclic, actionOrder) = constraintsAcrossActions.topologicalSort();
         require(isAcyclic, CyclicConstraints());
 
-        // The edges of `callListGraph` stay within an action, so each action keeps its call lists in sorted order.
+        // `callListOrder` meets the constraints within actions, so each action keeps its call lists in that order.
         orderedIndices = new uint256[](callListCount);
         uint256 position = 0;
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -214,13 +219,15 @@ library ForwarderCallOrder {
     /// `afterTags` and `beforeTags` entry names a resource of the transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param callListGraph The graph whose nodes are the call lists.
-    /// @param actionGraph The graph whose nodes are the actions.
+    /// @param constraintsWithinActions The constraints between call lists of one action, as a graph whose nodes are
+    /// the call lists.
+    /// @param constraintsAcrossActions The constraints between call lists of two actions, as a graph whose nodes are
+    /// the actions.
     function _addEdges(
         CallList[] memory callLists,
         IProtocolAdapter.Action[] calldata actions,
-        DirectedGraph.Graph memory callListGraph,
-        DirectedGraph.Graph memory actionGraph
+        DirectedGraph.Graph memory constraintsWithinActions,
+        DirectedGraph.Graph memory constraintsAcrossActions
     ) private pure {
         uint256 callListCount = callLists.length;
 
@@ -243,8 +250,8 @@ library ForwarderCallOrder {
                     }
                     _addEdge({
                         callLists: callLists,
-                        callListGraph: callListGraph,
-                        actionGraph: actionGraph,
+                        constraintsWithinActions: constraintsWithinActions,
+                        constraintsAcrossActions: constraintsAcrossActions,
                         predecessor: predecessor,
                         successor: callListIndex
                     });
@@ -265,8 +272,8 @@ library ForwarderCallOrder {
                     }
                     _addEdge({
                         callLists: callLists,
-                        callListGraph: callListGraph,
-                        actionGraph: actionGraph,
+                        constraintsWithinActions: constraintsWithinActions,
+                        constraintsAcrossActions: constraintsAcrossActions,
                         predecessor: callListIndex,
                         successor: successor
                     });
@@ -275,26 +282,28 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Adds an edge between two call lists to `callListGraph` if they belong to one action, and else an edge
-    /// between their actions to `actionGraph`.
+    /// @notice Adds an edge between two call lists to `constraintsWithinActions` if they belong to one action, and else
+    /// an edge between their actions to `constraintsAcrossActions`.
     /// @param callLists The call lists of the transaction.
-    /// @param callListGraph The graph whose nodes are the call lists.
-    /// @param actionGraph The graph whose nodes are the actions.
+    /// @param constraintsWithinActions The constraints between call lists of one action, as a graph whose nodes are
+    /// the call lists.
+    /// @param constraintsAcrossActions The constraints between call lists of two actions, as a graph whose nodes are
+    /// the actions.
     /// @param predecessor The call list whose calls run before those of `successor`.
     /// @param successor The call list whose calls run after those of `predecessor`.
     function _addEdge(
         CallList[] memory callLists,
-        DirectedGraph.Graph memory callListGraph,
-        DirectedGraph.Graph memory actionGraph,
+        DirectedGraph.Graph memory constraintsWithinActions,
+        DirectedGraph.Graph memory constraintsAcrossActions,
         uint256 predecessor,
         uint256 successor
     ) private pure {
         uint256 predecessorAction = callLists[predecessor].actionIndex;
         uint256 successorAction = callLists[successor].actionIndex;
         if (predecessorAction == successorAction) {
-            callListGraph.addEdge({predecessor: predecessor, successor: successor});
+            constraintsWithinActions.addEdge({predecessor: predecessor, successor: successor});
         } else {
-            actionGraph.addEdge({predecessor: predecessorAction, successor: successorAction});
+            constraintsAcrossActions.addEdge({predecessor: predecessorAction, successor: successorAction});
         }
     }
 
