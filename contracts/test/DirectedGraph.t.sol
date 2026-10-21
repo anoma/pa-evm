@@ -72,10 +72,10 @@ contract DirectedGraphTest is Test {
 
     /// @dev Draws a rank for each node and adds edges that agree with the ranks, so that the graph has no cycle.
     function testFuzz_topologicalSort_puts_the_predecessor_of_every_edge_before_its_successor(
-        uint16 nodeCount,
+        uint256 nodeCount,
         uint256 seed
     ) public pure {
-        nodeCount = uint16(bound(nodeCount, 1, DirectedGraph.MAX_NODE_COUNT));
+        nodeCount = bound(nodeCount, 1, DirectedGraph.MAX_NODE_COUNT);
         LibPRNG.PRNG memory prng = LibPRNG.PRNG({state: seed});
 
         uint256[] memory ranks = new uint256[](nodeCount);
@@ -84,7 +84,7 @@ contract DirectedGraphTest is Test {
         }
         prng.shuffle(ranks);
 
-        uint256 drawCount = 2 * uint256(nodeCount);
+        uint256 drawCount = 2 * nodeCount;
         DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
         uint256[] memory edgeStarts = new uint256[](drawCount);
         uint256[] memory edgeEnds = new uint256[](drawCount);
