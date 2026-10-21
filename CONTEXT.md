@@ -42,7 +42,7 @@ Two lists of logic refs, one for consumed and one for created resources: a trans
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA drives to enact EVM side effects on behalf of an action. Each lives in its own repo.
 
 **Forwarder call**:
-A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA executes the forwarder calls of a transaction after the nullifiers and commitments of all actions are added and after the proofs.
+A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA executes the forwarder calls of a transaction after the nullifiers and commitments of all actions are added, after the proofs, and after the new commitment tree root is stored.
 
 **Call-carrying resource**:
 A resource with forwarder calls in its external payload.

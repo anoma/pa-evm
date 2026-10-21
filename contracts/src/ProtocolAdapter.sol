@@ -92,8 +92,6 @@ contract ProtocolAdapter is
         __ProtocolAdapter_init(initialOwner);
     }
 
-    // NOTE: The state writes and reads after the forwarder calls are protected by the `nonReentrant` modifier.
-    // slither-disable-start reentrancy-no-eth,reentrancy-benign
     /// @inheritdoc IProtocolAdapter
     function execute(Transaction calldata transaction) external override nonReentrant whenNotPaused {
         uint256 actionCount = transaction.actions.length;
@@ -132,7 +130,13 @@ contract ProtocolAdapter is
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
         });
 
-        // Execute the forwarder calls after the state changes of all actions and after the proofs.
+        // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
+        // so there is no new root to store.
+        if (updatedCommitmentTreeRoot != bytes32(0)) {
+            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
+        }
+
+        // Execute the forwarder calls after all state changes of the transaction.
         if (callListCount != 0) {
             _executeForwarderCalls({
                 actions: transaction.actions,
@@ -141,18 +145,10 @@ contract ProtocolAdapter is
             });
         }
 
-        // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
-        // so there is no new root to store.
-        if (updatedCommitmentTreeRoot != bytes32(0)) {
-            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
-        }
-
         // NOTE: The event ordering is protected by the `nonReentrant` modifier.
         // slither-disable-next-line reentrancy-events
         emit TransactionExecuted({transactionId: transactionId});
     }
-
-    // slither-disable-end reentrancy-no-eth,reentrancy-benign
 
     /// @inheritdoc IProtocolAdapter
     function pause() external override onlyOwner {
