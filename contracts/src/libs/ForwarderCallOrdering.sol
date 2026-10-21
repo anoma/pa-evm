@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 import {DirectedGraph} from "../libs/DirectedGraph.sol";
 
-/// @title ForwarderCallOrder
+/// @title ForwarderCallOrdering
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
@@ -13,7 +13,7 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// list of the earlier action to each call list of the later one, so that the calls of an action are executed together.
 /// `order` sorts the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
-library ForwarderCallOrder {
+library ForwarderCallOrdering {
     using DirectedGraph for DirectedGraph.Graph;
 
     /// @notice The forwarder calls in the external payload of a resource. They are executed together and in their
@@ -26,23 +26,7 @@ library ForwarderCallOrder {
         bytes32 resourceTag;
         bytes32 resourceLogicRef;
         uint256 actionIndex;
-        ForwarderCall[] calls;
-    }
-
-    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
-    /// @param untrustedForwarder The forwarder contract to call.
-    /// @param input The input of the call.
-    /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the resources whose calls are executed before the calls of the call list of this
-    /// call.
-    /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
-    /// call.
-    struct ForwarderCall {
-        address untrustedForwarder;
-        bytes input;
-        bytes expectedOutput;
-        bytes32[] afterTags;
-        bytes32[] beforeTags;
+        IProtocolAdapter.ForwarderCall[] calls;
     }
 
     /// @notice The position of the offset of `afterTags` in an encoded forwarder call, which is its fourth word.
@@ -58,7 +42,7 @@ library ForwarderCallOrder {
     error BeforeTagNotInTransaction(bytes32 tag);
 
     /// @notice Thrown if the ordering constraints form a cycle, so that no order meets them.
-    error CyclicConstraints();
+    error CyclicOrderingConstraints();
 
     /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT`
     /// call-carrying resources.
@@ -151,7 +135,7 @@ library ForwarderCallOrder {
 
         bool isAcyclic;
         (isAcyclic, orderedIndices) = constraints.topologicalSort();
-        require(isAcyclic, CyclicConstraints());
+        require(isAcyclic, CyclicOrderingConstraints());
     }
 
     /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
@@ -173,9 +157,9 @@ library ForwarderCallOrder {
         callList.resourceLogicRef = resourceLogicRef;
 
         uint256 callCount = externalPayload.length;
-        callList.calls = new ForwarderCall[](callCount);
+        callList.calls = new IProtocolAdapter.ForwarderCall[](callCount);
         for (uint256 i = 0; i < callCount; ++i) {
-            ForwarderCall memory forwarderCall = callList.calls[i];
+            IProtocolAdapter.ForwarderCall memory forwarderCall = callList.calls[i];
             (
                 forwarderCall.untrustedForwarder,
                 forwarderCall.input,
@@ -187,7 +171,8 @@ library ForwarderCallOrder {
     }
 
     /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint that names the
-    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the
+    /// transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
     /// @return constraints The ordering constraints, as a graph whose nodes are the call lists.
@@ -201,11 +186,11 @@ library ForwarderCallOrder {
         constraints.successors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
-            ForwarderCall[] memory calls = callLists[callListIndex].calls;
+            IProtocolAdapter.ForwarderCall[] memory calls = callLists[callListIndex].calls;
             uint256 callCount = calls.length;
 
             for (uint256 c = 0; c < callCount; ++c) {
-                ForwarderCall memory forwarderCall = calls[c];
+                IProtocolAdapter.ForwarderCall memory forwarderCall = calls[c];
                 bytes32[] memory afterTags = forwarderCall.afterTags;
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {
@@ -214,7 +199,7 @@ library ForwarderCallOrder {
                     if (predecessor == callListCount) {
                         // A resource without calls has no calls to wait for.
                         require(
-                            _isTagOfTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
+                            _isTagInTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
                         );
                         continue;
                     }
@@ -234,7 +219,7 @@ library ForwarderCallOrder {
                     if (successor == callListCount) {
                         // A resource without calls has no calls that wait for these.
                         require(
-                            _isTagOfTransaction({actions: actions, tag: beforeTag}),
+                            _isTagInTransaction({actions: actions, tag: beforeTag}),
                             BeforeTagNotInTransaction(beforeTag)
                         );
                         continue;
@@ -313,7 +298,7 @@ library ForwarderCallOrder {
     /// @param actions The actions of the transaction.
     /// @param tag The tag to look for.
     /// @return found Whether a resource of the transaction has the tag.
-    function _isTagOfTransaction(IProtocolAdapter.Action[] calldata actions, bytes32 tag)
+    function _isTagInTransaction(IProtocolAdapter.Action[] calldata actions, bytes32 tag)
         private
         pure
         returns (bool found)

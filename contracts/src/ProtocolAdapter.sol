@@ -15,7 +15,7 @@ import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/R
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
-import {ForwarderCallOrder} from "./libs/ForwarderCallOrder.sol";
+import {ForwarderCallOrdering} from "./libs/ForwarderCallOrdering.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
 import {CommitmentTree} from "./state/CommitmentTree.sol";
 import {KindTreeRoot} from "./state/KindTreeRoot.sol";
@@ -43,9 +43,9 @@ contract ProtocolAdapter is
     using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
-    using ForwarderCallOrder for Action[];
-    using ForwarderCallOrder for ExpirableBlob[];
-    using ForwarderCallOrder for ForwarderCallOrder.CallList[];
+    using ForwarderCallOrdering for Action[];
+    using ForwarderCallOrdering for ExpirableBlob[];
+    using ForwarderCallOrdering for ForwarderCallOrdering.CallList[];
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
@@ -316,7 +316,7 @@ contract ProtocolAdapter is
     function _executeForwarderCallsOfResource(bytes32 logicRef, ExpirableBlob[] calldata externalPayload) internal {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
-            // `ForwarderCallOrder.hasOrderingConstraints` checked that the two tag lists after these fields are empty.
+            // `ForwarderCallOrdering.hasOrderingConstraints` checked that the tag lists after these fields are empty.
             (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
                 abi.decode(externalPayload[i].blob, (address, bytes, bytes));
             _executeForwarderCall({
@@ -329,14 +329,14 @@ contract ProtocolAdapter is
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     function _executeForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
-        ForwarderCallOrder.CallList[] memory callLists = actions.decodeCallLists(callListCount);
+        ForwarderCallOrdering.CallList[] memory callLists = actions.decodeCallLists(callListCount);
         uint256[] memory orderedIndices = callLists.order(actions);
 
         for (uint256 position = 0; position < callListCount; ++position) {
-            ForwarderCallOrder.CallList memory callList = callLists[orderedIndices[position]];
+            ForwarderCallOrdering.CallList memory callList = callLists[orderedIndices[position]];
             uint256 callCount = callList.calls.length;
             for (uint256 i = 0; i < callCount; ++i) {
-                ForwarderCallOrder.ForwarderCall memory forwarderCall = callList.calls[i];
+                ForwarderCall memory forwarderCall = callList.calls[i];
                 _executeForwarderCall({
                     logicRef: callList.resourceLogicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,
