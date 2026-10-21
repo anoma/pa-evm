@@ -214,7 +214,7 @@ library ForwarderCalls {
                     if (predecessor == callListCount) {
                         // A resource without calls has no calls to wait for.
                         require(
-                            _isTagOfTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
+                            _isTagInTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
                         );
                         continue;
                     }
@@ -234,7 +234,7 @@ library ForwarderCalls {
                     if (successor == callListCount) {
                         // A resource without calls has no calls that wait for these.
                         require(
-                            _isTagOfTransaction({actions: actions, tag: beforeTag}),
+                            _isTagInTransaction({actions: actions, tag: beforeTag}),
                             BeforeTagNotInTransaction(beforeTag)
                         );
                         continue;
@@ -313,7 +313,7 @@ library ForwarderCalls {
     /// @param actions The actions of the transaction.
     /// @param tag The tag to look for.
     /// @return found Whether a resource of the transaction has the tag.
-    function _isTagOfTransaction(IProtocolAdapter.Action[] calldata actions, bytes32 tag)
+    function _isTagInTransaction(IProtocolAdapter.Action[] calldata actions, bytes32 tag)
         private
         pure
         returns (bool found)
