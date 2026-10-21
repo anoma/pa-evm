@@ -142,7 +142,7 @@ interface IProtocolAdapter {
     event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively, and by running the forwarder calls of its resources.
+    /// set, respectively, and by executing the forwarder calls of its resources.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

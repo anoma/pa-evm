@@ -8,15 +8,16 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
-/// @dev `order` builds one graph whose nodes are the call lists. An edge means that the calls of its predecessor run
-/// before those of its successor. A constraint between call lists of two actions adds an edge from each call list of
-/// the earlier action to each call list of the later one, so that the calls of an action run together. `order` sorts
-/// the graph with `DirectedGraph.topologicalSort`.
+/// @dev `order` builds one graph whose nodes are the call lists. An edge means that the calls of its predecessor are
+/// executed before those of its successor. A constraint between call lists of two actions adds an edge from each call
+/// list of the earlier action to each call list of the later one, so that the calls of an action are executed together.
+/// `order` sorts the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
     using DirectedGraph for DirectedGraph.Graph;
 
-    /// @notice The forwarder calls in the external payload of a resource. They run together and in their order.
+    /// @notice The forwarder calls in the external payload of a resource. They are executed together and in their
+    /// order.
     /// @param resourceTag The tag of the resource.
     /// @param resourceLogicRef The logic reference of the resource.
     /// @param actionIndex The index of the action of the resource.
@@ -32,8 +33,10 @@ library ForwarderCallOrder {
     /// @param untrustedForwarder The forwarder contract to call.
     /// @param input The input of the call.
     /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the resources whose calls run before the calls of the call list of this call.
-    /// @param beforeTags The tags of the resources whose calls run after the calls of the call list of this call.
+    /// @param afterTags The tags of the resources whose calls are executed before the calls of the call list of this
+    /// call.
+    /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
+    /// call.
     struct ForwarderCall {
         address untrustedForwarder;
         bytes input;
@@ -135,7 +138,7 @@ library ForwarderCallOrder {
     /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @return orderedIndices The indices of `callLists`, in the order in which their calls run.
+    /// @return orderedIndices The indices of `callLists`, in the order in which their calls are executed.
     function order(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
         internal
         pure
@@ -229,7 +232,7 @@ library ForwarderCallOrder {
                     bytes32 beforeTag = beforeTags[b];
                     uint256 successor = _indexOf({callLists: callLists, tag: beforeTag});
                     if (successor == callListCount) {
-                        // A resource without calls has no calls to run before.
+                        // A resource without calls has no calls that wait for these.
                         require(
                             _isTagOfTransaction({actions: actions, tag: beforeTag}),
                             BeforeTagNotInTransaction(beforeTag)
@@ -248,8 +251,8 @@ library ForwarderCallOrder {
     /// of the action of `predecessor` to each call list of the action of `successor`.
     /// @param callLists The call lists of the transaction.
     /// @param constraints The ordering constraints, as a graph whose nodes are the call lists.
-    /// @param predecessor The call list whose calls run before those of `successor`.
-    /// @param successor The call list whose calls run after those of `predecessor`.
+    /// @param predecessor The call list whose calls are executed before those of `successor`.
+    /// @param successor The call list whose calls are executed after those of `predecessor`.
     function _addEdge(
         CallList[] memory callLists,
         DirectedGraph.Graph memory constraints,

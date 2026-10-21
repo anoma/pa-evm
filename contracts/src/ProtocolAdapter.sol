@@ -132,7 +132,7 @@ contract ProtocolAdapter is
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
         });
 
-        // Run the forwarder calls after the state changes of all actions and after the proofs.
+        // Execute the forwarder calls after the state changes of all actions and after the proofs.
         if (callListCount != 0) {
             _executeForwarderCalls({
                 actions: transaction.actions,
