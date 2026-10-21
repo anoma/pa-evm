@@ -56,10 +56,10 @@ library DirectedGraph {
         }
     }
 
-    /// @notice Sorts the nodes of a graph topologically: the predecessor of each edge comes before its successor. Of
-    /// the nodes that wait for no other node, the node with the lowest index comes next.
-    /// @dev Kahn's algorithm. A node is ready when all its predecessors are sorted. Taking the ready node with the
-    /// lowest index at each step makes the order unique.
+    /// @notice Sorts the nodes of a graph topologically: the predecessor of each edge comes before its successor. A
+    /// node is ready when all its predecessors are sorted. Of the ready nodes, the one with the lowest index comes
+    /// next, so the order is unique.
+    /// @dev Kahn's algorithm.
     /// @param graph The graph to sort.
     /// @return isAcyclic Whether the edges form no cycle, so that a topological order exists.
     /// @return sortedNodes The nodes in topological order, if `isAcyclic` is true.
