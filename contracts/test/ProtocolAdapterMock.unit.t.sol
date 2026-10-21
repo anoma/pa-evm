@@ -228,13 +228,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @dev A resource outside the transaction runs no call, so the call has nothing to run before.
-    function test_execute_ignores_a_before_tag_that_is_not_in_the_transaction() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
-        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(keccak256("not in the transaction"))});
+    /// @dev The call must run before the call of a resource that an earlier transaction consumed, but that call ran
+    /// already. A `beforeTags` entry outside the transaction constrains nothing, so the call runs anyway.
+    function test_execute_runs_a_call_that_must_precede_a_resource_an_earlier_transaction_consumed() public {
+        TxGen.ResourceAndAppData[] memory earlierConsumed = _carrier({nonce: 0, callId: 1});
+        _mockPa.execute(_transaction(earlierConsumed, _exampleResourceAndEmptyAppData({nonce: 1})));
 
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
+        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 2, callId: 2});
+        _constrain({data: consumed[0], afterTags: _noTags(), beforeTags: _tags(_nullifier(earlierConsumed[0]))});
+
+        _assertCallOrder({
+            txn: _transaction(consumed, _exampleResourceAndEmptyAppData({nonce: 3})), expected: _callIds(2)
+        });
     }
 
     function test_execute_ignores_a_before_tag_that_names_a_resource_without_calls() public {
