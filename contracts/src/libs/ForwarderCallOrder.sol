@@ -146,9 +146,7 @@ library ForwarderCallOrder {
         uint256 callListCount = callLists.length;
         require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
 
-        DirectedGraph.Graph memory constraints =
-            DirectedGraph.Graph({predecessors: new uint256[](callListCount), successors: new uint256[](callListCount)});
-        _addEdges({callLists: callLists, actions: actions, constraints: constraints});
+        DirectedGraph.Graph memory constraints = _buildConstraints({callLists: callLists, actions: actions});
 
         bool isAcyclic;
         (isAcyclic, orderedIndices) = constraints.topologicalSort();
@@ -187,17 +185,19 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Adds an edge for each ordering constraint that names the resource of a call list, and checks that each
-    /// `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint that names the
+    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param constraints The ordering constraints, as a graph whose nodes are the call lists.
-    function _addEdges(
-        CallList[] memory callLists,
-        IProtocolAdapter.Action[] calldata actions,
-        DirectedGraph.Graph memory constraints
-    ) private pure {
+    /// @return constraints The ordering constraints, as a graph whose nodes are the call lists.
+    function _buildConstraints(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
+        private
+        pure
+        returns (DirectedGraph.Graph memory constraints)
+    {
         uint256 callListCount = callLists.length;
+        constraints.predecessors = new uint256[](callListCount);
+        constraints.successors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
             ForwarderCall[] memory calls = callLists[callListIndex].calls;
