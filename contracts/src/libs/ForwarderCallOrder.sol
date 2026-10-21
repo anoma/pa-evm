@@ -103,10 +103,9 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Consumed calldata consumed = consumedResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = consumed.appData.externalPayload;
                 if (externalPayload.length != 0) {
-                    CallList memory callList = callLists[callListIndex++];
-                    callList.actionIndex = i;
                     _decodeCallList({
-                        callList: callList,
+                        callList: callLists[callListIndex++],
+                        actionIndex: i,
                         resourceTag: consumed.nullifier,
                         resourceLogicRef: consumed.logicRef,
                         externalPayload: externalPayload
@@ -120,10 +119,9 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Created calldata created = createdResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
                 if (externalPayload.length != 0) {
-                    CallList memory callList = callLists[callListIndex++];
-                    callList.actionIndex = i;
                     _decodeCallList({
-                        callList: callList,
+                        callList: callLists[callListIndex++],
+                        actionIndex: i,
                         resourceTag: created.commitment,
                         resourceLogicRef: created.logicRef,
                         externalPayload: externalPayload
@@ -187,17 +185,21 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Writes the tag and the logic reference of a resource to its call list and decodes its forwarder calls.
+    /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
+    /// forwarder calls.
     /// @param callList The call list to fill.
+    /// @param actionIndex The index of the action of the resource.
     /// @param resourceTag The tag of the resource.
     /// @param resourceLogicRef The logic reference of the resource.
     /// @param externalPayload The external payload of the resource.
     function _decodeCallList(
         CallList memory callList,
+        uint256 actionIndex,
         bytes32 resourceTag,
         bytes32 resourceLogicRef,
         IProtocolAdapter.ExpirableBlob[] calldata externalPayload
     ) private pure {
+        callList.actionIndex = actionIndex;
         callList.resourceTag = resourceTag;
         callList.resourceLogicRef = resourceLogicRef;
 
