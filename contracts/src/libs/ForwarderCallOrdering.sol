@@ -8,9 +8,9 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
-/// @dev `order` builds one graph whose nodes are the call lists. An edge means that the calls of its predecessor are
-/// executed before those of its successor. A constraint between call lists of two actions adds an edge from each call
-/// list of the earlier action to each call list of the later one, so that the calls of an action are executed together.
+/// @dev `order` builds one graph whose nodes are the call lists. An edge means that the calls of its source are
+/// executed before those of its target. A constraint between call lists of two actions adds an edge from each call list
+/// of the earlier action to each call list of the later one, so that the calls of an action are executed together.
 /// `order` sorts the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrdering {
@@ -182,8 +182,8 @@ library ForwarderCallOrdering {
         returns (DirectedGraph.Graph memory constraints)
     {
         uint256 callListCount = callLists.length;
-        constraints.predecessors = new uint256[](callListCount);
-        constraints.successors = new uint256[](callListCount);
+        constraints.inNeighbors = new uint256[](callListCount);
+        constraints.outNeighbors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
             IProtocolAdapter.ForwarderCall[] memory calls = callLists[callListIndex].calls;
@@ -195,28 +195,23 @@ library ForwarderCallOrdering {
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {
                     bytes32 afterTag = afterTags[a];
-                    uint256 predecessor = _indexOf({callLists: callLists, tag: afterTag});
-                    if (predecessor == callListCount) {
+                    uint256 source = _indexOf({callLists: callLists, tag: afterTag});
+                    if (source == callListCount) {
                         // A resource without calls has no calls to wait for.
                         require(
                             _isTagInTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
                         );
                         continue;
                     }
-                    _addEdge({
-                        callLists: callLists,
-                        constraints: constraints,
-                        predecessor: predecessor,
-                        successor: callListIndex
-                    });
+                    _addEdge({callLists: callLists, constraints: constraints, source: source, target: callListIndex});
                 }
 
                 bytes32[] memory beforeTags = forwarderCall.beforeTags;
                 uint256 beforeTagCount = beforeTags.length;
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
                     bytes32 beforeTag = beforeTags[b];
-                    uint256 successor = _indexOf({callLists: callLists, tag: beforeTag});
-                    if (successor == callListCount) {
+                    uint256 target = _indexOf({callLists: callLists, tag: beforeTag});
+                    if (target == callListCount) {
                         // A resource without calls has no calls that wait for these.
                         require(
                             _isTagInTransaction({actions: actions, tag: beforeTag}),
@@ -224,37 +219,32 @@ library ForwarderCallOrdering {
                         );
                         continue;
                     }
-                    _addEdge({
-                        callLists: callLists, constraints: constraints, predecessor: callListIndex, successor: successor
-                    });
+                    _addEdge({callLists: callLists, constraints: constraints, source: callListIndex, target: target});
                 }
             }
         }
     }
 
     /// @notice Adds the edge between two call lists if they belong to one action, and else an edge from each call list
-    /// of the action of `predecessor` to each call list of the action of `successor`.
+    /// of the action of `source` to each call list of the action of `target`.
     /// @param callLists The call lists of the transaction.
     /// @param constraints The ordering constraints, as a graph whose nodes are the call lists.
-    /// @param predecessor The call list whose calls are executed before those of `successor`.
-    /// @param successor The call list whose calls are executed after those of `predecessor`.
+    /// @param source The call list whose calls are executed before those of `target`.
+    /// @param target The call list whose calls are executed after those of `source`.
     function _addEdge(
         CallList[] memory callLists,
         DirectedGraph.Graph memory constraints,
-        uint256 predecessor,
-        uint256 successor
+        uint256 source,
+        uint256 target
     ) private pure {
-        if (callLists[predecessor].actionIndex == callLists[successor].actionIndex) {
-            constraints.addEdge({predecessor: predecessor, successor: successor});
+        if (callLists[source].actionIndex == callLists[target].actionIndex) {
+            constraints.addEdge({source: source, target: target});
             return;
         }
-        (uint256 predecessorStart, uint256 predecessorEnd) = _callListsOfAction(callLists, predecessor);
-        (uint256 successorStart, uint256 successorEnd) = _callListsOfAction(callLists, successor);
+        (uint256 sourceStart, uint256 sourceEnd) = _callListsOfAction(callLists, source);
+        (uint256 targetStart, uint256 targetEnd) = _callListsOfAction(callLists, target);
         constraints.addEdges({
-            predecessorStart: predecessorStart,
-            predecessorEnd: predecessorEnd,
-            successorStart: successorStart,
-            successorEnd: successorEnd
+            sourceStart: sourceStart, sourceEnd: sourceEnd, targetStart: targetStart, targetEnd: targetEnd
         });
     }
 

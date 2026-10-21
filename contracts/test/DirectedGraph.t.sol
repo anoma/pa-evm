@@ -12,7 +12,7 @@ contract DirectedGraphTest is Test {
 
     function test_addEdges_puts_each_node_of_one_range_before_each_node_of_another() public pure {
         DirectedGraph.Graph memory graph = _graphWithoutEdges(3);
-        graph.addEdges({predecessorStart: 1, predecessorEnd: 3, successorStart: 0, successorEnd: 1});
+        graph.addEdges({sourceStart: 1, sourceEnd: 3, targetStart: 0, targetEnd: 1});
 
         (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
 
@@ -20,13 +20,11 @@ contract DirectedGraphTest is Test {
         assertEq(sortedNodes, _list(1, 2, 0), "sorted nodes");
     }
 
-    /// @dev The predecessor range holds the node whose bit is the last bit of a bitmap.
+    /// @dev The source range holds the node whose bit is the last bit of a bitmap.
     function test_addEdges_reaches_the_last_node_of_a_bitmap() public pure {
         uint256 nodeCount = DirectedGraph.MAX_NODE_COUNT;
         DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
-        graph.addEdges({
-            predecessorStart: nodeCount - 1, predecessorEnd: nodeCount, successorStart: 0, successorEnd: nodeCount - 1
-        });
+        graph.addEdges({sourceStart: nodeCount - 1, sourceEnd: nodeCount, targetStart: 0, targetEnd: nodeCount - 1});
 
         (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
 
@@ -37,32 +35,32 @@ contract DirectedGraphTest is Test {
 
     function test_topologicalSort_reports_edges_that_form_a_cycle() public pure {
         (bool isAcyclic,) =
-            _graph({nodeCount: 3, edgeStarts: _list(0, 1, 2), edgeEnds: _list(1, 2, 0)}).topologicalSort();
+            _graph({nodeCount: 3, edgeSources: _list(0, 1, 2), edgeTargets: _list(1, 2, 0)}).topologicalSort();
 
         assertFalse(isAcyclic, "the edges form a cycle");
     }
 
     function test_topologicalSort_reports_an_edge_from_a_node_to_itself_as_a_cycle() public pure {
-        (bool isAcyclic,) = _graph({nodeCount: 2, edgeStarts: _list(1), edgeEnds: _list(1)}).topologicalSort();
+        (bool isAcyclic,) = _graph({nodeCount: 2, edgeSources: _list(1), edgeTargets: _list(1)}).topologicalSort();
 
         assertFalse(isAcyclic, "the edge forms a cycle");
     }
 
     function test_topologicalSort_sorts_a_graph_without_edges_by_index() public pure {
-        assertEq(_sort({nodeCount: 3, edgeStarts: _list(), edgeEnds: _list()}), _list(0, 1, 2), "sorted nodes");
+        assertEq(_sort({nodeCount: 3, edgeSources: _list(), edgeTargets: _list()}), _list(0, 1, 2), "sorted nodes");
     }
 
-    function test_topologicalSort_puts_the_predecessor_of_an_edge_before_its_successor() public pure {
-        assertEq(_sort({nodeCount: 3, edgeStarts: _list(2), edgeEnds: _list(0)}), _list(1, 2, 0), "sorted nodes");
+    function test_topologicalSort_puts_the_source_of_an_edge_before_its_target() public pure {
+        assertEq(_sort({nodeCount: 3, edgeSources: _list(2), edgeTargets: _list(0)}), _list(1, 2, 0), "sorted nodes");
     }
 
     /// @dev Once node 1 is sorted, nodes 0 and 2 are both ready, and 0 has the lower index.
     function test_topologicalSort_takes_the_ready_node_with_the_lowest_index() public pure {
-        assertEq(_sort({nodeCount: 3, edgeStarts: _list(1), edgeEnds: _list(0)}), _list(1, 0, 2), "sorted nodes");
+        assertEq(_sort({nodeCount: 3, edgeSources: _list(1), edgeTargets: _list(0)}), _list(1, 0, 2), "sorted nodes");
     }
 
     function test_topologicalSort_sorts_two_equal_edges_like_one() public pure {
-        assertEq(_sort({nodeCount: 2, edgeStarts: _list(1, 1), edgeEnds: _list(0, 0)}), _list(1, 0), "sorted nodes");
+        assertEq(_sort({nodeCount: 2, edgeSources: _list(1, 1), edgeTargets: _list(0, 0)}), _list(1, 0), "sorted nodes");
     }
 
     /// @dev Each node waits for the node above it, so the highest node, whose bit is the last bit of a bitmap, comes
@@ -71,7 +69,7 @@ contract DirectedGraphTest is Test {
         uint256 nodeCount = DirectedGraph.MAX_NODE_COUNT;
         DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
         for (uint256 node = 0; node + 1 < nodeCount; ++node) {
-            graph.addEdge({predecessor: node + 1, successor: node});
+            graph.addEdge({source: node + 1, target: node});
         }
 
         (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
@@ -84,14 +82,14 @@ contract DirectedGraphTest is Test {
     }
 
     function test_topologicalSort_returns_no_nodes_for_a_graph_without_nodes() public pure {
-        assertEq(_sort({nodeCount: 0, edgeStarts: _list(), edgeEnds: _list()}).length, 0, "number of sorted nodes");
+        assertEq(_sort({nodeCount: 0, edgeSources: _list(), edgeTargets: _list()}).length, 0, "number of sorted nodes");
     }
 
     /// @dev Draws a rank for each node and adds edges that agree with the ranks, so that the graph has no cycle.
-    function testFuzz_topologicalSort_puts_the_predecessor_of_every_edge_before_its_successor(
-        uint256 nodeCount,
-        uint256 seed
-    ) public pure {
+    function testFuzz_topologicalSort_puts_the_source_of_every_edge_before_its_target(uint256 nodeCount, uint256 seed)
+        public
+        pure
+    {
         nodeCount = bound(nodeCount, 1, DirectedGraph.MAX_NODE_COUNT);
         LibPRNG.PRNG memory prng = LibPRNG.PRNG({state: seed});
 
@@ -103,16 +101,16 @@ contract DirectedGraphTest is Test {
 
         uint256 drawCount = 2 * nodeCount;
         DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
-        uint256[] memory edgeStarts = new uint256[](drawCount);
-        uint256[] memory edgeEnds = new uint256[](drawCount);
+        uint256[] memory edgeSources = new uint256[](drawCount);
+        uint256[] memory edgeTargets = new uint256[](drawCount);
         uint256 edgeCount = 0;
         for (uint256 d = 0; d < drawCount; ++d) {
             uint256 first = prng.uniform(nodeCount);
             uint256 second = prng.uniform(nodeCount);
             if (ranks[first] != ranks[second]) {
-                (edgeStarts[edgeCount], edgeEnds[edgeCount]) =
+                (edgeSources[edgeCount], edgeTargets[edgeCount]) =
                     ranks[first] < ranks[second] ? (first, second) : (second, first);
-                graph.addEdge({predecessor: edgeStarts[edgeCount], successor: edgeEnds[edgeCount]});
+                graph.addEdge({source: edgeSources[edgeCount], target: edgeTargets[edgeCount]});
                 ++edgeCount;
             }
         }
@@ -129,35 +127,35 @@ contract DirectedGraphTest is Test {
             positions[sortedNodes[position]] = position;
         }
         for (uint256 e = 0; e < edgeCount; ++e) {
-            assertLt(positions[edgeStarts[e]], positions[edgeEnds[e]], "a predecessor comes before its successor");
+            assertLt(positions[edgeSources[e]], positions[edgeTargets[e]], "a source comes before its target");
         }
     }
 
-    function _sort(uint256 nodeCount, uint256[] memory edgeStarts, uint256[] memory edgeEnds)
+    function _sort(uint256 nodeCount, uint256[] memory edgeSources, uint256[] memory edgeTargets)
         private
         pure
         returns (uint256[] memory sortedNodes)
     {
         bool isAcyclic;
         (isAcyclic, sortedNodes) =
-            _graph({nodeCount: nodeCount, edgeStarts: edgeStarts, edgeEnds: edgeEnds}).topologicalSort();
+            _graph({nodeCount: nodeCount, edgeSources: edgeSources, edgeTargets: edgeTargets}).topologicalSort();
         assertTrue(isAcyclic, "the edges form no cycle");
     }
 
-    function _graph(uint256 nodeCount, uint256[] memory edgeStarts, uint256[] memory edgeEnds)
+    function _graph(uint256 nodeCount, uint256[] memory edgeSources, uint256[] memory edgeTargets)
         private
         pure
         returns (DirectedGraph.Graph memory graph)
     {
-        assertEq(edgeStarts.length, edgeEnds.length, "one start and one end for each edge");
+        assertEq(edgeSources.length, edgeTargets.length, "one start and one end for each edge");
         graph = _graphWithoutEdges(nodeCount);
-        for (uint256 e = 0; e < edgeStarts.length; ++e) {
-            graph.addEdge({predecessor: edgeStarts[e], successor: edgeEnds[e]});
+        for (uint256 e = 0; e < edgeSources.length; ++e) {
+            graph.addEdge({source: edgeSources[e], target: edgeTargets[e]});
         }
     }
 
     function _graphWithoutEdges(uint256 nodeCount) private pure returns (DirectedGraph.Graph memory graph) {
-        graph = DirectedGraph.Graph({predecessors: new uint256[](nodeCount), successors: new uint256[](nodeCount)});
+        graph = DirectedGraph.Graph({inNeighbors: new uint256[](nodeCount), outNeighbors: new uint256[](nodeCount)});
     }
 
     function _list() private pure returns (uint256[] memory list) {
