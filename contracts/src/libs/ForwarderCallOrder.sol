@@ -236,7 +236,8 @@ library ForwarderCallOrder {
             uint256 callCount = calls.length;
 
             for (uint256 c = 0; c < callCount; ++c) {
-                bytes32[] memory afterTags = calls[c].afterTags;
+                ForwarderCall memory forwarderCall = calls[c];
+                bytes32[] memory afterTags = forwarderCall.afterTags;
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {
                     bytes32 afterTag = afterTags[a];
@@ -257,7 +258,7 @@ library ForwarderCallOrder {
                     });
                 }
 
-                bytes32[] memory beforeTags = calls[c].beforeTags;
+                bytes32[] memory beforeTags = forwarderCall.beforeTags;
                 uint256 beforeTagCount = beforeTags.length;
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
                     bytes32 beforeTag = beforeTags[b];
