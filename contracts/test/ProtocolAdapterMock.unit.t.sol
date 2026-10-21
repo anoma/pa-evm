@@ -321,6 +321,24 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(2, 3, 4, 1)});
     }
 
+    /// @dev The call of the second action must run after the first call of the first action and before its second
+    /// call.
+    function test_execute_interleaves_the_calls_of_two_actions() public {
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
+        resourceLists[0] =
+            TxGen.ResourceLists({consumed: _carrier({nonce: 0, callId: 1}), created: _carrier({nonce: 1, callId: 2})});
+        resourceLists[1] = TxGen.ResourceLists({
+            consumed: _carrier({nonce: 2, callId: 3}), created: _exampleResourceAndEmptyAppData({nonce: 3})
+        });
+        _constrain({
+            data: resourceLists[1].consumed[0],
+            afterTags: _tags(_nullifier(resourceLists[0].consumed[0])),
+            beforeTags: _tags(_commitment(resourceLists[0].created[0]))
+        });
+
+        _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(1, 3, 2)});
+    }
+
     /// @dev A swap needs the unwrap (created) before the generic call and the wrap (both consumed). The two lists
     /// run the consumed resources first, so only the constraints set this order.
     function test_execute_runs_the_calls_of_a_swap_in_the_order_of_their_constraints() public {

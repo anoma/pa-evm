@@ -11,10 +11,10 @@
 | VERSION                                          |            1073 |   1073 |   1073 |   1073 |       3 |
 | commitmentCount                                  |             709 |   1709 |   1709 |   2709 |      12 |
 | denyLogicRefs                                    |             715 |  31709 |  28856 |  52996 |      11 |
-| execute                                          |            2881 | 183076 | 194613 | 433557 |      57 |
+| execute                                          |            2881 | 187000 | 194630 | 433557 |      58 |
 | getImplementation                                |             627 |    793 |    627 |   2627 |      12 |
 | getKindTreeRoot                                  |            2841 |   2841 |   2841 |   2841 |       2 |
-| initialize                                       |            3049 | 150647 | 152923 | 152923 |     123 |
+| initialize                                       |            3049 | 150665 | 152923 | 152923 |     124 |
 | isLogicRefDenied                                 |            2432 |   2435 |   2435 |   2439 |      12 |
 | isNullifierContained                             |             768 |   2767 |   2768 |   2768 |    2713 |
 | latestCommitmentTreeRoot                         |            6977 |  12429 |   9711 |  17877 |      15 |
