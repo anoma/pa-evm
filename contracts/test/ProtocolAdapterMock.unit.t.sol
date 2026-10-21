@@ -285,7 +285,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
+        vm.expectRevert(ForwarderCallOrder.CyclicOrderingConstraints.selector);
         _mockPa.execute(txn);
     }
 
@@ -296,7 +296,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
+        vm.expectRevert(ForwarderCallOrder.CyclicOrderingConstraints.selector);
         _mockPa.execute(txn);
     }
 
@@ -308,7 +308,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
+        vm.expectRevert(ForwarderCallOrder.CyclicOrderingConstraints.selector);
         _mockPa.execute(txn);
     }
 
@@ -352,7 +352,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
 
-        vm.expectRevert(ForwarderCallOrder.CyclicConstraints.selector);
+        vm.expectRevert(ForwarderCallOrder.CyclicOrderingConstraints.selector);
         _mockPa.execute(txn);
     }
 
