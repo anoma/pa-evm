@@ -123,14 +123,11 @@ contract ProtocolAdapter is
                 }
             }
 
-            // Add the action delta to the transaction delta.
             transactionDelta = transactionDelta.add(action.unitDelta);
 
             actionTreeRoots[i] = action.actionTreeRoot;
         }
 
-        // Verify the delta and aggregation proofs. The empty transaction is rejected above,
-        // so both proofs are guaranteed to be checked.
         bytes32 transactionId = _verifyGlobalProofs({
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
         });
