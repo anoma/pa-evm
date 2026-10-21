@@ -171,7 +171,8 @@ library ForwarderCallOrdering {
     }
 
     /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint that names the
-    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the
+    /// transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
     /// @return constraints The ordering constraints, as a graph whose nodes are the call lists.
