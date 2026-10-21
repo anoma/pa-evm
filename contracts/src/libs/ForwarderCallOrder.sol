@@ -242,8 +242,7 @@ library ForwarderCallOrder {
                     bytes32 beforeTag = beforeTags[b];
                     uint256 successor = _indexOf({carriers: carriers, tag: beforeTag});
                     if (successor == carrierCount) {
-                        // A resource without calls has no calls to run before. A resource outside the transaction
-                        // may have run its calls in an earlier transaction, which the constraint would not catch.
+                        // A resource without calls has no calls to run before.
                         require(
                             _isTagOfTransaction({actions: actions, tag: beforeTag}),
                             BeforeTagNotInTransaction(beforeTag)

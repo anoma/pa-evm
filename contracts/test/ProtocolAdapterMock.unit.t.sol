@@ -228,20 +228,17 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @dev The call must run before the call of a resource that an earlier transaction consumed, but that call ran
-    /// already. The protocol adapter could look up a consumed resource's nullifier, but it keeps no set of
-    /// commitments for a created one, so any tag outside the transaction reverts.
-    function test_execute_reverts_on_a_before_tag_of_a_resource_that_an_earlier_transaction_consumed() public {
-        TxGen.ResourceAndAppData[] memory earlierConsumed = _carrier({nonce: 0, callId: 1});
-        _mockPa.execute(_transaction(earlierConsumed, _exampleResourceAndEmptyAppData({nonce: 1})));
+    function test_execute_reverts_on_a_before_tag_that_is_not_in_the_transaction() public {
+        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        bytes32 tagNotInTransaction = keccak256("not in the transaction");
+        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(tagNotInTransaction)});
 
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 2, callId: 2});
-        bytes32 earlierNullifier = _nullifier(earlierConsumed[0]);
-        _constrain({data: consumed[0], afterTags: _noTags(), beforeTags: _tags(earlierNullifier)});
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-        IProtocolAdapter.Transaction memory txn = _transaction(consumed, _exampleResourceAndEmptyAppData({nonce: 3}));
-
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrder.BeforeTagNotInTransaction.selector, earlierNullifier));
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrder.BeforeTagNotInTransaction.selector, tagNotInTransaction)
+        );
         _mockPa.execute(txn);
     }
 
