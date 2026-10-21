@@ -44,11 +44,15 @@ An application contract (e.g. the ERC20 or generic-call forwarder) that the PA d
 **Forwarder call**:
 A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA runs the forwarder calls of a transaction after the nullifiers and commitments of all actions are added and after the proofs.
 
-**Carrier**:
-A resource with forwarder calls. The PA runs the calls of a carrier together and in their order, and the calls of the carriers of an action together.
+**Call-carrying resource**:
+A resource with forwarder calls in its external payload.
+_Avoid_: carrier
+
+**Call list**:
+The forwarder calls of a call-carrying resource, in the order of its external payload. The PA runs the calls of a call list together and in their order, and the call lists of an action together.
 
 **Ordering constraint**:
-An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of a resource, which is the nullifier of a consumed resource or the commitment of a created resource, whose calls run before (`afterTags`) or after (`beforeTags`) the calls of the carrier. Without ordering constraints, the calls run in the order of the actions, with the consumed resources of an action before its created resources.
+An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of a resource, which is the nullifier of a consumed resource or the commitment of a created resource, whose calls run before (`afterTags`) or after (`beforeTags`) the calls of the call-carrying resource. Without ordering constraints, the calls run in the order of the actions, with the consumed resources of an action before its created resources.
 
 **Environment**:
 One of the two protocol adapter deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.

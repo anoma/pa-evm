@@ -45,7 +45,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
     using ForwarderCallOrder for Action[];
     using ForwarderCallOrder for ExpirableBlob[];
-    using ForwarderCallOrder for ForwarderCallOrder.Carrier[];
+    using ForwarderCallOrder for ForwarderCallOrder.CallList[];
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.11";
@@ -106,18 +106,18 @@ contract ProtocolAdapter is
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
         bytes32 updatedCommitmentTreeRoot = bytes32(0);
-        uint256 carrierCount = 0;
+        uint256 callListCount = 0;
         bool hasOrderingConstraints = false;
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            (bytes32 newRoot, uint256 actionCarrierCount, bool actionHasOrderingConstraints) = _processAction(action);
+            (bytes32 newRoot, uint256 actionCallListCount, bool actionHasOrderingConstraints) = _processAction(action);
             if (newRoot != bytes32(0)) {
                 updatedCommitmentTreeRoot = newRoot;
             }
-            if (actionCarrierCount != 0) {
-                carrierCount += actionCarrierCount;
+            if (actionCallListCount != 0) {
+                callListCount += actionCallListCount;
                 if (actionHasOrderingConstraints) {
                     hasOrderingConstraints = true;
                 }
@@ -136,9 +136,11 @@ contract ProtocolAdapter is
         });
 
         // Run the forwarder calls after the state changes of all actions and after the proofs.
-        if (carrierCount != 0) {
+        if (callListCount != 0) {
             _runForwarderCalls({
-                actions: transaction.actions, carrierCount: carrierCount, hasOrderingConstraints: hasOrderingConstraints
+                actions: transaction.actions,
+                callListCount: callListCount,
+                hasOrderingConstraints: hasOrderingConstraints
             });
         }
 
@@ -187,17 +189,17 @@ contract ProtocolAdapter is
     /// * checking the logic references of the consumed and created resources against the denylists,
     /// * checking that the commitment tree roots referenced by the consumed resources are historical roots,
     /// * adding the nullifiers to the nullifier set and the commitments to the commitment tree,
-    /// * counting the carriers and checking their forwarder calls for ordering constraints,
+    /// * counting the resources that carry forwarder calls and checking the calls for ordering constraints,
     /// * emitting the app data blobs based on their deletion criterion, and
     /// * emitting the `ActionExecuted` event.
     /// @param action The action to process.
     /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
     /// action created no resources.
-    /// @return carrierCount The number of resources of the action that carry forwarder calls.
+    /// @return callListCount The number of resources of the action that carry forwarder calls.
     /// @return hasOrderingConstraints Whether a forwarder call of the action carries ordering constraints.
     function _processAction(Action calldata action)
         internal
-        returns (bytes32 updatedCommitmentTreeRoot, uint256 carrierCount, bool hasOrderingConstraints)
+        returns (bytes32 updatedCommitmentTreeRoot, uint256 callListCount, bool hasOrderingConstraints)
     {
         uint256 consumedCount = action.consumed.length;
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
@@ -219,7 +221,7 @@ contract ProtocolAdapter is
 
             ExpirableBlob[] calldata externalPayload = consumed.appData.externalPayload;
             if (externalPayload.length != 0) {
-                ++carrierCount;
+                ++callListCount;
                 if (!hasOrderingConstraints) {
                     hasOrderingConstraints = externalPayload.hasOrderingConstraints();
                 }
@@ -245,7 +247,7 @@ contract ProtocolAdapter is
 
             ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
             if (externalPayload.length != 0) {
-                ++carrierCount;
+                ++callListCount;
                 if (!hasOrderingConstraints) {
                     hasOrderingConstraints = externalPayload.hasOrderingConstraints();
                 }
@@ -268,11 +270,13 @@ contract ProtocolAdapter is
     /// @notice Runs the forwarder calls of a transaction. Without ordering constraints, the calls run in the order of
     /// the actions, with the consumed resources of an action before its created resources.
     /// @param actions The actions of the transaction.
-    /// @param carrierCount The number of resources that carry forwarder calls.
+    /// @param callListCount The number of resources that carry forwarder calls.
     /// @param hasOrderingConstraints Whether a forwarder call carries ordering constraints.
-    function _runForwarderCalls(Action[] calldata actions, uint256 carrierCount, bool hasOrderingConstraints) internal {
+    function _runForwarderCalls(Action[] calldata actions, uint256 callListCount, bool hasOrderingConstraints)
+        internal
+    {
         if (hasOrderingConstraints) {
-            _runForwarderCallsInConstraintOrder({actions: actions, carrierCount: carrierCount});
+            _runForwarderCallsInConstraintOrder({actions: actions, callListCount: callListCount});
         } else {
             _runForwarderCallsInActionOrder(actions);
         }
@@ -321,18 +325,19 @@ contract ProtocolAdapter is
 
     /// @notice Runs the forwarder calls of a transaction in the order that their ordering constraints set.
     /// @param actions The actions of the transaction.
-    /// @param carrierCount The number of resources that carry forwarder calls.
-    function _runForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 carrierCount) internal {
-        (ForwarderCallOrder.Carrier[] memory carriers, uint256 constraintCount) = actions.decodeCarriers(carrierCount);
-        uint256[] memory orderedIndices = carriers.order({actions: actions, constraintCount: constraintCount});
+    /// @param callListCount The number of resources that carry forwarder calls.
+    function _runForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
+        (ForwarderCallOrder.CallList[] memory callLists, uint256 constraintCount) =
+            actions.decodeCallLists(callListCount);
+        uint256[] memory orderedIndices = callLists.order({actions: actions, constraintCount: constraintCount});
 
-        for (uint256 position = 0; position < carrierCount; ++position) {
-            ForwarderCallOrder.Carrier memory carrier = carriers[orderedIndices[position]];
-            uint256 callCount = carrier.calls.length;
+        for (uint256 position = 0; position < callListCount; ++position) {
+            ForwarderCallOrder.CallList memory callList = callLists[orderedIndices[position]];
+            uint256 callCount = callList.calls.length;
             for (uint256 i = 0; i < callCount; ++i) {
-                ForwarderCallOrder.ForwarderCall memory forwarderCall = carrier.calls[i];
+                ForwarderCallOrder.ForwarderCall memory forwarderCall = callList.calls[i];
                 _runForwarderCall({
-                    logicRef: carrier.logicRef,
+                    logicRef: callList.resourceLogicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,
                     input: forwarderCall.input,
                     expectedOutput: forwarderCall.expectedOutput
@@ -347,7 +352,7 @@ contract ProtocolAdapter is
     /// @param input The input of the call.
     /// @param expectedOutput The output that the call must return.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
-    /// the associated carrier resource logic.
+    /// the logic of the call-carrying resource.
     function _runForwarderCall(
         bytes32 logicRef,
         address untrustedForwarder,

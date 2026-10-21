@@ -39,7 +39,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     using TxGen for Vm;
 
     address internal constant _OWNER = address(uint160(1));
-    bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
+    bytes32 internal constant _RESOURCE_LOGIC_REF = bytes32(uint256(123));
 
     RiscZeroVerifierRouter internal _router;
     RiscZeroMockVerifier internal _mockVerifier;
@@ -51,7 +51,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     bytes internal _input;
 
-    bytes32 internal _carrierLabelRef;
+    bytes32 internal _resourceLabelRef;
 
     function setUp() public {
         (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
@@ -63,14 +63,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
             Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
         );
 
-        _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+        _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _RESOURCE_LOGIC_REF}));
         _fwdTarget = address(new ForwarderTargetExample());
         _input = _encodedDefaultInput(_fwdTarget);
 
         _fwdList = new address[](1);
         _fwdList[0] = _fwd;
 
-        _carrierLabelRef = sha256(abi.encode(_fwd));
+        _resourceLabelRef = sha256(abi.encode(_fwd));
     }
 
     function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 actionCount, uint8 resourcePairCount) public {
@@ -120,9 +120,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_call_carrying_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -135,8 +136,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_call_carrying_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed =
+            _exampleCallCarryingResourceAndAppData({nonce: 0, fwdList: _fwdList});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
@@ -152,7 +154,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_all_ForwarderCallExecuted_events() public {
-        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _RESOURCE_LOGIC_REF}));
         assertNotEq(_fwd, fwd2, "forwarder addresses should differ");
 
         address[] memory fwdList = new address[](2);
@@ -160,7 +162,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         fwdList[1] = fwd2;
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
+        TxGen.ResourceAndAppData[] memory created = _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -181,25 +183,29 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_runs_unconstrained_calls_in_the_order_of_the_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
-        resourceLists[0] =
-            TxGen.ResourceLists({consumed: _carrier({nonce: 0, callId: 1}), created: _carrier({nonce: 1, callId: 2})});
-        resourceLists[1] =
-            TxGen.ResourceLists({consumed: _carrier({nonce: 2, callId: 3}), created: _carrier({nonce: 3, callId: 4})});
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 0, callId: 1}),
+            created: _callCarryingResource({nonce: 1, callId: 2})
+        });
+        resourceLists[1] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 2, callId: 3}),
+            created: _callCarryingResource({nonce: 3, callId: 4})
+        });
 
         _assertCallOrder({txn: vm.transaction(_mockVerifier, resourceLists), expected: _callIds(1, 2, 3, 4)});
     }
 
     function test_execute_runs_a_call_after_the_calls_of_its_after_tags() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: consumed[0], afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()});
 
         _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(2, 1)});
     }
 
     function test_execute_runs_a_call_before_the_calls_of_its_before_tags() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(_nullifier(consumed[0]))});
 
         _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(2, 1)});
@@ -208,15 +214,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @dev The protocol adapter changes the state of all resources before any call runs.
     function test_execute_accepts_an_after_tag_that_names_a_resource_without_calls() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: created[0], afterTags: _tags(_nullifier(consumed[0])), beforeTags: _noTags()});
 
         _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(2)});
     }
 
     function test_execute_reverts_on_an_after_tag_that_is_not_in_the_transaction() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         bytes32 tagNotInTransaction = keccak256("not in the transaction");
         _constrain({data: created[0], afterTags: _tags(tagNotInTransaction), beforeTags: _noTags()});
 
@@ -229,8 +235,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_reverts_on_a_before_tag_that_is_not_in_the_transaction() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         bytes32 tagNotInTransaction = keccak256("not in the transaction");
         _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(tagNotInTransaction)});
 
@@ -245,9 +251,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function test_execute_ignores_a_before_tag_that_names_a_resource_without_calls() public {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](2);
         consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0];
-        consumed[1] = _carrier({nonce: 1, callId: 1})[0];
+        consumed[1] = _callCarryingResource({nonce: 1, callId: 1})[0];
         TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](2);
-        created[0] = _carrier({nonce: 2, callId: 2})[0];
+        created[0] = _callCarryingResource({nonce: 2, callId: 2})[0];
         created[1] = _exampleResourceAndEmptyAppData({nonce: 3})[0];
         _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(_nullifier(consumed[0]))});
 
@@ -256,9 +262,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @dev The first call of the consumed resource has no constraints, but it runs together with the second call,
     /// which waits for the created resource.
-    function test_execute_applies_the_constraints_of_a_call_to_all_calls_of_its_carrier() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrierWithTwoCalls({nonce: 0, firstCallId: 1, secondCallId: 2});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 3});
+    function test_execute_applies_the_constraints_of_a_call_to_all_calls_of_its_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed =
+            _callCarryingResourceWithTwoCalls({nonce: 0, firstCallId: 1, secondCallId: 2});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 3});
         _constrainCall({
             data: consumed[0], callIndex: 1, afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()
         });
@@ -268,9 +275,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @dev The first call of the consumed resource must run before the created resource and the second call after
     /// it, which divides the calls of the consumed resource.
-    function test_execute_reverts_on_constraints_that_divide_the_calls_of_a_carrier() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrierWithTwoCalls({nonce: 0, firstCallId: 1, secondCallId: 2});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 3});
+    function test_execute_reverts_on_constraints_that_divide_the_calls_of_a_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed =
+            _callCarryingResourceWithTwoCalls({nonce: 0, firstCallId: 1, secondCallId: 2});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 3});
         bytes32 createdCommitment = _commitment(created[0]);
         _constrainCall({data: consumed[0], callIndex: 0, afterTags: _noTags(), beforeTags: _tags(createdCommitment)});
         _constrainCall({data: consumed[0], callIndex: 1, afterTags: _tags(createdCommitment), beforeTags: _noTags()});
@@ -281,9 +289,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_on_a_carrier_that_must_run_after_itself() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+    function test_execute_reverts_on_a_call_carrying_resource_that_must_run_after_itself() public {
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: created[0], afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()});
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
@@ -293,8 +301,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_reverts_on_constraints_that_form_a_cycle() public {
-        TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: consumed[0], afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()});
         _constrain({data: created[0], afterTags: _tags(_nullifier(consumed[0])), beforeTags: _noTags()});
 
@@ -308,10 +316,14 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// second action runs first.
     function test_execute_orders_the_calls_across_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
-        resourceLists[0] =
-            TxGen.ResourceLists({consumed: _carrier({nonce: 0, callId: 1}), created: _carrier({nonce: 1, callId: 2})});
-        resourceLists[1] =
-            TxGen.ResourceLists({consumed: _carrier({nonce: 2, callId: 3}), created: _carrier({nonce: 3, callId: 4})});
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 0, callId: 1}),
+            created: _callCarryingResource({nonce: 1, callId: 2})
+        });
+        resourceLists[1] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 2, callId: 3}),
+            created: _callCarryingResource({nonce: 3, callId: 4})
+        });
         _constrain({
             data: resourceLists[0].consumed[0],
             afterTags: _tags(_commitment(resourceLists[1].created[0])),
@@ -325,10 +337,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// call. The calls of an action run together, so no order meets these constraints.
     function test_execute_reverts_on_constraints_that_interleave_the_calls_of_two_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
-        resourceLists[0] =
-            TxGen.ResourceLists({consumed: _carrier({nonce: 0, callId: 1}), created: _carrier({nonce: 1, callId: 2})});
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 0, callId: 1}),
+            created: _callCarryingResource({nonce: 1, callId: 2})
+        });
         resourceLists[1] = TxGen.ResourceLists({
-            consumed: _carrier({nonce: 2, callId: 3}), created: _exampleResourceAndEmptyAppData({nonce: 3})
+            consumed: _callCarryingResource({nonce: 2, callId: 3}), created: _exampleResourceAndEmptyAppData({nonce: 3})
         });
         _constrain({
             data: resourceLists[1].consumed[0],
@@ -347,11 +361,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function test_execute_runs_the_calls_of_a_swap_in_the_order_of_their_constraints() public {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](3);
         consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0]; // the sold tokens
-        consumed[1] = _carrier({nonce: 1, callId: 10})[0]; // the generic call
-        consumed[2] = _carrier({nonce: 2, callId: 20})[0]; // the wrap of the bought tokens
+        consumed[1] = _callCarryingResource({nonce: 1, callId: 10})[0]; // the generic call
+        consumed[2] = _callCarryingResource({nonce: 2, callId: 20})[0]; // the wrap of the bought tokens
 
         TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](3);
-        created[0] = _carrier({nonce: 3, callId: 30})[0]; // the unwrap of the sold tokens
+        created[0] = _callCarryingResource({nonce: 3, callId: 30})[0]; // the unwrap of the sold tokens
         created[1] = _exampleResourceAndEmptyAppData({nonce: 4})[0]; // the bought tokens
         created[2] = _exampleResourceAndEmptyAppData({nonce: 5})[0]; // the change
 
@@ -367,7 +381,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// A call that ran before the nullifier is added would return false and make the transaction revert.
     function test_execute_runs_the_calls_after_adding_the_nullifiers_of_all_consumed_resources() public {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](2);
-        consumed[0] = _carrier({nonce: 0, callId: 1})[0];
+        consumed[0] = _callCarryingResource({nonce: 0, callId: 1})[0];
         consumed[1] = _exampleResourceAndEmptyAppData({nonce: 1})[0];
         TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](2);
         created[0] = _exampleResourceAndEmptyAppData({nonce: 2})[0];
@@ -387,7 +401,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// the input of the call.
     function test_execute_reverts_on_a_forwarder_call_in_the_encoding_without_tag_lists() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
         created[0].appData.externalPayload[0].blob = abi.encode(address(_fwd), _input, EXPECTED_OUTPUT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
@@ -398,7 +413,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function test_execute_reverts_on_a_forwarder_call_whose_after_tags_offset_is_out_of_bounds() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
         bytes memory blob = created[0].appData.externalPayload[0].blob;
         // The fourth word of the encoded call is the offset of `afterTags`.
         bytes32 outOfBoundsOffset = bytes32(blob.length);
@@ -669,7 +685,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
         created[0].appData.externalPayload[0].blob =
             _callBlob({untrustedForwarder: address(_fwd), input: _input, expectedOutput: fakeOutput});
@@ -861,7 +878,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
-                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+                nonce: bytes32(nonce), logicRef: _RESOURCE_LOGIC_REF, labelRef: _resourceLabelRef, quantity: 1
             }),
             appData: TxGen.emptyAppData()
         });
@@ -876,7 +893,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
-                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+                nonce: bytes32(nonce), logicRef: _RESOURCE_LOGIC_REF, labelRef: _resourceLabelRef, quantity: 1
             }),
             appData: IProtocolAdapter.AppData({
                 resourcePayload: TxGen.expirableBlobs(),
@@ -887,7 +904,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
     }
 
-    function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
+    function _exampleCallCarryingResourceAndAppData(uint256 nonce, address[] memory fwdList)
         private
         view
         returns (TxGen.ResourceAndAppData[] memory data)
@@ -897,7 +914,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
-                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+                nonce: bytes32(nonce), logicRef: _RESOURCE_LOGIC_REF, labelRef: _resourceLabelRef, quantity: 1
             }),
             appData: IProtocolAdapter.AppData({
                 discoveryPayload: new IProtocolAdapter.ExpirableBlob[](0),
@@ -921,8 +938,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     /// @notice Builds a resource that carries one forwarder call. The call increments `callId`, so that the output
     /// of each call names it.
-    function _carrier(uint256 nonce, uint256 callId) private view returns (TxGen.ResourceAndAppData[] memory data) {
-        data = _exampleCarrierResourceAndAppData({nonce: nonce, fwdList: _fwdList});
+    function _callCarryingResource(uint256 nonce, uint256 callId)
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory data)
+    {
+        data = _exampleCallCarryingResourceAndAppData({nonce: nonce, fwdList: _fwdList});
         data[0].appData.externalPayload[0].blob = _callBlob({
             untrustedForwarder: address(_fwd),
             input: abi.encode(_fwdTarget, abi.encodeCall(ForwarderTargetExample.increment, (callId))),
@@ -931,7 +952,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     /// @notice Builds a resource that carries two forwarder calls, which increment `firstCallId` and `secondCallId`.
-    function _carrierWithTwoCalls(uint256 nonce, uint256 firstCallId, uint256 secondCallId)
+    function _callCarryingResourceWithTwoCalls(uint256 nonce, uint256 firstCallId, uint256 secondCallId)
         private
         view
         returns (TxGen.ResourceAndAppData[] memory data)
@@ -939,11 +960,11 @@ contract ProtocolAdapterMockVerifierTest is Test {
         address[] memory fwdList = new address[](2);
         fwdList[0] = _fwd;
         fwdList[1] = _fwd;
-        data = _exampleCarrierResourceAndAppData({nonce: nonce, fwdList: fwdList});
+        data = _exampleCallCarryingResourceAndAppData({nonce: nonce, fwdList: fwdList});
         data[0].appData.externalPayload[0].blob =
-        _carrier({nonce: nonce, callId: firstCallId})[0].appData.externalPayload[0].blob;
+        _callCarryingResource({nonce: nonce, callId: firstCallId})[0].appData.externalPayload[0].blob;
         data[0].appData.externalPayload[1].blob =
-        _carrier({nonce: nonce, callId: secondCallId})[0].appData.externalPayload[0].blob;
+        _callCarryingResource({nonce: nonce, callId: secondCallId})[0].appData.externalPayload[0].blob;
     }
 
     /// @notice Rewrites the first call of a resource to carry the constraints.
