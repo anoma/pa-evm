@@ -76,7 +76,8 @@ library ForwarderCallOrder {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             bytes calldata blob = externalPayload[i].blob;
-            if (!_isAfterTagsEmpty(blob) || !_isBeforeTagsEmpty(blob)) {
+            if (_tagCount(blob, _AFTER_TAGS_OFFSET_POSITION) != 0 || _tagCount(blob, _BEFORE_TAGS_OFFSET_POSITION) != 0)
+            {
                 return true;
             }
         }
@@ -352,18 +353,12 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Returns whether the `afterTags` list of an encoded forwarder call is empty.
+    /// @notice Returns the number of entries of a tag list of an encoded forwarder call.
     /// @param blob The encoded forwarder call.
-    /// @return empty Whether the list has no entry.
-    function _isAfterTagsEmpty(bytes calldata blob) private pure returns (bool empty) {
-        empty = _wordAt(blob, _wordAt(blob, _AFTER_TAGS_OFFSET_POSITION)) == 0;
-    }
-
-    /// @notice Returns whether the `beforeTags` list of an encoded forwarder call is empty.
-    /// @param blob The encoded forwarder call.
-    /// @return empty Whether the list has no entry.
-    function _isBeforeTagsEmpty(bytes calldata blob) private pure returns (bool empty) {
-        empty = _wordAt(blob, _wordAt(blob, _BEFORE_TAGS_OFFSET_POSITION)) == 0;
+    /// @param offsetPosition The position of the offset of the tag list in the blob.
+    /// @return count The number of tags.
+    function _tagCount(bytes calldata blob, uint256 offsetPosition) private pure returns (uint256 count) {
+        count = _wordAt(blob, _wordAt(blob, offsetPosition));
     }
 
     /// @notice Returns the 32-byte word of a blob at an offset.
