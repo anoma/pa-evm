@@ -41,13 +41,6 @@ contract ForwarderCallOrderTest is Test {
         this.orderInCalldata(new ForwarderCallOrder.CallList[](callListCount), new IProtocolAdapter.Action[](0));
     }
 
-    function test_order_reverts_on_more_actions_than_a_graph_has_nodes() public {
-        uint256 actionCount = DirectedGraph.MAX_NODE_COUNT + 1;
-
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrder.TooManyActions.selector, actionCount));
-        this.orderInCalldata(new ForwarderCallOrder.CallList[](0), new IProtocolAdapter.Action[](actionCount));
-    }
-
     function testFuzz_hasOrderingConstraints_agrees_with_the_lengths_of_the_tag_lists(
         uint8 afterTagCount,
         uint8 beforeTagCount
@@ -66,17 +59,34 @@ contract ForwarderCallOrderTest is Test {
     }
 
     /// @dev The call lists carry no calls, so their order is the order of their indices.
-    function test_order_accepts_as_many_call_lists_and_actions_as_a_graph_has_nodes() public view {
+    function test_order_accepts_as_many_call_lists_as_a_graph_has_nodes() public view {
         uint256 maxNodeCount = DirectedGraph.MAX_NODE_COUNT;
 
-        uint256[] memory orderedIndices = this.orderInCalldata(
-            new ForwarderCallOrder.CallList[](maxNodeCount), new IProtocolAdapter.Action[](maxNodeCount)
-        );
+        uint256[] memory orderedIndices =
+            this.orderInCalldata(new ForwarderCallOrder.CallList[](maxNodeCount), new IProtocolAdapter.Action[](0));
 
         assertEq(orderedIndices.length, maxNodeCount, "number of ordered call lists");
         for (uint256 position = 0; position < maxNodeCount; ++position) {
             assertEq(orderedIndices[position], position, "ordered call list");
         }
+    }
+
+    /// @dev The call list of the first action waits for the call list of the last action.
+    function test_order_accepts_more_actions_than_a_graph_has_nodes() public view {
+        uint256 actionCount = DirectedGraph.MAX_NODE_COUNT + 1;
+        ForwarderCallOrder.CallList[] memory callLists = new ForwarderCallOrder.CallList[](2);
+        callLists[0].resourceTag = keccak256("a resource of the first action");
+        callLists[1].resourceTag = keccak256("a resource of the last action");
+        callLists[1].actionIndex = actionCount - 1;
+        callLists[0].calls = new ForwarderCallOrder.ForwarderCall[](1);
+        callLists[0].calls[0].afterTags = new bytes32[](1);
+        callLists[0].calls[0].afterTags[0] = callLists[1].resourceTag;
+
+        uint256[] memory orderedIndices = this.orderInCalldata(callLists, new IProtocolAdapter.Action[](actionCount));
+
+        assertEq(orderedIndices.length, 2, "number of ordered call lists");
+        assertEq(orderedIndices[0], 1, "the call list of the last action runs first");
+        assertEq(orderedIndices[1], 0, "the call list of the first action runs second");
     }
 
     function _payload(bytes memory blob)

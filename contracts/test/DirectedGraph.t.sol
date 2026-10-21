@@ -10,12 +10,29 @@ contract DirectedGraphTest is Test {
     using DirectedGraph for DirectedGraph.Graph;
     using LibPRNG for LibPRNG.PRNG;
 
-    function test_hasEdges_returns_false_for_a_graph_without_edges() public pure {
-        assertFalse(_graph({nodeCount: 3, edgeStarts: _list(), edgeEnds: _list()}).hasEdges(), "has edges");
+    function test_addEdges_puts_each_node_of_one_range_before_each_node_of_another() public pure {
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(3);
+        graph.addEdges({predecessorStart: 1, predecessorEnd: 3, successorStart: 0, successorEnd: 1});
+
+        (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
+
+        assertTrue(isAcyclic, "the edges form no cycle");
+        assertEq(sortedNodes, _list(1, 2, 0), "sorted nodes");
     }
 
-    function test_hasEdges_returns_true_for_a_graph_with_an_edge() public pure {
-        assertTrue(_graph({nodeCount: 3, edgeStarts: _list(2), edgeEnds: _list(1)}).hasEdges(), "has edges");
+    /// @dev The predecessor range holds the node whose bit is the last bit of a bitmap.
+    function test_addEdges_reaches_the_last_node_of_a_bitmap() public pure {
+        uint256 nodeCount = DirectedGraph.MAX_NODE_COUNT;
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
+        graph.addEdges({
+            predecessorStart: nodeCount - 1, predecessorEnd: nodeCount, successorStart: 0, successorEnd: nodeCount - 1
+        });
+
+        (bool isAcyclic, uint256[] memory sortedNodes) = graph.topologicalSort();
+
+        assertTrue(isAcyclic, "the edges form no cycle");
+        assertEq(sortedNodes[0], nodeCount - 1, "the last node comes first");
+        assertEq(sortedNodes[nodeCount - 1], nodeCount - 2, "the other nodes follow in the order of their indices");
     }
 
     function test_topologicalSort_reports_edges_that_form_a_cycle() public pure {

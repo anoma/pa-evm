@@ -8,9 +8,10 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
-/// @dev `order` splits the ordering constraints into two graphs: the constraints within actions, whose nodes are the
-/// call lists, and the constraints across actions, whose nodes are the actions. An edge means that the calls of its
-/// predecessor run before those of its successor. `order` sorts both graphs with `DirectedGraph.topologicalSort`.
+/// @dev `order` builds one graph whose nodes are the call lists. An edge means that the calls of its predecessor run
+/// before those of its successor. A constraint between call lists of two actions adds an edge from each call list of
+/// the earlier action to each call list of the later one, so that the calls of an action run together. `order` sorts
+/// the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
     using DirectedGraph for DirectedGraph.Graph;
@@ -59,9 +60,6 @@ library ForwarderCallOrder {
     /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT`
     /// call-carrying resources.
     error TooManyCallCarryingResources(uint256 count);
-
-    /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT` actions.
-    error TooManyActions(uint256 count);
 
     /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
     /// @dev Reads only the lengths of `afterTags` and `beforeTags`. The slicing reverts if the blob is too short or an
@@ -146,44 +144,13 @@ library ForwarderCallOrder {
         returns (uint256[] memory orderedIndices)
     {
         uint256 callListCount = callLists.length;
-        uint256 actionCount = actions.length;
         require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
-        require(actionCount <= DirectedGraph.MAX_NODE_COUNT, TooManyActions(actionCount));
 
-        DirectedGraph.Graph memory constraintsWithinActions =
-            DirectedGraph.Graph({predecessors: new uint256[](callListCount), successors: new uint256[](callListCount)});
-        DirectedGraph.Graph memory constraintsAcrossActions =
-            DirectedGraph.Graph({predecessors: new uint256[](actionCount), successors: new uint256[](actionCount)});
-        _addEdges({
-            callLists: callLists,
-            actions: actions,
-            constraintsWithinActions: constraintsWithinActions,
-            constraintsAcrossActions: constraintsAcrossActions
-        });
+        DirectedGraph.Graph memory constraints = _buildConstraints({callLists: callLists, actions: actions});
 
-        (bool isAcyclic, uint256[] memory callListOrder) = constraintsWithinActions.topologicalSort();
+        bool isAcyclic;
+        (isAcyclic, orderedIndices) = constraints.topologicalSort();
         require(isAcyclic, CyclicConstraints());
-
-        // Call lists of earlier actions have lower indices, so without constraints across actions, `callListOrder`
-        // already lists the call lists action by action.
-        if (!constraintsAcrossActions.hasEdges()) {
-            return callListOrder;
-        }
-
-        uint256[] memory actionOrder;
-        (isAcyclic, actionOrder) = constraintsAcrossActions.topologicalSort();
-        require(isAcyclic, CyclicConstraints());
-
-        // `callListOrder` meets the constraints within actions, so each action keeps its call lists in that order.
-        orderedIndices = new uint256[](callListCount);
-        uint256 position = 0;
-        for (uint256 i = 0; i < actionCount; ++i) {
-            for (uint256 k = 0; k < callListCount; ++k) {
-                if (callLists[callListOrder[k]].actionIndex == actionOrder[i]) {
-                    orderedIndices[position++] = callListOrder[k];
-                }
-            }
-        }
     }
 
     /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
@@ -218,21 +185,19 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Adds an edge for each ordering constraint that names the resource of a call list, and checks that each
-    /// `afterTags` and `beforeTags` entry names a resource of the transaction.
+    /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint that names the
+    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the transaction.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param constraintsWithinActions The constraints between call lists of one action, as a graph whose nodes are
-    /// the call lists.
-    /// @param constraintsAcrossActions The constraints between call lists of two actions, as a graph whose nodes are
-    /// the actions.
-    function _addEdges(
-        CallList[] memory callLists,
-        IProtocolAdapter.Action[] calldata actions,
-        DirectedGraph.Graph memory constraintsWithinActions,
-        DirectedGraph.Graph memory constraintsAcrossActions
-    ) private pure {
+    /// @return constraints The ordering constraints, as a graph whose nodes are the call lists.
+    function _buildConstraints(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
+        private
+        pure
+        returns (DirectedGraph.Graph memory constraints)
+    {
         uint256 callListCount = callLists.length;
+        constraints.predecessors = new uint256[](callListCount);
+        constraints.successors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
             ForwarderCall[] memory calls = callLists[callListIndex].calls;
@@ -254,8 +219,7 @@ library ForwarderCallOrder {
                     }
                     _addEdge({
                         callLists: callLists,
-                        constraintsWithinActions: constraintsWithinActions,
-                        constraintsAcrossActions: constraintsAcrossActions,
+                        constraints: constraints,
                         predecessor: predecessor,
                         successor: callListIndex
                     });
@@ -275,39 +239,59 @@ library ForwarderCallOrder {
                         continue;
                     }
                     _addEdge({
-                        callLists: callLists,
-                        constraintsWithinActions: constraintsWithinActions,
-                        constraintsAcrossActions: constraintsAcrossActions,
-                        predecessor: callListIndex,
-                        successor: successor
+                        callLists: callLists, constraints: constraints, predecessor: callListIndex, successor: successor
                     });
                 }
             }
         }
     }
 
-    /// @notice Adds an edge between two call lists to `constraintsWithinActions` if they belong to one action, and else
-    /// an edge between their actions to `constraintsAcrossActions`.
+    /// @notice Adds the edge between two call lists if they belong to one action, and else an edge from each call list
+    /// of the action of `predecessor` to each call list of the action of `successor`.
     /// @param callLists The call lists of the transaction.
-    /// @param constraintsWithinActions The constraints between call lists of one action, as a graph whose nodes are
-    /// the call lists.
-    /// @param constraintsAcrossActions The constraints between call lists of two actions, as a graph whose nodes are
-    /// the actions.
+    /// @param constraints The ordering constraints, as a graph whose nodes are the call lists.
     /// @param predecessor The call list whose calls run before those of `successor`.
     /// @param successor The call list whose calls run after those of `predecessor`.
     function _addEdge(
         CallList[] memory callLists,
-        DirectedGraph.Graph memory constraintsWithinActions,
-        DirectedGraph.Graph memory constraintsAcrossActions,
+        DirectedGraph.Graph memory constraints,
         uint256 predecessor,
         uint256 successor
     ) private pure {
-        uint256 predecessorAction = callLists[predecessor].actionIndex;
-        uint256 successorAction = callLists[successor].actionIndex;
-        if (predecessorAction == successorAction) {
-            constraintsWithinActions.addEdge({predecessor: predecessor, successor: successor});
-        } else {
-            constraintsAcrossActions.addEdge({predecessor: predecessorAction, successor: successorAction});
+        if (callLists[predecessor].actionIndex == callLists[successor].actionIndex) {
+            constraints.addEdge({predecessor: predecessor, successor: successor});
+            return;
+        }
+        (uint256 predecessorStart, uint256 predecessorEnd) = _callListsOfAction(callLists, predecessor);
+        (uint256 successorStart, uint256 successorEnd) = _callListsOfAction(callLists, successor);
+        constraints.addEdges({
+            predecessorStart: predecessorStart,
+            predecessorEnd: predecessorEnd,
+            successorStart: successorStart,
+            successorEnd: successorEnd
+        });
+    }
+
+    /// @notice Returns the range of the call lists of the action of a call list. The call lists of an action have
+    /// consecutive indices.
+    /// @param callLists The call lists of the transaction.
+    /// @param index The index of a call list of the action.
+    /// @return start The index of the first call list of the action.
+    /// @return end The index after the last call list of the action.
+    function _callListsOfAction(CallList[] memory callLists, uint256 index)
+        private
+        pure
+        returns (uint256 start, uint256 end)
+    {
+        uint256 actionIndex = callLists[index].actionIndex;
+        start = index;
+        while (start != 0 && callLists[start - 1].actionIndex == actionIndex) {
+            --start;
+        }
+        end = index + 1;
+        uint256 callListCount = callLists.length;
+        while (end != callListCount && callLists[end].actionIndex == actionIndex) {
+            ++end;
         }
     }
 

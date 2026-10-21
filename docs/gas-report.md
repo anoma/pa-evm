@@ -1,33 +1,33 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          4036765 |           18929 |        |        |        |         |
+|                                          4032530 |           18908 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
-| EMPTY_KIND_TREE_ROOT                             |             307 |    307 |    307 |    307 |      10 |
-| RISC_ZERO_VERIFIER_ROUTER                        |             357 |    357 |    357 |    357 |       1 |
-| RISC_ZERO_VERIFIER_SELECTOR                      |             646 |    646 |    646 |    646 |       2 |
-| UPGRADE_INTERFACE_VERSION                        |             820 |    820 |    820 |    820 |       2 |
-| VERSION                                          |            1057 |   1057 |   1057 |   1057 |       3 |
-| commitmentCount                                  |             699 |   1699 |   1699 |   2699 |      12 |
-| denyLogicRefs                                    |             703 |  31699 |  28847 |  52987 |      11 |
-| execute                                          |            2871 | 185923 | 194592 | 437965 |      58 |
-| getImplementation                                |             617 |    783 |    617 |   2617 |      12 |
-| getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       2 |
-| initialize                                       |            3035 | 150625 | 152882 | 152882 |     124 |
-| isLogicRefDenied                                 |            2423 |   2426 |   2426 |   2430 |      12 |
-| isNullifierContained                             |             755 |   2754 |   2755 |   2755 |    2713 |
-| latestCommitmentTreeRoot                         |            6953 |  12344 |   9659 |  17729 |      15 |
-| migrateNullifierSet                              |             696 |    696 |    696 |    696 |       2 |
-| owner                                            |             548 |   2360 |   2548 |   2548 |      32 |
-| pause                                            |            2529 |  21617 |  25821 |  25821 |      12 |
-| paused                                           |            2400 |   2400 |   2400 |   2400 |      15 |
-| proxiableUUID                                    |             290 |    290 |    290 |    290 |      11 |
-| riscZeroVerifierPaused                           |           10957 |  10957 |  10957 |  10957 |       5 |
-| setKindTreeRoot                                  |             578 |   6970 |   8703 |   8703 |       7 |
-| transferOwnership                                |            5453 |   5453 |   5453 |   5453 |       3 |
-| unpause                                          |            2331 |   6374 |   8396 |   8396 |       3 |
-| upgradeToAndCall                                 |            3016 |   8772 |   3202 |  23938 |       5 |
+| EMPTY_KIND_TREE_ROOT                             |             313 |    313 |    313 |    313 |      10 |
+| RISC_ZERO_VERIFIER_ROUTER                        |             363 |    363 |    363 |    363 |       1 |
+| RISC_ZERO_VERIFIER_SELECTOR                      |             653 |    653 |    653 |    653 |       2 |
+| UPGRADE_INTERFACE_VERSION                        |             831 |    831 |    831 |    831 |       2 |
+| VERSION                                          |            1070 |   1070 |   1070 |   1070 |       3 |
+| commitmentCount                                  |             706 |   1706 |   1706 |   2706 |      12 |
+| denyLogicRefs                                    |             715 |  31706 |  28853 |  52993 |      11 |
+| execute                                          |            2881 | 185710 | 194623 | 434286 |      58 |
+| getImplementation                                |             624 |    790 |    624 |   2624 |      12 |
+| getKindTreeRoot                                  |            2838 |   2838 |   2838 |   2838 |       2 |
+| initialize                                       |            3049 | 150662 | 152920 | 152920 |     124 |
+| isLogicRefDenied                                 |            2429 |   2432 |   2432 |   2436 |      12 |
+| isNullifierContained                             |             765 |   2764 |   2765 |   2765 |    2713 |
+| latestCommitmentTreeRoot                         |            6974 |  12426 |   9708 |  17874 |      15 |
+| migrateNullifierSet                              |             708 |    708 |    708 |    708 |       2 |
+| owner                                            |             554 |   2366 |   2554 |   2554 |      32 |
+| pause                                            |            2541 |  21624 |  25827 |  25827 |      12 |
+| paused                                           |            2406 |   2406 |   2406 |   2406 |      15 |
+| proxiableUUID                                    |             296 |    296 |    296 |    296 |      11 |
+| riscZeroVerifierPaused                           |           10963 |  10963 |  10963 |  10963 |       5 |
+| setKindTreeRoot                                  |             590 |   6982 |   8715 |   8715 |       7 |
+| transferOwnership                                |            5469 |   5469 |   5469 |   5469 |       3 |
+| unpause                                          |            2343 |   6382 |   8402 |   8402 |       3 |
+| upgradeToAndCall                                 |            3022 |   8784 |   3214 |  23956 |       5 |
 
 | src/examples/BlockTimeForwarder.sol:BlockTimeForwarder Contract |                 |     |        |     |         |
 |-----------------------------------------------------------------|-----------------|-----|--------|-----|---------|
