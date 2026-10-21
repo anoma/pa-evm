@@ -56,6 +56,13 @@ library ForwarderCallOrder {
     /// @notice Thrown if the ordering constraints form a cycle, so that no order meets them.
     error CyclicConstraints();
 
+    /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT`
+    /// call-carrying resources.
+    error TooManyCallCarryingResources(uint256 count);
+
+    /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT` actions.
+    error TooManyActions(uint256 count);
+
     /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
     /// @dev Reads only the lengths of `afterTags` and `beforeTags`. The slicing reverts if the blob is too short or an
     /// offset points outside it.
@@ -80,11 +87,10 @@ library ForwarderCallOrder {
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     /// @return callLists The call lists of the resources that carry forwarder calls.
-    /// @return constraintCount The number of `afterTags` and `beforeTags` entries of all calls.
     function decodeCallLists(IProtocolAdapter.Action[] calldata actions, uint256 callListCount)
         internal
         pure
-        returns (CallList[] memory callLists, uint256 constraintCount)
+        returns (CallList[] memory callLists)
     {
         callLists = new CallList[](callListCount);
         uint256 callListIndex = 0;
@@ -99,7 +105,7 @@ library ForwarderCallOrder {
                 if (externalPayload.length != 0) {
                     CallList memory callList = callLists[callListIndex++];
                     callList.actionIndex = i;
-                    constraintCount += _decodeCallList({
+                    _decodeCallList({
                         callList: callList,
                         resourceTag: consumed.nullifier,
                         resourceLogicRef: consumed.logicRef,
@@ -116,7 +122,7 @@ library ForwarderCallOrder {
                 if (externalPayload.length != 0) {
                     CallList memory callList = callLists[callListIndex++];
                     callList.actionIndex = i;
-                    constraintCount += _decodeCallList({
+                    _decodeCallList({
                         callList: callList,
                         resourceTag: created.commitment,
                         resourceLogicRef: created.logicRef,
@@ -134,28 +140,21 @@ library ForwarderCallOrder {
     /// first call list within an action.
     /// @param callLists The call lists of the transaction.
     /// @param actions The actions of the transaction.
-    /// @param constraintCount The number of `afterTags` and `beforeTags` entries of all calls.
     /// @return orderedIndices The indices of `callLists`, in the order in which their calls run.
-    function order(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions, uint256 constraintCount)
+    function order(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
         internal
         pure
         returns (uint256[] memory orderedIndices)
     {
         uint256 callListCount = callLists.length;
+        uint256 actionCount = actions.length;
+        require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
+        require(actionCount <= DirectedGraph.MAX_NODE_COUNT, TooManyActions(actionCount));
 
-        // Each ordering constraint adds at most one edge.
-        DirectedGraph.Graph memory callListGraph = DirectedGraph.Graph({
-            nodeCount: callListCount,
-            predecessors: new uint256[](constraintCount),
-            successors: new uint256[](constraintCount),
-            edgeCount: 0
-        });
-        DirectedGraph.Graph memory actionGraph = DirectedGraph.Graph({
-            nodeCount: actions.length,
-            predecessors: new uint256[](constraintCount),
-            successors: new uint256[](constraintCount),
-            edgeCount: 0
-        });
+        DirectedGraph.Graph memory callListGraph =
+            DirectedGraph.Graph({predecessors: new uint256[](callListCount), successors: new uint256[](callListCount)});
+        DirectedGraph.Graph memory actionGraph =
+            DirectedGraph.Graph({predecessors: new uint256[](actionCount), successors: new uint256[](actionCount)});
         _addEdges({callLists: callLists, actions: actions, callListGraph: callListGraph, actionGraph: actionGraph});
 
         (bool isAcyclic, uint256[] memory callListOrder) = callListGraph.topologicalSort();
@@ -163,7 +162,7 @@ library ForwarderCallOrder {
 
         // Call lists of earlier actions have lower indices, and the edges of `callListGraph` stay within an action, so
         // without edges in `actionGraph`, `callListOrder` already lists the call lists action by action.
-        if (actionGraph.edgeCount == 0) {
+        if (!actionGraph.hasEdges()) {
             return callListOrder;
         }
 
@@ -174,7 +173,6 @@ library ForwarderCallOrder {
         // The edges of `callListGraph` stay within an action, so each action keeps its call lists in sorted order.
         orderedIndices = new uint256[](callListCount);
         uint256 position = 0;
-        uint256 actionCount = actionOrder.length;
         for (uint256 i = 0; i < actionCount; ++i) {
             for (uint256 k = 0; k < callListCount; ++k) {
                 if (callLists[callListOrder[k]].actionIndex == actionOrder[i]) {
@@ -189,13 +187,12 @@ library ForwarderCallOrder {
     /// @param resourceTag The tag of the resource.
     /// @param resourceLogicRef The logic reference of the resource.
     /// @param externalPayload The external payload of the resource.
-    /// @return constraintCount The number of `afterTags` and `beforeTags` entries of the calls.
     function _decodeCallList(
         CallList memory callList,
         bytes32 resourceTag,
         bytes32 resourceLogicRef,
         IProtocolAdapter.ExpirableBlob[] calldata externalPayload
-    ) private pure returns (uint256 constraintCount) {
+    ) private pure {
         callList.resourceTag = resourceTag;
         callList.resourceLogicRef = resourceLogicRef;
 
@@ -210,7 +207,6 @@ library ForwarderCallOrder {
                 forwarderCall.afterTags,
                 forwarderCall.beforeTags
             ) = abi.decode(externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
-            constraintCount += forwarderCall.afterTags.length + forwarderCall.beforeTags.length;
         }
     }
 
