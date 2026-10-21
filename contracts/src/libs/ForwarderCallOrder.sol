@@ -2,15 +2,19 @@
 pragma solidity ^0.8.30;
 
 import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
+import {DirectedGraph} from "../libs/DirectedGraph.sol";
 
 /// @title ForwarderCallOrder
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
 /// @dev `order` builds two graphs from the ordering constraints, one whose nodes are the call lists and one whose
-/// nodes are the actions, and sorts both topologically with Kahn's algorithm.
+/// nodes are the actions. An edge means that the calls of its predecessor run before those of its successor. `order`
+/// sorts both graphs with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
 library ForwarderCallOrder {
+    using DirectedGraph for DirectedGraph.Graph;
+
     /// @notice The forwarder calls in the external payload of a resource. They run together and in their order.
     /// @param resourceTag The tag of the resource.
     /// @param resourceLogicRef The logic reference of the resource.
@@ -36,23 +40,6 @@ library ForwarderCallOrder {
         bytes32[] afterTags;
         bytes32[] beforeTags;
     }
-
-    /// @notice A directed graph whose nodes are either the call lists or the actions of a transaction. Each node is the
-    /// index of a call list or of an action. An edge from a predecessor to a successor means that the forwarder calls
-    /// of the predecessor run before those of the successor.
-    /// @param nodeCount The number of nodes.
-    /// @param predecessors The node at the start of each edge.
-    /// @param successors The node at the end of each edge.
-    /// @param edgeCount The number of edges, in the first entries of `predecessors` and `successors`.
-    struct Graph {
-        uint256 nodeCount;
-        uint256[] predecessors;
-        uint256[] successors;
-        uint256 edgeCount;
-    }
-
-    /// @notice The value that marks a sorted node in place of its in-degree, so that the node is never ready again.
-    uint256 private constant _SORTED = type(uint256).max;
 
     /// @notice The position of the offset of `afterTags` in an encoded forwarder call, which is its fourth word.
     uint256 private constant _AFTER_TAGS_OFFSET_POSITION = 3 * 32;
@@ -157,13 +144,13 @@ library ForwarderCallOrder {
         uint256 callListCount = callLists.length;
 
         // Each ordering constraint adds at most one edge.
-        Graph memory callListGraph = Graph({
+        DirectedGraph.Graph memory callListGraph = DirectedGraph.Graph({
             nodeCount: callListCount,
             predecessors: new uint256[](constraintCount),
             successors: new uint256[](constraintCount),
             edgeCount: 0
         });
-        Graph memory actionGraph = Graph({
+        DirectedGraph.Graph memory actionGraph = DirectedGraph.Graph({
             nodeCount: actions.length,
             predecessors: new uint256[](constraintCount),
             successors: new uint256[](constraintCount),
@@ -171,7 +158,8 @@ library ForwarderCallOrder {
         });
         _addEdges({callLists: callLists, actions: actions, callListGraph: callListGraph, actionGraph: actionGraph});
 
-        uint256[] memory callListOrder = topologicalSort(callListGraph);
+        (bool isAcyclic, uint256[] memory callListOrder) = callListGraph.topologicalSort();
+        require(isAcyclic, CyclicConstraints());
 
         // Call lists of earlier actions have lower indices, and the edges of `callListGraph` stay within an action, so
         // without edges in `actionGraph`, `callListOrder` already lists the call lists action by action.
@@ -179,7 +167,9 @@ library ForwarderCallOrder {
             return callListOrder;
         }
 
-        uint256[] memory actionOrder = topologicalSort(actionGraph);
+        uint256[] memory actionOrder;
+        (isAcyclic, actionOrder) = actionGraph.topologicalSort();
+        require(isAcyclic, CyclicConstraints());
 
         // The edges of `callListGraph` stay within an action, so each action keeps its call lists in sorted order.
         orderedIndices = new uint256[](callListCount);
@@ -189,40 +179,6 @@ library ForwarderCallOrder {
             for (uint256 k = 0; k < callListCount; ++k) {
                 if (callLists[callListOrder[k]].actionIndex == actionOrder[i]) {
                     orderedIndices[position++] = callListOrder[k];
-                }
-            }
-        }
-    }
-
-    /// @notice Sorts the nodes of a graph topologically: the predecessor of each edge comes before its successor. Of
-    /// the nodes that wait for no other node, the node with the lowest index comes next.
-    /// @dev Kahn's algorithm. The in-degree of a node is the number of edges to it from nodes that are not sorted yet,
-    /// and a node is ready when its in-degree is zero. Taking the ready node with the lowest index at each step makes
-    /// the order unique.
-    /// @param graph The graph to sort.
-    /// @return sortedNodes The nodes, in topological order.
-    function topologicalSort(Graph memory graph) internal pure returns (uint256[] memory sortedNodes) {
-        uint256 nodeCount = graph.nodeCount;
-        uint256[] memory predecessors = graph.predecessors;
-        uint256[] memory successors = graph.successors;
-        uint256 edgeCount = graph.edgeCount;
-
-        uint256[] memory inDegrees = new uint256[](nodeCount);
-        for (uint256 e = 0; e < edgeCount; ++e) {
-            ++inDegrees[successors[e]];
-        }
-
-        sortedNodes = new uint256[](nodeCount);
-        for (uint256 position = 0; position < nodeCount; ++position) {
-            uint256 node = _firstReadyNode(inDegrees);
-            require(node != nodeCount, CyclicConstraints());
-
-            // Each edge from this node ends at a node that is not sorted yet, so no decrement reaches this value.
-            inDegrees[node] = _SORTED;
-            sortedNodes[position] = node;
-            for (uint256 e = 0; e < edgeCount; ++e) {
-                if (predecessors[e] == node) {
-                    --inDegrees[successors[e]];
                 }
             }
         }
@@ -267,8 +223,8 @@ library ForwarderCallOrder {
     function _addEdges(
         CallList[] memory callLists,
         IProtocolAdapter.Action[] calldata actions,
-        Graph memory callListGraph,
-        Graph memory actionGraph
+        DirectedGraph.Graph memory callListGraph,
+        DirectedGraph.Graph memory actionGraph
     ) private pure {
         uint256 callListCount = callLists.length;
 
@@ -332,20 +288,18 @@ library ForwarderCallOrder {
     /// @param successor The call list whose calls run after those of `predecessor`.
     function _addEdge(
         CallList[] memory callLists,
-        Graph memory callListGraph,
-        Graph memory actionGraph,
+        DirectedGraph.Graph memory callListGraph,
+        DirectedGraph.Graph memory actionGraph,
         uint256 predecessor,
         uint256 successor
     ) private pure {
-        Graph memory graph = callListGraph;
         uint256 predecessorAction = callLists[predecessor].actionIndex;
         uint256 successorAction = callLists[successor].actionIndex;
-        if (predecessorAction != successorAction) {
-            (graph, predecessor, successor) = (actionGraph, predecessorAction, successorAction);
+        if (predecessorAction == successorAction) {
+            callListGraph.addEdge({predecessor: predecessor, successor: successor});
+        } else {
+            actionGraph.addEdge({predecessor: predecessorAction, successor: successorAction});
         }
-        graph.predecessors[graph.edgeCount] = predecessor;
-        graph.successors[graph.edgeCount] = successor;
-        ++graph.edgeCount;
     }
 
     /// @notice Returns the index of the call list of the resource with a tag.
@@ -386,18 +340,6 @@ library ForwarderCallOrder {
                 if (createdResources[j].commitment == tag) {
                     return true;
                 }
-            }
-        }
-    }
-
-    /// @notice Returns the ready node with the lowest index.
-    /// @param inDegrees The in-degree of each node, or `_SORTED` for a sorted node.
-    /// @return node The node, or the number of nodes if no node is ready.
-    function _firstReadyNode(uint256[] memory inDegrees) private pure returns (uint256 node) {
-        uint256 nodeCount = inDegrees.length;
-        for (node = 0; node < nodeCount; ++node) {
-            if (inDegrees[node] == 0) {
-                return node;
             }
         }
     }
