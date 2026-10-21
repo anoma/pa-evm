@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3891290 |           18253 |        |        |        |         |
+|                                          3906586 |           18325 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             316 |    316 |    316 |    316 |      10 |
@@ -10,23 +10,23 @@
 | UPGRADE_INTERFACE_VERSION                        |             834 |    834 |    834 |    834 |       2 |
 | VERSION                                          |            1073 |   1073 |   1073 |   1073 |       3 |
 | commitmentCount                                  |             709 |   1709 |   1709 |   2709 |      12 |
-| denyLogicRefs                                    |             718 |  31709 |  28856 |  52996 |      11 |
-| execute                                          |            2884 | 184040 | 194625 | 433622 |      57 |
+| denyLogicRefs                                    |             715 |  31709 |  28856 |  52996 |      11 |
+| execute                                          |            2881 | 183076 | 194613 | 433557 |      57 |
 | getImplementation                                |             627 |    793 |    627 |   2627 |      12 |
 | getKindTreeRoot                                  |            2841 |   2841 |   2841 |   2841 |       2 |
-| initialize                                       |            3052 | 150647 | 152923 | 152923 |     123 |
+| initialize                                       |            3049 | 150647 | 152923 | 152923 |     123 |
 | isLogicRefDenied                                 |            2432 |   2435 |   2435 |   2439 |      12 |
 | isNullifierContained                             |             768 |   2767 |   2768 |   2768 |    2713 |
 | latestCommitmentTreeRoot                         |            6977 |  12429 |   9711 |  17877 |      15 |
-| migrateNullifierSet                              |             711 |    711 |    711 |    711 |       2 |
+| migrateNullifierSet                              |             708 |    708 |    708 |    708 |       2 |
 | owner                                            |             557 |   2369 |   2557 |   2557 |      32 |
-| pause                                            |            2544 |  21627 |  25830 |  25830 |      12 |
+| pause                                            |            2541 |  21626 |  25830 |  25830 |      12 |
 | paused                                           |            2409 |   2409 |   2409 |   2409 |      15 |
 | proxiableUUID                                    |             299 |    299 |    299 |    299 |      11 |
 | riscZeroVerifierPaused                           |           10966 |  10966 |  10966 |  10966 |       5 |
-| setKindTreeRoot                                  |             593 |   6985 |   8718 |   8718 |       7 |
-| transferOwnership                                |            5472 |   5472 |   5472 |   5472 |       3 |
-| unpause                                          |            2346 |   6385 |   8405 |   8405 |       3 |
+| setKindTreeRoot                                  |             590 |   6982 |   8715 |   8715 |       7 |
+| transferOwnership                                |            5469 |   5469 |   5469 |   5469 |       3 |
+| unpause                                          |            2343 |   6384 |   8405 |   8405 |       3 |
 | upgradeToAndCall                                 |            3025 |   8790 |   3220 |  23965 |       5 |
 
 | src/examples/BlockTimeForwarder.sol:BlockTimeForwarder Contract |                 |     |        |     |         |

@@ -147,9 +147,9 @@ interface IProtocolAdapter {
     /// proofs. The calls of a resource run together and in their order: after the calls of each resource that one of
     /// them names in `afterTags`, and before the calls of each resource that one of them names in `beforeTags`. Of the
     /// resources whose calls can run next, the first in the order of the actions goes first, with the consumed
-    /// resources of an action before its created resources. A tag of a resource without calls constrains nothing, and
-    /// so does a `beforeTags` entry that is no tag of the transaction. The transaction reverts if an `afterTags` entry
-    /// is no tag of the transaction, or if no order meets the constraints.
+    /// resources of an action before its created resources. A tag of a resource without calls constrains nothing. The
+    /// transaction reverts if an `afterTags` or `beforeTags` entry is no tag of the transaction, or if no order meets
+    /// the constraints.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

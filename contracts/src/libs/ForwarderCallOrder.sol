@@ -39,6 +39,9 @@ library ForwarderCallOrder {
     /// @notice Thrown if an `afterTags` entry names no resource of the transaction.
     error AfterTagNotInTransaction(bytes32 tag);
 
+    /// @notice Thrown if a `beforeTags` entry names no resource of the transaction.
+    error BeforeTagNotInTransaction(bytes32 tag);
+
     /// @notice Thrown if the ordering constraints form a cycle, so that no order meets them.
     error CyclicConstraints();
 
@@ -110,7 +113,7 @@ library ForwarderCallOrder {
     }
 
     /// @notice Orders the carriers so that their forwarder calls meet the ordering constraints, and checks that each
-    /// `afterTags` entry names a resource of the transaction.
+    /// `afterTags` and `beforeTags` entry names a resource of the transaction.
     /// @param carriers The carriers of the transaction.
     /// @param actions The actions of the transaction.
     /// @param constraintCount The number of `afterTags` and `beforeTags` entries of all calls.
@@ -197,7 +200,7 @@ library ForwarderCallOrder {
     }
 
     /// @notice Writes one edge for each ordering constraint that names a carrier, and checks that each `afterTags`
-    /// entry names a resource of the transaction.
+    /// and `beforeTags` entry names a resource of the transaction.
     /// @param carriers The carriers of the transaction.
     /// @param actions The actions of the transaction.
     /// @param predecessors The carrier at the start of each edge.
@@ -236,12 +239,19 @@ library ForwarderCallOrder {
                 bytes32[] memory beforeTags = calls[c].beforeTags;
                 uint256 beforeTagCount = beforeTags.length;
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
-                    uint256 successor = _indexOf({carriers: carriers, tag: beforeTags[b]});
-                    if (successor != carrierCount) {
-                        predecessors[edgeCount] = carrierIndex;
-                        successors[edgeCount] = successor;
-                        ++edgeCount;
+                    bytes32 beforeTag = beforeTags[b];
+                    uint256 successor = _indexOf({carriers: carriers, tag: beforeTag});
+                    if (successor == carrierCount) {
+                        // A resource without calls has no calls to run before.
+                        require(
+                            _isTagOfTransaction({actions: actions, tag: beforeTag}),
+                            BeforeTagNotInTransaction(beforeTag)
+                        );
+                        continue;
                     }
+                    predecessors[edgeCount] = carrierIndex;
+                    successors[edgeCount] = successor;
+                    ++edgeCount;
                 }
             }
         }

@@ -228,13 +228,18 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @dev A resource outside the transaction runs no call, so the call has nothing to run before.
-    function test_execute_ignores_a_before_tag_that_is_not_in_the_transaction() public {
+    function test_execute_reverts_on_a_before_tag_that_is_not_in_the_transaction() public {
         TxGen.ResourceAndAppData[] memory consumed = _carrier({nonce: 0, callId: 1});
         TxGen.ResourceAndAppData[] memory created = _carrier({nonce: 1, callId: 2});
-        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(keccak256("not in the transaction"))});
+        bytes32 tagNotInTransaction = keccak256("not in the transaction");
+        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(tagNotInTransaction)});
 
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrder.BeforeTagNotInTransaction.selector, tagNotInTransaction)
+        );
+        _mockPa.execute(txn);
     }
 
     function test_execute_ignores_a_before_tag_that_names_a_resource_without_calls() public {
