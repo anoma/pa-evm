@@ -76,7 +76,8 @@ library ForwarderCallOrder {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             bytes calldata blob = externalPayload[i].blob;
-            if (!_isAfterTagsEmpty(blob) || !_isBeforeTagsEmpty(blob)) {
+            if (_tagCount(blob, _AFTER_TAGS_OFFSET_POSITION) != 0 || _tagCount(blob, _BEFORE_TAGS_OFFSET_POSITION) != 0)
+            {
                 return true;
             }
         }
@@ -103,10 +104,9 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Consumed calldata consumed = consumedResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = consumed.appData.externalPayload;
                 if (externalPayload.length != 0) {
-                    CallList memory callList = callLists[callListIndex++];
-                    callList.actionIndex = i;
                     _decodeCallList({
-                        callList: callList,
+                        callList: callLists[callListIndex++],
+                        actionIndex: i,
                         resourceTag: consumed.nullifier,
                         resourceLogicRef: consumed.logicRef,
                         externalPayload: externalPayload
@@ -120,10 +120,9 @@ library ForwarderCallOrder {
                 IProtocolAdapter.Created calldata created = createdResources[j];
                 IProtocolAdapter.ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
                 if (externalPayload.length != 0) {
-                    CallList memory callList = callLists[callListIndex++];
-                    callList.actionIndex = i;
                     _decodeCallList({
-                        callList: callList,
+                        callList: callLists[callListIndex++],
+                        actionIndex: i,
                         resourceTag: created.commitment,
                         resourceLogicRef: created.logicRef,
                         externalPayload: externalPayload
@@ -187,17 +186,21 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Writes the tag and the logic reference of a resource to its call list and decodes its forwarder calls.
+    /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
+    /// forwarder calls.
     /// @param callList The call list to fill.
+    /// @param actionIndex The index of the action of the resource.
     /// @param resourceTag The tag of the resource.
     /// @param resourceLogicRef The logic reference of the resource.
     /// @param externalPayload The external payload of the resource.
     function _decodeCallList(
         CallList memory callList,
+        uint256 actionIndex,
         bytes32 resourceTag,
         bytes32 resourceLogicRef,
         IProtocolAdapter.ExpirableBlob[] calldata externalPayload
     ) private pure {
+        callList.actionIndex = actionIndex;
         callList.resourceTag = resourceTag;
         callList.resourceLogicRef = resourceLogicRef;
 
@@ -236,7 +239,8 @@ library ForwarderCallOrder {
             uint256 callCount = calls.length;
 
             for (uint256 c = 0; c < callCount; ++c) {
-                bytes32[] memory afterTags = calls[c].afterTags;
+                ForwarderCall memory forwarderCall = calls[c];
+                bytes32[] memory afterTags = forwarderCall.afterTags;
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {
                     bytes32 afterTag = afterTags[a];
@@ -257,7 +261,7 @@ library ForwarderCallOrder {
                     });
                 }
 
-                bytes32[] memory beforeTags = calls[c].beforeTags;
+                bytes32[] memory beforeTags = forwarderCall.beforeTags;
                 uint256 beforeTagCount = beforeTags.length;
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
                     bytes32 beforeTag = beforeTags[b];
@@ -349,18 +353,12 @@ library ForwarderCallOrder {
         }
     }
 
-    /// @notice Returns whether the `afterTags` list of an encoded forwarder call is empty.
+    /// @notice Returns the number of entries of a tag list of an encoded forwarder call.
     /// @param blob The encoded forwarder call.
-    /// @return empty Whether the list has no entry.
-    function _isAfterTagsEmpty(bytes calldata blob) private pure returns (bool empty) {
-        empty = _wordAt(blob, _wordAt(blob, _AFTER_TAGS_OFFSET_POSITION)) == 0;
-    }
-
-    /// @notice Returns whether the `beforeTags` list of an encoded forwarder call is empty.
-    /// @param blob The encoded forwarder call.
-    /// @return empty Whether the list has no entry.
-    function _isBeforeTagsEmpty(bytes calldata blob) private pure returns (bool empty) {
-        empty = _wordAt(blob, _wordAt(blob, _BEFORE_TAGS_OFFSET_POSITION)) == 0;
+    /// @param offsetPosition The position of the offset of the tag list in the blob.
+    /// @return count The number of tags.
+    function _tagCount(bytes calldata blob, uint256 offsetPosition) private pure returns (uint256 count) {
+        count = _wordAt(blob, _wordAt(blob, offsetPosition));
     }
 
     /// @notice Returns the 32-byte word of a blob at an offset.

@@ -137,7 +137,7 @@ contract ProtocolAdapter is
 
         // Run the forwarder calls after the state changes of all actions and after the proofs.
         if (callListCount != 0) {
-            _runForwarderCalls({
+            _executeForwarderCalls({
                 actions: transaction.actions,
                 callListCount: callListCount,
                 hasOrderingConstraints: hasOrderingConstraints
@@ -267,32 +267,32 @@ contract ProtocolAdapter is
         });
     }
 
-    /// @notice Runs the forwarder calls of a transaction. Without ordering constraints, the calls run in the order of
-    /// the actions, with the consumed resources of an action before its created resources.
+    /// @notice Executes the forwarder calls of a transaction. Without ordering constraints, the calls run in the order
+    /// of the actions, with the consumed resources of an action before its created resources.
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     /// @param hasOrderingConstraints Whether a forwarder call carries ordering constraints.
-    function _runForwarderCalls(Action[] calldata actions, uint256 callListCount, bool hasOrderingConstraints)
+    function _executeForwarderCalls(Action[] calldata actions, uint256 callListCount, bool hasOrderingConstraints)
         internal
     {
         if (hasOrderingConstraints) {
-            _runForwarderCallsInConstraintOrder({actions: actions, callListCount: callListCount});
+            _executeForwarderCallsInConstraintOrder({actions: actions, callListCount: callListCount});
         } else {
-            _runForwarderCallsInActionOrder(actions);
+            _executeForwarderCallsInActionOrder(actions);
         }
     }
 
-    /// @notice Runs the forwarder calls of a transaction in the order of the actions, with the consumed resources of
-    /// an action before its created resources.
+    /// @notice Executes the forwarder calls of a transaction in the order of the actions, with the consumed resources
+    /// of an action before its created resources.
     /// @param actions The actions of the transaction.
-    function _runForwarderCallsInActionOrder(Action[] calldata actions) internal {
+    function _executeForwarderCallsInActionOrder(Action[] calldata actions) internal {
         uint256 actionCount = actions.length;
         for (uint256 i = 0; i < actionCount; ++i) {
             Consumed[] calldata consumedResources = actions[i].consumed;
             uint256 consumedCount = consumedResources.length;
             for (uint256 j = 0; j < consumedCount; ++j) {
                 Consumed calldata consumed = consumedResources[j];
-                _runForwarderCallsOfResource({
+                _executeForwarderCallsOfResource({
                     logicRef: consumed.logicRef, externalPayload: consumed.appData.externalPayload
                 });
             }
@@ -301,32 +301,32 @@ contract ProtocolAdapter is
             uint256 createdCount = createdResources.length;
             for (uint256 j = 0; j < createdCount; ++j) {
                 Created calldata created = createdResources[j];
-                _runForwarderCallsOfResource({
+                _executeForwarderCallsOfResource({
                     logicRef: created.logicRef, externalPayload: created.appData.externalPayload
                 });
             }
         }
     }
 
-    /// @notice Decodes and runs the forwarder calls of a resource, which carry no ordering constraints.
+    /// @notice Decodes and executes the forwarder calls of a resource, which carry no ordering constraints.
     /// @param logicRef The logic reference of the call-carrying resource.
     /// @param externalPayload The external payload of the resource.
-    function _runForwarderCallsOfResource(bytes32 logicRef, ExpirableBlob[] calldata externalPayload) internal {
+    function _executeForwarderCallsOfResource(bytes32 logicRef, ExpirableBlob[] calldata externalPayload) internal {
         uint256 callCount = externalPayload.length;
         for (uint256 i = 0; i < callCount; ++i) {
             // `ForwarderCallOrder.hasOrderingConstraints` checked that the two tag lists after these fields are empty.
             (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
                 abi.decode(externalPayload[i].blob, (address, bytes, bytes));
-            _runForwarderCall({
+            _executeForwarderCall({
                 logicRef: logicRef, untrustedForwarder: untrustedForwarder, input: input, expectedOutput: expectedOutput
             });
         }
     }
 
-    /// @notice Runs the forwarder calls of a transaction in the order that their ordering constraints set.
+    /// @notice Executes the forwarder calls of a transaction in the order that their ordering constraints set.
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
-    function _runForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
+    function _executeForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
         ForwarderCallOrder.CallList[] memory callLists = actions.decodeCallLists(callListCount);
         uint256[] memory orderedIndices = callLists.order(actions);
 
@@ -335,7 +335,7 @@ contract ProtocolAdapter is
             uint256 callCount = callList.calls.length;
             for (uint256 i = 0; i < callCount; ++i) {
                 ForwarderCallOrder.ForwarderCall memory forwarderCall = callList.calls[i];
-                _runForwarderCall({
+                _executeForwarderCall({
                     logicRef: callList.resourceLogicRef,
                     untrustedForwarder: forwarderCall.untrustedForwarder,
                     input: forwarderCall.input,
@@ -345,14 +345,14 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Runs a call to an external, untrusted forwarder contract.
+    /// @notice Executes a call to an external, untrusted forwarder contract.
     /// @param logicRef The logic reference of the call-carrying resource.
     /// @param untrustedForwarder The forwarder contract to call.
     /// @param input The input of the call.
     /// @param expectedOutput The output that the call must return.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
     /// the logic of the call-carrying resource.
-    function _runForwarderCall(
+    function _executeForwarderCall(
         bytes32 logicRef,
         address untrustedForwarder,
         bytes memory input,
