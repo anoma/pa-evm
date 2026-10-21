@@ -397,6 +397,33 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(_transaction(consumed, created));
     }
 
+    /// @dev The call checks that the root after the commitment of the created resource is historical. The protocol
+    /// adapter must store this root before it executes the calls.
+    function test_execute_runs_the_calls_after_storing_the_commitment_tree_root() public {
+        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
+        TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
+
+        CommitmentTreeMock commitmentTree = CommitmentTreeMock(
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
+        );
+        assertEq(
+            commitmentTree.latestCommitmentTreeRoot(),
+            _mockPa.latestCommitmentTreeRoot(),
+            "the protocol adapter and the separate commitment tree start with the same root"
+        );
+        bytes32 newRoot = commitmentTree.addCommitment(_commitment(created[0]));
+
+        consumed[0].appData.externalPayload[0].blob = _callBlob({
+            untrustedForwarder: address(_fwd),
+            input: abi.encode(address(_mockPa), abi.encodeCall(_mockPa.isCommitmentTreeRootHistorical, (newRoot))),
+            expectedOutput: abi.encode(true)
+        });
+
+        _mockPa.execute(_transaction(consumed, created));
+    }
+
     /// @dev The old encoding has no tag lists, so the words where the protocol adapter reads their offsets belong to
     /// the input of the call.
     function test_execute_reverts_on_a_forwarder_call_in_the_encoding_without_tag_lists() public {
