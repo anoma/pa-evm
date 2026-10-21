@@ -42,7 +42,7 @@ library ForwarderCallOrdering {
     error BeforeTagNotInTransaction(bytes32 tag);
 
     /// @notice Thrown if the ordering constraints form a cycle, so that no order meets them.
-    error CyclicConstraints();
+    error CyclicOrderingConstraints();
 
     /// @notice Thrown if a transaction with ordering constraints has more than `DirectedGraph.MAX_NODE_COUNT`
     /// call-carrying resources.
@@ -135,7 +135,7 @@ library ForwarderCallOrdering {
 
         bool isAcyclic;
         (isAcyclic, orderedIndices) = constraints.topologicalSort();
-        require(isAcyclic, CyclicConstraints());
+        require(isAcyclic, CyclicOrderingConstraints());
     }
 
     /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
