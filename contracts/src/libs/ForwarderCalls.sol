@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 import {DirectedGraph} from "../libs/DirectedGraph.sol";
 
-/// @title ForwarderCallOrder
+/// @title ForwarderCalls
 /// @author Anoma Foundation, 2026
 /// @notice A library decoding the forwarder calls of a transaction into call lists and ordering the call lists by the
 /// ordering constraints of the calls.
@@ -13,7 +13,7 @@ import {DirectedGraph} from "../libs/DirectedGraph.sol";
 /// list of the earlier action to each call list of the later one, so that the calls of an action are executed together.
 /// `order` sorts the graph with `DirectedGraph.topologicalSort`.
 /// @custom:security-contact security@anoma.foundation
-library ForwarderCallOrder {
+library ForwarderCalls {
     using DirectedGraph for DirectedGraph.Graph;
 
     /// @notice The forwarder calls in the external payload of a resource. They are executed together and in their
@@ -26,7 +26,7 @@ library ForwarderCallOrder {
         bytes32 resourceTag;
         bytes32 resourceLogicRef;
         uint256 actionIndex;
-        ForwarderCall[] calls;
+        Call[] calls;
     }
 
     /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
@@ -37,7 +37,7 @@ library ForwarderCallOrder {
     /// call.
     /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
     /// call.
-    struct ForwarderCall {
+    struct Call {
         address untrustedForwarder;
         bytes input;
         bytes expectedOutput;
@@ -173,9 +173,9 @@ library ForwarderCallOrder {
         callList.resourceLogicRef = resourceLogicRef;
 
         uint256 callCount = externalPayload.length;
-        callList.calls = new ForwarderCall[](callCount);
+        callList.calls = new Call[](callCount);
         for (uint256 i = 0; i < callCount; ++i) {
-            ForwarderCall memory forwarderCall = callList.calls[i];
+            Call memory forwarderCall = callList.calls[i];
             (
                 forwarderCall.untrustedForwarder,
                 forwarderCall.input,
@@ -201,11 +201,11 @@ library ForwarderCallOrder {
         constraints.successors = new uint256[](callListCount);
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
-            ForwarderCall[] memory calls = callLists[callListIndex].calls;
+            Call[] memory calls = callLists[callListIndex].calls;
             uint256 callCount = calls.length;
 
             for (uint256 c = 0; c < callCount; ++c) {
-                ForwarderCall memory forwarderCall = calls[c];
+                Call memory forwarderCall = calls[c];
                 bytes32[] memory afterTags = forwarderCall.afterTags;
                 uint256 afterTagCount = afterTags.length;
                 for (uint256 a = 0; a < afterTagCount; ++a) {

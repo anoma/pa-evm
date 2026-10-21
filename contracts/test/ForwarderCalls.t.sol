@@ -5,25 +5,25 @@ import {Test} from "forge-std-1.17.0/src/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {DirectedGraph} from "../src/libs/DirectedGraph.sol";
-import {ForwarderCallOrder} from "../src/libs/ForwarderCallOrder.sol";
+import {ForwarderCalls} from "../src/libs/ForwarderCalls.sol";
 
-contract ForwarderCallOrderTest is Test {
+contract ForwarderCallsTest is Test {
     /// @dev Passes the payload in calldata, where the protocol adapter reads it.
     function hasOrderingConstraintsInCalldata(IProtocolAdapter.ExpirableBlob[] calldata externalPayload)
         external
         pure
         returns (bool constrained)
     {
-        constrained = ForwarderCallOrder.hasOrderingConstraints(externalPayload);
+        constrained = ForwarderCalls.hasOrderingConstraints(externalPayload);
     }
 
     /// @dev Passes the actions in calldata, where the protocol adapter reads them.
-    function orderInCalldata(ForwarderCallOrder.CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
+    function orderInCalldata(ForwarderCalls.CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
         external
         pure
         returns (uint256[] memory orderedIndices)
     {
-        orderedIndices = ForwarderCallOrder.order(callLists, actions);
+        orderedIndices = ForwarderCalls.order(callLists, actions);
     }
 
     /// @dev The offsets of the tag lists are the fourth and fifth words of the encoded call.
@@ -37,8 +37,8 @@ contract ForwarderCallOrderTest is Test {
     function test_order_reverts_on_more_call_lists_than_a_graph_has_nodes() public {
         uint256 callListCount = DirectedGraph.MAX_NODE_COUNT + 1;
 
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrder.TooManyCallCarryingResources.selector, callListCount));
-        this.orderInCalldata(new ForwarderCallOrder.CallList[](callListCount), new IProtocolAdapter.Action[](0));
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCalls.TooManyCallCarryingResources.selector, callListCount));
+        this.orderInCalldata(new ForwarderCalls.CallList[](callListCount), new IProtocolAdapter.Action[](0));
     }
 
     function testFuzz_hasOrderingConstraints_agrees_with_the_lengths_of_the_tag_lists(
@@ -63,7 +63,7 @@ contract ForwarderCallOrderTest is Test {
         uint256 maxNodeCount = DirectedGraph.MAX_NODE_COUNT;
 
         uint256[] memory orderedIndices =
-            this.orderInCalldata(new ForwarderCallOrder.CallList[](maxNodeCount), new IProtocolAdapter.Action[](0));
+            this.orderInCalldata(new ForwarderCalls.CallList[](maxNodeCount), new IProtocolAdapter.Action[](0));
 
         assertEq(orderedIndices.length, maxNodeCount, "number of ordered call lists");
         for (uint256 position = 0; position < maxNodeCount; ++position) {
@@ -74,11 +74,11 @@ contract ForwarderCallOrderTest is Test {
     /// @dev The call list of the first action waits for the call list of the last action.
     function test_order_accepts_more_actions_than_a_graph_has_nodes() public view {
         uint256 actionCount = DirectedGraph.MAX_NODE_COUNT + 1;
-        ForwarderCallOrder.CallList[] memory callLists = new ForwarderCallOrder.CallList[](2);
+        ForwarderCalls.CallList[] memory callLists = new ForwarderCalls.CallList[](2);
         callLists[0].resourceTag = keccak256("a resource of the first action");
         callLists[1].resourceTag = keccak256("a resource of the last action");
         callLists[1].actionIndex = actionCount - 1;
-        callLists[0].calls = new ForwarderCallOrder.ForwarderCall[](1);
+        callLists[0].calls = new ForwarderCalls.Call[](1);
         callLists[0].calls[0].afterTags = new bytes32[](1);
         callLists[0].calls[0].afterTags[0] = callLists[1].resourceTag;
 
