@@ -8,7 +8,7 @@ import {DirectedGraph} from "../src/libs/DirectedGraph.sol";
 import {ForwarderCallOrder} from "../src/libs/ForwarderCallOrder.sol";
 
 contract ForwarderCallOrderTest is Test {
-    /// @notice Passes the payload in calldata, where the protocol adapter reads it.
+    /// @dev Passes the payload in calldata, where the protocol adapter reads it.
     function hasOrderingConstraintsInCalldata(IProtocolAdapter.ExpirableBlob[] calldata externalPayload)
         external
         pure
@@ -17,7 +17,7 @@ contract ForwarderCallOrderTest is Test {
         constrained = ForwarderCallOrder.hasOrderingConstraints(externalPayload);
     }
 
-    /// @notice Passes the actions in calldata, where the protocol adapter reads them.
+    /// @dev Passes the actions in calldata, where the protocol adapter reads them.
     function orderInCalldata(ForwarderCallOrder.CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
         external
         pure
