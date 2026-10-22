@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Script} from "forge-std-1.17.0/src/Script.sol";
-
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title StagingScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts acting on the staging environment protocol adapter proxy, which the staging proxy
-/// owner drives directly.
+/// @notice The base of the scripts that the staging proxy owner executes directly on a recorded proxy it owns: the
+/// staging proxy, or a production proxy before its migration completes. `IS_PRODUCTION` selects the record.
 /// @custom:security-contact security@anoma.foundation
-abstract contract StagingScript is Script {
+abstract contract StagingScript is RecordedDeploymentsScript {
     /// @notice Thrown if the proxy is not a staging deployment, i.e. not owned by the staging proxy owner.
     error NotAStagingDeployment(address proxy);
 

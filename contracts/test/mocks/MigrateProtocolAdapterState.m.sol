@@ -14,7 +14,11 @@ contract MigrateProtocolAdapterStateMock is MigrateProtocolAdapterState {
         _PROXY = proxy;
     }
 
-    function _recordedDeployments(bool) internal view override returns (address legacyProtocolAdapter, address proxy) {
-        (legacyProtocolAdapter, proxy) = (_LEGACY_PROTOCOL_ADAPTER, _PROXY);
+    function _recordedLegacyProtocolAdapter() internal view override returns (address legacyProtocolAdapter) {
+        legacyProtocolAdapter = _LEGACY_PROTOCOL_ADAPTER;
+    }
+
+    function _recordedProxy(bool) internal view override returns (address proxy) {
+        proxy = _PROXY;
     }
 }

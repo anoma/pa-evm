@@ -6,6 +6,7 @@ import {Vm} from "forge-std-1.17.0/src/Vm.sol";
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {MigrateProtocolAdapterState} from "../../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
@@ -93,7 +94,9 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", block.chainid)
+            abi.encodeWithSelector(
+                RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", block.chainid
+            )
         );
         script.run({isProduction: true});
     }
