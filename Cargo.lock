@@ -1054,8 +1054,7 @@ dependencies = [
 [[package]]
 name = "anoma-pa-testkit"
 version = "1.0.0-rc.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af9cf7ad92985ee1cb374acb0612a4b3b4e294193c4aa09feaa61fbc29e1d480"
+source = "git+https://github.com/anoma/pa-testkit?rev=579a6b352ba7891029e64389f02c7da8844c7cac#579a6b352ba7891029e64389f02c7da8844c7cac"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
@@ -1085,9 +1084,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-core"
-version = "2.0.0-rc.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67e1bcd869cc28ff97bfd0524d8ec212a271e5dd579000c85bb6089788a8fe49"
+version = "2.0.0-rc.7.1"
+source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
 dependencies = [
  "bincode",
  "bytemuck",
@@ -1099,9 +1097,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0"
-version = "2.0.0-rc.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c714707d0ab67af288c34aa053a7c660629812b7dc89c29428ed13a9f3ffb8de"
+version = "2.0.0-rc.7.1"
+source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
@@ -1122,9 +1119,8 @@ dependencies = [
 
 [[package]]
 name = "anoma-rm-risc0-gadgets"
-version = "2.0.0-rc.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d4607cb984ae146f0c41a5264c7b4aea09ff787dbc4f9461940fb3ef7d78d4a"
+version = "2.0.0-rc.7.1"
+source = "git+https://github.com/anoma/arm-risc0?tag=v2.0.0-rc.7.1#8f5202fafc3b81d0ca74a37570f5bf840f98ff01"
 dependencies = [
  "aes-gcm",
  "alloy-primitives",

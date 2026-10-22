@@ -73,7 +73,8 @@ interface IProtocolAdapter {
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
-    /// @param externalPayload A list of blobs for encoding data connected with external calls.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls. Each blob encodes one
+    /// `ForwarderCall` as `abi.encode(untrustedForwarder, input, expectedOutput, afterTags, beforeTags)`.
     /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;
@@ -88,6 +89,22 @@ interface IProtocolAdapter {
     struct ExpirableBlob {
         DeletionCriterion deletionCriterion;
         bytes blob;
+    }
+
+    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
+    /// @param untrustedForwarder The forwarder contract to call.
+    /// @param input The input of the call.
+    /// @param expectedOutput The output that the call must return.
+    /// @param afterTags The tags of the call-carrying resources whose calls are executed before the calls of the call
+    /// list of this call.
+    /// @param beforeTags The tags of the call-carrying resources whose calls are executed after the calls of the call
+    /// list of this call.
+    struct ForwarderCall {
+        address untrustedForwarder;
+        bytes input;
+        bytes expectedOutput;
+        bytes32[] afterTags;
+        bytes32[] beforeTags;
     }
 
     /// @notice Emitted when a transaction is executed.
@@ -140,7 +157,7 @@ interface IProtocolAdapter {
     event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively.
+    /// set, respectively, and by executing the forwarder calls of its resources.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

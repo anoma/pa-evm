@@ -41,6 +41,19 @@ Two lists of logic refs, one for consumed and one for created resources: a trans
 **Forwarder**:
 An application contract (e.g. the ERC20 or generic-call forwarder) that the PA drives to enact EVM side effects on behalf of an action. Each lives in its own repo.
 
+**Forwarder call**:
+A call from the PA to a forwarder that a resource carries in its external payload, with the output that the call must return and its ordering constraints. The PA executes the forwarder calls of a transaction after the nullifiers and commitments of all actions are added, after the proofs, and after the new commitment tree root is stored.
+
+**Call-carrying resource**:
+A resource with forwarder calls in its external payload.
+_Avoid_: carrier
+
+**Call list**:
+The forwarder calls of a call-carrying resource, in the order of its external payload. The PA executes the calls of a call list together and in their order, and the call lists of an action together.
+
+**Ordering constraint**:
+An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of another call-carrying resource of the transaction, which is the nullifier of a consumed resource or the commitment of a created resource. The PA executes the calls of the named resource before (`afterTags`) or after (`beforeTags`) the calls of the resource that carries the constraint. Without ordering constraints, the PA executes the calls in the order of the actions, with the consumed resources of an action before its created resources.
+
 **Environment**:
 One of the two protocol adapter deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.
 
