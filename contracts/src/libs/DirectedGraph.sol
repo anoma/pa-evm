@@ -23,6 +23,9 @@ library DirectedGraph {
     /// @notice The maximum number of nodes of a graph, which is the number of bits of a bitmap.
     uint256 public constant MAX_NODE_COUNT = 256;
 
+    /// @notice Thrown if a graph to sort has more than `MAX_NODE_COUNT` nodes.
+    error TooManyNodes(uint256 nodeCount);
+
     /// @notice Adds an edge to a graph.
     /// @param graph The graph.
     /// @param source The node at the start of the edge.
@@ -59,8 +62,8 @@ library DirectedGraph {
     /// @notice Sorts the nodes of a graph topologically: the source of each edge comes before its target. A node
     /// is ready when all its in-neighbors are sorted. Of the ready nodes, the one with the lowest index comes
     /// next, so the order is unique.
-    /// @dev Kahn's algorithm. The graph must have at most `MAX_NODE_COUNT` nodes, as `Graph` states: a bitmap has no
-    /// bit for a node at a higher index, so such a node never becomes ready.
+    /// @dev Kahn's algorithm. Reverts if the graph has more than `MAX_NODE_COUNT` nodes, because a bitmap has no bit
+    /// for node `MAX_NODE_COUNT` and above.
     /// @param graph The graph to sort.
     /// @return isAcyclic Whether the edges form no cycle, so that a topological order exists.
     /// @return sortedNodes The nodes in topological order, if `isAcyclic` is true.
@@ -68,6 +71,7 @@ library DirectedGraph {
         uint256[] memory inNeighbors = graph.inNeighbors;
         uint256[] memory outNeighbors = graph.outNeighbors;
         uint256 nodeCount = inNeighbors.length;
+        require(nodeCount <= MAX_NODE_COUNT, TooManyNodes(nodeCount));
 
         uint256 readyBitmap = 0;
         for (uint256 node = 0; node < nodeCount; ++node) {

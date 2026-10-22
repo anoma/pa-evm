@@ -10,6 +10,14 @@ contract DirectedGraphTest is Test {
     using DirectedGraph for DirectedGraph.Graph;
     using LibPRNG for LibPRNG.PRNG;
 
+    function test_topologicalSort_reverts_on_a_graph_with_more_than_the_maximum_node_count() public {
+        uint256 nodeCount = DirectedGraph.MAX_NODE_COUNT + 1;
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(nodeCount);
+
+        vm.expectRevert(abi.encodeWithSelector(DirectedGraph.TooManyNodes.selector, nodeCount));
+        graph.topologicalSort();
+    }
+
     function test_addEdges_puts_each_node_of_one_range_before_each_node_of_another() public pure {
         DirectedGraph.Graph memory graph = _graphWithoutEdges(3);
         graph.addEdges({sourceStart: 1, sourceEnd: 3, targetStart: 0, targetEnd: 1});
@@ -79,15 +87,6 @@ contract DirectedGraphTest is Test {
         for (uint256 position = 0; position < nodeCount; ++position) {
             assertEq(sortedNodes[position], nodeCount - 1 - position, "sorted node");
         }
-    }
-
-    /// @dev A bitmap has no bit for node `MAX_NODE_COUNT`, so that node never becomes ready.
-    function test_topologicalSort_reports_a_graph_with_more_than_the_maximum_node_count_as_cyclic() public pure {
-        DirectedGraph.Graph memory graph = _graphWithoutEdges(DirectedGraph.MAX_NODE_COUNT + 1);
-
-        (bool isAcyclic,) = graph.topologicalSort();
-
-        assertFalse(isAcyclic, "the node above the maximum node count never becomes ready");
     }
 
     function test_topologicalSort_returns_no_nodes_for_a_graph_without_nodes() public pure {
