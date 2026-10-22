@@ -138,117 +138,121 @@ contracts-deploy-proxy deployer chain *args:
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
-contracts-simulate-staging-upgrade proxy implementation chain *args:
+contracts-simulate-staging-upgrade chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
-        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging upgrade to the deployed implementation as the proxy owner
-contracts-execute-staging-upgrade deployer proxy implementation chain *args:
+contracts-execute-staging-upgrade deployer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
-        --sig "run(address,address)" {{proxy}} {{implementation}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
-contracts-simulate-production-upgrade-proposal proxy proposer implementation chain *args:
+contracts-simulate-production-upgrade-proposal proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --sig "run(address)" {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose the production upgrade to the deployed implementation to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-upgrade deployer proxy proposer implementation chain *args:
+contracts-propose-production-upgrade deployer proposer chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
-        --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
+        --sig "run(address)" {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging kind table update (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-kind-table-update proxy root chain *args:
+contracts-simulate-staging-kind-table-update root chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
-        --sig "run(address,bytes32)" {{proxy}} {{root}} \
+        --sig "run(bool,bytes32)" $IS_PRODUCTION {{root}} \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging kind table update as the proxy owner
-contracts-execute-staging-kind-table-update deployer proxy root chain *args:
+contracts-execute-staging-kind-table-update deployer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
-        --sig "run(address,bytes32)" {{proxy}} {{root}} \
+        --sig "run(bool,bytes32)" $IS_PRODUCTION {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production kind table update proposal (dry-run): simulates the Safe executing the update
-contracts-simulate-production-kind-table-proposal proxy proposer root chain *args:
+contracts-simulate-production-kind-table-proposal proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
+        --sig "run(address,bytes32)" {{proposer}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose updating the production kind tree root to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-kind-table-update deployer proxy proposer root chain *args:
+contracts-propose-production-kind-table-update deployer proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
     cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
-        --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
+        --sig "run(address,bytes32)" {{proposer}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # A pause or a logic ref denial deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
 
 # Simulate the staging pause (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-pause proxy chain *args:
+contracts-simulate-staging-pause chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
-        --sig "run(address)" {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging pause as the proxy owner
-contracts-execute-staging-pause deployer proxy chain *args:
+contracts-execute-staging-pause deployer chain *args:
     cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
-        --sig "run(address)" {{proxy}} \
+        --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production pause proposal (dry-run): simulates the Safe executing the pause
-contracts-simulate-production-pause-proposal proxy proposer chain *args:
+contracts-simulate-production-pause-proposal proposer chain *args:
     cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
-        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --sig "run(address)" {{proposer}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose pausing the production proxy to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-pause deployer proxy proposer chain *args:
+contracts-propose-production-pause deployer proposer chain *args:
     cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
-        --sig "run(address,address)" {{proxy}} {{proposer}} \
+        --sig "run(address)" {{proposer}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the staging logic ref denial (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-logic-ref-denial proxy logic_refs chain *args:
+contracts-simulate-staging-logic-ref-denial logic_refs chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
-        --sig "run(address,(bytes32,bool)[])" {{proxy}} {{quote(logic_refs)}} \
+        --sig "run(bool,(bytes32,bool)[])" $IS_PRODUCTION {{quote(logic_refs)}} \
         --rpc-url {{chain}} {{ args }}
 
 # Execute the staging logic ref denial as the proxy owner
-contracts-execute-staging-logic-ref-denial deployer proxy logic_refs chain *args:
+contracts-execute-staging-logic-ref-denial deployer logic_refs chain *args:
     cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
-        --sig "run(address,(bytes32,bool)[])" {{proxy}} {{quote(logic_refs)}} \
+        --sig "run(bool,(bytes32,bool)[])" $IS_PRODUCTION {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the production logic ref denial proposal (dry-run): simulates the Safe executing the denial
-contracts-simulate-production-logic-ref-denial-proposal proxy proposer logic_refs chain *args:
+contracts-simulate-production-logic-ref-denial-proposal proposer logic_refs chain *args:
     cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
-        --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
+        --sig "run(address,(bytes32,bool)[])" {{proposer}} {{quote(logic_refs)}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose the production logic ref denial to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-logic-ref-denial deployer proxy proposer logic_refs chain *args:
+contracts-propose-production-logic-ref-denial deployer proposer logic_refs chain *args:
     cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
-        --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
+        --sig "run(address,(bytes32,bool)[])" {{proposer}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
 # Simulate the proposal to transfer the legacy protocol adapter (dry-run): simulates the Safe that owns it executing the transfer

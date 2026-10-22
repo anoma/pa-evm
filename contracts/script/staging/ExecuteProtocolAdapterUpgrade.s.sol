@@ -8,35 +8,23 @@ import {StagingScript} from "./StagingScript.s.sol";
 
 /// @title ExecuteProtocolAdapterUpgrade
 /// @author Anoma Foundation, 2026
-/// @notice A script to execute upgrading the staging environment protocol adapter proxy to the deployed
-/// implementation of the current source version (see `DeployProtocolAdapterImplementation`). Staging only: the
-/// production proxy is owned by a Safe multisig, whose owners execute the upgrade proposed by
-/// `production/ProposeProtocolAdapterUpgrade` in the Safe app instead.
+/// @notice A script to execute upgrading a recorded protocol adapter proxy that the staging proxy owner owns to the
+/// deployed implementation of the current source version (see `DeployProtocolAdapterImplementation`). Once a Safe
+/// multisig owns the proxy, its owners execute the upgrade proposed by `production/ProposeProtocolAdapterUpgrade` in
+/// the Safe app instead.
 /// @custom:security-contact security@anoma.foundation
 contract ExecuteProtocolAdapterUpgrade is StagingScript {
-    /// @notice Executes the upgrade as the proxy owner. Without `--broadcast`, the upgrade is simulated locally.
-    /// @param proxy The staging environment protocol adapter proxy to upgrade.
-    /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
-    /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
-    /// compares two independent derivations.
-    function run(address proxy, address newImplementation) public {
+    /// @notice Executes the upgrade of the recorded proxy to the implementation this source version predicts, as the
+    /// proxy owner. Without `--broadcast`, the upgrade is simulated locally.
+    /// @param isProduction Whether to upgrade the production or the staging proxy.
+    function run(bool isProduction) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        // forge-lint: disable-next-line(unused-return)
-        (address predictedImplementation,) = implementationDeployScript.predict();
-
-        require(
-            newImplementation == predictedImplementation,
-            DeployProtocolAdapterImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
-        );
-        require(
-            newImplementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(newImplementation)
-        );
-
+        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address proxy = _requireRecordedProxy(isProduction);
         address owner = _stagingOwner({proxy: proxy});
 
         vm.startBroadcast(owner);
-        UUPSUpgradeable(proxy).upgradeToAndCall(newImplementation, implementationDeployScript.INITIALIZATION_DATA());
+        UUPSUpgradeable(proxy).upgradeToAndCall(implementation, implementationDeployScript.INITIALIZATION_DATA());
         vm.stopBroadcast();
     }
 }
