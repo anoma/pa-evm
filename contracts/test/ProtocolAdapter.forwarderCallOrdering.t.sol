@@ -203,25 +203,24 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         _mockPa.execute(txn);
     }
 
-    /// @dev A swap needs the unwrap (created) before the generic call and the wrap (both consumed). The two lists
-    /// run the consumed resources first, so only the constraints set this order.
-    function test_execute_runs_the_calls_of_a_swap_in_the_order_of_their_constraints() public {
+    /// @dev The constraints chain the call of the created resource before the calls of the two consumed resources with
+    /// calls. Without the constraints, the calls of the consumed resources run first. The resources without calls do
+    /// not change the order.
+    function test_execute_runs_the_calls_in_the_order_of_a_chain_of_constraints() public {
         TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](3);
-        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0]; // the sold tokens
-        consumed[1] = _callCarryingResource({nonce: 1, callId: 10})[0]; // the generic call
-        consumed[2] = _callCarryingResource({nonce: 2, callId: 20})[0]; // the wrap of the bought tokens
+        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0];
+        consumed[1] = _callCarryingResource({nonce: 1, callId: 1})[0];
+        consumed[2] = _callCarryingResource({nonce: 2, callId: 2})[0];
 
         TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](3);
-        created[0] = _callCarryingResource({nonce: 3, callId: 30})[0]; // the unwrap of the sold tokens
-        created[1] = _exampleResourceAndEmptyAppData({nonce: 4})[0]; // the bought tokens
-        created[2] = _exampleResourceAndEmptyAppData({nonce: 5})[0]; // the change
+        created[0] = _callCarryingResource({nonce: 3, callId: 3})[0];
+        created[1] = _exampleResourceAndEmptyAppData({nonce: 4})[0];
+        created[2] = _exampleResourceAndEmptyAppData({nonce: 5})[0];
 
-        bytes32 unwrapCommitment = _commitment(created[0]);
-        bytes32 genericCallNullifier = _nullifier(consumed[1]);
-        _constrain({data: consumed[1], afterTags: _tags(unwrapCommitment), beforeTags: _noTags()});
-        _constrain({data: consumed[2], afterTags: _tags(genericCallNullifier), beforeTags: _noTags()});
+        _constrain({data: consumed[1], afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()});
+        _constrain({data: consumed[2], afterTags: _tags(_nullifier(consumed[1])), beforeTags: _noTags()});
 
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(30, 10, 20)});
+        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(3, 1, 2)});
     }
 
     /// @dev The call of the first consumed resource reads the nullifier of the second one, which the loop adds later.
