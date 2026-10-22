@@ -48,24 +48,20 @@ library ForwarderCallOrdering {
     /// call-carrying resources.
     error TooManyCallCarryingResources(uint256 count);
 
-    /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
-    /// @dev Reads only the lengths of `afterTags` and `beforeTags`. The slicing reverts if the blob is too short or an
-    /// offset points outside it.
-    /// @param externalPayload The external payload of the resource.
-    /// @return constrained Whether a call has an `afterTags` or a `beforeTags` entry.
-    function hasOrderingConstraints(IProtocolAdapter.ExpirableBlob[] calldata externalPayload)
-        internal
-        pure
-        returns (bool constrained)
-    {
-        uint256 callCount = externalPayload.length;
-        for (uint256 i = 0; i < callCount; ++i) {
-            bytes calldata blob = externalPayload[i].blob;
-            if (_tagCount(blob, _AFTER_TAGS_OFFSET_POSITION) != 0 || _tagCount(blob, _BEFORE_TAGS_OFFSET_POSITION) != 0)
-            {
-                return true;
-            }
-        }
+    /// @notice Orders the call lists so that their forwarder calls meet the ordering constraints, and checks that
+    /// each `afterTags` and `beforeTags` entry names a call-carrying resource of the transaction. The NatSpec of
+    /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
+    /// @param callLists The call lists of the transaction.
+    /// @return orderedIndices The indices of `callLists`, in the order in which their calls are executed.
+    function order(CallList[] memory callLists) internal pure returns (uint256[] memory orderedIndices) {
+        uint256 callListCount = callLists.length;
+        require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
+
+        DirectedGraph.Graph memory constraints = _buildConstraints(callLists);
+
+        bool isAcyclic;
+        (isAcyclic, orderedIndices) = constraints.topologicalSort();
+        require(isAcyclic, CyclicOrderingConstraints());
     }
 
     /// @notice Decodes the call lists of a transaction, in the order of the actions, with the consumed resources of an
@@ -117,51 +113,23 @@ library ForwarderCallOrdering {
         }
     }
 
-    /// @notice Orders the call lists so that their forwarder calls meet the ordering constraints, and checks that
-    /// each `afterTags` and `beforeTags` entry names a call-carrying resource of the transaction. The NatSpec of
-    /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
-    /// @param callLists The call lists of the transaction.
-    /// @return orderedIndices The indices of `callLists`, in the order in which their calls are executed.
-    function order(CallList[] memory callLists) internal pure returns (uint256[] memory orderedIndices) {
-        uint256 callListCount = callLists.length;
-        require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
-
-        DirectedGraph.Graph memory constraints = _buildConstraints(callLists);
-
-        bool isAcyclic;
-        (isAcyclic, orderedIndices) = constraints.topologicalSort();
-        require(isAcyclic, CyclicOrderingConstraints());
-    }
-
-    /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
-    /// forwarder calls.
-    /// @param callList The call list to fill.
-    /// @param actionIndex The index of the action of the resource.
-    /// @param resourceTag The tag of the resource.
-    /// @param resourceLogicRef The logic reference of the resource.
+    /// @notice Returns whether a forwarder call of a resource carries ordering constraints.
+    /// @dev Reads only the lengths of `afterTags` and `beforeTags`. The slicing reverts if the blob is too short or an
+    /// offset points outside it.
     /// @param externalPayload The external payload of the resource.
-    function _decodeCallList(
-        CallList memory callList,
-        uint256 actionIndex,
-        bytes32 resourceTag,
-        bytes32 resourceLogicRef,
-        IProtocolAdapter.ExpirableBlob[] calldata externalPayload
-    ) private pure {
-        callList.actionIndex = actionIndex;
-        callList.resourceTag = resourceTag;
-        callList.resourceLogicRef = resourceLogicRef;
-
+    /// @return constrained Whether a call has an `afterTags` or a `beforeTags` entry.
+    function hasOrderingConstraints(IProtocolAdapter.ExpirableBlob[] calldata externalPayload)
+        internal
+        pure
+        returns (bool constrained)
+    {
         uint256 callCount = externalPayload.length;
-        callList.calls = new IProtocolAdapter.ForwarderCall[](callCount);
         for (uint256 i = 0; i < callCount; ++i) {
-            IProtocolAdapter.ForwarderCall memory forwarderCall = callList.calls[i];
-            (
-                forwarderCall.untrustedForwarder,
-                forwarderCall.input,
-                forwarderCall.expectedOutput,
-                forwarderCall.afterTags,
-                forwarderCall.beforeTags
-            ) = abi.decode(externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
+            bytes calldata blob = externalPayload[i].blob;
+            if (_tagCount(blob, _AFTER_TAGS_OFFSET_POSITION) != 0 || _tagCount(blob, _BEFORE_TAGS_OFFSET_POSITION) != 0)
+            {
+                return true;
+            }
         }
     }
 
@@ -261,6 +229,38 @@ library ForwarderCallOrdering {
             if (callLists[index].resourceTag == tag) {
                 return index;
             }
+        }
+    }
+
+    /// @notice Writes the action index, the tag and the logic reference of a resource to its call list and decodes its
+    /// forwarder calls.
+    /// @param callList The call list to fill.
+    /// @param actionIndex The index of the action of the resource.
+    /// @param resourceTag The tag of the resource.
+    /// @param resourceLogicRef The logic reference of the resource.
+    /// @param externalPayload The external payload of the resource.
+    function _decodeCallList(
+        CallList memory callList,
+        uint256 actionIndex,
+        bytes32 resourceTag,
+        bytes32 resourceLogicRef,
+        IProtocolAdapter.ExpirableBlob[] calldata externalPayload
+    ) private pure {
+        callList.actionIndex = actionIndex;
+        callList.resourceTag = resourceTag;
+        callList.resourceLogicRef = resourceLogicRef;
+
+        uint256 callCount = externalPayload.length;
+        callList.calls = new IProtocolAdapter.ForwarderCall[](callCount);
+        for (uint256 i = 0; i < callCount; ++i) {
+            IProtocolAdapter.ForwarderCall memory forwarderCall = callList.calls[i];
+            (
+                forwarderCall.untrustedForwarder,
+                forwarderCall.input,
+                forwarderCall.expectedOutput,
+                forwarderCall.afterTags,
+                forwarderCall.beforeTags
+            ) = abi.decode(externalPayload[i].blob, (address, bytes, bytes, bytes32[], bytes32[]));
         }
     }
 
