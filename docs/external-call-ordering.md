@@ -27,7 +27,7 @@ abi.encode(address untrustedForwarder, bytes input, bytes expectedOutput, bytes3
 
 The PA calls `forwardCall(logicRef, input)` on `untrustedForwarder`, with the logic reference of the resource. If the output of the call differs from `expectedOutput`, the transaction reverts with `ForwarderCallOutputMismatch`. After each call, the PA emits a `ForwarderCallExecuted` event, so the events show the order of execution.
 
-`afterTags` and `beforeTags` hold the ordering constraints of the call. Each entry is the tag of a resource: the nullifier of a consumed resource or the commitment of a created resource.
+`afterTags` and `beforeTags` hold the ordering constraints of the call. Each entry is the tag of a call-carrying resource of the transaction: the nullifier of a consumed resource or the commitment of a created resource.
 
 - An `afterTags` entry makes the calls of the named resource come before the calls of this resource.
 - A `beforeTags` entry makes the calls of the named resource come after the calls of this resource.
@@ -49,8 +49,8 @@ So the resources of the legacy protocol adapter that a migrated chain still hold
 
 ## Boundaries
 
-- Only call-carrying resources take part in the order. A tag that names a resource without forwarder calls sets no order. The PA only checks that the transaction contains the named resource.
-- The constraints apply inside one transaction. A tag that names no resource of the transaction makes the transaction revert with `AfterTagNotInTransaction` or `BeforeTagNotInTransaction`. The PA does not look up the nullifier set or the commitment tree for a tag.
+- Only call-carrying resources take part in the order. A tag that names a resource without forwarder calls sets no order, so the client most likely named the wrong resource. Such a tag, and a tag that names no resource of the transaction, make the transaction revert with `AfterTagNamesNoCallCarryingResource` or `BeforeTagNamesNoCallCarryingResource`.
+- The constraints apply inside one transaction. The PA does not look up the nullifier set or the commitment tree for a tag.
 - The calls of one resource stay together. The PA executes them in the order of the external payload. Constraints that divide them have no order.
 - The calls of one action stay together. The PA never interleaves them with the calls of another action. So a constraint between resources of two actions puts all calls of one action before all calls of the other. Constraints that interleave two actions have no order.
 - The order does not change the ARM execution, which ends before the first call.
@@ -62,7 +62,7 @@ Without ordering constraints, the PA executes the call lists in the order of the
 With ordering constraints, the PA solves a graph problem. A graph has nodes and edges, and an edge from node A to node B means that A comes before B. The in-neighbors of a node are the nodes with an edge to it, and its out-neighbors are the nodes that it has an edge to.
 
 1. Each call list is a node. The nodes are numbered in the order of the transaction.
-2. Each tag that names a call-carrying resource gives an edge from the call list that comes first to the call list that comes second. If the two call lists belong to one action, the PA adds this edge. If they belong to two actions, it adds an edge from each call list of the first action to each call list of the second action. These edges keep the calls of each action together.
+2. Each tag gives an edge from the call list that comes first to the call list that comes second. If the two call lists belong to one action, the PA adds this edge. If they belong to two actions, it adds an edge from each call list of the first action to each call list of the second action. These edges keep the calls of each action together.
 3. The PA sorts the nodes so that each node comes after its in-neighbors. This is a topological sort, made with Kahn's algorithm. Of the nodes whose in-neighbors are all sorted, the node with the lowest number comes next.
 4. If the edges form a cycle, no order meets the constraints, and the transaction reverts with `CyclicOrderingConstraints`. An edge from a call list to itself is a cycle too, so a resource cannot name its own tag.
 

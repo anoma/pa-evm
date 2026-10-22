@@ -95,10 +95,10 @@ interface IProtocolAdapter {
     /// @param untrustedForwarder The forwarder contract to call.
     /// @param input The input of the call.
     /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the resources whose calls are executed before the calls of the call list of this
-    /// call.
-    /// @param beforeTags The tags of the resources whose calls are executed after the calls of the call list of this
-    /// call.
+    /// @param afterTags The tags of the call-carrying resources whose calls are executed before the calls of the call
+    /// list of this call.
+    /// @param beforeTags The tags of the call-carrying resources whose calls are executed after the calls of the call
+    /// list of this call.
     struct ForwarderCall {
         address untrustedForwarder;
         bytes input;
