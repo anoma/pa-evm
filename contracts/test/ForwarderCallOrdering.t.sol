@@ -19,7 +19,7 @@ contract ForwarderCallOrderingTest is Test {
 
     /// @dev Passes the actions in calldata, where the protocol adapter reads them.
     function orderInCalldata(
-        ForwarderCallOrdering.CallList[] memory callLists,
+        ForwarderCallOrdering.CallList[] calldata callLists,
         IProtocolAdapter.Action[] calldata actions
     ) external pure returns (uint256[] memory orderedIndices) {
         orderedIndices = ForwarderCallOrdering.order(callLists, actions);
