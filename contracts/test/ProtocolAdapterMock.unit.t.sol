@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
-import {ForwarderExample} from "anoma-forwarder-bases-3.0.1/test/examples/ForwarderExample.sol";
-import {EXPECTED_OUTPUT} from "anoma-forwarder-bases-3.0.1/test/examples/ForwarderTargetExample.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderExample.sol";
+import {EXPECTED_OUTPUT} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderTargetExample.sol";
 import {Vm} from "forge-std-1.17.0/src/Test.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
 

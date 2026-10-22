@@ -16,17 +16,17 @@ integrity = "1a08068b2fe262d4f6ae80e0be44965480b1a532d40722c80634d8963337743d"
 
 [[dependencies]]
 name = "anoma-forwarder-bases"
-version = "3.0.1"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_0_1_02-10-2026_07:37:10_contracts.zip"
-checksum = "6847369177f5a13d13e95cdf3dbcbbd1cf82c5833afc5e5de8894cee8540cea7"
-integrity = "b2448714fd44f39f370b48736bd3047dd8af57461abd2f9301823720191b8194"
+version = "3.1.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_1_0_22-10-2026_12:15:38_contracts.zip"
+checksum = "8bf86a162ddb2f59d8e2ebff1763660e8796d486cf91e883367c6aabc559ca7d"
+integrity = "0ad41f829796f2a75e0553ba6962e28b70433293bc417de387f481798f15f04a"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
-version = "1.2.4"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_4_01-10-2026_16:03:41_contracts.zip"
-checksum = "9ea14846e2d69874963ccf4e4bbe760d2a9b0d49c4430148e97d64f08f72f6b3"
-integrity = "40a5b4ec5ef3c6ce51972d78304ca89b72e83d059039fe4041dfc5f956578ab1"
+version = "1.2.5"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_5_22-10-2026_17:13:58_contracts.zip"
+checksum = "616d97f83d5138783c8e2f4b29749292c640433813a2c7fe82807784c7269054"
+integrity = "05ba75998053ddbe1d0c2c33c0db07d812c0ca0bcc168c1a521a7409f5a26684"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
