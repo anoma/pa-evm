@@ -181,6 +181,29 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
+        vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created =
+            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
+
+        created[0].appData.externalPayload[0].blob =
+            _callBlob({untrustedForwarder: address(_fwd), input: _input, expectedOutput: fakeOutput});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        // Create a transaction with two resources, the created calling the forwarder.
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        // Expect output mismatch.
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
+        );
+        _mockPa.execute(txn);
+    }
+
     function test_execute_runs_unconstrained_calls_in_the_order_of_the_actions() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
         resourceLists[0] = TxGen.ResourceLists({
@@ -716,29 +739,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
         txn.actions[actionIndex].consumed[resourceIndex].logicRef = SHA256.hash(originalLogicRef, nonce);
 
         vm.expectRevert(VerificationFailed.selector, address(_mockVerifier));
-        _mockPa.execute(txn);
-    }
-
-    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
-        vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
-
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created =
-            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
-
-        created[0].appData.externalPayload[0].blob =
-            _callBlob({untrustedForwarder: address(_fwd), input: _input, expectedOutput: fakeOutput});
-
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-
-        // Create a transaction with two resources, the created calling the forwarder.
-        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
-
-        // Expect output mismatch.
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
-        );
         _mockPa.execute(txn);
     }
 
