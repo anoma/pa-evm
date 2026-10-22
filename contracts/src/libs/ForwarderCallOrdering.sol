@@ -35,11 +35,11 @@ library ForwarderCallOrdering {
     /// @notice The position of the offset of `beforeTags` in an encoded forwarder call, which is its fifth word.
     uint256 private constant _BEFORE_TAGS_OFFSET_POSITION = 4 * 32;
 
-    /// @notice Thrown if an `afterTags` entry names no resource of the transaction.
-    error AfterTagNotInTransaction(bytes32 tag);
+    /// @notice Thrown if an `afterTags` entry names no call-carrying resource of the transaction.
+    error AfterTagNamesNoCallCarryingResource(bytes32 tag);
 
-    /// @notice Thrown if a `beforeTags` entry names no resource of the transaction.
-    error BeforeTagNotInTransaction(bytes32 tag);
+    /// @notice Thrown if a `beforeTags` entry names no call-carrying resource of the transaction.
+    error BeforeTagNamesNoCallCarryingResource(bytes32 tag);
 
     /// @notice Thrown if the ordering constraints form a cycle, so that no order meets them.
     error CyclicOrderingConstraints();
@@ -118,20 +118,15 @@ library ForwarderCallOrdering {
     }
 
     /// @notice Orders the call lists so that their forwarder calls meet the ordering constraints, and checks that
-    /// each `afterTags` and `beforeTags` entry names a resource of the transaction. The NatSpec of
+    /// each `afterTags` and `beforeTags` entry names a call-carrying resource of the transaction. The NatSpec of
     /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
     /// @param callLists The call lists of the transaction.
-    /// @param actions The actions of the transaction.
     /// @return orderedIndices The indices of `callLists`, in the order in which their calls are executed.
-    function order(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
-        internal
-        pure
-        returns (uint256[] memory orderedIndices)
-    {
+    function order(CallList[] memory callLists) internal pure returns (uint256[] memory orderedIndices) {
         uint256 callListCount = callLists.length;
         require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
 
-        DirectedGraph.Graph memory constraints = _buildConstraints({callLists: callLists, actions: actions});
+        DirectedGraph.Graph memory constraints = _buildConstraints(callLists);
 
         bool isAcyclic;
         (isAcyclic, orderedIndices) = constraints.topologicalSort();
@@ -170,13 +165,11 @@ library ForwarderCallOrdering {
         }
     }
 
-    /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint that names the
-    /// resource of a call list. Checks that each `afterTags` and `beforeTags` entry names a resource of the
-    /// transaction.
+    /// @notice Builds a graph whose nodes are the call lists, with an edge for each ordering constraint. Checks that
+    /// each `afterTags` and `beforeTags` entry names the resource of a call list.
     /// @param callLists The call lists of the transaction.
-    /// @param actions The actions of the transaction.
     /// @return constraints The ordering constraints, as a graph whose nodes are the call lists.
-    function _buildConstraints(CallList[] memory callLists, IProtocolAdapter.Action[] calldata actions)
+    function _buildConstraints(CallList[] memory callLists)
         private
         pure
         returns (DirectedGraph.Graph memory constraints)
@@ -196,13 +189,7 @@ library ForwarderCallOrdering {
                 for (uint256 a = 0; a < afterTagCount; ++a) {
                     bytes32 afterTag = afterTags[a];
                     uint256 source = _indexOf({callLists: callLists, tag: afterTag});
-                    if (source == callListCount) {
-                        // A resource without calls has no calls to wait for.
-                        require(
-                            _isTagInTransaction({actions: actions, tag: afterTag}), AfterTagNotInTransaction(afterTag)
-                        );
-                        continue;
-                    }
+                    require(source != callListCount, AfterTagNamesNoCallCarryingResource(afterTag));
                     _addEdge({callLists: callLists, constraints: constraints, source: source, target: callListIndex});
                 }
 
@@ -211,14 +198,7 @@ library ForwarderCallOrdering {
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
                     bytes32 beforeTag = beforeTags[b];
                     uint256 target = _indexOf({callLists: callLists, tag: beforeTag});
-                    if (target == callListCount) {
-                        // A resource without calls has no calls that wait for these.
-                        require(
-                            _isTagInTransaction({actions: actions, tag: beforeTag}),
-                            BeforeTagNotInTransaction(beforeTag)
-                        );
-                        continue;
-                    }
+                    require(target != callListCount, BeforeTagNamesNoCallCarryingResource(beforeTag));
                     _addEdge({callLists: callLists, constraints: constraints, source: callListIndex, target: target});
                 }
             }
@@ -280,35 +260,6 @@ library ForwarderCallOrdering {
         for (index = 0; index < callListCount; ++index) {
             if (callLists[index].resourceTag == tag) {
                 return index;
-            }
-        }
-    }
-
-    /// @notice Returns whether a tag is the nullifier or the commitment of a resource of a transaction.
-    /// @param actions The actions of the transaction.
-    /// @param tag The tag to look for.
-    /// @return found Whether a resource of the transaction has the tag.
-    function _isTagInTransaction(IProtocolAdapter.Action[] calldata actions, bytes32 tag)
-        private
-        pure
-        returns (bool found)
-    {
-        uint256 actionCount = actions.length;
-        for (uint256 i = 0; i < actionCount; ++i) {
-            IProtocolAdapter.Consumed[] calldata consumedResources = actions[i].consumed;
-            uint256 consumedCount = consumedResources.length;
-            for (uint256 j = 0; j < consumedCount; ++j) {
-                if (consumedResources[j].nullifier == tag) {
-                    return true;
-                }
-            }
-
-            IProtocolAdapter.Created[] calldata createdResources = actions[i].created;
-            uint256 createdCount = createdResources.length;
-            for (uint256 j = 0; j < createdCount; ++j) {
-                if (createdResources[j].commitment == tag) {
-                    return true;
-                }
             }
         }
     }

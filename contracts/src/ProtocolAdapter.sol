@@ -264,9 +264,9 @@ contract ProtocolAdapter is
     /// @dev Executes the calls of one resource together and in their order: after the calls of each resource that their
     /// `afterTags` name, and before the calls of each resource that their `beforeTags` name. Also executes the calls of
     /// one action together. Of the resources whose calls can come next, takes the first in the transaction, with the
-    /// consumed resources of an action before its created resources. Ignores a tag of a resource without calls. With
-    /// ordering constraints, it reverts if a tag in `afterTags` or `beforeTags` belongs to no resource of the
-    /// transaction, if no order meets the constraints, or if more than 256 resources carry calls.
+    /// consumed resources of an action before its created resources. With ordering constraints, it reverts if a tag in
+    /// `afterTags` or `beforeTags` names no call-carrying resource of the transaction, if no order meets the
+    /// constraints, or if more than 256 resources carry calls.
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     /// @param hasOrderingConstraints Whether a forwarder call carries ordering constraints.
@@ -326,7 +326,7 @@ contract ProtocolAdapter is
     /// @param callListCount The number of resources that carry forwarder calls.
     function _executeForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
         ForwarderCallOrdering.CallList[] memory callLists = actions.decodeCallLists(callListCount);
-        uint256[] memory orderedIndices = callLists.order(actions);
+        uint256[] memory orderedIndices = callLists.order();
 
         for (uint256 position = 0; position < callListCount; ++position) {
             ForwarderCallOrdering.CallList memory callList = callLists[orderedIndices[position]];

@@ -52,7 +52,7 @@ _Avoid_: carrier
 The forwarder calls of a call-carrying resource, in the order of its external payload. The PA executes the calls of a call list together and in their order, and the call lists of an action together.
 
 **Ordering constraint**:
-An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of a resource, which is the nullifier of a consumed resource or the commitment of a created resource, whose calls the PA executes before (`afterTags`) or after (`beforeTags`) the calls of the call-carrying resource. Without ordering constraints, the PA executes the calls in the order of the actions, with the consumed resources of an action before its created resources.
+An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of another call-carrying resource of the transaction, which is the nullifier of a consumed resource or the commitment of a created resource. The PA executes the calls of the named resource before (`afterTags`) or after (`beforeTags`) the calls of the resource that carries the constraint. Without ordering constraints, the PA executes the calls in the order of the actions, with the consumed resources of an action before its created resources.
 
 **Environment**:
 One of the two protocol adapter deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.

@@ -47,62 +47,62 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(2, 1)});
     }
 
-    function test_execute_ignores_an_after_tag_that_names_a_consumed_resource_without_calls() public {
-        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) =
-            _resourcesWithAndWithoutCalls();
-        _constrain({data: created[0], afterTags: _tags(_nullifier(consumed[0])), beforeTags: _noTags()});
+    function test_execute_reverts_on_an_after_tag_that_names_a_resource_without_calls() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 1});
+        bytes32 tagWithoutCalls = _nullifier(consumed[0]);
+        _constrain({data: created[0], afterTags: _tags(tagWithoutCalls), beforeTags: _noTags()});
 
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrdering.AfterTagNamesNoCallCarryingResource.selector, tagWithoutCalls)
+        );
+        _mockPa.execute(txn);
     }
 
-    function test_execute_ignores_an_after_tag_that_names_a_created_resource_without_calls() public {
-        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) =
-            _resourcesWithAndWithoutCalls();
-        _constrain({data: created[0], afterTags: _tags(_commitment(created[1])), beforeTags: _noTags()});
+    function test_execute_reverts_on_a_before_tag_that_names_a_resource_without_calls() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 1});
+        bytes32 tagWithoutCalls = _nullifier(consumed[0]);
+        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(tagWithoutCalls)});
 
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
-    }
+        IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
-    function test_execute_ignores_a_before_tag_that_names_a_consumed_resource_without_calls() public {
-        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) =
-            _resourcesWithAndWithoutCalls();
-        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(_nullifier(consumed[0]))});
-
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
-    }
-
-    function test_execute_ignores_a_before_tag_that_names_a_created_resource_without_calls() public {
-        (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created) =
-            _resourcesWithAndWithoutCalls();
-        _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(_commitment(created[1]))});
-
-        _assertCallOrder({txn: _transaction(consumed, created), expected: _callIds(1, 2)});
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrdering.BeforeTagNamesNoCallCarryingResource.selector, tagWithoutCalls)
+        );
+        _mockPa.execute(txn);
     }
 
     function test_execute_reverts_on_an_after_tag_that_is_not_in_the_transaction() public {
-        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 1});
         bytes32 tagNotInTransaction = keccak256("not in the transaction");
         _constrain({data: created[0], afterTags: _tags(tagNotInTransaction), beforeTags: _noTags()});
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ForwarderCallOrdering.AfterTagNotInTransaction.selector, tagNotInTransaction)
+            abi.encodeWithSelector(
+                ForwarderCallOrdering.AfterTagNamesNoCallCarryingResource.selector, tagNotInTransaction
+            )
         );
         _mockPa.execute(txn);
     }
 
     function test_execute_reverts_on_a_before_tag_that_is_not_in_the_transaction() public {
-        TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
-        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 1});
         bytes32 tagNotInTransaction = keccak256("not in the transaction");
         _constrain({data: created[0], afterTags: _noTags(), beforeTags: _tags(tagNotInTransaction)});
 
         IProtocolAdapter.Transaction memory txn = _transaction(consumed, created);
 
         vm.expectRevert(
-            abi.encodeWithSelector(ForwarderCallOrdering.BeforeTagNotInTransaction.selector, tagNotInTransaction)
+            abi.encodeWithSelector(
+                ForwarderCallOrdering.BeforeTagNamesNoCallCarryingResource.selector, tagNotInTransaction
+            )
         );
         _mockPa.execute(txn);
     }
@@ -348,20 +348,6 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
             input: abi.encode(_fwdTarget, abi.encodeCall(ForwarderTargetExample.increment, (callId))),
             expectedOutput: abi.encode(callId + 1)
         });
-    }
-
-    /// @dev Consumed resource 1 carries call 1, created resource 0 carries call 2, and the other two carry no calls.
-    function _resourcesWithAndWithoutCalls()
-        private
-        view
-        returns (TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created)
-    {
-        consumed = new TxGen.ResourceAndAppData[](2);
-        consumed[0] = _exampleResourceAndEmptyAppData({nonce: 0})[0];
-        consumed[1] = _callCarryingResource({nonce: 1, callId: 1})[0];
-        created = new TxGen.ResourceAndAppData[](2);
-        created[0] = _callCarryingResource({nonce: 2, callId: 2})[0];
-        created[1] = _exampleResourceAndEmptyAppData({nonce: 3})[0];
     }
 
     /// @notice Builds a resource that carries two forwarder calls, which increment `firstCallId` and `secondCallId`.
