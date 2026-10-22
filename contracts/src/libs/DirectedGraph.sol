@@ -26,39 +26,6 @@ library DirectedGraph {
     /// @notice Thrown if a graph to sort has more than `MAX_NODE_COUNT` nodes.
     error TooManyNodes(uint256 nodeCount);
 
-    /// @notice Adds an edge to a graph.
-    /// @param graph The graph.
-    /// @param source The node at the start of the edge.
-    /// @param target The node at the end of the edge.
-    function addEdge(Graph memory graph, uint256 source, uint256 target) internal pure {
-        graph.inNeighbors[target] = graph.inNeighbors[target]._add(source);
-        graph.outNeighbors[source] = graph.outNeighbors[source]._add(target);
-    }
-
-    /// @notice Adds an edge from each node in a range to each node in another range. A range holds the nodes from its
-    /// start up to its end, without the end.
-    /// @param graph The graph.
-    /// @param sourceStart The first node at the start of the edges.
-    /// @param sourceEnd The node after the last node at the start of the edges.
-    /// @param targetStart The first node at the end of the edges.
-    /// @param targetEnd The node after the last node at the end of the edges.
-    function addEdges(
-        Graph memory graph,
-        uint256 sourceStart,
-        uint256 sourceEnd,
-        uint256 targetStart,
-        uint256 targetEnd
-    ) internal pure {
-        uint256 sourceSet = _range(sourceStart, sourceEnd);
-        uint256 targetSet = _range(targetStart, targetEnd);
-        for (uint256 node = sourceStart; node < sourceEnd; ++node) {
-            graph.outNeighbors[node] = graph.outNeighbors[node]._union(targetSet);
-        }
-        for (uint256 node = targetStart; node < targetEnd; ++node) {
-            graph.inNeighbors[node] = graph.inNeighbors[node]._union(sourceSet);
-        }
-    }
-
     /// @notice Sorts the nodes of a graph topologically: the source of each edge comes before its target. A node
     /// is ready when all its in-neighbors are sorted. Of the ready nodes, the one with the lowest index comes
     /// next, so the order is unique.
@@ -105,6 +72,39 @@ library DirectedGraph {
         isAcyclic = true;
     }
 
+    /// @notice Adds an edge to a graph.
+    /// @param graph The graph.
+    /// @param source The node at the start of the edge.
+    /// @param target The node at the end of the edge.
+    function addEdge(Graph memory graph, uint256 source, uint256 target) internal pure {
+        graph.inNeighbors[target] = graph.inNeighbors[target]._add(source);
+        graph.outNeighbors[source] = graph.outNeighbors[source]._add(target);
+    }
+
+    /// @notice Adds an edge from each node in a range to each node in another range. A range holds the nodes from its
+    /// start up to its end, without the end.
+    /// @param graph The graph.
+    /// @param sourceStart The first node at the start of the edges.
+    /// @param sourceEnd The node after the last node at the start of the edges.
+    /// @param targetStart The first node at the end of the edges.
+    /// @param targetEnd The node after the last node at the end of the edges.
+    function addEdges(
+        Graph memory graph,
+        uint256 sourceStart,
+        uint256 sourceEnd,
+        uint256 targetStart,
+        uint256 targetEnd
+    ) internal pure {
+        uint256 sourceSet = _range(sourceStart, sourceEnd);
+        uint256 targetSet = _range(targetStart, targetEnd);
+        for (uint256 node = sourceStart; node < sourceEnd; ++node) {
+            graph.outNeighbors[node] = graph.outNeighbors[node]._union(targetSet);
+        }
+        for (uint256 node = targetStart; node < targetEnd; ++node) {
+            graph.inNeighbors[node] = graph.inNeighbors[node]._union(sourceSet);
+        }
+    }
+
     /// @notice Returns a set with a node added.
     /// @param set The set, as a bitmap.
     /// @param node The node to add.
@@ -128,12 +128,12 @@ library DirectedGraph {
         node = LibBit.ffs(set);
     }
 
-    /// @notice Returns the nodes that are in one set or in another.
-    /// @param set The first set, as a bitmap.
-    /// @param other The second set, as a bitmap.
-    /// @return result The nodes of both sets.
-    function _union(uint256 set, uint256 other) internal pure returns (uint256 result) {
-        result = set | other;
+    /// @notice Returns whether each node of a set is also in another set.
+    /// @param set The set to check, as a bitmap.
+    /// @param superset The other set, as a bitmap.
+    /// @return isSubset Whether `superset` holds each node of `set`.
+    function _isSubsetOf(uint256 set, uint256 superset) internal pure returns (bool isSubset) {
+        isSubset = (set & ~superset) == 0;
     }
 
     /// @notice Returns the nodes of a range, which must not be empty.
@@ -144,11 +144,11 @@ library DirectedGraph {
         set = (type(uint256).max >> (MAX_NODE_COUNT - end)) & ~((1 << start) - 1);
     }
 
-    /// @notice Returns whether each node of a set is also in another set.
-    /// @param set The set to check, as a bitmap.
-    /// @param superset The other set, as a bitmap.
-    /// @return isSubset Whether `superset` holds each node of `set`.
-    function _isSubsetOf(uint256 set, uint256 superset) internal pure returns (bool isSubset) {
-        isSubset = (set & ~superset) == 0;
+    /// @notice Returns the nodes that are in one set or in another.
+    /// @param set The first set, as a bitmap.
+    /// @param other The second set, as a bitmap.
+    /// @return result The nodes of both sets.
+    function _union(uint256 set, uint256 other) internal pure returns (uint256 result) {
+        result = set | other;
     }
 }
