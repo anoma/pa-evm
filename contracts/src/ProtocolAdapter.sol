@@ -48,7 +48,7 @@ contract ProtocolAdapter is
     using ForwarderCallOrdering for ForwarderCallOrdering.CallList[];
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.11";
+    string public constant override VERSION = "2.0.0-rc.12";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
