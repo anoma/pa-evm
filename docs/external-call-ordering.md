@@ -70,8 +70,6 @@ The lowest-number rule makes the order unique. A client that builds or simulates
 
 For each node, the graph holds the in-neighbors and the out-neighbors, each as a set of 256 bits. So a transaction with ordering constraints can have at most 256 call-carrying resources, and with more it reverts with `TooManyCallCarryingResources`. A transaction without ordering constraints builds no graph and has no such limit. The actions are not nodes, so the graph sets no limit on their number.
 
-If a transaction breaks more than one of these rules, it reverts with the first error that the PA finds. The PA checks the number of call-carrying resources first. Then it checks the tags: call list by call list in the order of the nodes, each call in the order of its call list, and the `afterTags` of a call before its `beforeTags`. It reverts with `CyclicOrderingConstraints` only if every tag names a resource of the transaction.
-
 Without ordering constraints, the PA reads only the lengths of the two tag lists of each call. With ordering constraints, it also decodes all calls into memory, and it builds and sorts the graph.
 
 ## Examples
