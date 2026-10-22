@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          4011716 |           18812 |        |        |        |         |
+|                                          3973564 |           18637 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             304 |    304 |    304 |    304 |      10 |
@@ -11,10 +11,10 @@
 | VERSION                                          |            1054 |   1054 |   1054 |   1054 |       3 |
 | commitmentCount                                  |             696 |   1696 |   1696 |   2696 |      12 |
 | denyLogicRefs                                    |             703 |  31697 |  28844 |  52984 |      11 |
-| execute                                          |            2871 | 195499 | 196568 | 434000 |      61 |
+| execute                                          |            2871 | 186098 | 196568 | 433930 |      59 |
 | getImplementation                                |             614 |    780 |    614 |   2614 |      12 |
 | getKindTreeRoot                                  |            2828 |   2828 |   2828 |   2828 |       2 |
-| initialize                                       |            3035 | 150675 | 152879 | 152879 |     127 |
+| initialize                                       |            3035 | 150640 | 152879 | 152879 |     125 |
 | isCommitmentTreeRootHistorical                   |             897 |    897 |    897 |    897 |       1 |
 | isLogicRefDenied                                 |            2420 |   2423 |   2423 |   2427 |      12 |
 | isNullifierContained                             |             752 |   2751 |   2752 |   2752 |    2713 |
