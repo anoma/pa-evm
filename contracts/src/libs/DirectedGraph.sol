@@ -59,7 +59,8 @@ library DirectedGraph {
     /// @notice Sorts the nodes of a graph topologically: the source of each edge comes before its target. A node
     /// is ready when all its in-neighbors are sorted. Of the ready nodes, the one with the lowest index comes
     /// next, so the order is unique.
-    /// @dev Kahn's algorithm.
+    /// @dev Kahn's algorithm. The graph must have at most `MAX_NODE_COUNT` nodes, as `Graph` states: a bitmap has no
+    /// bit for a node at a higher index, so such a node never becomes ready.
     /// @param graph The graph to sort.
     /// @return isAcyclic Whether the edges form no cycle, so that a topological order exists.
     /// @return sortedNodes The nodes in topological order, if `isAcyclic` is true.
