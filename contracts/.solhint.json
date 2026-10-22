@@ -27,7 +27,6 @@
     "gas-multitoken1155": "warn",
     "gas-named-return-values": "warn",
     "gas-small-strings": "warn",
-    "gas-strict-inequalities": "warn",
     "gas-struct-packing": "warn",
     "comprehensive-interface": "error",
     "check-send-result": "error",

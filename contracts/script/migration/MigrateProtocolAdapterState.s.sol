@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {Math} from "@openzeppelin-contracts-5.7.0/utils/math/Math.sol";
-import {ICommitmentTree as ILegacyCommitmentTree} from "anoma-pa-evm-1.1.0/src/interfaces/ICommitmentTree.sol";
-import {INullifierSet as ILegacyNullifierSet} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
+import {ILegacyCommitmentTree} from "../../src/interfaces/ILegacyCommitmentTree.sol";
+import {ILegacyNullifierSet} from "../../src/interfaces/ILegacyNullifierSet.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";

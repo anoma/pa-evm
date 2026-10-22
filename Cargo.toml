@@ -11,21 +11,21 @@ homepage = "https://anoma.net/"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "2.4.1", features = ["full", "eip712", "node-bindings"] }
-alloy-chains = "0.2.36"
-anoma-pa-testkit = "1.0.0-rc.2"
-anoma-risc0-verifier-bindings = "1.2.4"
-anoma-rm-risc0 = { version = "2.0.0-rc.7", features = ["bonsai", "aggregation"] }
+alloy = { version = "2.5.0", features = ["full", "eip712", "node-bindings"] }
+alloy-chains = "0.2.39"
+anoma-pa-testkit = { git = "https://github.com/anoma/pa-testkit", tag = "v1.0.0-rc.3" }
+anoma-risc0-verifier-bindings = "1.2.5"
+anoma-rm-risc0 = { git = "https://github.com/anoma/arm-risc0", tag = "v2.0.0-rc.7.1", features = ["bonsai", "aggregation"] }
 anyhow = "1.0.104"
 dotenvy = { version = "0.15.7", features = ["cli"] }
 hex = "0.4.3"
 regex = "1.13.1"
 risc0-zkvm = "3.0.6"
-rstest = "0.26.1"
+rstest = "0.28.0"
 serde = { version = "1.0.229", default-features = false }
-serde_json = "1.0.151"
-thiserror = "2.0.19"
-tokio = { version = "1.53.1", features = ["rt-multi-thread"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 
 anoma-pa-evm-bindings = { path = "crates/bindings" }
 anoma-pa-evm-integration-test = { path = "crates/integration-test" }

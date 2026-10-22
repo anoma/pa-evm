@@ -89,7 +89,7 @@ contracts-gen-bindings:
     # build first and let it read those artifacts.
     cd contracts && forge clean && forge build --skip test && forge bind \
         --skip-build \
-        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTableRoot|ERC1967Proxy|DeploymentParameters)$' \
+        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTreeRoot|ERC1967Proxy|DeploymentParameters)$' \
         --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
@@ -193,7 +193,7 @@ contracts-simulate-production-kind-table-proposal proxy proposer root chain *arg
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
-# Propose updating the production kind table root to the owning Safe (proposer = unlocked deployer)
+# Propose updating the production kind tree root to the owning Safe (proposer = unlocked deployer)
 contracts-propose-production-kind-table-update deployer proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean

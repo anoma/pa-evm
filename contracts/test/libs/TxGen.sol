@@ -169,7 +169,7 @@ library TxGen {
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
-        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTableRoot: emptyKindTableRoot()});
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: emptyKindTreeRoot()});
     }
 
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
@@ -189,7 +189,7 @@ library TxGen {
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
-        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTableRoot: emptyKindTableRoot()});
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: emptyKindTreeRoot()});
     }
 
     /// @dev Assembles the transaction and its delta proof.
@@ -209,7 +209,7 @@ library TxGen {
         }
 
         txn = IProtocolAdapter.Transaction({
-            actions: actions, deltaProof: proof, aggregationProof: "", kindTableRoot: emptyKindTableRoot()
+            actions: actions, deltaProof: proof, aggregationProof: "", kindTreeRoot: emptyKindTreeRoot()
         });
     }
 
@@ -218,15 +218,15 @@ library TxGen {
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         IProtocolAdapter.Transaction memory txn,
-        bytes32 kindTableRoot
+        bytes32 kindTreeRoot
     ) internal view returns (IProtocolAdapter.Transaction memory aggregatedTxn) {
         aggregatedTxn = txn;
 
-        aggregatedTxn.kindTableRoot = kindTableRoot;
+        aggregatedTxn.kindTreeRoot = kindTreeRoot;
         aggregatedTxn.aggregationProof =
         mockVerifier.mockProve({
             imageId: VerifyingKeys._BATCH_AGGREGATION_EVM,
-            journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTableRoot, txn.actions))
+            journalDigest: sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTreeRoot, txn.actions))
         }).seal;
     }
 
@@ -241,8 +241,8 @@ library TxGen {
         }
     }
 
-    /// @dev The root of the empty kind table: its padding leaf, matching the protocol adapter's initialization default.
-    function emptyKindTableRoot() internal pure returns (bytes32 rootOfEmptyTable) {
+    /// @dev The root of the empty kind tree: its padding leaf, matching the protocol adapter's initialization default.
+    function emptyKindTreeRoot() internal pure returns (bytes32 rootOfEmptyTable) {
         rootOfEmptyTable = sha256("EMPTY");
     }
 

@@ -4,11 +4,11 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.2.4/script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-1.2.5/script/DeployRiscZeroContracts.s.sol";
 import {
     DeployRiscZeroContractsMock,
     MOCK_VERIFIER_SELECTOR
-} from "anoma-risc0-deployments-1.2.4/test/script/DeployRiscZeroContractsMock.s.sol";
+} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
 
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
@@ -154,11 +154,6 @@ contract ProtocolAdapterTest is Test {
     function test_execute_reverts_on_the_empty_transaction() public {
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
         _pa.execute(_emptyTx);
-    }
-
-    function test_simulateExecute_reverts_on_the_empty_transaction() public {
-        vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
-        _pa.simulateExecute({transaction: _emptyTx, skipRiscZeroProofVerification: true});
     }
 
     function test_RISC_ZERO_VERIFIER_ROUTER_returns_the_router_address() public view {

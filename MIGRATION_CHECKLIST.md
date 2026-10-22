@@ -52,12 +52,12 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 - [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's legacy ERC20 forwarder.
 
-- [ ] Install the chain's kind table root on the proxy. Generate the table after the forwarders are recorded, so that it carries the members under the label of the legacy ERC20 forwarder. The proxy can take the root while paused, so install it before the stop of the legacy protocol adapter. The migration and completion runs do not change it. Simulate, run, and read it back:
+- [ ] Install the chain's kind tree root on the proxy. Generate the table after the forwarders are recorded, so that it carries the members under the label of the legacy ERC20 forwarder. The proxy can take the root while paused, so install it before the stop of the legacy protocol adapter. The migration and completion runs do not change it. Simulate, run, and read it back:
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TABLE_ROOT> <CHAIN>
-  just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TABLE_ROOT> <CHAIN>
-  cast call <PROXY> "getKindTableRoot()(bytes32)" --rpc-url <CHAIN>
+  just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TREE_ROOT> <CHAIN>
+  just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TREE_ROOT> <CHAIN>
+  cast call <PROXY> "getKindTreeRoot()(bytes32)" --rpc-url <CHAIN>
   ```
 
 - [ ] Deprecate the logic reference that the chain's legacy ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The members under the label of the legacy ERC20 forwarder make its resources fungible with those of the environment's ERC20 forwarder, in both directions, so without this entry a transaction could convert resources of the environment's ERC20 forwarder into new legacy-forwarder resources. Legacy-forwarder resources stay consumable, so they still convert and unwrap. Take the logic reference from the legacy ERC20 forwarder that the forwarder repository records, and check that the environment's ERC20 forwarder on the chain accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the stop of the legacy protocol adapter. Simulate, run, and read it back:

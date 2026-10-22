@@ -1,6 +1,6 @@
 # Journal constants are injected, not passed in calldata
 
-ADR-0004 replaces the kind table part of this decision: the transaction carries the kind table root. The verifying keys stay injected.
+ADR-0004 replaces the kind table part of this decision: the transaction carries the kind tree root. The verifying keys stay injected.
 
 ## Context
 
@@ -35,8 +35,8 @@ Two ways to obtain them when encoding the journal on chain:
 
 **Injection.** Neither value is part of the `Transaction` calldata.
 
-- `kindTableRoot` is protocol adapter storage, rotated by the
-  owner-protected `setKindTableRoot`. The root changes whenever a
+- `kindTreeRoot` is protocol adapter storage, rotated by the
+  owner-protected `setKindTreeRoot`. The root changes whenever a
   token is added to the set of supported resources, so it must be mutable
   without an implementation upgrade.
 - The compliance and aggregation verifying keys are compile-time constants
@@ -49,7 +49,7 @@ The protocol adapter therefore accepts exactly one kind table — the current on
 is not rejected by a check; it is simply unencodable, and its journal digest
 will not match.
 
-`getKindTableRoot` exposes the mutable half, so a client can read what the
+`getKindTreeRoot` exposes the mutable half, so a client can read what the
 deployed adapter expects and compare it off chain. The keys are readable from
 the verified source.
 

@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import {SafeCast} from "@openzeppelin-contracts-5.7.0/utils/math/SafeCast.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
-import {ICommitmentTree as ILegacyCommitmentTree} from "anoma-pa-evm-1.1.0/src/interfaces/ICommitmentTree.sol";
-import {INullifierSet as ILegacyNullifierSet} from "anoma-pa-evm-1.1.0/src/interfaces/INullifierSet.sol";
 
+import {ILegacyCommitmentTree} from "./interfaces/ILegacyCommitmentTree.sol";
+import {ILegacyNullifierSet} from "./interfaces/ILegacyNullifierSet.sol";
 import {IMigrational} from "./interfaces/IMigrational.sol";
 import {MerkleTree} from "./libs/MerkleTree.sol";
 import {SHA256} from "./libs/SHA256.sol";
@@ -119,7 +119,6 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     {
         uint256 end = start + count;
         uint256 nullifierCount = ILegacyNullifierSet(_LEGACY_PROTOCOL_ADAPTER).nullifierCount();
-        // solhint-disable-next-line gas-strict-inequalities
         require(end <= nullifierCount, NullifierBatchOutOfRange({end: end, nullifierCount: nullifierCount}));
 
         // The copied nullifiers stay the first ones of the legacy protocol adapter: a later start leaves a
