@@ -119,7 +119,6 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     {
         uint256 end = start + count;
         uint256 nullifierCount = ILegacyNullifierSet(_LEGACY_PROTOCOL_ADAPTER).nullifierCount();
-        // solhint-disable-next-line gas-strict-inequalities
         require(end <= nullifierCount, NullifierBatchOutOfRange({end: end, nullifierCount: nullifierCount}));
 
         // The copied nullifiers stay the first ones of the legacy protocol adapter: a later start leaves a
