@@ -98,4 +98,4 @@ Action 0 has a consumed resource A and a created resource B, both with calls. Ac
 - [`ProtocolAdapter.execute`](../contracts/src/ProtocolAdapter.sol) executes the two parts. Its function `_executeForwarderCalls` executes the calls in the order of the transaction, or in the order of the constraints if a call has an ordering constraint.
 - [`ForwarderCallOrdering`](../contracts/src/libs/ForwarderCallOrdering.sol) decodes the call lists, checks the tags, and builds and sorts the graph.
 - [`DirectedGraph`](../contracts/src/libs/DirectedGraph.sol) holds the graph and its topological sort.
-- Tests: the forwarder call tests in [`ProtocolAdapterMock.unit.t.sol`](../contracts/test/ProtocolAdapterMock.unit.t.sol), [`ForwarderCallOrdering.t.sol`](../contracts/test/ForwarderCallOrdering.t.sol) and [`DirectedGraph.t.sol`](../contracts/test/DirectedGraph.t.sol).
+- Tests: [`ProtocolAdapter.forwarderCallOrdering.t.sol`](../contracts/test/ProtocolAdapter.forwarderCallOrdering.t.sol), [`ForwarderCallOrdering.t.sol`](../contracts/test/ForwarderCallOrdering.t.sol) and [`DirectedGraph.t.sol`](../contracts/test/DirectedGraph.t.sol).

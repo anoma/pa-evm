@@ -81,6 +81,15 @@ contract DirectedGraphTest is Test {
         }
     }
 
+    /// @dev A bitmap has no bit for node `MAX_NODE_COUNT`, so that node never becomes ready.
+    function test_topologicalSort_reports_a_graph_with_more_than_the_maximum_node_count_as_cyclic() public pure {
+        DirectedGraph.Graph memory graph = _graphWithoutEdges(DirectedGraph.MAX_NODE_COUNT + 1);
+
+        (bool isAcyclic,) = graph.topologicalSort();
+
+        assertFalse(isAcyclic, "the node above the maximum node count never becomes ready");
+    }
+
     function test_topologicalSort_returns_no_nodes_for_a_graph_without_nodes() public pure {
         assertEq(_sort({nodeCount: 0, edgeSources: _list(), edgeTargets: _list()}).length, 0, "number of sorted nodes");
     }
