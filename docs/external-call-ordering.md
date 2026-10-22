@@ -54,6 +54,7 @@ So the resources of the legacy protocol adapter that a migrated chain still hold
 - The calls of one resource stay together. The PA executes them in the order of the external payload. Constraints that divide them have no order.
 - The calls of one action stay together. The PA never interleaves them with the calls of another action. So a constraint between resources of two actions puts all calls of one action before all calls of the other. Constraints that interleave two actions have no order.
 - The order does not change the ARM execution, which ends before the first call.
+- A call can call back into the PA. The reentrancy guard of `execute` makes a nested `execute` revert, but the functions of the owner have no such guard. So a call that makes the owner act can pause the PA, deny logic references, set the kind tree root, transfer or renounce the ownership, or upgrade the PA during the call execution. The remaining calls still run, and the transaction completes.
 
 ## The graph problem
 
