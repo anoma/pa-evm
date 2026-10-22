@@ -8,6 +8,7 @@ import {IKindTreeRoot} from "../../../src/interfaces/IKindTreeRoot.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {ProposeKindTreeRootUpdateMock} from "../../mocks/ProposeKindTreeRootUpdate.m.sol";
 
 /// @notice Checks the production-only kind tree root update proposal script against a Safe-owned production proxy.
 /// Outside broadcast mode, the script simulates the Safe executing the update, so the proxy must end up on the new
@@ -41,24 +42,24 @@ contract ProposeKindTreeRootUpdateTest is RiscZeroRouterFixture, SafeFixture {
         });
         emit IKindTreeRoot.KindTreeRootUpdated(_NEW_KIND_TREE_ROOT);
 
-        new ProposeKindTreeRootUpdate()
-            .run({proxy: _productionProxy, proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+        new ProposeKindTreeRootUpdateMock(_productionProxy)
+            .run({proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
 
         assertEq(ProtocolAdapter(_productionProxy).getKindTreeRoot(), _NEW_KIND_TREE_ROOT, "kind tree root differs");
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdate();
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdateMock(_stagingProxy);
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+        script.run({proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
     }
 
     function test_run_reverts_if_the_simulated_update_fails() public {
-        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdate();
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdateMock(_productionProxy);
 
         // The protocol adapter rejects the zero kind tree root, so the simulated Safe execution fails.
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
-        script.run({proxy: _productionProxy, proposer: _owner, newKindTreeRoot: bytes32(0)});
+        script.run({proposer: _owner, newKindTreeRoot: bytes32(0)});
     }
 }

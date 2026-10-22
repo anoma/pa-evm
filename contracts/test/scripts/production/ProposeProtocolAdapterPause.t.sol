@@ -9,6 +9,7 @@ import {ProposeProtocolAdapterPause} from "../../../script/production/ProposePro
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {ProposeProtocolAdapterPauseMock} from "../../mocks/ProposeProtocolAdapterPause.m.sol";
 
 /// @notice Checks the production-only pause proposal script against a Safe-owned production proxy. Outside broadcast
 /// mode, the script simulates the Safe executing the pause, so the proxy must end up paused.
@@ -37,26 +38,26 @@ contract ProposeProtocolAdapterPauseTest is RiscZeroRouterFixture, SafeFixture {
         vm.expectEmit(_productionProxy);
         emit Pausable.Paused(_safe);
 
-        new ProposeProtocolAdapterPause().run({proxy: _productionProxy, proposer: _owner});
+        new ProposeProtocolAdapterPauseMock(_productionProxy).run({proposer: _owner});
 
         assertTrue(ProtocolAdapter(_productionProxy).paused(), "the proxy should be paused");
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeProtocolAdapterPause script = new ProposeProtocolAdapterPause();
+        ProposeProtocolAdapterPause script = new ProposeProtocolAdapterPauseMock(_stagingProxy);
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner});
+        script.run({proposer: _owner});
     }
 
     function test_run_reverts_if_the_simulated_pause_fails() public {
-        ProposeProtocolAdapterPause script = new ProposeProtocolAdapterPause();
+        ProposeProtocolAdapterPause script = new ProposeProtocolAdapterPauseMock(_productionProxy);
 
         // The protocol adapter rejects a second pause, so the simulated Safe execution fails.
         vm.prank(_safe);
         ProtocolAdapter(_productionProxy).pause();
 
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
-        script.run({proxy: _productionProxy, proposer: _owner});
+        script.run({proposer: _owner});
     }
 }
