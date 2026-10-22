@@ -5,7 +5,7 @@ import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967P
 import {
     ForwarderTargetExample,
     EXPECTED_OUTPUT
-} from "anoma-forwarder-bases-3.0.1/test/examples/ForwarderTargetExample.sol";
+} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderTargetExample.sol";
 import {Vm} from "forge-std-1.17.0/src/Test.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
