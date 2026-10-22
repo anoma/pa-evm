@@ -18,7 +18,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install just
-        uses: extractions/setup-just@v3
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
