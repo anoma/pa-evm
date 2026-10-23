@@ -54,6 +54,9 @@ The forwarder calls of a call-carrying resource, in the order of its external pa
 **Ordering constraint**:
 An `afterTags` or `beforeTags` entry of a forwarder call. It names the tag of another call-carrying resource of the transaction, which is the nullifier of a consumed resource or the commitment of a created resource. The PA executes the calls of the named resource before (`afterTags`) or after (`beforeTags`) the calls of the resource that carries the constraint. Without ordering constraints, the PA executes the calls in the order of the actions, with the consumed resources of an action before its created resources.
 
+**Call order**:
+The order of the call lists that a transaction can carry in `Transaction.callOrder`, as the numbers of the call lists in the order of the transaction. The delta proof signs a non-empty call order. The PA checks it instead of computing an order: it must name each call list once, keep the actions in the order of the transaction, and meet every ordering constraint (ADR-0005).
+
 **Environment**:
 One of the two protocol adapter deployments the repo maintains, each recorded per chain in the deployment record and tracking a branch. Say "environment" (not "network" or "deployment target") — a chain is where an environment lives, not which one it is.
 
