@@ -5,25 +5,25 @@
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             301 |    301 |    301 |    301 |      10 |
-| RISC_ZERO_VERIFIER_ROUTER                        |             351 |    351 |    351 |    351 |       1 |
-| RISC_ZERO_VERIFIER_SELECTOR                      |             640 |    640 |    640 |    640 |       2 |
+| RISC_ZERO_VERIFIER_ROUTER                        |             351 |    351 |    351 |    351 |       2 |
+| RISC_ZERO_VERIFIER_SELECTOR                      |             640 |    640 |    640 |    640 |       4 |
 | UPGRADE_INTERFACE_VERSION                        |             814 |    814 |    814 |    814 |       2 |
 | VERSION                                          |            1051 |   1051 |   1051 |   1051 |       3 |
-| commitmentCount                                  |             693 |   1693 |   1693 |   2693 |      12 |
+| commitmentCount                                  |            2693 |   2693 |   2693 |   2693 |      17 |
 | denyLogicRefs                                    |             700 |  31694 |  28841 |  52981 |      11 |
-| execute                                          |            2868 | 186086 | 196556 | 433894 |      59 |
-| getImplementation                                |             611 |    777 |    611 |   2611 |      12 |
+| execute                                          |            2868 | 185078 | 195573 | 433894 |      60 |
+| getImplementation                                |             611 |    764 |    611 |   2611 |      13 |
 | getKindTreeRoot                                  |            2825 |   2825 |   2825 |   2825 |       2 |
 | initialize                                       |            3032 | 150631 | 152870 | 152870 |     125 |
-| isCommitmentTreeRootHistorical                   |             894 |    894 |    894 |    894 |       1 |
+| isCommitmentTreeRootHistorical                   |             894 |   2769 |   2894 |   2894 |      16 |
 | isLogicRefDenied                                 |            2417 |   2420 |   2420 |   2424 |      12 |
-| isNullifierContained                             |             749 |   2748 |   2749 |   2749 |    2713 |
-| latestCommitmentTreeRoot                         |            6947 |  12001 |   9653 |  17723 |      16 |
+| isNullifierContained                             |             749 |   2748 |   2749 |   2749 |    3163 |
+| latestCommitmentTreeRoot                         |            6947 |  11957 |  15038 |  15723 |      19 |
 | migrateNullifierSet                              |             693 |    693 |    693 |    693 |       2 |
 | owner                                            |             542 |   2354 |   2542 |   2542 |      32 |
 | pause                                            |            2526 |  21611 |  25815 |  25815 |      12 |
-| paused                                           |            2394 |   2394 |   2394 |   2394 |      15 |
-| proxiableUUID                                    |             284 |    284 |    284 |    284 |      11 |
+| paused                                           |            2394 |   2394 |   2394 |   2394 |      16 |
+| proxiableUUID                                    |             284 |    284 |    284 |    284 |      15 |
 | riscZeroVerifierPaused                           |           10945 |  10945 |  10945 |  10945 |       5 |
 | setKindTreeRoot                                  |             575 |   6967 |   8700 |   8700 |       7 |
 | transferOwnership                                |            5450 |   5450 |   5450 |   5450 |       3 |

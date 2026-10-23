@@ -7,6 +7,7 @@ import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {ILegacyCommitmentTree} from "../../src/interfaces/ILegacyCommitmentTree.sol";
 import {ILegacyNullifierSet} from "../../src/interfaces/ILegacyNullifierSet.sol";
 import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
+import {SHA256} from "../../src/libs/SHA256.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
@@ -51,9 +52,11 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// adapter.
     error CommitmentTreeRootMismatch(bytes32 expected, bytes32 actual);
 
-    /// @notice Thrown if the copied commitment tree holds a different number of commitments than the legacy
-    /// protocol adapter.
+    /// @notice Thrown if the proxy holds fewer commitments than the legacy protocol adapter.
     error CommitmentCountMismatch(uint256 expected, uint256 actual);
+
+    /// @notice Thrown if the proxy no longer accepts a root that the copy left it.
+    error MissingHistoricalRoot(bytes32 root);
 
     /// @notice Thrown if a nullifier of the legacy protocol adapter is absent from the copied set.
     error MissingNullifier(bytes32 nullifier);
@@ -92,7 +95,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
 
     /// @notice Checks a migrated proxy against the stopped legacy protocol adapter and against the end state
     /// of the migration, reading both from the chain. Run it after `FinalizeProtocolAdapterStateMigration` has
-    /// broadcast, because that script only ever sees the simulated state.
+    /// broadcast, because that script only ever sees the simulated state. Transactions settled since then may have
+    /// grown the commitment tree past the copy.
     /// @param isProduction Whether to check the production or the staging proxy. The production proxy owner must own a
     /// production proxy.
     function verify(bool isProduction) public {
@@ -177,18 +181,32 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
     }
 
-    /// @notice Checks the proxy against the stopped legacy protocol adapter: the latest root, the commitment
-    /// count, and every nullifier. Reverts on the first difference.
+    /// @notice Checks the proxy against the stopped legacy protocol adapter: the commitment count, the latest root
+    /// while no transaction has added a commitment, the two roots the copy leaves, and every nullifier. Reverts on the
+    /// first difference.
     /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _check(address legacyProtocolAdapter, address proxy) internal view {
-        bytes32 expectedRoot = ILegacyCommitmentTree(legacyProtocolAdapter).latestCommitmentTreeRoot();
-        bytes32 actualRoot = ICommitmentTree(proxy).latestCommitmentTreeRoot();
-        require(actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot}));
-
         uint256 expectedCount = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentCount();
         uint256 actualCount = ICommitmentTree(proxy).commitmentCount();
-        require(actualCount == expectedCount, CommitmentCountMismatch({expected: expectedCount, actual: actualCount}));
+        require(actualCount >= expectedCount, CommitmentCountMismatch({expected: expectedCount, actual: actualCount}));
+
+        bytes32 expectedRoot = ILegacyCommitmentTree(legacyProtocolAdapter).latestCommitmentTreeRoot();
+        if (actualCount == expectedCount) {
+            bytes32 actualRoot = ICommitmentTree(proxy).latestCommitmentTreeRoot();
+            require(
+                actualRoot == expectedRoot, CommitmentTreeRootMismatch({expected: expectedRoot, actual: actualRoot})
+            );
+        }
+
+        // A settled transaction moves the latest root on, but the copied root and the empty-tree root stay.
+        require(
+            ICommitmentTree(proxy).isCommitmentTreeRootHistorical(expectedRoot), MissingHistoricalRoot(expectedRoot)
+        );
+        require(
+            ICommitmentTree(proxy).isCommitmentTreeRootHistorical(SHA256.EMPTY_HASH),
+            MissingHistoricalRoot(SHA256.EMPTY_HASH)
+        );
 
         uint256 nullifierCount = ILegacyNullifierSet(legacyProtocolAdapter).nullifierCount();
         for (uint256 i = 0; i < nullifierCount; ++i) {
