@@ -304,38 +304,39 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
     }
 
     /// @dev Without a constraint, the call of the consumed resource would run first.
-    function test_execute_runs_the_calls_in_the_order_that_the_transaction_carries() public {
+    function test_executeWithCallOrder_runs_the_calls_in_the_call_order() public {
         IProtocolAdapter.Transaction memory txn = _transaction({
             consumed: _callCarryingResource({nonce: 0, callId: 1}),
             created: _callCarryingResource({nonce: 1, callId: 2})
         });
 
-        _assertCallOrder({txn: vm.withCallOrder(txn, _callOrder(1, 0)), expected: _callIds(2, 1)});
+        _assertCallOrderWith({txn: txn, callOrder: _callOrder(1, 0), expected: _callIds(2, 1)});
     }
 
-    function test_execute_runs_a_carried_order_that_meets_the_constraints() public {
+    function test_executeWithCallOrder_runs_a_call_order_that_meets_the_constraints() public {
         TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
         TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         _constrain({data: consumed[0], afterTags: _tags(_commitment(created[0])), beforeTags: _noTags()});
 
-        _assertCallOrder({
-            txn: vm.withCallOrder(_transaction(consumed, created), _callOrder(1, 0)), expected: _callIds(2, 1)
+        _assertCallOrderWith({
+            txn: _transaction(consumed, created), callOrder: _callOrder(1, 0), expected: _callIds(2, 1)
         });
     }
 
-    function test_execute_reverts_on_a_carried_order_that_violates_a_constraint() public {
+    function test_executeWithCallOrder_reverts_on_a_call_order_that_violates_a_constraint() public {
         TxGen.ResourceAndAppData[] memory consumed = _callCarryingResource({nonce: 0, callId: 1});
         TxGen.ResourceAndAppData[] memory created = _callCarryingResource({nonce: 1, callId: 2});
         bytes32 afterTag = _commitment(created[0]);
         _constrain({data: consumed[0], afterTags: _tags(afterTag), beforeTags: _noTags()});
+        uint256[] memory callOrder = _callOrder(0, 1);
 
-        IProtocolAdapter.Transaction memory txn = vm.withCallOrder(_transaction(consumed, created), _callOrder(0, 1));
+        IProtocolAdapter.Transaction memory txn = vm.signCallOrder(_transaction(consumed, created), callOrder);
 
         vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderViolatesConstraint.selector, afterTag));
-        _mockPa.execute(txn);
+        _mockPa.executeWithCallOrder(txn, callOrder);
     }
 
-    function test_execute_reverts_on_a_carried_order_that_runs_a_later_action_first() public {
+    function test_executeWithCallOrder_reverts_on_a_call_order_that_runs_a_later_action_first() public {
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
         resourceLists[0] = TxGen.ResourceLists({
             consumed: _callCarryingResource({nonce: 0, callId: 1}),
@@ -349,45 +350,43 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         (callOrder[0], callOrder[1], callOrder[2], callOrder[3]) = (2, 3, 0, 1);
 
         IProtocolAdapter.Transaction memory txn =
-            vm.withCallOrder(vm.transaction(_mockVerifier, resourceLists), callOrder);
+            vm.signCallOrder(vm.transaction(_mockVerifier, resourceLists), callOrder);
 
         vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderNotInActionOrder.selector, 0));
-        _mockPa.execute(txn);
+        _mockPa.executeWithCallOrder(txn, callOrder);
     }
 
     /// @dev Whoever relays the transaction cannot replace the call order that the delta proof signs.
-    function test_execute_reverts_on_a_call_order_that_the_delta_proof_does_not_sign() public {
-        IProtocolAdapter.Transaction memory txn = vm.withCallOrder(
+    function test_executeWithCallOrder_reverts_on_a_call_order_that_the_delta_proof_does_not_sign() public {
+        IProtocolAdapter.Transaction memory txn = vm.signCallOrder(
             _transaction({
                 consumed: _callCarryingResource({nonce: 0, callId: 1}),
                 created: _callCarryingResource({nonce: 1, callId: 2})
             }),
             _callOrder(1, 0)
         );
-        txn.callOrder = _callOrder(0, 1);
 
         vm.expectPartialRevert(DeltaProof.DeltaMismatch.selector);
-        _mockPa.execute(txn);
+        _mockPa.executeWithCallOrder(txn, _callOrder(0, 1));
     }
 
     /// @dev Whoever relays the transaction cannot drop the call order that the delta proof signs.
     function test_execute_reverts_on_a_signed_call_order_that_was_dropped() public {
-        IProtocolAdapter.Transaction memory txn = vm.withCallOrder(
+        IProtocolAdapter.Transaction memory txn = vm.signCallOrder(
             _transaction({
                 consumed: _callCarryingResource({nonce: 0, callId: 1}),
                 created: _callCarryingResource({nonce: 1, callId: 2})
             }),
             _callOrder(1, 0)
         );
-        txn.callOrder = new uint256[](0);
 
         vm.expectPartialRevert(DeltaProof.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_on_a_call_order_without_call_carrying_resources() public {
+    function test_executeWithCallOrder_reverts_on_a_call_order_without_call_carrying_resources() public {
         uint256[] memory callOrder = new uint256[](1);
-        IProtocolAdapter.Transaction memory txn = vm.withCallOrder(
+        IProtocolAdapter.Transaction memory txn = vm.signCallOrder(
             _transaction({
                 consumed: _exampleResourceAndEmptyAppData({nonce: 0}),
                 created: _exampleResourceAndEmptyAppData({nonce: 1})
@@ -396,7 +395,7 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         );
 
         vm.expectRevert(ForwarderCallOrdering.CallOrderNotAPermutation.selector);
-        _mockPa.execute(txn);
+        _mockPa.executeWithCallOrder(txn, callOrder);
     }
 
     function _transaction(TxGen.ResourceAndAppData[] memory consumed, TxGen.ResourceAndAppData[] memory created)
@@ -412,6 +411,23 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
     function _assertCallOrder(IProtocolAdapter.Transaction memory txn, uint256[] memory expected) private {
         vm.recordLogs();
         _mockPa.execute(txn);
+        _assertRecordedCallOrder(expected);
+    }
+
+    /// @notice Signs the call order, executes the transaction in it and checks the values of its forwarder calls in
+    /// the order in which they ran.
+    function _assertCallOrderWith(
+        IProtocolAdapter.Transaction memory txn,
+        uint256[] memory callOrder,
+        uint256[] memory expected
+    ) private {
+        vm.recordLogs();
+        _mockPa.executeWithCallOrder(vm.signCallOrder(txn, callOrder), callOrder);
+        _assertRecordedCallOrder(expected);
+    }
+
+    /// @notice Checks the values of the recorded forwarder calls in the order in which they ran.
+    function _assertRecordedCallOrder(uint256[] memory expected) private {
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
         uint256[] memory actual = new uint256[](logs.length);

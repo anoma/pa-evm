@@ -305,8 +305,7 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
             actions: new IProtocolAdapter.Action[](0),
             deltaProof: "",
             aggregationProof: "",
-            kindTreeRoot: _mockPa.EMPTY_KIND_TREE_ROOT(),
-            callOrder: new uint256[](0)
+            kindTreeRoot: _mockPa.EMPTY_KIND_TREE_ROOT()
         });
 
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_mockPa));

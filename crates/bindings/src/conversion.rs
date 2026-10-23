@@ -109,9 +109,6 @@ impl From<Transaction> for IProtocolAdapter::Transaction {
             deltaProof: Bytes::from(delta_proof),
             aggregationProof: Bytes::from(encode_seal(&aggregation.proof).unwrap()),
             kindTreeRoot: B256::from_slice(aggregation.instance.kind_tree_root.as_bytes()),
-            // An empty call order lets the protocol adapter compute the order, so the delta proof signs only the
-            // transaction ID.
-            callOrder: Vec::new(),
         }
     }
 }

@@ -75,10 +75,10 @@ library DeltaProof {
         verifyingKey = EfficientHashLib.hash(actionTreeRoots);
     }
 
-    /// @notice Computes the delta verifying key of a transaction that carries its call order, so that the delta proof
-    /// also signs the order: the Keccak-256 hash of the ABI encoding of the transaction ID and the order.
+    /// @notice Computes the delta verifying key of a transaction that comes with a call order, so that the delta
+    /// proof also signs the order: the Keccak-256 hash of the ABI encoding of the transaction ID and the order.
     /// @param transactionId The transaction ID, which `computeVerifyingKey` computes from the action tree roots.
-    /// @param callOrder The call order that the transaction carries.
+    /// @param callOrder The call order that comes with the transaction.
     /// @return verifyingKey The verifying key obtained from hashing the transaction ID and the call order.
     function computeVerifyingKeyWithCallOrder(bytes32 transactionId, uint256[] memory callOrder)
         internal

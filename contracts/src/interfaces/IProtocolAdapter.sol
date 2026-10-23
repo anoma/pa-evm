@@ -20,14 +20,11 @@ interface IProtocolAdapter {
     /// RISC Zero proof being verified.
     /// @param kindTreeRoot The root of the kind tree the aggregation proof is proven against: the stored root or
     /// the root of the empty kind tree.
-    /// @param callOrder The indices of the call lists in the order in which their forwarder calls are executed, or
-    /// empty to let the protocol adapter compute the order. The delta proof signs a non-empty order.
     struct Transaction {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
         bytes32 kindTreeRoot;
-        uint256[] callOrder;
     }
 
     /// @notice The action object providing context separation between non-intersecting sets of resources. An action
@@ -163,6 +160,13 @@ interface IProtocolAdapter {
     /// set, respectively, and by executing the forwarder calls of its resources.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
+
+    /// @notice Executes a transaction as `execute` does, but runs its forwarder calls in the call order that comes with
+    /// it, which the delta proof signs.
+    /// @param transaction The transaction to execute.
+    /// @param callOrder The indices of the call lists in the order in which their forwarder calls are executed, or
+    /// empty to let the protocol adapter compute the order as `execute` does. The delta proof signs a non-empty order.
+    function executeWithCallOrder(Transaction calldata transaction, uint256[] calldata callOrder) external;
 
     /// @notice Pauses the protocol adapter, so that no transaction executes until `unpause`.
     function pause() external;

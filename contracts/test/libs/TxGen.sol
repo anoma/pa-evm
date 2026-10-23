@@ -209,23 +209,18 @@ library TxGen {
         }
 
         txn = IProtocolAdapter.Transaction({
-            actions: actions,
-            deltaProof: proof,
-            aggregationProof: "",
-            kindTreeRoot: emptyKindTreeRoot(),
-            callOrder: new uint256[](0)
+            actions: actions, deltaProof: proof, aggregationProof: "", kindTreeRoot: emptyKindTreeRoot()
         });
     }
 
-    /// @dev Carries the call order and signs it with a new delta proof. The aggregation proof stays valid, since the
-    /// aggregation journal does not cover the call order.
-    function withCallOrder(VmSafe vm, IProtocolAdapter.Transaction memory txn, uint256[] memory callOrder)
+    /// @dev Signs the call order with a new delta proof, for `executeWithCallOrder`. The aggregation proof stays valid,
+    /// since the aggregation journal does not cover the call order.
+    function signCallOrder(VmSafe vm, IProtocolAdapter.Transaction memory txn, uint256[] memory callOrder)
         internal
-        returns (IProtocolAdapter.Transaction memory orderedTxn)
+        returns (IProtocolAdapter.Transaction memory signedTxn)
     {
-        orderedTxn = txn;
-        orderedTxn.callOrder = callOrder;
-        orderedTxn.deltaProof = DeltaGen.generateProof(
+        signedTxn = txn;
+        signedTxn.deltaProof = DeltaGen.generateProof(
             vm,
             DeltaGen.ProofInputs({
                 summedValueCommitmentRandomness: summedValueCommitmentRandomness(txn.actions),
