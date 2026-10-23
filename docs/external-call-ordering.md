@@ -74,7 +74,7 @@ Without ordering constraints, the PA reads only the lengths of the two tag lists
 
 ## A carried call order
 
-A transaction can also come with the order itself, through `executeWithCallOrder`, whose `callOrder` lists the numbers of its call lists in the order in which their calls run. [ADR-0005](adr/0005-the-transaction-can-carry-the-call-order.md) records the decision. `execute`, and `executeWithCallOrder` with an empty `callOrder`, compute the order as described above. Otherwise:
+A transaction can also come with the order itself, through `executeWithCallOrder`, whose `callOrder` lists the numbers of its call lists in the order in which their calls run. `execute`, and `executeWithCallOrder` with an empty `callOrder`, compute the order as described above. Otherwise:
 
 - The delta proof signs `keccak256(abi.encode(transactionId, callOrder))` instead of the transaction ID, so whoever relays the transaction cannot change or drop the order. Whoever holds the delta witness, such as the composer, chooses it.
 - The PA builds no graph. It checks that `callOrder` names each call list exactly once (`CallOrderNotAPermutation`), that the action indices of the call lists never decrease along it (`CallOrderNotInActionOrder`), and that every ordering constraint holds (`CallOrderViolatesConstraint`), in this order. Each tag must still name a call-carrying resource.
