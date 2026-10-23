@@ -81,6 +81,8 @@ A transaction can also come with the order itself, through `executeWithCallOrder
 - The actions keep the order of the transaction, so only the call lists inside an action move. A constraint that runs a later action first fails the check.
 - The limit of 256 call-carrying resources does not apply.
 
+The ordering constraints stay the rules of the applications, which the logic proof of each resource binds through its app data, and the call order is the choice of whoever holds the delta witness within them.
+
 ## Examples
 
 ### A swap in one action
@@ -107,4 +109,5 @@ Action 0 has a consumed resource A and a created resource B, both with calls. Ac
 - [`ProtocolAdapter.execute` and `executeWithCallOrder`](../contracts/src/ProtocolAdapter.sol) execute the two parts. Their function `_executeForwarderCalls` executes the calls in the call order that comes with the transaction, or else in the order of the transaction, or in the order of the constraints if a call has an ordering constraint.
 - [`ForwarderCallOrdering`](../contracts/src/libs/ForwarderCallOrdering.sol) decodes the call lists, checks the tags, and builds and sorts the graph. Its function `checkCallOrder` checks a carried call order.
 - [`DirectedGraph`](../contracts/src/libs/DirectedGraph.sol) holds the graph and its topological sort.
+- [`call_order`](../crates/bindings/src/call_order.rs) signs a call order with the delta witness, for `executeWithCallOrder`.
 - Tests: [`ProtocolAdapter.forwarderCallOrdering.t.sol`](../contracts/test/ProtocolAdapter.forwarderCallOrdering.t.sol), [`ForwarderCallOrdering.t.sol`](../contracts/test/ForwarderCallOrdering.t.sol) and [`DirectedGraph.t.sol`](../contracts/test/DirectedGraph.t.sol).
