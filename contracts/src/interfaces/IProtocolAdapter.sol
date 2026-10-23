@@ -20,11 +20,14 @@ interface IProtocolAdapter {
     /// RISC Zero proof being verified.
     /// @param kindTreeRoot The root of the kind tree the aggregation proof is proven against: the stored root or
     /// the root of the empty kind tree.
+    /// @param callOrder The indices of the call lists in the order in which their forwarder calls are executed, or
+    /// empty to let the protocol adapter compute the order. The delta proof signs a non-empty order (ADR-0005).
     struct Transaction {
         Action[] actions;
         bytes deltaProof;
         bytes aggregationProof;
         bytes32 kindTreeRoot;
+        uint256[] callOrder;
     }
 
     /// @notice The action object providing context separation between non-intersecting sets of resources. An action

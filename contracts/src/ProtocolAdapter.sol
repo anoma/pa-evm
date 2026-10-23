@@ -141,8 +141,11 @@ contract ProtocolAdapter is
             _executeForwarderCalls({
                 actions: transaction.actions,
                 callListCount: callListCount,
-                hasOrderingConstraints: hasOrderingConstraints
+                hasOrderingConstraints: hasOrderingConstraints,
+                callOrder: transaction.callOrder
             });
+        } else {
+            require(transaction.callOrder.length == 0, ForwarderCallOrdering.CallOrderNotAPermutation());
         }
 
         // NOTE: The event ordering is protected by the `nonReentrant` modifier.
@@ -266,14 +269,21 @@ contract ProtocolAdapter is
     /// one action together. Of the resources whose calls can come next, takes the first in the transaction, with the
     /// consumed resources of an action before its created resources. With ordering constraints, it reverts if a tag in
     /// `afterTags` or `beforeTags` names no call-carrying resource of the transaction, if no order meets the
-    /// constraints, or if more than 256 resources carry calls.
+    /// constraints, or if more than 256 resources carry calls. A transaction that carries its call order sets the order
+    /// itself: `ForwarderCallOrdering.checkCallOrder` checks it instead.
     /// @param actions The actions of the transaction.
     /// @param callListCount The number of resources that carry forwarder calls.
     /// @param hasOrderingConstraints Whether a forwarder call carries ordering constraints.
-    function _executeForwarderCalls(Action[] calldata actions, uint256 callListCount, bool hasOrderingConstraints)
-        internal
-    {
-        if (hasOrderingConstraints) {
+    /// @param callOrder The call order that the transaction carries, or empty.
+    function _executeForwarderCalls(
+        Action[] calldata actions,
+        uint256 callListCount,
+        bool hasOrderingConstraints,
+        uint256[] calldata callOrder
+    ) internal {
+        if (callOrder.length != 0) {
+            _executeForwarderCallsInCallOrder({actions: actions, callListCount: callListCount, callOrder: callOrder});
+        } else if (hasOrderingConstraints) {
             _executeForwarderCallsInConstraintOrder({actions: actions, callListCount: callListCount});
         } else {
             _executeForwarderCallsInActionOrder(actions);
@@ -326,8 +336,31 @@ contract ProtocolAdapter is
     /// @param callListCount The number of resources that carry forwarder calls.
     function _executeForwarderCallsInConstraintOrder(Action[] calldata actions, uint256 callListCount) internal {
         ForwarderCallOrdering.CallList[] memory callLists = actions.decodeCallLists(callListCount);
-        uint256[] memory orderedIndices = callLists.order();
+        _executeCallLists({callLists: callLists, orderedIndices: callLists.order()});
+    }
 
+    /// @notice Executes the forwarder calls of a transaction in the call order that it carries, after checking it.
+    /// @param actions The actions of the transaction.
+    /// @param callListCount The number of resources that carry forwarder calls.
+    /// @param callOrder The call order that the transaction carries.
+    function _executeForwarderCallsInCallOrder(
+        Action[] calldata actions,
+        uint256 callListCount,
+        uint256[] calldata callOrder
+    ) internal {
+        ForwarderCallOrdering.CallList[] memory callLists = actions.decodeCallLists(callListCount);
+        uint256[] memory orderedIndices = callOrder;
+        callLists.checkCallOrder(orderedIndices);
+        _executeCallLists({callLists: callLists, orderedIndices: orderedIndices});
+    }
+
+    /// @notice Executes the forwarder calls of the call lists in an order, the calls of each call list together.
+    /// @param callLists The call lists of the transaction.
+    /// @param orderedIndices The indices of `callLists`, in the order in which their calls are executed.
+    function _executeCallLists(ForwarderCallOrdering.CallList[] memory callLists, uint256[] memory orderedIndices)
+        internal
+    {
+        uint256 callListCount = callLists.length;
         for (uint256 position = 0; position < callListCount; ++position) {
             ForwarderCallOrdering.CallList memory callList = callLists[orderedIndices[position]];
             uint256 callCount = callList.calls.length;
@@ -446,11 +479,17 @@ contract ProtocolAdapter is
         bytes32[] memory actionTreeRoots,
         Delta memory transactionDelta
     ) internal view returns (bytes32 transactionId) {
-        // The delta proof signs the Keccak-256 hash of the concatenated action tree roots.
+        // The delta proof signs the Keccak-256 hash of the concatenated action tree roots, and with it the call order
+        // if the transaction carries one.
         transactionId = DeltaProof.computeVerifyingKey(actionTreeRoots);
+        bytes32 deltaVerifyingKey = transaction.callOrder.length == 0
+            ? transactionId
+            : DeltaProof.computeVerifyingKeyWithCallOrder({
+                transactionId: transactionId, callOrder: transaction.callOrder
+            });
 
         // Check the delta proof.
-        transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
+        transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: deltaVerifyingKey});
 
         // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
         // root the transaction carries.

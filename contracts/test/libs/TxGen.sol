@@ -209,8 +209,31 @@ library TxGen {
         }
 
         txn = IProtocolAdapter.Transaction({
-            actions: actions, deltaProof: proof, aggregationProof: "", kindTreeRoot: emptyKindTreeRoot()
+            actions: actions,
+            deltaProof: proof,
+            aggregationProof: "",
+            kindTreeRoot: emptyKindTreeRoot(),
+            callOrder: new uint256[](0)
         });
+    }
+
+    /// @dev Carries the call order and signs it with a new delta proof. The aggregation proof stays valid, since the
+    /// aggregation journal does not cover the call order.
+    function withCallOrder(VmSafe vm, IProtocolAdapter.Transaction memory txn, uint256[] memory callOrder)
+        internal
+        returns (IProtocolAdapter.Transaction memory orderedTxn)
+    {
+        orderedTxn = txn;
+        orderedTxn.callOrder = callOrder;
+        orderedTxn.deltaProof = DeltaGen.generateProof(
+            vm,
+            DeltaGen.ProofInputs({
+                summedValueCommitmentRandomness: summedValueCommitmentRandomness(txn.actions),
+                verifyingKey: DeltaProof.computeVerifyingKeyWithCallOrder({
+                    transactionId: DeltaProof.computeVerifyingKey(actionTreeRoots(txn.actions)), callOrder: callOrder
+                })
+            })
+        );
     }
 
     /// @dev Mock-proves the aggregation against a kind table: the transaction carries its root, and the seal
