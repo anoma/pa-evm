@@ -15,6 +15,52 @@ import {MigrateProtocolAdapterStateMock} from "../../mocks/MigrateProtocolAdapte
 /// @notice Checks the migration run end to end against a stand-in for the legacy protocol adapter, and the
 /// check of a migrated proxy.
 contract MigrateProtocolAdapterStateTest is MigrationFixture {
+    function test_run_completes_an_empty_migration_and_can_be_repeated() public {
+        _useEmptyCommitmentTree({nullifierCount: 0, stopped: true});
+        ProtocolAdapter pa = ProtocolAdapter(_proxy);
+        address migrationalImplementation = pa.getImplementation();
+
+        _migrationScript.run({isProduction: false});
+        _migrationScript.run({isProduction: false});
+
+        assertTrue(pa.paused(), "copy-in should leave the empty proxy paused");
+        assertEq(pa.commitmentCount(), 0, "the commitment tree should stay empty");
+        assertEq(pa.latestCommitmentTreeRoot(), _legacyProtocolAdapter.latestCommitmentTreeRoot());
+        assertEq(pa.getImplementation(), migrationalImplementation);
+
+        _finalizationScript.run({isProduction: false});
+        _migrationScript.run({isProduction: false});
+        _finalizationScript.run({isProduction: false});
+        _migrationScript.verify({isProduction: false});
+    }
+
+    function test_run_resumes_a_nullifier_only_migration() public {
+        _useEmptyCommitmentTree({nullifierCount: _NULLIFIER_COUNT, stopped: true});
+        uint256 copied = _migrationScript.NULLIFIERS_PER_BATCH() + 1;
+        assertLt(copied, _NULLIFIER_COUNT, "the earlier run should leave nullifiers to copy");
+        vm.prank(DEFAULT_SENDER);
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: copied});
+
+        _migrationScript.run({isProduction: false});
+        _migrationScript.run({isProduction: false});
+
+        assertTrue(ProtocolAdapter(_proxy).paused());
+        assertEq(ProtocolAdapter(_proxy).commitmentCount(), 0);
+        _finalizationScript.run({isProduction: false});
+        _migrationScript.verify({isProduction: false});
+    }
+
+    function test_run_reverts_if_an_empty_legacy_protocol_adapter_is_still_running() public {
+        _useEmptyCommitmentTree({nullifierCount: 0, stopped: false});
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationalProtocolAdapter.LegacyProtocolAdapterNotStopped.selector, address(_legacyProtocolAdapter)
+            )
+        );
+        _migrationScript.run({isProduction: false});
+    }
+
     function test_run_copies_the_state_and_leaves_the_proxy_paused() public {
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
         bytes32 kindTreeRoot = pa.getKindTreeRoot();

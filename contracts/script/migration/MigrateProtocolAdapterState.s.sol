@@ -84,6 +84,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
             _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
 
             if (protocolAdapter.paused()) {
+                _requireLegacyProtocolAdapterStopped(legacyProtocolAdapter);
                 _migrateCommitmentTree({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
                 _migrateNullifierSet({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
             }
@@ -101,9 +102,9 @@ contract MigrateProtocolAdapterState is MigrationScript {
         _checkEndState({proxy: proxy, isProduction: isProduction});
     }
 
-    /// @notice Copies the commitment tree of the legacy protocol adapter into the proxy, unless an earlier
-    /// run did. The tree's sides come from its storage, since it exposes no getter for them; the slot is checked
-    /// against its own getters first, and the proxy rejects sides that do not reproduce the root.
+    /// @notice Copies a nonempty commitment tree of the legacy protocol adapter into the proxy, unless an earlier
+    /// run did. A fresh proxy already has the empty tree. The sides come from legacy storage; the slots are checked
+    /// against the public getters first, and the proxy rejects sides that do not reproduce the root.
     /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _migrateCommitmentTree(address legacyProtocolAdapter, address proxy) internal {
@@ -113,6 +114,10 @@ contract MigrateProtocolAdapterState is MigrationScript {
         }
 
         uint256 leafCount = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentCount();
+        // The copy entry point rejects an empty tree; the fresh proxy already represents it.
+        if (leafCount == 0) {
+            return;
+        }
         uint8 treeDepth = ILegacyCommitmentTree(legacyProtocolAdapter).commitmentTreeDepth();
 
         _checkSlot({

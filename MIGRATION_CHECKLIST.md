@@ -108,7 +108,7 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
    just contracts-execute-migration deployer <CHAIN>
    ```
 
-   The run copies the commitment tree and the nullifier set, and the proxy stays paused. The recipe waits for each transaction before it sends the next (`--slow`). Without that, a transaction that reverts on chain would not stop the ones behind it. The run sends one transaction for the tree and one per `NULLIFIERS_PER_BATCH` nullifiers. A chain holding 8000 nullifiers sends 41 transactions.
+   The run copies the commitment tree and the nullifier set, and the proxy stays paused. The recipe waits for each transaction before it sends the next (`--slow`). Without that, a transaction that reverts on chain would not stop the ones behind it. The run sends one transaction for a nonempty tree and one per `NULLIFIERS_PER_BATCH` nullifiers. An empty tree needs no copy transaction because a fresh proxy already has it; any nullifiers are still copied, and the legacy adapter must still be stopped. A chain holding a nonempty tree and 8000 nullifiers sends 41 transactions.
 
    If the run stops early, fix the cause and repeat it. Every step skips once it is done, so the repeat continues where the run stopped. The copy-in stays open until the upgrade lands, and a proxy left half-migrated cannot be replaced at its address.
 

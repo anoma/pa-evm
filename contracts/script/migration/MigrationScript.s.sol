@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
@@ -80,6 +81,16 @@ abstract contract MigrationScript is Script {
         require(
             copiedFrom == legacyProtocolAdapter,
             LegacyProtocolAdapterMismatch({expected: legacyProtocolAdapter, actual: copiedFrom})
+        );
+    }
+
+    /// @notice Reverts unless the legacy protocol adapter is stopped. The copy calls of the proxy check it too, but a
+    /// legacy protocol adapter without commitments and nullifiers needs no copy call.
+    /// @param legacyProtocolAdapter The legacy protocol adapter the records name.
+    function _requireLegacyProtocolAdapterStopped(address legacyProtocolAdapter) internal view {
+        require(
+            Pausable(legacyProtocolAdapter).paused(),
+            MigrationalProtocolAdapter.LegacyProtocolAdapterNotStopped(legacyProtocolAdapter)
         );
     }
 }

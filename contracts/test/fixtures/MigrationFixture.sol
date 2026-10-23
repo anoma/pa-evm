@@ -70,4 +70,26 @@ abstract contract MigrationFixture is RiscZeroRouterFixture {
             opts
         );
     }
+
+    /// @notice Replaces the starting point with a legacy protocol adapter that holds no commitments, a proxy bound
+    /// to it, and scripts reading the two.
+    /// @param nullifierCount The number of nullifiers the legacy protocol adapter holds.
+    /// @param stopped Whether the legacy protocol adapter is stopped.
+    function _useEmptyCommitmentTree(uint256 nullifierCount, bool stopped) internal {
+        _legacyProtocolAdapter = new LegacyProtocolAdapterMock(DEFAULT_SENDER);
+        for (uint256 i = 0; i < nullifierCount; ++i) {
+            _legacyProtocolAdapter.addNullifier(keccak256(abi.encode("nullifier", i)));
+        }
+        if (stopped) {
+            vm.prank(DEFAULT_SENDER);
+            _legacyProtocolAdapter.emergencyStop();
+        }
+        _proxy = _deployMigrationalProxy(address(_legacyProtocolAdapter));
+        _migrationScript = new MigrateProtocolAdapterStateMock({
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: _proxy
+        });
+        _finalizationScript = new FinalizeProtocolAdapterStateMigrationMock({
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: _proxy
+        });
+    }
 }

@@ -78,6 +78,19 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         _finalizationScript.run({isProduction: false});
     }
 
+    /// @dev The copied state matches without a copy call, so only the script stands between the unpause and a
+    /// legacy protocol adapter that still settles.
+    function test_run_reverts_if_an_empty_legacy_protocol_adapter_is_still_running() public {
+        _useEmptyCommitmentTree({nullifierCount: 0, stopped: false});
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationalProtocolAdapter.LegacyProtocolAdapterNotStopped.selector, address(_legacyProtocolAdapter)
+            )
+        );
+        _finalizationScript.run({isProduction: false});
+    }
+
     function test_run_reverts_for_a_proxy_that_copies_from_another_legacy_protocol_adapter() public {
         address other = makeAddr("other legacy protocol adapter");
         FinalizeProtocolAdapterStateMigration script =

@@ -40,6 +40,8 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
             _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
 
             if (protocolAdapter.paused()) {
+                // The unpause compares the state, not whether the legacy protocol adapter can still change it.
+                _requireLegacyProtocolAdapterStopped(legacyProtocolAdapter);
                 vm.broadcast(owner);
                 protocolAdapter.unpause();
             }
