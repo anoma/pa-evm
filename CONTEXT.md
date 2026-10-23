@@ -89,3 +89,18 @@ One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, afte
 
 **Sides**:
 The stored left-sibling hashes of the commitment tree of the legacy protocol adapter, one per level. The legacy protocol adapter exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.
+
+**State migration**:
+The one-time copy of the commitment tree and the nullifier set of a chain's legacy protocol adapter into the protocol adapter. The migrational implementation makes the copy. It changes no resource. At the same time, the asset migration of the forwarder repository moves the tokens of the legacy ERC20 forwarder.
+_Avoid_: migration (on its own)
+
+**Conversion**:
+A transaction that consumes a resource of one kind and creates a resource of another kind. The stored kind table gives both kinds the same kind point, so the transaction balances. Only a conversion needs the stored kind table.
+
+**Soft migration**:
+The process in which users convert their resources of a deprecated logic ref into resources of the active logic ref. The protocol adapter still consumes resources of the deprecated logic ref, so their circuit must still be trusted.
+_Avoid_: migration (on its own)
+
+**Hard migration**:
+The process in which users create resources of a new logic ref from a proof that they own unspent resources of a denied logic ref. The protocol adapter consumes no resource of the denied logic ref. The application stores their nullifiers instead, so no proof of the denied circuit runs again. The ERC20 forwarder and its circuit call it emergency migration.
+_Avoid_: migration (on its own), rescue

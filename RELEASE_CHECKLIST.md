@@ -416,7 +416,7 @@ For changes that touch only the bindings crate and leave `VERSION` alone.
 
 ## Updating the Kind Tree Root
 
-Not a release. The kind tree root is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved.
+Not a release. The kind tree root is rotated on a live proxy without changing `VERSION`, so no promotion, tag or publish is involved. The account that sets the root is trusted for balance, as [`docs/kind-tree-root-trust.md`](./docs/kind-tree-root-trust.md) explains.
 
 For **staging**:
 
