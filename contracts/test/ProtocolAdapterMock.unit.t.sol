@@ -3,25 +3,74 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
+
 import {ForwarderExample} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderExample.sol";
-import {EXPECTED_OUTPUT} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderTargetExample.sol";
-import {Vm} from "forge-std-1.17.0/src/Test.sol";
+import {
+    ForwarderTargetExample,
+    _encodedDefaultInput,
+    EXPECTED_OUTPUT
+} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderTargetExample.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
+import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {VerificationFailed} from "risc0-risc0-ethereum-3.0.1/contracts/src/IRiscZeroVerifier.sol";
+import {
+    RiscZeroVerifierEmergencyStop
+} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {ICommitmentTree} from "../src/interfaces/ICommitmentTree.sol";
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {DeltaProof} from "../src/libs/DeltaProof.sol";
 import {SHA256} from "../src/libs/SHA256.sol";
+
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {CommitmentTree} from "../src/state/CommitmentTree.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
-import {ProtocolAdapterMockVerifierFixture} from "./fixtures/ProtocolAdapterMockVerifierFixture.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 
-contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
+contract ProtocolAdapterMockVerifierTest is Test {
+    using TxGen for IProtocolAdapter.Action[];
     using TxGen for IProtocolAdapter.Action;
     using TxGen for Vm;
+
+    address internal constant _OWNER = address(uint160(1));
+    bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
+
+    RiscZeroVerifierRouter internal _router;
+    RiscZeroMockVerifier internal _mockVerifier;
+    RiscZeroVerifierEmergencyStop internal _emergencyStop;
+    ProtocolAdapter internal _mockPa;
+    address internal _fwd;
+    address internal _fwdTarget;
+    address[] internal _fwdList;
+
+    bytes internal _input;
+
+    bytes32 internal _carrierLabelRef;
+
+    function setUp() public {
+        (_router, _emergencyStop, _mockVerifier) = new DeployRiscZeroContractsMock().run();
+
+        Options memory opts;
+        opts.constructorData = abi.encode(_router, _mockVerifier.SELECTOR());
+
+        _mockPa = ProtocolAdapter(
+            Upgrades.deployUUPSProxy("ProtocolAdapter.sol", abi.encodeCall(ProtocolAdapter.initialize, (_OWNER)), opts)
+        );
+
+        _fwd = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
+        _fwdTarget = address(new ForwarderTargetExample());
+        _input = _encodedDefaultInput(_fwdTarget);
+
+        _fwdList = new address[](1);
+        _fwdList[0] = _fwd;
+
+        _carrierLabelRef = sha256(abi.encode(_fwd));
+    }
 
     function testFuzz_execute_emits_the_TransactionExecuted_event(uint8 actionCount, uint8 resourcePairCount) public {
         actionCount = uint8(bound(actionCount, 1, 10));
@@ -70,10 +119,9 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_call_carrying_resource() public {
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created =
-            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -86,9 +134,8 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         _mockPa.execute(txn);
     }
 
-    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_call_carrying_resource() public {
-        TxGen.ResourceAndAppData[] memory consumed =
-            _exampleCallCarryingResourceAndAppData({nonce: 0, fwdList: _fwdList});
+    function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
+        TxGen.ResourceAndAppData[] memory consumed = _exampleCarrierResourceAndAppData({nonce: 0, fwdList: _fwdList});
         TxGen.ResourceAndAppData[] memory created = _exampleResourceAndEmptyAppData({nonce: 1});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
@@ -104,7 +151,7 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
     }
 
     function test_execute_emits_all_ForwarderCallExecuted_events() public {
-        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _RESOURCE_LOGIC_REF}));
+        address fwd2 = address(new ForwarderExample({protocolAdapter: address(_mockPa), logicRef: _CARRIER_LOGIC_REF}));
         assertNotEq(_fwd, fwd2, "forwarder addresses should differ");
 
         address[] memory fwdList = new address[](2);
@@ -112,7 +159,7 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         fwdList[1] = fwd2;
 
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created = _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: fwdList});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: fwdList});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -128,29 +175,6 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
             untrustedForwarder: address(fwd2), input: _input, output: EXPECTED_OUTPUT
         });
 
-        _mockPa.execute(txn);
-    }
-
-    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
-        vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
-
-        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
-        TxGen.ResourceAndAppData[] memory created =
-            _exampleCallCarryingResourceAndAppData({nonce: 1, fwdList: _fwdList});
-
-        created[0].appData.externalPayload[0].blob =
-            _callBlob({untrustedForwarder: address(_fwd), input: _input, expectedOutput: fakeOutput});
-
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
-
-        // Create a transaction with two resources, the created calling the forwarder.
-        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
-
-        // Expect output mismatch.
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
-        );
         _mockPa.execute(txn);
     }
 
@@ -406,6 +430,27 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         _mockPa.execute(txn);
     }
 
+    function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
+        vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
+
+        TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
+        TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
+
+        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, _input, fakeOutput);
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+
+        // Create a transaction with two resources, the created calling the forwarder.
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, resourceLists);
+
+        // Expect output mismatch.
+        vm.expectRevert(
+            abi.encodeWithSelector(ProtocolAdapter.ForwarderCallOutputMismatch.selector, fakeOutput, EXPECTED_OUTPUT)
+        );
+        _mockPa.execute(txn);
+    }
+
     function testFuzz_execute_reverts_on_ubalanced_delta(uint128 createdQuantity, uint128 consumedQuantity) public {
         vm.assume(createdQuantity != consumedQuantity);
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
@@ -538,6 +583,21 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         _mockPa.execute(txn);
     }
 
+    function _exampleResourceAndEmptyAppData(uint256 nonce)
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory data)
+    {
+        data = new TxGen.ResourceAndAppData[](1);
+
+        data[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+            }),
+            appData: TxGen.emptyAppData()
+        });
+    }
+
     function _exampleResourceAndBlobAppData(uint256 nonce)
         private
         view
@@ -547,7 +607,7 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
 
         data[0] = TxGen.ResourceAndAppData({
             resource: TxGen.mockResource({
-                nonce: bytes32(nonce), logicRef: _RESOURCE_LOGIC_REF, labelRef: _resourceLabelRef, quantity: 1
+                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
             }),
             appData: IProtocolAdapter.AppData({
                 resourcePayload: TxGen.expirableBlobs(),
@@ -556,6 +616,36 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
                 applicationPayload: TxGen.expirableBlobs()
             })
         });
+    }
+
+    function _exampleCarrierResourceAndAppData(uint256 nonce, address[] memory fwdList)
+        private
+        view
+        returns (TxGen.ResourceAndAppData[] memory data)
+    {
+        data = new TxGen.ResourceAndAppData[](1);
+        uint256 nCalls = fwdList.length;
+
+        data[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
+            }),
+            appData: IProtocolAdapter.AppData({
+                discoveryPayload: new IProtocolAdapter.ExpirableBlob[](0),
+                resourcePayload: new IProtocolAdapter.ExpirableBlob[](0),
+                externalPayload: new IProtocolAdapter.ExpirableBlob[](nCalls),
+                applicationPayload: new IProtocolAdapter.ExpirableBlob[](0)
+            })
+        });
+
+        IProtocolAdapter.ExpirableBlob[] memory externalBlobs = new IProtocolAdapter.ExpirableBlob[](nCalls);
+        for (uint256 i = 0; i < nCalls; ++i) {
+            externalBlobs[i] = IProtocolAdapter.ExpirableBlob({
+                deletionCriterion: IProtocolAdapter.DeletionCriterion.Never,
+                blob: abi.encode(address(fwdList[i]), _input, EXPECTED_OUTPUT)
+            });
+        }
+        data[0].appData.externalPayload = externalBlobs;
     }
 
     function _bindParameters(uint8 actionCount, uint8 resourcePairCount, uint8 actionIndex, uint8 resourceIndex)
