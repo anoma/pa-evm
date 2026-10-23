@@ -48,6 +48,16 @@ library ForwarderCallOrdering {
     /// call-carrying resources.
     error TooManyCallCarryingResources(uint256 count);
 
+    /// @notice Thrown if a carried call order does not name each call list exactly once.
+    error CallOrderNotAPermutation();
+
+    /// @notice Thrown if the action indices of the call lists decrease along a carried call order.
+    error CallOrderNotInActionOrder(uint256 actionIndex);
+
+    /// @notice Thrown if a carried call order runs a call list on the wrong side of a call list that an `afterTags` or
+    /// `beforeTags` entry names.
+    error CallOrderViolatesConstraint(bytes32 tag);
+
     /// @notice Orders the call lists so that their forwarder calls meet the ordering constraints, and checks that
     /// each `afterTags` and `beforeTags` entry names a call-carrying resource of the transaction. The NatSpec of
     /// `ProtocolAdapter._executeForwarderCalls` states the rules of the order.
@@ -62,6 +72,58 @@ library ForwarderCallOrdering {
         bool isAcyclic;
         (isAcyclic, orderedIndices) = constraints.topologicalSort();
         require(isAcyclic, CyclicOrderingConstraints());
+    }
+
+    /// @notice Checks a call order that a transaction carries, in three steps that each run only if the ones before
+    /// passed: the order names each call list exactly once, the action indices of the call lists never decrease along
+    /// it, and it meets every ordering constraint. As in `order`, each `afterTags` and `beforeTags` entry must name a
+    /// call-carrying resource of the transaction.
+    /// @dev Builds no graph, so it sets no limit on the number of call lists.
+    /// @param callLists The call lists of the transaction.
+    /// @param callOrder The indices of `callLists`, in the order in which their calls are executed.
+    function checkCallOrder(CallList[] memory callLists, uint256[] memory callOrder) internal pure {
+        uint256 callListCount = callLists.length;
+        require(callOrder.length == callListCount, CallOrderNotAPermutation());
+
+        // The position of each call list in `callOrder`, plus one, so that zero marks a call list not seen yet.
+        uint256[] memory positions = new uint256[](callListCount);
+        for (uint256 position = 0; position < callListCount; ++position) {
+            uint256 callListIndex = callOrder[position];
+            require(callListIndex < callListCount && positions[callListIndex] == 0, CallOrderNotAPermutation());
+            positions[callListIndex] = position + 1;
+        }
+
+        for (uint256 position = 1; position < callListCount; ++position) {
+            uint256 actionIndex = callLists[callOrder[position]].actionIndex;
+            require(
+                actionIndex >= callLists[callOrder[position - 1]].actionIndex, CallOrderNotInActionOrder(actionIndex)
+            );
+        }
+
+        for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {
+            IProtocolAdapter.ForwarderCall[] memory calls = callLists[callListIndex].calls;
+            uint256 callCount = calls.length;
+
+            for (uint256 c = 0; c < callCount; ++c) {
+                bytes32[] memory afterTags = calls[c].afterTags;
+                uint256 afterTagCount = afterTags.length;
+                for (uint256 a = 0; a < afterTagCount; ++a) {
+                    bytes32 afterTag = afterTags[a];
+                    uint256 source = _indexOf({callLists: callLists, tag: afterTag});
+                    require(source != callListCount, AfterTagNamesNoCallCarryingResource(afterTag));
+                    require(positions[source] < positions[callListIndex], CallOrderViolatesConstraint(afterTag));
+                }
+
+                bytes32[] memory beforeTags = calls[c].beforeTags;
+                uint256 beforeTagCount = beforeTags.length;
+                for (uint256 b = 0; b < beforeTagCount; ++b) {
+                    bytes32 beforeTag = beforeTags[b];
+                    uint256 target = _indexOf({callLists: callLists, tag: beforeTag});
+                    require(target != callListCount, BeforeTagNamesNoCallCarryingResource(beforeTag));
+                    require(positions[callListIndex] < positions[target], CallOrderViolatesConstraint(beforeTag));
+                }
+            }
+        }
     }
 
     /// @notice Decodes the call lists of a transaction, in the order of the actions, with the consumed resources of an
