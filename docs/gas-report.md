@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3973324 |           18636 |        |        |        |         |
+|                                          3934275 |           18456 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             301 |    301 |    301 |    301 |      10 |
@@ -11,14 +11,14 @@
 | VERSION                                          |            1051 |   1051 |   1051 |   1051 |       3 |
 | commitmentCount                                  |             693 |   1693 |   1693 |   2693 |      12 |
 | denyLogicRefs                                    |             700 |  31694 |  28841 |  52981 |      11 |
-| execute                                          |            2868 | 186086 | 196556 | 433894 |      59 |
+| execute                                          |            2868 | 186261 | 197251 | 434925 |      59 |
 | getImplementation                                |             611 |    777 |    611 |   2611 |      12 |
 | getKindTreeRoot                                  |            2825 |   2825 |   2825 |   2825 |       2 |
 | initialize                                       |            3032 | 150631 | 152870 | 152870 |     125 |
 | isCommitmentTreeRootHistorical                   |             894 |    894 |    894 |    894 |       1 |
 | isLogicRefDenied                                 |            2417 |   2420 |   2420 |   2424 |      12 |
 | isNullifierContained                             |             749 |   2748 |   2749 |   2749 |    2713 |
-| latestCommitmentTreeRoot                         |            6947 |  12001 |   9653 |  17723 |      16 |
+| latestCommitmentTreeRoot                         |            4836 |   9048 |   8011 |  13252 |      16 |
 | migrateNullifierSet                              |             693 |    693 |    693 |    693 |       2 |
 | owner                                            |             542 |   2354 |   2542 |   2542 |      32 |
 | pause                                            |            2526 |  21611 |  25815 |  25815 |      12 |
@@ -41,19 +41,19 @@
 | test/mocks/CommitmentTree.m.sol:CommitmentTreeMock Contract |                 |       |        |       |         |
 |-------------------------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                                             | Deployment Size |       |        |       |         |
-|                                                      831550 |            3698 |       |        |       |         |
+|                                                      786757 |            3491 |       |        |       |         |
 |                                                             |                 |       |        |       |         |
 | Function Name                                               | Min             | Avg   | Median | Max   | # Calls |
-| addCommitment                                               |           17970 | 43368 |  30998 | 97286 |      64 |
+| addCommitment                                               |           12406 | 33881 |  15140 | 96547 |      57 |
 | addCommitmentTreeRoot                                       |            2460 | 18358 |  23658 | 23658 |       4 |
 | commitmentCount                                             |            2355 |  2355 |   2355 |  2355 |      42 |
 | commitmentTreeCapacity                                      |            2452 |  2452 |   2452 |  2452 |       1 |
 | commitmentTreeDepth                                         |            2317 |  2317 |   2317 |  2317 |      36 |
 | commitmentTreeSides                                         |            2730 | 12114 |  14045 | 16308 |      34 |
 | commitmentTreeZeros                                         |            4839 | 14149 |  16154 | 18417 |      35 |
-| initialize                                                  |            2522 | 86953 |  93677 | 93677 |      24 |
+| initialize                                                  |            2522 | 86661 |  93677 | 93677 |      23 |
 | isCommitmentTreeRootHistorical                              |            2498 |  2498 |   2498 |  2498 |       4 |
-| latestCommitmentTreeRoot                                    |            6625 | 10221 |   9980 | 14677 |      11 |
+| latestCommitmentTreeRoot                                    |            4485 | 12680 |  12876 | 20308 |      45 |
 
 | test/mocks/NullifierSet.m.sol:NullifierSetMock Contract |                 |       |        |       |         |
 |---------------------------------------------------------|-----------------|-------|--------|-------|---------|

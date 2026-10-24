@@ -1,5 +1,6 @@
-//! The commitment tree of a protocol adapter. The adapter stores only its commitment count and, for each level, the
-//! last left node (its sides), so the tree starts from these and adds the leaves the tests create.
+//! The commitment tree of a protocol adapter. The adapter stores only its commitment count and, for each level where
+//! the count has a one bit, the root of the last complete left subtree (its sides), so the tree starts from these and
+//! adds the leaves the tests create.
 
 use alloy::primitives::B256;
 use alloy::providers::DynProvider;

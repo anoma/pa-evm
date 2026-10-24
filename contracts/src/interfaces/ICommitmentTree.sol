@@ -22,8 +22,9 @@ interface ICommitmentTree {
     /// @return capacity The computed tree capacity.
     function commitmentTreeCapacity() external view returns (uint256 capacity);
 
-    /// @notice Returns the sides of the commitment tree: for each level below the root, the last left node on that
-    /// level. The tree keeps them to add commitments without storing the earlier ones.
+    /// @notice Returns the sides of the commitment tree: for each level below the root, the root of the last complete
+    /// left subtree on that level. The tree keeps them to add commitments without storing the earlier ones. Only the
+    /// levels where the commitment count has a one bit are meaningful; the others hold stale values.
     /// @return sides The sides, from the leaf level up.
     function commitmentTreeSides() external view returns (bytes32[] memory sides);
 

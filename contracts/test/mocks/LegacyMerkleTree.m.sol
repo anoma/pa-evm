@@ -1,0 +1,153 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {Arrays} from "@openzeppelin-contracts-5.7.0/utils/Arrays.sol";
+
+import {SHA256} from "../../src/libs/SHA256.sol";
+
+/// @title LegacyMerkleTree
+/// @notice The `MerkleTree` of the protocol adapter before `push` wrote one side, kept verbatim as a stand-in for the
+/// state and the behavior of the deployed trees. `push` computes the root and writes every left-child level.
+/// @dev This is a modified version of the OpenZeppelin `MerkleTree` implementation
+/// (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.4.0/contracts/utils/structs/MerkleTree.sol).
+/// @custom:security-contact security@anoma.foundation
+library LegacyMerkleTree {
+    struct Tree {
+        uint256 _nextLeafIndex;
+        bytes32[] _sides;
+        bytes32[] _zeros;
+    }
+
+    /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
+    /// and returns the initial root of the empty tree.
+    /// @param self The tree data structure.
+    /// @return initialRoot The initial root of the empty tree.
+    function setup(Tree storage self) internal returns (bytes32 initialRoot) {
+        initialRoot = SHA256.EMPTY_HASH;
+
+        // Store the root of the empty subtree of depth 0.
+        self._zeros.push(SHA256.EMPTY_HASH);
+
+        self._nextLeafIndex = 0;
+    }
+
+    /// @notice Pushes a leaf to the tree.
+    /// @param self The tree data structure.
+    /// @param leaf The leaf to add.
+    /// @return index The index of the leaf.
+    /// @return newRoot The new root of the tree.
+    function push(Tree storage self, bytes32 leaf) internal returns (uint256 index, bytes32 newRoot) {
+        // Cache the tree depth read.
+        uint256 treeDepth = depth(self);
+
+        // Get the next leaf index and increment it after assignment.
+        index = self._nextLeafIndex++;
+
+        // Rebuild the branch from leaf to root.
+        uint256 currentIndex = index;
+        bytes32 currentLevelHash = leaf;
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            // Compute the next level hash for depth `i+1`.
+            // Check whether the `currentIndex` node is the left or right child of its parent.
+            if (isLeftChild(currentIndex)) {
+                // Store the current hash as the sibling (side) for the current level.
+                // NOTE: The next push reads this side, and the tree depth bounds the writes.
+                // forge-lint: disable-next-line(costly-loop)
+                Arrays.unsafeAccess(self._sides, i).value = currentLevelHash;
+
+                // Compute the current level hash using the right sibling, which is the zero hash of this level.
+                currentLevelHash = SHA256.hash(currentLevelHash, Arrays.unsafeAccess(self._zeros, i).value);
+            } else {
+                // Compute the current level hash using the left sibling (side).
+                currentLevelHash = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, currentLevelHash);
+            }
+
+            currentIndex >>= 1;
+        }
+
+        // Expand the tree if the capacity is reached.
+        if (self._nextLeafIndex == capacity(self)) {
+            // Store the current level hash as the sibling (side).
+            // This hash is the root of the left subtree.
+            self._sides.push(currentLevelHash);
+
+            // Cache the hash of the empty subtree (zero).
+            // This hash is the root of the right subtree of the expanded tree.
+            bytes32 currentZero = Arrays.unsafeAccess(self._zeros, treeDepth).value;
+
+            // Update the current level hash by computing the hash of the left and right subtree hashes.
+            // This hash is the root of the expanded subtree.
+            currentLevelHash = SHA256.hash(currentLevelHash, currentZero);
+
+            // Compute and store the root of the empty subtree of next depth.
+            self._zeros.push(SHA256.hash(currentZero, currentZero));
+        }
+
+        newRoot = currentLevelHash;
+    }
+
+    /// @notice Computes the root of the tree in its current state.
+    /// @param self The tree data structure.
+    /// @return treeRoot The root of the tree.
+    function currentRoot(Tree storage self) internal view returns (bytes32 treeRoot) {
+        uint256 treeDepth = depth(self);
+        uint256 index = self._nextLeafIndex;
+
+        treeRoot = Arrays.unsafeAccess(self._zeros, 0).value;
+        for (uint256 i = 0; i < treeDepth; ++i) {
+            if (isLeftChild(index)) {
+                treeRoot = SHA256.hash(treeRoot, Arrays.unsafeAccess(self._zeros, i).value);
+            } else {
+                treeRoot = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, treeRoot);
+            }
+
+            index >>= 1;
+        }
+    }
+
+    /// @notice Returns the tree depth.
+    /// @param self The tree data structure.
+    /// @return treeDepth The depth of the tree.
+    function depth(Tree storage self) internal view returns (uint8 treeDepth) {
+        // The tree gains one level per capacity doubling, so the depth cannot reach 256.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        treeDepth = uint8(self._sides.length);
+    }
+
+    /// @notice Returns the number of leaves that have been added to the tree.
+    /// @param self The tree data structure.
+    /// @return count The number of leaves in the tree.
+    function leafCount(Tree storage self) internal view returns (uint256 count) {
+        count = self._nextLeafIndex;
+    }
+
+    /// @notice Returns the sides of the tree: for each level below the root, the last left node on that level. `push`
+    /// keeps them to add leaves without storing the earlier ones.
+    /// @param self The tree data structure.
+    /// @return treeSides The sides, from the leaf level up.
+    function sides(Tree storage self) internal view returns (bytes32[] memory treeSides) {
+        treeSides = self._sides;
+    }
+
+    /// @notice Returns the zeros of the tree: for each level up to the root, the root of an empty subtree of that
+    /// height.
+    /// @param self The tree data structure.
+    /// @return treeZeros The zeros, from the leaf level up.
+    function zeros(Tree storage self) internal view returns (bytes32[] memory treeZeros) {
+        treeZeros = self._zeros;
+    }
+
+    /// @notice Calculates the capacity of the tree.
+    /// @param self The tree data structure.
+    /// @return treeCapacity The computed tree capacity.
+    function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
+        treeCapacity = uint256(1) << depth(self); // 2^treeDepth
+    }
+
+    /// @notice Checks whether a node is the left or right child according to its index.
+    /// @param index The index to check.
+    /// @return isLeft Whether this node is the left or right child.
+    function isLeftChild(uint256 index) internal pure returns (bool isLeft) {
+        isLeft = (index & 1) == 0;
+    }
+}
