@@ -80,7 +80,7 @@ library TxGen {
                     valueCommitmentRandomness: valueCommitmentRandomness(consumedData[i].nullifier)
                 })
             );
-            actionDelta = (i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
+            actionDelta = (i == 0) ? resourceDelta : DeltaGen.add(actionDelta, resourceDelta);
         }
 
         for (uint256 i = 0; i < createdCount; ++i) {
@@ -99,7 +99,7 @@ library TxGen {
                     valueCommitmentRandomness: valueCommitmentRandomness(createdData[i].commitment)
                 })
             );
-            actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
+            actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : DeltaGen.add(actionDelta, resourceDelta);
         }
 
         action = IProtocolAdapter.Action({
