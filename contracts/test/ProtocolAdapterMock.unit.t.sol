@@ -538,6 +538,42 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         _mockPa.execute(txn);
     }
 
+    function test_execute_reverts_on_a_non_canonical_encoding_of_the_actions() public {
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
+        });
+
+        bytes memory actions = _withoutFirstWord(abi.encode(txn.actions));
+        bytes memory deltaProof = _withoutFirstWord(abi.encode(txn.deltaProof));
+        bytes memory aggregationProof = _withoutFirstWord(abi.encode(txn.aggregationProof));
+
+        // A zero word between the actions and the delta proof leaves the decoded transaction unchanged, but the
+        // actions are no longer encoded canonically.
+        uint256 deltaProofOffset = 0x80 + actions.length + 0x20;
+        // solhint-disable-next-line func-named-parameters
+        bytes memory nonCanonical = bytes.concat(
+            ProtocolAdapter.execute.selector,
+            bytes32(uint256(0x20)),
+            bytes32(uint256(0x80)),
+            bytes32(deltaProofOffset),
+            bytes32(deltaProofOffset + deltaProof.length),
+            txn.kindTreeRoot,
+            actions,
+            bytes32(0),
+            deltaProof,
+            aggregationProof
+        );
+
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, bytes memory returnData) = address(_mockPa).call(nonCanonical);
+        assertFalse(success);
+        assertEq(bytes4(returnData), VerificationFailed.selector);
+
+        _mockPa.execute(txn);
+    }
+
     function _exampleResourceAndBlobAppData(uint256 nonce)
         private
         view
@@ -580,5 +616,12 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
     /// @dev Flips all bits of a seal byte to invalidate the proof it belongs to.
     function _flipBits(bytes1 sealByte) private pure returns (bytes1 flipped) {
         flipped = sealByte ^ bytes1(0xff);
+    }
+
+    function _withoutFirstWord(bytes memory data) private pure returns (bytes memory result) {
+        result = new bytes(data.length - 32);
+        for (uint256 i = 0; i < result.length; ++i) {
+            result[i] = data[i + 32];
+        }
     }
 }

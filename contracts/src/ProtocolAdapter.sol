@@ -13,7 +13,6 @@ import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
-import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {ForwarderCallOrdering} from "./libs/ForwarderCallOrdering.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
@@ -40,7 +39,6 @@ contract ProtocolAdapter is
     LogicRefDenylist,
     KindTreeRoot
 {
-    using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
     using ForwarderCallOrdering for Action[];
@@ -452,11 +450,21 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
-        // root the transaction carries.
+        // Reconstruct the aggregation journal `abi.encode(complianceKey, kindTreeRoot, actions)` from the injected
+        // compliance circuit verifying key and the kind tree root the transaction carries. The canonical encoding of
+        // the actions is the calldata from their length to the length of the delta proof, so the journal hashes it in
+        // place. A transaction in another encoding fails the aggregation proof.
+        Action[] calldata actions = transaction.actions;
+        bytes calldata deltaProof = transaction.deltaProof;
+        uint256 start;
+        uint256 end;
+        // forge-lint: disable-next-item(inline-assembly)
+        assembly {
+            start := sub(actions.offset, 0x20)
+            end := sub(deltaProof.offset, 0x20)
+        }
         bytes32 journalDigest = sha256(
-            transaction.actions
-                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTreeRoot: transaction.kindTreeRoot})
+            abi.encodePacked(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, uint256(0x60), msg.data[start:end])
         );
 
         // Process the aggregation proof.
