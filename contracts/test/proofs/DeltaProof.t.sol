@@ -353,6 +353,23 @@ contract DeltaProofTest is Test {
         );
     }
 
+    /// @dev The proof is the one that `sign_call_order` of the bindings makes, as `crates/bindings/tests/call_order.rs`
+    /// checks: the order `[1, 0]` of one action with the root `0x11..11`, signed with the delta witness 1.
+    function test_verify_accepts_a_call_order_that_the_bindings_sign() public {
+        bytes32[] memory actionTreeRoots = new bytes32[](1);
+        actionTreeRoots[0] = 0x1111111111111111111111111111111111111111111111111111111111111111;
+        uint256[] memory callOrder = new uint256[](2);
+        callOrder[0] = 1;
+
+        DeltaProof.verify({
+            proof: hex"f2dc14e6d7df234de39fe8bc1a31083a215fc7613ad768a87e9148fdb8d30b110e792bcd2f6fa6135ae468fd1dc8a583ebcfde45c568e926e768cc91e571d7281b",
+            instance: DeltaGen.generateInstanceFromPreDelta(vm, 1),
+            verifyingKey: DeltaProof.computeVerifyingKeyWithCallOrder({
+                transactionId: DeltaProof.computeVerifyingKey(actionTreeRoots), callOrder: callOrder
+            })
+        });
+    }
+
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
         internal
         pure
