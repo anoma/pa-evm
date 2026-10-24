@@ -191,6 +191,66 @@ contract ForwarderCallOrderingTest is Test {
         ForwarderCallOrdering.checkCallOrder(callLists, callOrder);
     }
 
+    /// @dev Every order that `order` computes passes `checkCallOrder`, so `executeWithCallOrder` accepts each order in
+    /// which `execute` runs the calls. The fuzzer picks up to 8 call lists, the action of each, and up to 8 constraints
+    /// between them, each an `afterTags` or a `beforeTags` entry.
+    function testFuzz_checkCallOrder_accepts_each_order_that_order_computes(
+        uint8 callListCount,
+        uint8[8] memory actionSteps,
+        uint8 constraintCount,
+        uint8[3][8] memory constraints
+    ) public view {
+        callListCount = uint8(bound(callListCount, 1, 8));
+        constraintCount = uint8(bound(constraintCount, 0, 8));
+
+        ForwarderCallOrdering.CallList[] memory callLists = new ForwarderCallOrdering.CallList[](callListCount);
+        for (uint256 i = 0; i < callListCount; ++i) {
+            callLists[i].resourceTag = keccak256(abi.encode("resource", i));
+            // The call lists are in transaction order, and an action can carry no calls.
+            if (i != 0) callLists[i].actionIndex = callLists[i - 1].actionIndex + actionSteps[i] % 3;
+        }
+
+        uint256[] memory afterTagCounts = new uint256[](callListCount);
+        uint256[] memory beforeTagCounts = new uint256[](callListCount);
+        for (uint256 k = 0; k < constraintCount; ++k) {
+            if (constraints[k][2] % 2 == 0) ++afterTagCounts[constraints[k][1] % callListCount];
+            else ++beforeTagCounts[constraints[k][0] % callListCount];
+        }
+        for (uint256 i = 0; i < callListCount; ++i) {
+            callLists[i].calls = new IProtocolAdapter.ForwarderCall[](1);
+            callLists[i].calls[0].afterTags = new bytes32[](afterTagCounts[i]);
+            callLists[i].calls[0].beforeTags = new bytes32[](beforeTagCounts[i]);
+            (afterTagCounts[i], beforeTagCounts[i]) = (0, 0);
+        }
+
+        // Constraint `k` runs call list `constraints[k][0]` before call list `constraints[k][1]`.
+        for (uint256 k = 0; k < constraintCount; ++k) {
+            uint256 first = constraints[k][0] % callListCount;
+            uint256 second = constraints[k][1] % callListCount;
+            if (constraints[k][2] % 2 == 0) {
+                callLists[second].calls[0].afterTags[afterTagCounts[second]++] = callLists[first].resourceTag;
+            } else {
+                callLists[first].calls[0].beforeTags[beforeTagCounts[first]++] = callLists[second].resourceTag;
+            }
+        }
+
+        try this.orderInAnExternalCall(callLists) returns (uint256[] memory orderedIndices) {
+            ForwarderCallOrdering.checkCallOrder(callLists, orderedIndices);
+        } catch (bytes memory reason) {
+            // No order meets the constraints, so `execute` reverts as well.
+            assertEq(bytes4(reason), ForwarderCallOrdering.CyclicOrderingConstraints.selector, "only a cycle reverts");
+        }
+    }
+
+    /// @dev Calls `order` externally, so that a test can catch its revert.
+    function orderInAnExternalCall(ForwarderCallOrdering.CallList[] memory callLists)
+        external
+        pure
+        returns (uint256[] memory orderedIndices)
+    {
+        orderedIndices = ForwarderCallOrdering.order(callLists);
+    }
+
     /// @notice Builds three call lists without calls: 0 and 1 of action 0, and 2 of action 1.
     function _threeCallLists() private pure returns (ForwarderCallOrdering.CallList[] memory callLists) {
         callLists = new ForwarderCallOrdering.CallList[](3);
