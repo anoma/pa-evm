@@ -463,13 +463,11 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         );
 
         bytes32[] memory cms = TxGen.collectCommitments(txn);
-        bytes32 newRoot = newCmTree.latestCommitmentTreeRoot();
-
         for (uint256 i = 0; i < cms.length; ++i) {
-            newRoot = newCmTree.addCommitment(cms[i]);
+            newCmTree.addCommitment(cms[i]);
         }
 
-        newCmTree.addCommitmentTreeRoot(newRoot);
+        newCmTree.addCommitmentTreeRoot(newCmTree.latestCommitmentTreeRoot());
 
         assertTrue(
             _mockPa.latestCommitmentTreeRoot() == newCmTree.latestCommitmentTreeRoot(),

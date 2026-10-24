@@ -93,14 +93,13 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         emit CommitmentTreeRootAdded({root: initialRoot});
     }
 
-    /// @notice Adds a commitment to the accumulator and returns the new root.
+    /// @notice Adds a commitment to the accumulator.
+    /// @dev It computes no root. Use `_currentCommitmentTreeRoot` once after the last commitment of a transaction.
     /// @param commitment The commitment to add.
-    /// @return newRoot The resulting new root.
-    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
+    function _addCommitment(bytes32 commitment) internal {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
-        uint256 index;
-        (index, newRoot) = $._merkleTree.push(commitment);
+        $._merkleTree.push(commitment);
     }
 
     /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
@@ -121,6 +120,14 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
         isHistorical = $._historicalRoots[root];
+    }
+
+    /// @notice Computes the root of the tree with all commitments added so far.
+    /// @return root The current root.
+    function _currentCommitmentTreeRoot() internal view returns (bytes32 root) {
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        root = $._merkleTree.currentRoot();
     }
 
     /// @notice Returns the storage from the commitment tree storage location.
