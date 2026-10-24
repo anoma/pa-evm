@@ -336,23 +336,20 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         _mockPa.executeWithCallOrder(txn, callOrder);
     }
 
-    function test_executeWithCallOrder_reverts_on_a_call_order_that_runs_a_later_action_first() public {
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
-        resourceLists[0] = TxGen.ResourceLists({
-            consumed: _callCarryingResource({nonce: 0, callId: 1}),
-            created: _callCarryingResource({nonce: 1, callId: 2})
-        });
-        resourceLists[1] = TxGen.ResourceLists({
-            consumed: _callCarryingResource({nonce: 2, callId: 3}),
-            created: _callCarryingResource({nonce: 3, callId: 4})
-        });
+    function test_executeWithCallOrder_runs_a_later_action_first() public {
         uint256[] memory callOrder = new uint256[](4);
         (callOrder[0], callOrder[1], callOrder[2], callOrder[3]) = (2, 3, 0, 1);
 
-        IProtocolAdapter.Transaction memory txn =
-            vm.signCallOrder(vm.transaction(_mockVerifier, resourceLists), callOrder);
+        _assertCallOrderWith({txn: _twoActionTransaction(), callOrder: callOrder, expected: _callIds(3, 4, 1, 2)});
+    }
 
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderNotInActionOrder.selector, 0));
+    function test_executeWithCallOrder_reverts_on_a_call_order_that_splits_an_action() public {
+        uint256[] memory callOrder = new uint256[](4);
+        (callOrder[0], callOrder[1], callOrder[2], callOrder[3]) = (0, 2, 1, 3);
+
+        IProtocolAdapter.Transaction memory txn = vm.signCallOrder(_twoActionTransaction(), callOrder);
+
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderSplitsAction.selector, 0));
         _mockPa.executeWithCallOrder(txn, callOrder);
     }
 
@@ -446,6 +443,21 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
         for (uint256 i = 0; i < count; ++i) {
             assertEq(actual[i], expected[i], "value of the forwarder call");
         }
+    }
+
+    /// @notice Builds a transaction of two actions, each with a consumed and a created resource that carry one forwarder
+    /// call, with the call IDs 1 to 4 in transaction order.
+    function _twoActionTransaction() private returns (IProtocolAdapter.Transaction memory txn) {
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](2);
+        resourceLists[0] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 0, callId: 1}),
+            created: _callCarryingResource({nonce: 1, callId: 2})
+        });
+        resourceLists[1] = TxGen.ResourceLists({
+            consumed: _callCarryingResource({nonce: 2, callId: 3}),
+            created: _callCarryingResource({nonce: 3, callId: 4})
+        });
+        txn = vm.transaction(_mockVerifier, resourceLists);
     }
 
     /// @notice Builds a resource that carries one forwarder call. The call increments `callId`, so that the output

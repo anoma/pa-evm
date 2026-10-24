@@ -52,8 +52,8 @@ library ForwarderCallOrdering {
     /// lists takes only the empty order.
     error CallOrderNotAPermutation();
 
-    /// @notice Thrown if the action indices of the call lists decrease along a carried call order.
-    error CallOrderNotInActionOrder(uint256 actionIndex);
+    /// @notice Thrown if a carried call order does not run the call lists of an action together.
+    error CallOrderSplitsAction(uint256 actionIndex);
 
     /// @notice Thrown if a carried call order runs a call list on the wrong side of a call list that an `afterTags` or
     /// `beforeTags` entry names.
@@ -76,8 +76,8 @@ library ForwarderCallOrdering {
     }
 
     /// @notice Checks a call order that a transaction carries, in three steps that each run only if the ones before
-    /// passed: the order names each call list exactly once, the action indices of the call lists never decrease along
-    /// it, and it meets every ordering constraint. As in `order`, each `afterTags` and `beforeTags` entry must name a
+    /// passed: the order names each call list exactly once, it runs the call lists of an action together, as `order`
+    /// does, and it meets every ordering constraint. As in `order`, each `afterTags` and `beforeTags` entry must name a
     /// call-carrying resource of the transaction.
     /// @dev Builds no graph, so it sets no limit on the number of call lists.
     /// @param callLists The call lists of the transaction.
@@ -94,11 +94,20 @@ library ForwarderCallOrdering {
             positions[callListIndex] = position + 1;
         }
 
+        if (callListCount == 0) {
+            return;
+        }
+
+        // Whether the order has run the call lists of an action and moved on to another action. The call lists are in
+        // transaction order, so the last one has the largest action index.
+        bool[] memory isActionLeft = new bool[](callLists[callListCount - 1].actionIndex + 1);
         for (uint256 position = 1; position < callListCount; ++position) {
+            uint256 previousActionIndex = callLists[callOrder[position - 1]].actionIndex;
             uint256 actionIndex = callLists[callOrder[position]].actionIndex;
-            require(
-                actionIndex >= callLists[callOrder[position - 1]].actionIndex, CallOrderNotInActionOrder(actionIndex)
-            );
+            if (actionIndex != previousActionIndex) {
+                isActionLeft[previousActionIndex] = true;
+                require(!isActionLeft[actionIndex], CallOrderSplitsAction(actionIndex));
+            }
         }
 
         for (uint256 callListIndex = 0; callListIndex < callListCount; ++callListIndex) {

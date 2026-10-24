@@ -49,15 +49,19 @@ contract ForwarderCallOrderingTest is Test {
         ForwarderCallOrdering.checkCallOrder(_threeCallLists(), _indices(0, 1, 3));
     }
 
-    function test_checkCallOrder_reverts_on_an_order_that_runs_a_later_action_first() public {
-        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderNotInActionOrder.selector, 0));
+    function test_checkCallOrder_accepts_an_order_that_runs_a_later_action_first() public pure {
         ForwarderCallOrdering.checkCallOrder(_threeCallLists(), _indices(2, 0, 1));
     }
 
-    /// @dev The order runs action 1 first and also names call list 0 twice. The permutation step comes first.
-    function test_checkCallOrder_reports_a_call_list_named_twice_before_the_action_order() public {
+    function test_checkCallOrder_reverts_on_an_order_that_splits_an_action() public {
+        vm.expectRevert(abi.encodeWithSelector(ForwarderCallOrdering.CallOrderSplitsAction.selector, 0));
+        ForwarderCallOrdering.checkCallOrder(_threeCallLists(), _indices(0, 2, 1));
+    }
+
+    /// @dev The order splits action 0 and also names call list 0 twice. The permutation step comes first.
+    function test_checkCallOrder_reports_a_call_list_named_twice_before_a_split_action() public {
         vm.expectRevert(ForwarderCallOrdering.CallOrderNotAPermutation.selector);
-        ForwarderCallOrdering.checkCallOrder(_threeCallLists(), _indices(2, 0, 0));
+        ForwarderCallOrdering.checkCallOrder(_threeCallLists(), _indices(0, 2, 0));
     }
 
     function test_checkCallOrder_reverts_on_an_order_that_runs_a_call_list_before_its_after_tag() public {
