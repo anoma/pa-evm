@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {EllipticCurve} from "elliptic-curve-solidity-0.2.5/contracts/EllipticCurve.sol";
 import {VmSafe} from "forge-std-1.17.0/src/Vm.sol";
 
 import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {DeltaProof} from "../../src/libs/DeltaProof.sol";
 
 library DeltaGen {
     using DeltaGen for uint256;
@@ -131,6 +133,33 @@ library DeltaGen {
                 SECP256K1_ORDER
             );
         }
+    }
+
+    /// @notice Returns the elliptic curve point representing the zero delta.
+    /// @return zeroDelta The zero delta.
+    function zero() internal pure returns (IProtocolAdapter.Delta memory zeroDelta) {
+        zeroDelta = IProtocolAdapter.Delta({x: 0, y: 0});
+    }
+
+    /// @notice Adds two delta points affinely, as the reference of the Jacobian sum of `DeltaProof`.
+    /// @param lhs The left-hand side point that can also be the zero delta.
+    /// @param rhs The right-hand side point that must be a curve point.
+    /// @return sum The resulting curve point.
+    function add(IProtocolAdapter.Delta memory lhs, IProtocolAdapter.Delta memory rhs)
+        internal
+        pure
+        returns (IProtocolAdapter.Delta memory sum)
+    {
+        require(
+            EllipticCurve.isOnCurve({
+                _x: rhs.x, _y: rhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
+            }),
+            DeltaProof.PointNotOnCurve(rhs)
+        );
+
+        (sum.x, sum.y) = EllipticCurve.ecAdd({
+            _x1: lhs.x, _y1: lhs.y, _x2: rhs.x, _y2: rhs.y, _aa: DeltaProof._AA, _pp: DeltaProof._PP
+        });
     }
 
     /// @notice Computes the pre-delta `kind * signedQuantity + valueCommitmentRandomness` (mod `SECP256K1_ORDER`).

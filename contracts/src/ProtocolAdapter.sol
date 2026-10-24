@@ -42,7 +42,7 @@ contract ProtocolAdapter is
 {
     using Aggregation for Action[];
     using DeltaProof for bytes;
-    using DeltaProof for Delta;
+    using DeltaProof for DeltaProof.Jacobian;
     using ForwarderCallOrdering for Action[];
     using ForwarderCallOrdering for ExpirableBlob[];
     using ForwarderCallOrdering for ForwarderCallOrdering.CallList[];
@@ -102,7 +102,8 @@ contract ProtocolAdapter is
         require(_isKindTreeRootAccepted(transaction.kindTreeRoot), UnacceptedKindTreeRoot(transaction.kindTreeRoot));
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
-        Delta memory transactionDelta = DeltaProof.zero();
+        // slither-disable-next-line uninitialized-local
+        DeltaProof.Jacobian memory deltaSum;
         bool addedCommitments = false;
         uint256 callListCount = 0;
         bool hasOrderingConstraints = false;
@@ -122,10 +123,12 @@ contract ProtocolAdapter is
                 }
             }
 
-            transactionDelta = transactionDelta.add(action.unitDelta);
+            deltaSum.add(action.unitDelta);
 
             actionTreeRoots[i] = action.actionTreeRoot;
         }
+
+        Delta memory transactionDelta = deltaSum.toAffine();
 
         bytes32 transactionId = _verifyGlobalProofs({
             transaction: transaction, actionTreeRoots: actionTreeRoots, transactionDelta: transactionDelta
