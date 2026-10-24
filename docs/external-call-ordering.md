@@ -79,7 +79,7 @@ A transaction can also come with the order itself, through `executeWithCallOrder
 - The delta proof signs `keccak256(abi.encode(transactionId, callOrder))` instead of the transaction ID, so whoever relays the transaction cannot change or drop the order. Whoever holds the delta witness, such as the composer, chooses it.
 - The PA builds no graph. It checks that `callOrder` names each call list exactly once (`CallOrderNotAPermutation`), that it runs the call lists of an action together (`CallOrderSplitsAction`), and that every ordering constraint holds (`CallOrderViolatesConstraint`), in this order. Each tag must still name a call-carrying resource.
 - As with the computed order, the calls of an action run together, but the actions can run in any order that the constraints allow. So every order that `execute` computes is also a valid `callOrder`.
-- The limit of 256 call-carrying resources does not apply.
+- The same limit of 256 call-carrying resources applies once a call carries ordering constraints, which bounds the search for each tag.
 
 The ordering constraints stay the rules of the applications, which the logic proof of each resource binds through its app data, and the call order is the choice of whoever holds the delta witness within them.
 

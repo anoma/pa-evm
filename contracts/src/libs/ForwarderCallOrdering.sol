@@ -79,7 +79,8 @@ library ForwarderCallOrdering {
     /// passed: the order names each call list exactly once, it runs the call lists of an action together, as `order`
     /// does, and it meets every ordering constraint. As in `order`, each `afterTags` and `beforeTags` entry must name a
     /// call-carrying resource of the transaction.
-    /// @dev Builds no graph, so it sets no limit on the number of call lists.
+    /// @dev Builds no graph, but once a call carries ordering constraints it limits the number of call lists as `order`
+    /// does, which bounds the linear search for each tag.
     /// @param callLists The call lists of the transaction.
     /// @param callOrder The indices of `callLists`, in the order in which their calls are executed.
     function checkCallOrder(CallList[] memory callLists, uint256[] memory callOrder) internal pure {
@@ -117,6 +118,12 @@ library ForwarderCallOrdering {
             for (uint256 c = 0; c < callCount; ++c) {
                 bytes32[] memory afterTags = calls[c].afterTags;
                 uint256 afterTagCount = afterTags.length;
+                bytes32[] memory beforeTags = calls[c].beforeTags;
+                uint256 beforeTagCount = beforeTags.length;
+                if (afterTagCount + beforeTagCount != 0) {
+                    require(callListCount <= DirectedGraph.MAX_NODE_COUNT, TooManyCallCarryingResources(callListCount));
+                }
+
                 for (uint256 a = 0; a < afterTagCount; ++a) {
                     bytes32 afterTag = afterTags[a];
                     uint256 source = _indexOf({callLists: callLists, tag: afterTag});
@@ -124,8 +131,6 @@ library ForwarderCallOrdering {
                     require(positions[source] < positions[callListIndex], CallOrderViolatesConstraint(afterTag));
                 }
 
-                bytes32[] memory beforeTags = calls[c].beforeTags;
-                uint256 beforeTagCount = beforeTags.length;
                 for (uint256 b = 0; b < beforeTagCount; ++b) {
                     bytes32 beforeTag = beforeTags[b];
                     uint256 target = _indexOf({callLists: callLists, tag: beforeTag});

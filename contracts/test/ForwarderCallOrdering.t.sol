@@ -177,17 +177,21 @@ contract ForwarderCallOrderingTest is Test {
         ForwarderCallOrdering.checkCallOrder(callLists, _indices(1, 0, 2));
     }
 
-    /// @dev `order` reverts on this many call lists once a call carries a constraint.
-    function test_checkCallOrder_accepts_more_call_lists_than_a_graph_has_nodes() public pure {
-        uint256 callListCount = DirectedGraph.MAX_NODE_COUNT + 1;
-        ForwarderCallOrdering.CallList[] memory callLists = new ForwarderCallOrdering.CallList[](callListCount);
-        uint256[] memory callOrder = new uint256[](callListCount);
-        for (uint256 i = 0; i < callListCount; ++i) {
-            callLists[i].resourceTag = bytes32(i + 1);
-            callOrder[i] = callListCount - 1 - i;
-        }
+    /// @dev As `execute`, which builds no graph without ordering constraints.
+    function test_checkCallOrder_accepts_more_call_lists_than_a_graph_has_nodes_without_constraints() public pure {
+        (ForwarderCallOrdering.CallList[] memory callLists, uint256[] memory callOrder) = _tooManyCallLists();
+
+        ForwarderCallOrdering.checkCallOrder(callLists, callOrder);
+    }
+
+    /// @dev As `order`, which bounds the search for each tag.
+    function test_checkCallOrder_reverts_on_more_call_lists_than_a_graph_has_nodes_with_a_constraint() public {
+        (ForwarderCallOrdering.CallList[] memory callLists, uint256[] memory callOrder) = _tooManyCallLists();
         _constrain({callList: callLists[0], afterTag: callLists[1].resourceTag, beforeTag: bytes32(0)});
 
+        vm.expectRevert(
+            abi.encodeWithSelector(ForwarderCallOrdering.TooManyCallCarryingResources.selector, callLists.length)
+        );
         ForwarderCallOrdering.checkCallOrder(callLists, callOrder);
     }
 
@@ -249,6 +253,21 @@ contract ForwarderCallOrderingTest is Test {
         returns (uint256[] memory orderedIndices)
     {
         orderedIndices = ForwarderCallOrdering.order(callLists);
+    }
+
+    /// @notice Builds one more call list than a graph has nodes, all of one action, and the order that reverses them.
+    function _tooManyCallLists()
+        private
+        pure
+        returns (ForwarderCallOrdering.CallList[] memory callLists, uint256[] memory callOrder)
+    {
+        uint256 callListCount = DirectedGraph.MAX_NODE_COUNT + 1;
+        callLists = new ForwarderCallOrdering.CallList[](callListCount);
+        callOrder = new uint256[](callListCount);
+        for (uint256 i = 0; i < callListCount; ++i) {
+            callLists[i].resourceTag = bytes32(i + 1);
+            callOrder[i] = callListCount - 1 - i;
+        }
     }
 
     /// @notice Builds three call lists without calls: 0 and 1 of action 0, and 2 of action 1.
