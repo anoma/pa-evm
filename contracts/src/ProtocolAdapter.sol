@@ -39,7 +39,7 @@ contract ProtocolAdapter is
     KindTreeRoot
 {
     using DeltaProof for bytes;
-    using DeltaProof for Delta;
+    using DeltaProof for DeltaProof.Jacobian;
 
     /// @inheritdoc IVersion
     string public constant override VERSION = "2.0.0-rc.13";
@@ -98,7 +98,8 @@ contract ProtocolAdapter is
         require(_isKindTreeRootAccepted(transaction.kindTreeRoot), UnacceptedKindTreeRoot(transaction.kindTreeRoot));
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
-        Delta memory transactionDelta = DeltaProof.zero();
+        // slither-disable-next-line uninitialized-local
+        DeltaProof.Jacobian memory deltaSum;
         bool addedCommitments = false;
 
         for (uint256 i = 0; i < actionCount; ++i) {
@@ -110,10 +111,12 @@ contract ProtocolAdapter is
             }
 
             // Add the action delta to the transaction delta.
-            transactionDelta = transactionDelta.add(action.unitDelta);
+            deltaSum.add(action.unitDelta);
 
             actionTreeRoots[i] = action.actionTreeRoot;
         }
+
+        Delta memory transactionDelta = deltaSum.toAffine();
 
         // Verify the delta and aggregation proofs. The empty transaction is rejected above,
         // so both proofs are guaranteed to be checked.

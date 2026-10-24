@@ -12,6 +12,13 @@ import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 /// @notice A library containing methods of the delta proving system.
 /// @custom:security-contact security@anoma.foundation
 library DeltaProof {
+    /// @notice A curve point in Jacobian coordinates, where the all-zero value is the zero delta.
+    struct Jacobian {
+        uint256 x;
+        uint256 y;
+        uint256 z;
+    }
+
     /// @notice The x-coordinate of the curve generator point.
     uint256 internal constant _GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
 
@@ -33,27 +40,55 @@ library DeltaProof {
     /// @notice Thrown when a provided point is not on the curve.
     error PointNotOnCurve(IProtocolAdapter.Delta point);
 
-    /// @notice Returns the elliptic curve point representing the zero delta.
-    /// @return zeroDelta The zero delta.
-    function zero() internal pure returns (IProtocolAdapter.Delta memory zeroDelta) {
-        zeroDelta = IProtocolAdapter.Delta({x: 0, y: 0});
+    /// @notice Converts a Jacobian sum to affine coordinates with one modular inverse, computed as z^(p-2) by the
+    /// modexp precompile.
+    /// @param acc The Jacobian sum.
+    /// @return sum The affine point, which is the zero delta (0, 0) for z = 0, as 0^(p-2) = 0.
+    function toAffine(Jacobian memory acc) internal view returns (IProtocolAdapter.Delta memory sum) {
+        if (acc.z == 1) {
+            return IProtocolAdapter.Delta({x: acc.x, y: acc.y});
+        }
+
+        // forge-lint: disable-start(low-level-calls, custom-errors, literal-instead-of-constant)
+        // slither-disable-next-line low-level-calls
+        (bool ok, bytes memory out) = address(0x05).staticcall(abi.encode(32, 32, 32, acc.z, _PP - 2, _PP));
+        require(ok);
+        // forge-lint: disable-end(low-level-calls, custom-errors, literal-instead-of-constant)
+        uint256 zInv = abi.decode(out, (uint256));
+
+        uint256 zInv2 = mulmod(zInv, zInv, _PP);
+        sum.x = mulmod(acc.x, zInv2, _PP);
+        sum.y = mulmod(acc.y, mulmod(zInv, zInv2, _PP), _PP);
     }
 
-    /// @notice Adds two delta points and returns the sum.
-    /// @param lhs The left-hand side point that can also be the zero delta.
-    /// @param rhs The right-hand side point that must be a curve point.
-    /// @return sum The resulting curve point.
-    /// @dev Note that only the right-hand side point is checked to allow adding the zero delta from the left. This is
-    /// done due to the delta points being added sequentially starting from the zero delta in the
-    /// `ProtocolAdapter.execute()` function.
-    function add(IProtocolAdapter.Delta memory lhs, IProtocolAdapter.Delta memory rhs)
-        internal
-        pure
-        returns (IProtocolAdapter.Delta memory sum)
-    {
+    /// @notice Adds a delta point to a running Jacobian sum in place.
+    /// @param acc The running sum, starting from the zero delta.
+    /// @param rhs The point to add that must be a curve point.
+    /// @dev Only the added point is checked, as the running sum is built from checked points. The conversion to affine
+    /// coordinates is deferred to `toAffine`, so that summing the action deltas in the `ProtocolAdapter.execute()`
+    /// function costs one modular inverse instead of one per action.
+    function add(Jacobian memory acc, IProtocolAdapter.Delta memory rhs) internal pure {
         require(EllipticCurve.isOnCurve({_x: rhs.x, _y: rhs.y, _aa: _AA, _bb: _BB, _pp: _PP}), PointNotOnCurve(rhs));
 
-        (sum.x, sum.y) = EllipticCurve.ecAdd({_x1: lhs.x, _y1: lhs.y, _x2: rhs.x, _y2: rhs.y, _aa: _AA, _pp: _PP});
+        if (acc.z == 0) {
+            (acc.x, acc.y, acc.z) = (rhs.x, rhs.y, 1);
+            return;
+        }
+
+        // The Jacobian addition is undefined for equal x-coordinates, so the doubling and the cancellation to the zero
+        // delta are picked first by comparing the added point scaled to the running sum.
+        uint256 zz = mulmod(acc.z, acc.z, _PP);
+        if (acc.x == mulmod(rhs.x, zz, _PP)) {
+            if (acc.y == mulmod(rhs.y, mulmod(acc.z, zz, _PP), _PP)) {
+                (acc.x, acc.y, acc.z) = EllipticCurve.jacDouble({_x: acc.x, _y: acc.y, _z: acc.z, _aa: _AA, _pp: _PP});
+            } else {
+                (acc.x, acc.y, acc.z) = (0, 0, 0);
+            }
+            return;
+        }
+
+        (acc.x, acc.y, acc.z) =
+            EllipticCurve.jacAdd({_x1: acc.x, _y1: acc.y, _z1: acc.z, _x2: rhs.x, _y2: rhs.y, _z2: 1, _pp: _PP});
     }
 
     /// @notice Converts an elliptic curve point to an Ethereum account address.
