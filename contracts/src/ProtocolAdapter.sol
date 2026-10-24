@@ -364,10 +364,22 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
-        // root the transaction carries.
-        bytes32 journalDigest =
-            sha256(abi.encode(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, transaction.actions));
+        // Reconstruct the aggregation journal `abi.encode(complianceKey, kindTreeRoot, actions)` from the injected
+        // compliance circuit verifying key and the kind tree root the transaction carries. The canonical encoding of
+        // the actions is the calldata from their length to the length of the delta proof, so the journal hashes it in
+        // place. A transaction in another encoding fails the aggregation proof.
+        Action[] calldata actions = transaction.actions;
+        bytes calldata deltaProof = transaction.deltaProof;
+        uint256 start;
+        uint256 end;
+        // forge-lint: disable-next-item(inline-assembly)
+        assembly {
+            start := sub(actions.offset, 0x20)
+            end := sub(deltaProof.offset, 0x20)
+        }
+        bytes32 journalDigest = sha256(
+            abi.encodePacked(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, uint256(0x60), msg.data[start:end])
+        );
 
         // Process the aggregation proof.
         _processRiscZeroProof({

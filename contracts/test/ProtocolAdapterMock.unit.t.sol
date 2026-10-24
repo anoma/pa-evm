@@ -650,6 +650,38 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
+    function test_execute_reverts_on_a_non_canonical_encoding_of_the_actions() public {
+        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
+            mockVerifier: _mockVerifier,
+            nonce: 0,
+            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
+        });
+
+        bytes memory actions = _withoutFirstWord(abi.encode(txn.actions));
+        bytes memory deltaProof = _withoutFirstWord(abi.encode(txn.deltaProof));
+        bytes memory aggregationProof = _withoutFirstWord(abi.encode(txn.aggregationProof));
+
+        // A zero word between the actions and the delta proof leaves the decoded transaction unchanged, but the
+        // actions are no longer encoded canonically.
+        uint256 deltaProofOffset = 0x80 + actions.length + 0x20;
+        bytes memory nonCanonical = bytes.concat(
+            ProtocolAdapter.execute.selector,
+            abi.encode(
+                uint256(0x20), uint256(0x80), deltaProofOffset, deltaProofOffset + deltaProof.length, txn.kindTreeRoot
+            ),
+            actions,
+            bytes32(0),
+            deltaProof,
+            aggregationProof
+        );
+
+        (bool success, bytes memory returnData) = address(_mockPa).call(nonCanonical);
+        assertFalse(success);
+        assertEq(bytes4(returnData), VerificationFailed.selector);
+
+        _mockPa.execute(txn);
+    }
+
     /// @dev Builds a transaction of one action in which every resource calls its own forwarder. The resources are
     /// the consumed resources, then the created resources, and `forwarders` lists their forwarders in this order. Each
     /// consumed resource has quantity `createdCount` and each created resource quantity `consumedCount`, so the action
@@ -820,5 +852,12 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function _pair(bytes32 first, bytes32 second) private pure returns (bytes32[] memory pair) {
         pair = new bytes32[](2);
         (pair[0], pair[1]) = (first, second);
+    }
+
+    function _withoutFirstWord(bytes memory data) private pure returns (bytes memory result) {
+        result = new bytes(data.length - 32);
+        for (uint256 i = 0; i < result.length; ++i) {
+            result[i] = data[i + 32];
+        }
     }
 }
