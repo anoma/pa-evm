@@ -48,7 +48,8 @@ library ForwarderCallOrdering {
     /// call-carrying resources.
     error TooManyCallCarryingResources(uint256 count);
 
-    /// @notice Thrown if a carried call order does not name each call list exactly once.
+    /// @notice Thrown if a carried call order does not name each call list exactly once. A transaction without call
+    /// lists takes only the empty order.
     error CallOrderNotAPermutation();
 
     /// @notice Thrown if the action indices of the call lists decrease along a carried call order.
