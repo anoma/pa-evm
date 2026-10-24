@@ -552,17 +552,21 @@ contract ProtocolAdapterMockVerifierTest is ProtocolAdapterMockVerifierFixture {
         // A zero word between the actions and the delta proof leaves the decoded transaction unchanged, but the
         // actions are no longer encoded canonically.
         uint256 deltaProofOffset = 0x80 + actions.length + 0x20;
+        // solhint-disable-next-line func-named-parameters
         bytes memory nonCanonical = bytes.concat(
             ProtocolAdapter.execute.selector,
-            abi.encode(
-                uint256(0x20), uint256(0x80), deltaProofOffset, deltaProofOffset + deltaProof.length, txn.kindTreeRoot
-            ),
+            bytes32(uint256(0x20)),
+            bytes32(uint256(0x80)),
+            bytes32(deltaProofOffset),
+            bytes32(deltaProofOffset + deltaProof.length),
+            txn.kindTreeRoot,
             actions,
             bytes32(0),
             deltaProof,
             aggregationProof
         );
 
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returnData) = address(_mockPa).call(nonCanonical);
         assertFalse(success);
         assertEq(bytes4(returnData), VerificationFailed.selector);
