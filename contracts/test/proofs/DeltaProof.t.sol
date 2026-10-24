@@ -25,6 +25,7 @@ library DeltaFuzzing {
 
 contract DeltaProofTest is Test {
     using DeltaProof for IProtocolAdapter.Delta;
+    using DeltaProof for DeltaProof.Jacobian;
     using DeltaGen for DeltaGen.InstanceInputs[];
     using DeltaGen for DeltaGen.InstanceInputs;
     using DeltaGen for uint256;
@@ -66,7 +67,7 @@ contract DeltaProofTest is Test {
         IProtocolAdapter.Delta memory expectedDelta = DeltaGen.generateInstanceFromPreDelta(vm, expectedPreDelta);
 
         // Verify that the deltas add correctly
-        IProtocolAdapter.Delta memory computedDelta = DeltaProof.add(instance1, instance2);
+        IProtocolAdapter.Delta memory computedDelta = DeltaGen.add(instance1, instance2);
 
         assertEq(computedDelta.x, expectedDelta.x, "computed delta x should match expected");
         assertEq(computedDelta.y, expectedDelta.y, "computed delta y should match expected");
@@ -209,14 +210,14 @@ contract DeltaProofTest is Test {
         vm.assume(totalRandomness != 0);
 
         // Generate and accumulate delta instances
-        IProtocolAdapter.Delta memory deltaAcc = DeltaProof.zero();
+        IProtocolAdapter.Delta memory deltaAcc = DeltaGen.zero();
         for (uint256 i = 0; i < pairedInputs.length; i++) {
             // Normalize and validate each input
             pairedInputs[i].valueCommitmentRandomness = pairedInputs[i].valueCommitmentRandomness.modOrder();
             vm.assume(pairedInputs[i].computePreDelta() != 0);
 
             IProtocolAdapter.Delta memory instance = DeltaGen.generateInstance(vm, pairedInputs[i]);
-            deltaAcc = deltaAcc.add(instance);
+            deltaAcc = DeltaGen.add(deltaAcc, instance);
         }
 
         // Generate proof with the total accumulated randomness
@@ -250,7 +251,7 @@ contract DeltaProofTest is Test {
 
         // Attempt to add a point being not on the curve.
         vm.expectRevert(abi.encodeWithSelector(DeltaProof.PointNotOnCurve.selector, rhs), address(this));
-        lhs.add(rhs);
+        DeltaGen.add(lhs, rhs);
     }
 
     function testFuzz_add_reverts_when_adding_zero_from_the_right(uint32 k) public {
@@ -264,15 +265,58 @@ contract DeltaProofTest is Test {
             "Left-hand side point must be on the curve."
         );
 
-        IProtocolAdapter.Delta memory zero = DeltaProof.zero();
+        IProtocolAdapter.Delta memory zero = DeltaGen.zero();
 
         // Add the two points.
         vm.expectRevert(abi.encodeWithSelector(DeltaProof.PointNotOnCurve.selector, zero), address(this));
-        lhs.add(zero);
+        DeltaGen.add(lhs, zero);
+    }
+
+    /// @dev Each step adds a fresh multiple of the generator, a repeat of the previous point, or the running sum or its
+    /// negation (doubling and cancellation against a running sum with z != 1), so that sums pass through the zero
+    /// delta and restart from it.
+    function testFuzz_add_matches_the_chained_affine_sum(uint256[6] memory seeds, uint8 count) public view {
+        IProtocolAdapter.Delta[] memory points = new IProtocolAdapter.Delta[](1 + (count % 6));
+        uint256 running = 0;
+        uint256 k = 0;
+        for (uint256 i = 0; i < points.length; i++) {
+            uint256 mode = running == 0 ? 0 : seeds[i] % 4;
+            if (mode == 0) k = 1 + (seeds[i] >> 2) % (DeltaGen.SECP256K1_ORDER - 1);
+            if (mode == 2) k = running;
+            if (mode == 3) k = DeltaGen.SECP256K1_ORDER - running;
+            points[i] = _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
+            running = addmod(running, k, DeltaGen.SECP256K1_ORDER);
+        }
+
+        _assertJacobianSumMatchesChainedSum(points);
+    }
+
+    function test_add_handles_cancellation_and_repeated_doubling_with_a_running_sum_that_is_not_normalized()
+        public
+        view
+    {
+        IProtocolAdapter.Delta memory g =
+            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: 1});
+
+        // G + (-G) is the zero delta.
+        IProtocolAdapter.Delta[] memory points = new IProtocolAdapter.Delta[](2);
+        points[0] = g;
+        points[1] = IProtocolAdapter.Delta({x: g.x, y: DeltaProof._PP - g.y});
+        IProtocolAdapter.Delta memory sum = _jacobianSum(points);
+        assertEq(sum.x, 0, "G + (-G) x should be zero");
+        assertEq(sum.y, 0, "G + (-G) y should be zero");
+
+        // G + G doubles, and the sum continues from a running sum with z != 1.
+        points = new IProtocolAdapter.Delta[](4);
+        points[0] = g;
+        points[1] = g;
+        points[2] = g;
+        points[3] = g;
+        _assertJacobianSumMatchesChainedSum(points);
     }
 
     function testFuzz_add_adding_zero_from_the_left_produces_a_curve_point(uint32 k) public pure {
-        IProtocolAdapter.Delta memory zero = DeltaProof.zero();
+        IProtocolAdapter.Delta memory zero = DeltaGen.zero();
 
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory rhs =
@@ -285,7 +329,7 @@ contract DeltaProofTest is Test {
         );
 
         // Add the two points and check that the sum is a curve point.
-        IProtocolAdapter.Delta memory sum = zero.add(rhs);
+        IProtocolAdapter.Delta memory sum = DeltaGen.add(zero, rhs);
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: sum.x, _y: sum.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -295,7 +339,7 @@ contract DeltaProofTest is Test {
     }
 
     function testFuzz_add_adding_zero_from_the_left_is_the_identity_operation(uint32 k) public pure {
-        IProtocolAdapter.Delta memory zero = DeltaProof.zero();
+        IProtocolAdapter.Delta memory zero = DeltaGen.zero();
 
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory rhs =
@@ -308,7 +352,7 @@ contract DeltaProofTest is Test {
         );
 
         // Add the two points and check that the sum is a curve point.
-        IProtocolAdapter.Delta memory sum = zero.add(rhs);
+        IProtocolAdapter.Delta memory sum = DeltaGen.add(zero, rhs);
         assertEq(sum.x, rhs.x, "zero + rhs x should equal rhs x");
         assertEq(sum.y, rhs.y, "zero + rhs y should equal rhs y");
     }
@@ -334,7 +378,7 @@ contract DeltaProofTest is Test {
         );
 
         // Add the two points and check that the sum is a curve point.
-        IProtocolAdapter.Delta memory sum = lhs.add(rhs);
+        IProtocolAdapter.Delta memory sum = DeltaGen.add(lhs, rhs);
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: sum.x, _y: sum.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -344,13 +388,37 @@ contract DeltaProofTest is Test {
     }
 
     function test_zero_is_not_on_the_curve() public pure {
-        IProtocolAdapter.Delta memory p2 = DeltaProof.zero();
+        IProtocolAdapter.Delta memory p2 = DeltaGen.zero();
         assertFalse(
             EllipticCurve.isOnCurve({
                 _x: p2.x, _y: p2.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
             }),
             "zero point should not be on the curve"
         );
+    }
+
+    function _jacobianSum(IProtocolAdapter.Delta[] memory points)
+        internal
+        view
+        returns (IProtocolAdapter.Delta memory sum)
+    {
+        DeltaProof.Jacobian memory acc;
+        for (uint256 i = 0; i < points.length; i++) {
+            acc.add(points[i]);
+        }
+        sum = acc.toAffine();
+    }
+
+    /// @dev The reference is the affine `add` chained from the zero delta.
+    function _assertJacobianSumMatchesChainedSum(IProtocolAdapter.Delta[] memory points) internal view {
+        IProtocolAdapter.Delta memory chained = DeltaGen.zero();
+        for (uint256 i = 0; i < points.length; i++) {
+            chained = DeltaGen.add(chained, points[i]);
+        }
+
+        IProtocolAdapter.Delta memory sum = _jacobianSum(points);
+        assertEq(sum.x, chained.x, "Jacobian sum x should match the chained sum");
+        assertEq(sum.y, chained.y, "Jacobian sum y should match the chained sum");
     }
 
     function _getBoundedDeltaInstances(uint256 kind, DeltaFuzzing.InstanceInputsExceptKind[] memory fuzzerInputs)
