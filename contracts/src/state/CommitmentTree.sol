@@ -36,37 +36,27 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
 
     /// @inheritdoc ICommitmentTree
     function commitmentCount() external view override returns (uint256 count) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        count = $._merkleTree.leafCount();
+        count = _getCommitmentTreeStorage()._merkleTree.leafCount();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeDepth() external view override returns (uint8 depth) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        depth = $._merkleTree.depth();
+        depth = _getCommitmentTreeStorage()._merkleTree.depth();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeCapacity() external view override returns (uint256 capacity) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        capacity = $._merkleTree.capacity();
+        capacity = _getCommitmentTreeStorage()._merkleTree.capacity();
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentTreeSides() external view override returns (bytes32[] memory sides) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        sides = $._merkleTree.sides();
+    function commitmentTreeLeftSiblings() external view override returns (bytes32[] memory leftSiblings) {
+        leftSiblings = _getCommitmentTreeStorage()._merkleTree.leftSiblings();
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentTreeZeros() external view override returns (bytes32[] memory zeros) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        zeros = $._merkleTree.zeros();
+    function commitmentTreeEmptySubtreeRoots() external view override returns (bytes32[] memory emptySubtreeRoots) {
+        emptySubtreeRoots = _getCommitmentTreeStorage()._merkleTree.emptySubtreeRoots();
     }
 
     /// @inheritdoc ICommitmentTree
@@ -75,10 +65,8 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
-    function latestCommitmentTreeRoot() external view override returns (bytes32 root) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        root = $._merkleTree.currentRoot();
+    function latestCommitmentTreeRoot() public view override returns (bytes32 root) {
+        root = _getCommitmentTreeStorage()._merkleTree.currentRoot();
     }
 
     /// @notice Initializes the commitment tree by setting up the underlying Merkle tree and storing the initial root.
@@ -93,14 +81,10 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         emit CommitmentTreeRootAdded({root: initialRoot});
     }
 
-    /// @notice Adds a commitment to the accumulator and returns the new root.
+    /// @notice Adds a commitment to the accumulator.
     /// @param commitment The commitment to add.
-    /// @return newRoot The resulting new root.
-    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        uint256 index;
-        (index, newRoot) = $._merkleTree.push(commitment);
+    function _addCommitment(bytes32 commitment) internal {
+        _getCommitmentTreeStorage()._merkleTree.push(commitment);
     }
 
     /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
@@ -118,9 +102,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     /// @param root The commitment tree root to look up.
     /// @return isHistorical Whether a consumed resource can reference the root.
     function _isCommitmentTreeRootHistorical(bytes32 root) internal view returns (bool isHistorical) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        isHistorical = $._historicalRoots[root];
+        isHistorical = _getCommitmentTreeStorage()._historicalRoots[root];
     }
 
     /// @notice Returns the storage from the commitment tree storage location.

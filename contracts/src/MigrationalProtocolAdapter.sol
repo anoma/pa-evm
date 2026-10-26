@@ -76,7 +76,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     }
 
     /// @inheritdoc IMigrational
-    function migrateCommitmentTree(bytes32[] calldata sides)
+    function migrateCommitmentTree(bytes32[] calldata leftSiblings)
         external
         override
         onlyOwner
@@ -89,15 +89,15 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         uint256 leafCount = ILegacyCommitmentTree(_LEGACY_PROTOCOL_ADAPTER).commitmentCount();
         require(leafCount != 0, EmptyCommitmentTreeNotAllowed());
 
-        uint8 treeDepth = sides.length.toUint8();
+        uint8 treeDepth = leftSiblings.length.toUint8();
         uint256 capacity = uint256(1) << treeDepth;
         require(leafCount < capacity, LeafCountExceedsCapacity({leafCount: leafCount, capacity: capacity}));
 
-        $._merkleTree._nextLeafIndex = leafCount;
-        $._merkleTree._sides = sides;
-        $._merkleTree._zeros = _zeroHashes(treeDepth);
+        $._merkleTree._leafCount = leafCount;
+        $._merkleTree._leftSiblings = leftSiblings;
+        $._merkleTree._emptySubtreeRoots = _computeEmptySubtreeRoots(treeDepth);
 
-        // The sides are the only value a caller supplies, and this is what binds them to the legacy protocol
+        // The left siblings are the only value a caller supplies, and this is what binds them to the legacy protocol
         // adapter.
         bytes32 expectedRoot = ILegacyCommitmentTree(_LEGACY_PROTOCOL_ADAPTER).latestCommitmentTreeRoot();
         bytes32 root = $._merkleTree.currentRoot();
@@ -193,15 +193,15 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
 
     /// @notice Returns the roots of the empty subtrees, one per level, for a tree of the given depth.
     /// @param treeDepth The depth of the tree.
-    /// @return hashes The empty-subtree roots, from level 0 up to `treeDepth`.
+    /// @return roots The empty subtree roots, from level 0 up to `treeDepth`.
     /// @dev `MerkleTree.setup` stores the first and `MerkleTree.push` appends one per level it adds, so this
     /// reproduces what a tree of that depth holds.
-    function _zeroHashes(uint8 treeDepth) internal pure returns (bytes32[] memory hashes) {
-        hashes = new bytes32[](uint256(treeDepth) + 1);
-        hashes[0] = SHA256.EMPTY_HASH;
+    function _computeEmptySubtreeRoots(uint8 treeDepth) internal pure returns (bytes32[] memory roots) {
+        roots = new bytes32[](uint256(treeDepth) + 1);
+        roots[0] = SHA256.EMPTY_HASH;
 
         for (uint256 i = 0; i < treeDepth; ++i) {
-            hashes[i + 1] = SHA256.hash(hashes[i], hashes[i]);
+            roots[i + 1] = SHA256.hash(roots[i], roots[i]);
         }
     }
 }

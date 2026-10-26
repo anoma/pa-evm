@@ -13,6 +13,8 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     using MerkleTreeReference for bytes32[];
     using OzMerkleTree for OzMerkleTree.Bytes32PushTree;
 
+    uint256 internal constant _LEAVES = 2824;
+
     MerkleTree.Tree internal _merkleTree;
     MerkleTree.Tree internal _paMerkleTree;
     OzMerkleTree.Bytes32PushTree internal _ozMerkleTree;
@@ -59,13 +61,45 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         assertEq(_merkleTree.setup(), SHA256.EMPTY_HASH, "initial root should be the empty hash");
     }
 
-    function test_currentRoot_matches_the_root_returned_by_every_push() public {
+    function test_currentRoot_matches_the_padded_tree_root_after_every_push() public {
         assertEq(_merkleTree.setup(), _merkleTree.currentRoot(), "the empty tree's root differs");
 
-        for (uint256 i = 0; i < 20; ++i) {
-            (, bytes32 pushed) = _merkleTree.push(keccak256(abi.encode(i)));
-            assertEq(_merkleTree.currentRoot(), pushed, "the recomputed root differs after a push");
+        bytes32[] memory leaves = new bytes32[](_LEAVES);
+        for (uint256 i = 0; i < _LEAVES; ++i) {
+            leaves[i] = keccak256(abi.encode(i));
+            _merkleTree.push(leaves[i]);
+
+            if (_isChecked(i + 1)) {
+                assertEq(_merkleTree.currentRoot(), _paddedTreeRoot(leaves, i + 1), "the root differs after a push");
+            }
         }
+    }
+
+    /// @dev A push writes the leaf count and one left sibling, the root of the subtree the leaf completes, and grows
+    /// the arrays only when the capacity is reached.
+    function test_push_writes_one_left_sibling() public {
+        _merkleTree.setup();
+
+        // Leaf index 5 has one trailing one: it completes the pair of leaves 4 and 5, inside a tree of depth 3.
+        for (uint256 i = 0; i < 5; ++i) {
+            _merkleTree.push(keccak256(abi.encode(i)));
+        }
+        uint256 depthBefore = _merkleTree.depth();
+        uint256 emptySubtreeRootsBefore = _merkleTree._emptySubtreeRoots.length;
+        bytes32 untouched = _merkleTree._leftSiblings[2];
+
+        _merkleTree.push(keccak256("sixth"));
+        // Only the left sibling at level 1 changes, to the root of the pair.
+        assertEq(
+            _merkleTree._leftSiblings[1],
+            SHA256.hash(keccak256(abi.encode(4)), keccak256("sixth")),
+            "the left sibling at level 1"
+        );
+        assertEq(_merkleTree._leftSiblings[2], untouched, "a higher left sibling must not change");
+        assertEq(_merkleTree.depth(), depthBefore, "the depth must not change");
+        assertEq(
+            _merkleTree._emptySubtreeRoots.length, emptySubtreeRootsBefore, "the empty subtree roots must not change"
+        );
     }
 
     function testFuzz_push_returns_the_same_roots(bytes32[] memory leaves) public {
@@ -85,7 +119,9 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         uint256 ozIndex = 0;
         // Now add all the leaves to each Merkle tree
         for (uint256 i = 0; i < leaves.length; i++) {
-            (paIndex, paRoot) = _paMerkleTree.push(leaves[i]);
+            _paMerkleTree.push(leaves[i]);
+            paIndex = _paMerkleTree.leafCount() - 1;
+            paRoot = _paMerkleTree.currentRoot();
             (ozIndex, ozRoot) = _ozMerkleTree.push(leaves[i], _hashPair);
             // The lead counts must remain matched throughout
             assertEq(paIndex, ozIndex, "leaf indices should match during push");
@@ -236,6 +272,26 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     function testFuzz_gas_optimized(uint256 leavesCount) public pure {
         leavesCount = bound(leavesCount, 0, 1000000);
         MerkleTreeReference.computeMinimalTreeDepth(leavesCount);
+    }
+
+    /// @dev The counts checked: 1 to 40, around each power of two up to 2,048, and `_LEAVES`.
+    function _isChecked(uint256 count) internal pure returns (bool checked) {
+        if (count <= 40 || count == _LEAVES) {
+            return true;
+        }
+        for (uint256 p = 64; p <= 2048; p <<= 1) {
+            if (count + 1 >= p && count <= p + 1) {
+                return true;
+            }
+        }
+    }
+
+    function _paddedTreeRoot(bytes32[] memory leaves, uint256 count) internal pure returns (bytes32 root) {
+        bytes32[] memory prefix = new bytes32[](count);
+        for (uint256 i = 0; i < count; ++i) {
+            prefix[i] = leaves[i];
+        }
+        root = MerkleTreeReference.computeCommitmentTreeRoot(prefix);
     }
 
     /// @notice Hashes two `bytes32` values.

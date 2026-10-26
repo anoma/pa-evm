@@ -29,36 +29,31 @@ interface IProtocolAdapter {
 
     /// @notice The action object providing context separation between non-intersecting sets of resources. An action
     /// corresponds to one compliance unit constraining its consumed and created resources.
-    /// @param consumed The public data of the consumed resources.
-    /// @param created The public data of the created resources.
+    /// @param resources The part of the aggregation instance for each consumed and created resource, in the order
+    /// in which the protocol adapter processes them.
     /// @param unitDelta The action's delta value obtained from the underlying compliance unit.
-    /// @param actionTreeRoot The root of the tree containing the tags of all resources present in the action.
+    /// @param actionTreeRoot The root of the tree whose leaves are the tags of the action's resources, in the order of
+    /// `resources`.
     struct Action {
-        Consumed[] consumed;
-        Created[] created;
+        ResourceInstance[] resources;
         Delta unitDelta;
         bytes32 actionTreeRoot;
     }
 
-    /// @notice The public data of a consumed resource.
-    /// @param nullifier The nullifier of the resource.
+    /// @notice The part of the aggregation instance for one resource: its compliance data and the app data of its
+    /// logic proof.
+    /// @param consumed Whether the resource is consumed.
+    /// @param tag The tag of the resource: the nullifier of a consumed resource or the commitment of a created
+    /// resource.
     /// @param logicRef The reference to (the verifying key of) the resource logic.
-    /// @param commitmentTreeRoot The historical commitment tree root the resource's inclusion is proven against.
+    /// @param commitmentTreeRoot The historical commitment tree root that a consumed resource's inclusion is proven
+    /// against, or `bytes32(0)` for a created resource.
     /// @param appData The application data associated with the resource.
-    struct Consumed {
-        bytes32 nullifier;
+    struct ResourceInstance {
+        bool consumed;
+        bytes32 tag;
         bytes32 logicRef;
         bytes32 commitmentTreeRoot;
-        AppData appData;
-    }
-
-    /// @notice The public data of a created resource.
-    /// @param commitment The commitment of the resource.
-    /// @param logicRef The reference to (the verifying key of) the resource logic.
-    /// @param appData The application data associated with the resource.
-    struct Created {
-        bytes32 commitment;
-        bytes32 logicRef;
         AppData appData;
     }
 
@@ -73,8 +68,7 @@ interface IProtocolAdapter {
     /// @notice A struct containing payloads of different kinds.
     /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
     /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
-    /// @param externalPayload A list of blobs for encoding data connected with external calls. Each blob encodes one
-    /// `ForwarderCall` as `abi.encode(untrustedForwarder, input, expectedOutput, afterTags, beforeTags)`.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls.
     /// @param applicationPayload A list of blobs for application-specific purposes.
     struct AppData {
         ExpirableBlob[] resourcePayload;
@@ -89,22 +83,6 @@ interface IProtocolAdapter {
     struct ExpirableBlob {
         DeletionCriterion deletionCriterion;
         bytes blob;
-    }
-
-    /// @notice A forwarder call and its ordering constraints, which hold for all calls of its call list.
-    /// @param untrustedForwarder The forwarder contract to call.
-    /// @param input The input of the call.
-    /// @param expectedOutput The output that the call must return.
-    /// @param afterTags The tags of the call-carrying resources whose calls are executed before the calls of the call
-    /// list of this call.
-    /// @param beforeTags The tags of the call-carrying resources whose calls are executed after the calls of the call
-    /// list of this call.
-    struct ForwarderCall {
-        address untrustedForwarder;
-        bytes input;
-        bytes expectedOutput;
-        bytes32[] afterTags;
-        bytes32[] beforeTags;
     }
 
     /// @notice Emitted when a transaction is executed.
@@ -157,7 +135,7 @@ interface IProtocolAdapter {
     event ApplicationPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
     /// @notice Executes a transaction by adding the commitments and nullifiers to the commitment tree and nullifier
-    /// set, respectively, and by executing the forwarder calls of its resources.
+    /// set, respectively.
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 

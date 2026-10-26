@@ -51,6 +51,19 @@ library MerkleTreeReference {
         root = computeRoot({leaves: leaves, treeDepth: computeMinimalTreeDepth(leaves.length)});
     }
 
+    /// @notice Computes the root the commitment tree has for a number of leaves: the leaves padded with the empty hash
+    /// to a tree of depth the bit length of the leaf count, so that the tree gains a level when its capacity is reached.
+    /// @param leaves The leaves of the tree.
+    /// @return root The computed root.
+    /// @dev This method should only be used for trees with low depth.
+    function computeCommitmentTreeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
+        uint8 treeDepth = 0;
+        for (uint256 x = leaves.length; x > 0; x >>= 1) {
+            ++treeDepth;
+        }
+        root = computeRoot({leaves: leaves, treeDepth: treeDepth});
+    }
+
     /// @notice Computes the minimal required tree depth for a number of leaves.
     /// @param leavesCount The number of leaves.
     /// @return treeDepth The minimal required tree depth.

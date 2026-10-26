@@ -22,9 +22,10 @@ interface IMigrational {
 
     /// @notice Copies the commitment tree of the legacy protocol adapter in. Allowed once, while paused, and
     /// only while the legacy protocol adapter is stopped.
-    /// @param sides The stored sides of the tree of the legacy protocol adapter, one per level. This is the one part
-    /// of the tree that it does not expose through a getter, so it is passed in and checked against its root.
-    function migrateCommitmentTree(bytes32[] calldata sides) external;
+    /// @param leftSiblings The stored left siblings of the tree of the legacy protocol adapter, one per level. This is
+    /// the one part of the tree that it does not expose through a getter, so it is passed in and checked against its
+    /// root.
+    function migrateCommitmentTree(bytes32[] calldata leftSiblings) external;
 
     /// @notice Copies `count` nullifiers of the legacy protocol adapter in, from index `start` on. Allowed
     /// while paused, and only while the legacy protocol adapter is stopped. Call it until every nullifier is in.

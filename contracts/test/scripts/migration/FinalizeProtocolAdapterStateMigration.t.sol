@@ -112,10 +112,10 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
     }
 
     function test_run_resumes_a_run_that_stopped_after_the_unpause() public {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(DEFAULT_SENDER);
-        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(leftSiblings);
         MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT});
         MigrationalProtocolAdapter(_proxy).unpause();
         vm.stopPrank();
