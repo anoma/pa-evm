@@ -19,7 +19,7 @@ Two candidate formats:
 
 The journal is the ABI **arguments** encoding of the `AggregationInstance`
 fields: `abi.encode(complianceKey, kindTreeRoot, actions)` on-chain
-(`Aggregation.toJournal`), equivalently `abi_encode_params` over
+(`Aggregation.computeJournalDigest` hashes it in place from the calldata), equivalently `abi_encode_params` over
 `(compliance_key, kind_table_root, actions)` in Rust — no outer tuple
 offset.
 
