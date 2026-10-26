@@ -40,24 +40,25 @@ library MerkleTree {
         // Get the next leaf index and increment it after assignment.
         uint256 index = self._nextLeafIndex++;
 
-        // Fold the leaf with the left siblings (sides) while the node is a right child. The level counts the
-        // trailing ones of the index.
+        // Fold the leaf with the left siblings (sides) while the node is a right child; the result is the root of the
+        // subtree that the leaf completes. The level counts the trailing ones of the index.
+        bytes32 node = leaf;
         uint256 level = 0;
         for (uint256 currentIndex = index; !isLeftChild(currentIndex); currentIndex >>= 1) {
-            leaf = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, leaf);
+            node = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, node);
             ++level;
         }
 
         if (level == depth(self)) {
             // The capacity is reached. The leaf finishes the whole tree, whose root becomes the side of a new level.
-            self._sides.push(leaf);
+            self._sides.push(node);
 
             // Store the root of the empty subtree of the next depth.
             bytes32 currentZero = Arrays.unsafeAccess(self._zeros, level).value;
             self._zeros.push(SHA256.hash(currentZero, currentZero));
         } else {
             // NOTE: Only this level is written, the next `push` or `currentRoot` reads it.
-            Arrays.unsafeAccess(self._sides, level).value = leaf;
+            Arrays.unsafeAccess(self._sides, level).value = node;
         }
     }
 
