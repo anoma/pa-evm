@@ -134,7 +134,7 @@ contract ProtocolAdapter is
         // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
         // so there is no new root to store.
         if (addedCommitments) {
-            _addCommitmentTreeRoot(_currentCommitmentTreeRoot());
+            _addCommitmentTreeRoot(latestCommitmentTreeRoot());
         }
 
         // Execute the forwarder calls after all state changes of the transaction.

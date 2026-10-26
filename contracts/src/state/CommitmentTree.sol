@@ -75,7 +75,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
-    function latestCommitmentTreeRoot() external view override returns (bytes32 root) {
+    function latestCommitmentTreeRoot() public view override returns (bytes32 root) {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
         root = $._merkleTree.currentRoot();
@@ -94,7 +94,6 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @notice Adds a commitment to the accumulator.
-    /// @dev It computes no root. Use `_currentCommitmentTreeRoot` once after the last commitment of a transaction.
     /// @param commitment The commitment to add.
     function _addCommitment(bytes32 commitment) internal {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
@@ -120,14 +119,6 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
 
         isHistorical = $._historicalRoots[root];
-    }
-
-    /// @notice Computes the root of the tree with all commitments added so far.
-    /// @return root The current root.
-    function _currentCommitmentTreeRoot() internal view returns (bytes32 root) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        root = $._merkleTree.currentRoot();
     }
 
     /// @notice Returns the storage from the commitment tree storage location.
