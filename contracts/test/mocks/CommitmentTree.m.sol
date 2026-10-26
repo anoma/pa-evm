@@ -8,8 +8,8 @@ contract CommitmentTreeMock is CommitmentTree {
         __CommitmentTree_init();
     }
 
-    function addCommitment(bytes32 commitment) external returns (bytes32 newRoot) {
-        newRoot = _addCommitment(commitment);
+    function addCommitment(bytes32 commitment) external {
+        _addCommitment(commitment);
     }
 
     function addCommitmentTreeRoot(bytes32 root) external {
