@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3201765 |           15059 |        |        |        |         |
+|                                          3206287 |           15080 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             285 |    285 |    285 |    285 |      10 |
@@ -11,13 +11,13 @@
 | VERSION                                          |            1057 |   1057 |   1057 |   1057 |       3 |
 | commitmentCount                                  |             699 |   1699 |   1699 |   2699 |      12 |
 | denyLogicRefs                                    |             721 |  31742 |  28895 |  53059 |      11 |
-| execute                                          |            2890 | 165133 | 190393 | 419222 |      45 |
+| execute                                          |            2890 | 165104 | 190393 | 419212 |      45 |
 | getImplementation                                |             617 |    783 |    617 |   2617 |      12 |
 | getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       2 |
 | initialize                                       |            3032 | 150354 | 152876 | 152876 |     111 |
 | isLogicRefDenied                                 |            2423 |   2426 |   2426 |   2430 |      12 |
 | isNullifierContained                             |            2755 |   2755 |   2755 |   2755 |    2712 |
-| latestCommitmentTreeRoot                         |            4842 |   8515 |   7927 |  11662 |      16 |
+| latestCommitmentTreeRoot                         |            4842 |   8524 |   7805 |  11724 |      16 |
 | migrateNullifierSet                              |             693 |    693 |    693 |    693 |       2 |
 | owner                                            |             548 |   2360 |   2548 |   2548 |      32 |
 | pause                                            |            2526 |  21616 |  25821 |  25821 |      12 |
@@ -40,7 +40,7 @@
 | test/mocks/CommitmentTree.m.sol:CommitmentTreeMock Contract |                 |       |        |       |         |
 |-------------------------------------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                                             | Deployment Size |       |        |       |         |
-|                                                      788485 |            3499 |       |        |       |         |
+|                                                      793027 |            3520 |       |        |       |         |
 |                                                             |                 |       |        |       |         |
 | Function Name                                               | Min             | Avg   | Median | Max   | # Calls |
 | addCommitment                                               |           12415 | 34208 |  14946 | 96347 |      58 |
@@ -52,7 +52,7 @@
 | commitmentTreeLeftSiblings                                  |            2546 | 11963 |  13901 | 16172 |      34 |
 | initialize                                                  |            2522 | 86661 |  93677 | 93677 |      23 |
 | isCommitmentTreeRootHistorical                              |            2498 |  2498 |   2498 |  2498 |       4 |
-| latestCommitmentTreeRoot                                    |            4485 | 11373 |  11305 | 18285 |      45 |
+| latestCommitmentTreeRoot                                    |            4485 | 11192 |  11243 | 18260 |      45 |
 
 | test/mocks/NullifierSet.m.sol:NullifierSetMock Contract |                 |       |        |       |         |
 |---------------------------------------------------------|-----------------|-------|--------|-------|---------|
