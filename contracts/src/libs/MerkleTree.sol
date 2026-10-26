@@ -36,13 +36,13 @@ library MerkleTree {
     /// @param leaf The leaf to add.
     function push(Tree storage self, bytes32 leaf) internal {
         // Get the next leaf index and increment it after assignment.
-        uint256 index = self._nextLeafIndex++;
+        uint256 leafIndex = self._nextLeafIndex++;
 
         // Fold the leaf with the left siblings (sides) while the node is a right child; the result is the root of the
-        // subtree that the leaf completes. The level counts the trailing ones of the index.
+        // subtree that the leaf completes. The level counts the trailing ones of the leaf index.
         bytes32 node = leaf;
         uint256 level = 0;
-        for (uint256 currentIndex = index; isRightChild(currentIndex); currentIndex >>= 1) {
+        for (uint256 nodeIndex = leafIndex; isRightChild(nodeIndex); nodeIndex >>= 1) {
             node = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, node);
             ++level;
         }
@@ -66,21 +66,22 @@ library MerkleTree {
     /// @return treeRoot The root of the tree.
     function currentRoot(Tree storage self) internal view returns (bytes32 treeRoot) {
         uint256 treeDepth = depth(self);
-        uint256 index = self._nextLeafIndex;
+        uint256 nodeIndex = self._nextLeafIndex;
 
         // The root of the empty subtree of the current level.
         bytes32 zero = SHA256.EMPTY_HASH;
-        treeRoot = zero;
-        for (uint256 i = 0; i < treeDepth; ++i) {
-            if (isRightChild(index)) {
-                treeRoot = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, treeRoot);
+        bytes32 node = zero;
+        for (uint256 level = 0; level < treeDepth; ++level) {
+            if (isRightChild(nodeIndex)) {
+                node = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, node);
             } else {
-                treeRoot = SHA256.hash(treeRoot, zero);
+                node = SHA256.hash(node, zero);
             }
 
             zero = SHA256.hash(zero, zero);
-            index >>= 1;
+            nodeIndex >>= 1;
         }
+        treeRoot = node;
     }
 
     /// @notice Returns the tree depth.
@@ -124,9 +125,9 @@ library MerkleTree {
     }
 
     /// @notice Checks whether a node is the right child of its parent, according to its index on its level.
-    /// @param index The index of the node on its level.
+    /// @param nodeIndex The index of the node on its level.
     /// @return isRight Whether the node is a right child.
-    function isRightChild(uint256 index) internal pure returns (bool isRight) {
-        isRight = (index & 1) == 1;
+    function isRightChild(uint256 nodeIndex) internal pure returns (bool isRight) {
+        isRight = (nodeIndex & 1) == 1;
     }
 }
