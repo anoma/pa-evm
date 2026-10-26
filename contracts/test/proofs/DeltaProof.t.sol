@@ -229,9 +229,11 @@ contract DeltaProofTest is Test {
         DeltaFuzzing.verify({proof: proof, instance: deltaAcc, verifyingKey: verifyingKey});
     }
 
-    function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(uint32 k, IProtocolAdapter.Delta memory rhs)
-        public
-    {
+    function testFuzz_add_reverts_when_adding_a_non_curve_from_the_right(
+        uint32 k,
+        IProtocolAdapter.Delta memory rhs,
+        bool empty
+    ) public {
         // Ensure that `rhs` is not on the curve.
         vm.assume(
             !EllipticCurve.isOnCurve({
@@ -249,12 +251,15 @@ contract DeltaProofTest is Test {
             "Left-hand side point must be on the curve."
         );
 
+        DeltaProof.Jacobian memory acc;
+        if (!empty) acc.add(lhs);
+
         // Attempt to add a point being not on the curve.
         vm.expectRevert(abi.encodeWithSelector(DeltaProof.PointNotOnCurve.selector, rhs), address(this));
-        DeltaGen.add(lhs, rhs);
+        acc.add(rhs);
     }
 
-    function testFuzz_add_reverts_when_adding_zero_from_the_right(uint32 k) public {
+    function testFuzz_add_reverts_when_adding_zero_from_the_right(uint32 k, bool empty) public {
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory lhs =
             _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
@@ -266,10 +271,12 @@ contract DeltaProofTest is Test {
         );
 
         IProtocolAdapter.Delta memory zero = DeltaGen.zero();
+        DeltaProof.Jacobian memory acc;
+        if (!empty) acc.add(lhs);
 
         // Add the two points.
         vm.expectRevert(abi.encodeWithSelector(DeltaProof.PointNotOnCurve.selector, zero), address(this));
-        DeltaGen.add(lhs, zero);
+        acc.add(zero);
     }
 
     /// @dev Each step adds a fresh multiple of the generator, a repeat of the previous point, or the running sum or its
