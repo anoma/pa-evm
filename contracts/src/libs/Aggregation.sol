@@ -8,6 +8,13 @@ import {IProtocolAdapter} from "../interfaces/IProtocolAdapter.sol";
 /// @notice A library computing the digest of the RISC Zero journal of the aggregation instance.
 /// @custom:security-contact security@anoma.foundation
 library Aggregation {
+    /// @notice The size of the word that holds the length of a dynamic array or of `bytes` in front of its data.
+    uint256 internal constant _LENGTH_WORD_SIZE = 0x20;
+
+    /// @notice The offset of the actions in the journal, after its three head words: the compliance key, the kind tree
+    /// root and this offset.
+    uint256 internal constant _ACTIONS_OFFSET = 0x60;
+
     /// @notice Computes the SHA-256 digest of the RISC Zero journal of the aggregation instance,
     /// `abi.encode(complianceKey, kindTreeRoot, actions)`, with the kind tree root and the actions of a transaction.
     /// @dev The canonical encoding of the actions is the calldata from their length to the length of the delta proof,
@@ -26,10 +33,10 @@ library Aggregation {
         uint256 end;
         // forge-lint: disable-next-item(inline-assembly)
         assembly {
-            start := sub(actions.offset, 0x20)
-            end := sub(deltaProof.offset, 0x20)
+            start := sub(actions.offset, _LENGTH_WORD_SIZE)
+            end := sub(deltaProof.offset, _LENGTH_WORD_SIZE)
         }
         journalDigest =
-            sha256(abi.encodePacked(complianceKey, transaction.kindTreeRoot, uint256(0x60), msg.data[start:end]));
+            sha256(abi.encodePacked(complianceKey, transaction.kindTreeRoot, _ACTIONS_OFFSET, msg.data[start:end]));
     }
 }
