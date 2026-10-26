@@ -13,7 +13,6 @@ import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol"
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
-import {Aggregation} from "./libs/Aggregation.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
 import {ForwarderCallOrdering} from "./libs/ForwarderCallOrdering.sol";
 import {VerifyingKeys} from "./libs/VerifyingKeys.sol";
@@ -40,7 +39,6 @@ contract ProtocolAdapter is
     LogicRefDenylist,
     KindTreeRoot
 {
-    using Aggregation for Action[];
     using DeltaProof for bytes;
     using DeltaProof for Delta;
     using ForwarderCallOrdering for Action[];
@@ -455,10 +453,8 @@ contract ProtocolAdapter is
 
         // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
         // root the transaction carries.
-        bytes32 journalDigest = sha256(
-            transaction.actions
-                .toJournal({complianceKey: VerifyingKeys._COMPLIANCE, kindTreeRoot: transaction.kindTreeRoot})
-        );
+        bytes32 journalDigest =
+            sha256(abi.encode(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, transaction.actions));
 
         // Process the aggregation proof.
         _processRiscZeroProof({
