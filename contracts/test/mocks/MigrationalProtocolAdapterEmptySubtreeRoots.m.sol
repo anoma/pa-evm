@@ -11,7 +11,7 @@ contract MigrationalProtocolAdapterEmptySubtreeRootsMock is MigrationalProtocolA
     {}
 
     /// @notice Returns the empty subtree roots the migrational protocol adapter writes for a tree of the given depth.
-    function computeEmptySubtreeRoots(uint8 treeDepth) external pure returns (bytes32[] memory roots) {
+    function computeEmptySubtreeRoots(uint8 treeDepth) external view returns (bytes32[] memory roots) {
         roots = _computeEmptySubtreeRoots(treeDepth);
     }
 }

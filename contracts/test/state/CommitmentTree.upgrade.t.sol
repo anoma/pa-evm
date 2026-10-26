@@ -113,7 +113,7 @@ contract CommitmentTreeUpgradeTest is Test {
         }
     }
 
-    function _root(bytes32[] memory leaves, uint256 count) internal pure returns (bytes32 root) {
+    function _root(bytes32[] memory leaves, uint256 count) internal view returns (bytes32 root) {
         bytes32[] memory prefix = new bytes32[](count);
         for (uint256 i = 0; i < count; ++i) {
             prefix[i] = leaves[i];

@@ -196,7 +196,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     /// @return roots The empty subtree roots, from level 0 up to `treeDepth`.
     /// @dev `MerkleTree.setup` stores the first and `MerkleTree.push` appends one per level it adds, so this
     /// reproduces what a tree of that depth holds.
-    function _computeEmptySubtreeRoots(uint8 treeDepth) internal pure returns (bytes32[] memory roots) {
+    function _computeEmptySubtreeRoots(uint8 treeDepth) internal view returns (bytes32[] memory roots) {
         roots = new bytes32[](uint256(treeDepth) + 1);
         roots[0] = SHA256.EMPTY_HASH;
 

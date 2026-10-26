@@ -441,7 +441,7 @@ library TxGen {
     /// @dev The action tree leaves are the tags in the order of the resources.
     function computeActionTreeRoot(IProtocolAdapter.ResourceInstance[] memory resources)
         internal
-        pure
+        view
         returns (bytes32 root)
     {
         bytes32[] memory tags = new bytes32[](resources.length);
