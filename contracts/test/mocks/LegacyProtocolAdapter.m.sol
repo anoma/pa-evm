@@ -5,7 +5,7 @@ import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 import {EnumerableSet} from "@openzeppelin-contracts-5.7.0/utils/structs/EnumerableSet.sol";
 
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
+import {LegacyMerkleTree as MerkleTree} from "./LegacyMerkleTree.m.sol";
 
 /// @notice A stand-in for the legacy protocol adapter, holding its state in the same storage layout and
 /// exposing the getters `MigrateProtocolAdapterState` reads. The legacy protocol adapter inherits

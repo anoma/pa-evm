@@ -12,6 +12,7 @@ import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterP
 import {MigrateProtocolAdapterState} from "../../../script/migration/MigrateProtocolAdapterState.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
 import {ICommitmentTree} from "../../../src/interfaces/ICommitmentTree.sol";
+import {INullifierSet} from "../../../src/interfaces/INullifierSet.sol";
 import {IProtocolAdapter} from "../../../src/interfaces/IProtocolAdapter.sol";
 import {SHA256} from "../../../src/libs/SHA256.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
@@ -166,7 +167,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         _migrationScript.verify({isProduction: true});
     }
 
-    function test_verify_accepts_a_proxy_that_settled_after_the_finalization() public {
+    function test_verify_checks_a_proxy_that_settled_after_the_finalization() public {
         _migrationScript.run({isProduction: false});
         _finalizationScript.run({isProduction: false});
         ProtocolAdapter pa = ProtocolAdapter(_proxy);
@@ -192,6 +193,11 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
             _legacyProtocolAdapter.latestCommitmentTreeRoot(),
             "the transaction should move the latest root on"
         );
+        _migrationScript.verify({isProduction: false});
+
+        bytes32 nullifier = _legacyProtocolAdapter.nullifierAtIndex(_NULLIFIER_COUNT / 2);
+        vm.mockCall(_proxy, abi.encodeCall(INullifierSet.isNullifierContained, (nullifier)), abi.encode(false));
+        vm.expectRevert(abi.encodeWithSelector(MigrateProtocolAdapterState.MissingNullifier.selector, nullifier));
         _migrationScript.verify({isProduction: false});
     }
 
@@ -227,6 +233,7 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
         bytes32[2] memory roots = [_legacyProtocolAdapter.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH];
 
         for (uint256 i = 0; i < roots.length; ++i) {
+            vm.mockCall(_proxy, abi.encodeCall(ICommitmentTree.commitmentCount, ()), abi.encode(_COMMITMENT_COUNT + 1));
             vm.mockCall(
                 _proxy, abi.encodeCall(ICommitmentTree.isCommitmentTreeRootHistorical, (roots[i])), abi.encode(false)
             );

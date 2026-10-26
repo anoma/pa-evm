@@ -259,7 +259,8 @@ contract ProtocolAdapterForwarderCallOrderingTest is ProtocolAdapterMockVerifier
             _mockPa.latestCommitmentTreeRoot(),
             "the protocol adapter and the separate commitment tree start with the same root"
         );
-        bytes32 newRoot = commitmentTree.addCommitment(_commitment(created[0]));
+        commitmentTree.addCommitment(_commitment(created[0]));
+        bytes32 newRoot = commitmentTree.latestCommitmentTreeRoot();
 
         consumed[0].appData.externalPayload[0].blob = _callBlob({
             untrustedForwarder: address(_fwd),

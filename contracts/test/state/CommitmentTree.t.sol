@@ -25,9 +25,8 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         assertTrue(_cmAcc.isCommitmentTreeRootHistorical(initialRoot), "initial root should be a historical root");
 
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            assertEq(
-                _cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1], "root should match after adding commitment"
-            );
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
+            assertEq(_cmAcc.latestCommitmentTreeRoot(), _roots[i + 1], "root should match after adding commitment");
         }
     }
 
@@ -77,14 +76,6 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitmentTreeRoot(rootToStore);
     }
 
-    function test_latestCommitmentTreeRoot_returns_the_root_of_the_tree() public {
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            bytes32 root = _cmAcc.addCommitment(_leaves[i + 1][i]);
-
-            assertEq(_cmAcc.latestCommitmentTreeRoot(), root, "latest root should be the root after the last push");
-        }
-    }
-
     function test_addCommitment_allows_adding_the_same_commitment_multiple_times() public {
         // Note: The compliance circuit will prevent the same commitment being added a second time.
         bytes32 cm = sha256("SOMETHING");
@@ -111,7 +102,8 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _assertTheSidesAndZerosReproduce(_cmAcc.latestCommitmentTreeRoot());
 
         for (uint256 i = 0; i < 33; ++i) {
-            _assertTheSidesAndZerosReproduce(_cmAcc.addCommitment(keccak256(abi.encode(i))));
+            _cmAcc.addCommitment(keccak256(abi.encode(i)));
+            _assertTheSidesAndZerosReproduce(_cmAcc.latestCommitmentTreeRoot());
         }
     }
 

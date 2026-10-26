@@ -137,4 +137,4 @@ The stop in step 2 leaves users unable to transact, and the unpause in step 7 le
    just contracts-check-migration <CHAIN>
    ```
 
-   It compares the copied state with the legacy protocol adapter, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy. Transactions settled after the unpause add commitments, so the check then requires the copied root to stay historical rather than latest.
+   It compares the copied state with the legacy protocol adapter, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy. If a transaction adds commitments after the unpause, the check requires the copied root to stay historical rather than latest.

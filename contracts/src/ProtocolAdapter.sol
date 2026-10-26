@@ -103,16 +103,17 @@ contract ProtocolAdapter is
 
         bytes32[] memory actionTreeRoots = new bytes32[](actionCount);
         Delta memory transactionDelta = DeltaProof.zero();
-        bytes32 updatedCommitmentTreeRoot = bytes32(0);
+        bool addedCommitments = false;
         uint256 callListCount = 0;
         bool hasOrderingConstraints = false;
 
         for (uint256 i = 0; i < actionCount; ++i) {
             Action calldata action = transaction.actions[i];
 
-            (bytes32 newRoot, uint256 actionCallListCount, bool actionHasOrderingConstraints) = _processAction(action);
-            if (newRoot != bytes32(0)) {
-                updatedCommitmentTreeRoot = newRoot;
+            (bool actionAddedCommitments, uint256 actionCallListCount, bool actionHasOrderingConstraints) =
+                _processAction(action);
+            if (actionAddedCommitments) {
+                addedCommitments = true;
             }
             if (actionCallListCount != 0) {
                 callListCount += actionCallListCount;
@@ -132,8 +133,8 @@ contract ProtocolAdapter is
 
         // Store the final commitment tree root. A transaction creating no resources leaves the tree untouched,
         // so there is no new root to store.
-        if (updatedCommitmentTreeRoot != bytes32(0)) {
-            _addCommitmentTreeRoot(updatedCommitmentTreeRoot);
+        if (addedCommitments) {
+            _addCommitmentTreeRoot(latestCommitmentTreeRoot());
         }
 
         // Execute the forwarder calls after all state changes of the transaction.
@@ -186,13 +187,12 @@ contract ProtocolAdapter is
     /// * emitting the app data blobs based on their deletion criterion, and
     /// * emitting the `ActionExecuted` event.
     /// @param action The action to process.
-    /// @return updatedCommitmentTreeRoot The commitment tree root after the last added commitment, or zero if the
-    /// action created no resources.
+    /// @return addedCommitments Whether the action added commitments to the commitment tree.
     /// @return callListCount The number of resources of the action that carry forwarder calls.
     /// @return hasOrderingConstraints Whether a forwarder call of the action carries ordering constraints.
     function _processAction(Action calldata action)
         internal
-        returns (bytes32 updatedCommitmentTreeRoot, uint256 callListCount, bool hasOrderingConstraints)
+        returns (bool addedCommitments, uint256 callListCount, bool hasOrderingConstraints)
     {
         uint256 consumedCount = action.consumed.length;
         bytes32[] memory nullifiers = new bytes32[](consumedCount);
@@ -236,7 +236,8 @@ contract ProtocolAdapter is
 
             // `_addCommitment` does not error if a repeating leaf is added to the tree.
             // Uniqueness of commitments is granted by the compliance circuit, assuming that nullifiers are unique.
-            updatedCommitmentTreeRoot = _addCommitment(created.commitment);
+            _addCommitment(created.commitment);
+            addedCommitments = true;
 
             ExpirableBlob[] calldata externalPayload = created.appData.externalPayload;
             if (externalPayload.length != 0) {
