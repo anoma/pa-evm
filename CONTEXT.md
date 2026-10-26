@@ -87,5 +87,5 @@ One execution of `MigrateProtocolAdapterState.run` for one chain: the copy-in. T
 **Completion run**:
 One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against the legacy protocol adapter, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
-**Sides**:
-The stored left-sibling hashes of the commitment tree of the legacy protocol adapter, one per level, of which only the levels where the leaf count has a one bit are meaningful. The legacy protocol adapter exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.
+**Left siblings**:
+The stored roots of the last complete left subtree on each level of a commitment tree, of which only the levels where the leaf count has a one bit are meaningful. The legacy protocol adapter stores them as `_sides` and exposes no getter for them, so the script reads them from its storage, and the migrational implementation proves that they reproduce its root.

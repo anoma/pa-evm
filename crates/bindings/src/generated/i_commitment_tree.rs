@@ -8,8 +8,8 @@ interface ICommitmentTree {
     function commitmentCount() external view returns (uint256 count);
     function commitmentTreeCapacity() external view returns (uint256 capacity);
     function commitmentTreeDepth() external view returns (uint8 depth);
-    function commitmentTreeSides() external view returns (bytes32[] memory sides);
-    function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
+    function commitmentTreeEmptySubtreeRoots() external view returns (bytes32[] memory emptySubtreeRoots);
+    function commitmentTreeLeftSiblings() external view returns (bytes32[] memory leftSiblings);
     function isCommitmentTreeRootHistorical(bytes32 root) external view returns (bool isHistorical);
     function latestCommitmentTreeRoot() external view returns (bytes32 root);
 }
@@ -59,11 +59,11 @@ interface ICommitmentTree {
   },
   {
     "type": "function",
-    "name": "commitmentTreeSides",
+    "name": "commitmentTreeEmptySubtreeRoots",
     "inputs": [],
     "outputs": [
       {
-        "name": "sides",
+        "name": "emptySubtreeRoots",
         "type": "bytes32[]",
         "internalType": "bytes32[]"
       }
@@ -72,11 +72,11 @@ interface ICommitmentTree {
   },
   {
     "type": "function",
-    "name": "commitmentTreeZeros",
+    "name": "commitmentTreeLeftSiblings",
     "inputs": [],
     "outputs": [
       {
-        "name": "zeros",
+        "name": "leftSiblings",
         "type": "bytes32[]",
         "internalType": "bytes32[]"
       }
@@ -757,21 +757,21 @@ function commitmentTreeDepth() external view returns (uint8 depth);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `commitmentTreeSides()` and selector `0xed83cdc7`.
+    /**Function with signature `commitmentTreeEmptySubtreeRoots()` and selector `0xcace15fd`.
 ```solidity
-function commitmentTreeSides() external view returns (bytes32[] memory sides);
+function commitmentTreeEmptySubtreeRoots() external view returns (bytes32[] memory emptySubtreeRoots);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct commitmentTreeSidesCall;
+    pub struct commitmentTreeEmptySubtreeRootsCall;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`commitmentTreeSides()`](commitmentTreeSidesCall) function.
+    ///Container type for the return parameters of the [`commitmentTreeEmptySubtreeRoots()`](commitmentTreeEmptySubtreeRootsCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct commitmentTreeSidesReturn {
+    pub struct commitmentTreeEmptySubtreeRootsReturn {
         #[allow(missing_docs)]
-        pub sides: alloy::sol_types::private::Vec<
+        pub emptySubtreeRoots: alloy::sol_types::private::Vec<
             alloy::sol_types::private::FixedBytes<32>,
         >,
     }
@@ -802,16 +802,16 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<commitmentTreeSidesCall>
+            impl ::core::convert::From<commitmentTreeEmptySubtreeRootsCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: commitmentTreeSidesCall) -> Self {
+                fn from(value: commitmentTreeEmptySubtreeRootsCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for commitmentTreeSidesCall {
+            for commitmentTreeEmptySubtreeRootsCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -844,23 +844,23 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<commitmentTreeSidesReturn>
+            impl ::core::convert::From<commitmentTreeEmptySubtreeRootsReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: commitmentTreeSidesReturn) -> Self {
-                    (value.sides,)
+                fn from(value: commitmentTreeEmptySubtreeRootsReturn) -> Self {
+                    (value.emptySubtreeRoots,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for commitmentTreeSidesReturn {
+            for commitmentTreeEmptySubtreeRootsReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { sides: tuple.0 }
+                    Self { emptySubtreeRoots: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for commitmentTreeSidesCall {
+        impl alloy_sol_types::SolCall for commitmentTreeEmptySubtreeRootsCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -876,8 +876,8 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "commitmentTreeSides()";
-            const SELECTOR: [u8; 4] = [237u8, 131u8, 205u8, 199u8];
+            const SIGNATURE: &'static str = "commitmentTreeEmptySubtreeRoots()";
+            const SELECTOR: [u8; 4] = [202u8, 206u8, 21u8, 253u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -902,8 +902,8 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: commitmentTreeSidesReturn = r.into();
-                        r.sides
+                        let r: commitmentTreeEmptySubtreeRootsReturn = r.into();
+                        r.emptySubtreeRoots
                     })
             }
             #[inline]
@@ -918,8 +918,8 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
                         config,
                     )
                     .map(|r| {
-                        let r: commitmentTreeSidesReturn = r.into();
-                        r.sides
+                        let r: commitmentTreeEmptySubtreeRootsReturn = r.into();
+                        r.emptySubtreeRoots
                     })
             }
             #[inline]
@@ -935,21 +935,21 @@ function commitmentTreeSides() external view returns (bytes32[] memory sides);
     };
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    /**Function with signature `commitmentTreeZeros()` and selector `0x51945b06`.
+    /**Function with signature `commitmentTreeLeftSiblings()` and selector `0x663cbf9d`.
 ```solidity
-function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
+function commitmentTreeLeftSiblings() external view returns (bytes32[] memory leftSiblings);
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct commitmentTreeZerosCall;
+    pub struct commitmentTreeLeftSiblingsCall;
     #[derive(serde::Serialize, serde::Deserialize)]
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
-    ///Container type for the return parameters of the [`commitmentTreeZeros()`](commitmentTreeZerosCall) function.
+    ///Container type for the return parameters of the [`commitmentTreeLeftSiblings()`](commitmentTreeLeftSiblingsCall) function.
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
-    pub struct commitmentTreeZerosReturn {
+    pub struct commitmentTreeLeftSiblingsReturn {
         #[allow(missing_docs)]
-        pub zeros: alloy::sol_types::private::Vec<
+        pub leftSiblings: alloy::sol_types::private::Vec<
             alloy::sol_types::private::FixedBytes<32>,
         >,
     }
@@ -980,16 +980,16 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<commitmentTreeZerosCall>
+            impl ::core::convert::From<commitmentTreeLeftSiblingsCall>
             for UnderlyingRustTuple<'_> {
-                fn from(value: commitmentTreeZerosCall) -> Self {
+                fn from(value: commitmentTreeLeftSiblingsCall) -> Self {
                     ()
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for commitmentTreeZerosCall {
+            for commitmentTreeLeftSiblingsCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
                     Self
                 }
@@ -1022,23 +1022,23 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
             }
             #[automatically_derived]
             #[doc(hidden)]
-            impl ::core::convert::From<commitmentTreeZerosReturn>
+            impl ::core::convert::From<commitmentTreeLeftSiblingsReturn>
             for UnderlyingRustTuple<'_> {
-                fn from(value: commitmentTreeZerosReturn) -> Self {
-                    (value.zeros,)
+                fn from(value: commitmentTreeLeftSiblingsReturn) -> Self {
+                    (value.leftSiblings,)
                 }
             }
             #[automatically_derived]
             #[doc(hidden)]
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
-            for commitmentTreeZerosReturn {
+            for commitmentTreeLeftSiblingsReturn {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { zeros: tuple.0 }
+                    Self { leftSiblings: tuple.0 }
                 }
             }
         }
         #[automatically_derived]
-        impl alloy_sol_types::SolCall for commitmentTreeZerosCall {
+        impl alloy_sol_types::SolCall for commitmentTreeLeftSiblingsCall {
             type Parameters<'a> = ();
             type Token<'a> = <Self::Parameters<
                 'a,
@@ -1054,8 +1054,8 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
             type ReturnToken<'a> = <Self::ReturnTuple<
                 'a,
             > as alloy_sol_types::SolType>::Token<'a>;
-            const SIGNATURE: &'static str = "commitmentTreeZeros()";
-            const SELECTOR: [u8; 4] = [81u8, 148u8, 91u8, 6u8];
+            const SIGNATURE: &'static str = "commitmentTreeLeftSiblings()";
+            const SELECTOR: [u8; 4] = [102u8, 60u8, 191u8, 157u8];
             #[inline]
             fn new<'a>(
                 tuple: <Self::Parameters<'a> as alloy_sol_types::SolType>::RustType,
@@ -1080,8 +1080,8 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
                     '_,
                 > as alloy_sol_types::SolType>::abi_decode_sequence(data)
                     .map(|r| {
-                        let r: commitmentTreeZerosReturn = r.into();
-                        r.zeros
+                        let r: commitmentTreeLeftSiblingsReturn = r.into();
+                        r.leftSiblings
                     })
             }
             #[inline]
@@ -1096,8 +1096,8 @@ function commitmentTreeZeros() external view returns (bytes32[] memory zeros);
                         config,
                     )
                     .map(|r| {
-                        let r: commitmentTreeZerosReturn = r.into();
-                        r.zeros
+                        let r: commitmentTreeLeftSiblingsReturn = r.into();
+                        r.leftSiblings
                     })
             }
             #[inline]
@@ -1454,9 +1454,9 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
         #[allow(missing_docs)]
         commitmentTreeDepth(commitmentTreeDepthCall),
         #[allow(missing_docs)]
-        commitmentTreeSides(commitmentTreeSidesCall),
+        commitmentTreeEmptySubtreeRoots(commitmentTreeEmptySubtreeRootsCall),
         #[allow(missing_docs)]
-        commitmentTreeZeros(commitmentTreeZerosCall),
+        commitmentTreeLeftSiblings(commitmentTreeLeftSiblingsCall),
         #[allow(missing_docs)]
         isCommitmentTreeRootHistorical(isCommitmentTreeRootHistoricalCall),
         #[allow(missing_docs)]
@@ -1470,31 +1470,31 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
         ///
         /// Prefer using `SolInterface` methods instead.
         pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [81u8, 148u8, 91u8, 6u8],
+            [102u8, 60u8, 191u8, 157u8],
             [160u8, 96u8, 86u8, 247u8],
             [189u8, 235u8, 68u8, 45u8],
             [196u8, 73u8, 86u8, 209u8],
-            [237u8, 131u8, 205u8, 199u8],
+            [202u8, 206u8, 21u8, 253u8],
             [248u8, 173u8, 244u8, 195u8],
             [254u8, 24u8, 171u8, 145u8],
         ];
         /// The names of the variants in the same order as `SELECTORS`.
         pub const VARIANT_NAMES: &'static [&'static str] = &[
-            ::core::stringify!(commitmentTreeZeros),
+            ::core::stringify!(commitmentTreeLeftSiblings),
             ::core::stringify!(commitmentTreeDepth),
             ::core::stringify!(latestCommitmentTreeRoot),
             ::core::stringify!(commitmentCount),
-            ::core::stringify!(commitmentTreeSides),
+            ::core::stringify!(commitmentTreeEmptySubtreeRoots),
             ::core::stringify!(isCommitmentTreeRootHistorical),
             ::core::stringify!(commitmentTreeCapacity),
         ];
         /// The signatures in the same order as `SELECTORS`.
         pub const SIGNATURES: &'static [&'static str] = &[
-            <commitmentTreeZerosCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <commitmentTreeLeftSiblingsCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentTreeDepthCall as alloy_sol_types::SolCall>::SIGNATURE,
             <latestCommitmentTreeRootCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentCountCall as alloy_sol_types::SolCall>::SIGNATURE,
-            <commitmentTreeSidesCall as alloy_sol_types::SolCall>::SIGNATURE,
+            <commitmentTreeEmptySubtreeRootsCall as alloy_sol_types::SolCall>::SIGNATURE,
             <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::SIGNATURE,
             <commitmentTreeCapacityCall as alloy_sol_types::SolCall>::SIGNATURE,
         ];
@@ -1536,11 +1536,11 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 Self::commitmentTreeDepth(_) => {
                     <commitmentTreeDepthCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::commitmentTreeSides(_) => {
-                    <commitmentTreeSidesCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::commitmentTreeEmptySubtreeRoots(_) => {
+                    <commitmentTreeEmptySubtreeRootsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
-                Self::commitmentTreeZeros(_) => {
-                    <commitmentTreeZerosCall as alloy_sol_types::SolCall>::SELECTOR
+                Self::commitmentTreeLeftSiblings(_) => {
+                    <commitmentTreeLeftSiblingsCall as alloy_sol_types::SolCall>::SELECTOR
                 }
                 Self::isCommitmentTreeRootHistorical(_) => {
                     <isCommitmentTreeRootHistoricalCall as alloy_sol_types::SolCall>::SELECTOR
@@ -1582,17 +1582,17 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                 alloy_sol_types::abi::AbiDecoderConfig,
             ) -> alloy_sol_types::Result<ICommitmentTreeCalls>] = &[
                 {
-                    fn commitmentTreeZeros(
+                    fn commitmentTreeLeftSiblings(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeZerosCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeLeftSiblingsCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(ICommitmentTreeCalls::commitmentTreeZeros)
+                            .map(ICommitmentTreeCalls::commitmentTreeLeftSiblings)
                     }
-                    commitmentTreeZeros
+                    commitmentTreeLeftSiblings
                 },
                 {
                     fn commitmentTreeDepth(
@@ -1634,17 +1634,17 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                     commitmentCount
                 },
                 {
-                    fn commitmentTreeSides(
+                    fn commitmentTreeEmptySubtreeRoots(
                         data: &[u8],
                         config: alloy_sol_types::abi::AbiDecoderConfig,
                     ) -> alloy_sol_types::Result<ICommitmentTreeCalls> {
-                        <commitmentTreeSidesCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
+                        <commitmentTreeEmptySubtreeRootsCall as alloy_sol_types::SolCall>::abi_decode_raw_with_config(
                                 data,
                                 config,
                             )
-                            .map(ICommitmentTreeCalls::commitmentTreeSides)
+                            .map(ICommitmentTreeCalls::commitmentTreeEmptySubtreeRoots)
                     }
-                    commitmentTreeSides
+                    commitmentTreeEmptySubtreeRoots
                 },
                 {
                     fn isCommitmentTreeRootHistorical(
@@ -1713,13 +1713,13 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                         inner,
                     )
                 }
-                Self::commitmentTreeSides(inner) => {
-                    <commitmentTreeSidesCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::commitmentTreeEmptySubtreeRoots(inner) => {
+                    <commitmentTreeEmptySubtreeRootsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
-                Self::commitmentTreeZeros(inner) => {
-                    <commitmentTreeZerosCall as alloy_sol_types::SolCall>::abi_encoded_size(
+                Self::commitmentTreeLeftSiblings(inner) => {
+                    <commitmentTreeLeftSiblingsCall as alloy_sol_types::SolCall>::abi_encoded_size(
                         inner,
                     )
                 }
@@ -1756,14 +1756,14 @@ function latestCommitmentTreeRoot() external view returns (bytes32 root);
                         out,
                     )
                 }
-                Self::commitmentTreeSides(inner) => {
-                    <commitmentTreeSidesCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::commitmentTreeEmptySubtreeRoots(inner) => {
+                    <commitmentTreeEmptySubtreeRootsCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
                 }
-                Self::commitmentTreeZeros(inner) => {
-                    <commitmentTreeZerosCall as alloy_sol_types::SolCall>::abi_encode_raw(
+                Self::commitmentTreeLeftSiblings(inner) => {
+                    <commitmentTreeLeftSiblingsCall as alloy_sol_types::SolCall>::abi_encode_raw(
                         inner,
                         out,
                     )
@@ -2098,17 +2098,17 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeDepthCall, N> {
             self.call_builder(&commitmentTreeDepthCall)
         }
-        ///Creates a new call builder for the [`commitmentTreeSides`] function.
-        pub fn commitmentTreeSides(
+        ///Creates a new call builder for the [`commitmentTreeEmptySubtreeRoots`] function.
+        pub fn commitmentTreeEmptySubtreeRoots(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeSidesCall, N> {
-            self.call_builder(&commitmentTreeSidesCall)
+        ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeEmptySubtreeRootsCall, N> {
+            self.call_builder(&commitmentTreeEmptySubtreeRootsCall)
         }
-        ///Creates a new call builder for the [`commitmentTreeZeros`] function.
-        pub fn commitmentTreeZeros(
+        ///Creates a new call builder for the [`commitmentTreeLeftSiblings`] function.
+        pub fn commitmentTreeLeftSiblings(
             &self,
-        ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeZerosCall, N> {
-            self.call_builder(&commitmentTreeZerosCall)
+        ) -> alloy_contract::SolCallBuilder<&P, commitmentTreeLeftSiblingsCall, N> {
+            self.call_builder(&commitmentTreeLeftSiblingsCall)
         }
         ///Creates a new call builder for the [`isCommitmentTreeRootHistorical`] function.
         pub fn isCommitmentTreeRootHistorical(

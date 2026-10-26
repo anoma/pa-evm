@@ -84,26 +84,38 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitment(cm);
     }
 
-    function test_commitmentTreeZeros_returns_the_root_of_an_empty_subtree_per_level() public {
+    function test_commitmentTreeEmptySubtreeRoots_returns_the_root_of_an_empty_subtree_per_level() public {
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
             _cmAcc.addCommitment(_leaves[i + 1][i]);
         }
 
-        bytes32[] memory zeros = _cmAcc.commitmentTreeZeros();
+        bytes32[] memory emptySubtreeRoots = _cmAcc.commitmentTreeEmptySubtreeRoots();
 
-        assertEq(zeros.length, _cmAcc.commitmentTreeDepth() + 1, "the zeros should cover every level up to the root");
-        assertEq(zeros[0], SHA256.EMPTY_HASH, "the zero of the leaf level should be the empty hash");
-        for (uint256 level = 1; level < zeros.length; ++level) {
-            assertEq(zeros[level], SHA256.hash(zeros[level - 1], zeros[level - 1]), "a zero should pair the one below");
+        assertEq(
+            emptySubtreeRoots.length,
+            _cmAcc.commitmentTreeDepth() + 1,
+            "the empty subtree roots should cover every level up to the root"
+        );
+        assertEq(
+            emptySubtreeRoots[0], SHA256.EMPTY_HASH, "the empty subtree root of the leaf level should be the empty hash"
+        );
+        for (uint256 level = 1; level < emptySubtreeRoots.length; ++level) {
+            assertEq(
+                emptySubtreeRoots[level],
+                SHA256.hash(emptySubtreeRoots[level - 1], emptySubtreeRoots[level - 1]),
+                "an empty subtree root should pair the one below"
+            );
         }
     }
 
-    function test_commitmentTreeSides_and_commitmentTreeZeros_reproduce_the_root_after_every_push() public {
-        _assertTheSidesAndZerosReproduce(_cmAcc.latestCommitmentTreeRoot());
+    function test_commitmentTreeLeftSiblings_and_commitmentTreeEmptySubtreeRoots_reproduce_the_root_after_every_push()
+        public
+    {
+        _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(_cmAcc.latestCommitmentTreeRoot());
 
         for (uint256 i = 0; i < 33; ++i) {
             _cmAcc.addCommitment(keccak256(abi.encode(i)));
-            _assertTheSidesAndZerosReproduce(_cmAcc.latestCommitmentTreeRoot());
+            _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(_cmAcc.latestCommitmentTreeRoot());
         }
     }
 
@@ -117,19 +129,25 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         );
     }
 
-    /// @dev Rebuilds the root the way `MerkleTree.currentRoot` does, from the commitment count, the sides and the zeros.
-    function _assertTheSidesAndZerosReproduce(bytes32 root) internal view {
+    /// @dev Rebuilds the root the way `MerkleTree.currentRoot` does, from the commitment count, the left siblings
+    /// and the empty subtree roots.
+    function _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(bytes32 root) internal view {
         uint256 count = _cmAcc.commitmentCount();
-        bytes32[] memory sides = _cmAcc.commitmentTreeSides();
-        bytes32[] memory zeros = _cmAcc.commitmentTreeZeros();
+        bytes32[] memory leftSiblings = _cmAcc.commitmentTreeLeftSiblings();
+        bytes32[] memory emptySubtreeRoots = _cmAcc.commitmentTreeEmptySubtreeRoots();
 
-        assertEq(sides.length, _cmAcc.commitmentTreeDepth(), "the sides should cover every level below the root");
+        assertEq(
+            leftSiblings.length,
+            _cmAcc.commitmentTreeDepth(),
+            "the left siblings should cover every level below the root"
+        );
 
-        bytes32 rebuilt = zeros[0];
-        for (uint256 level = 0; level < sides.length; ++level) {
-            rebuilt =
-                ((count >> level) & 1) == 0 ? SHA256.hash(rebuilt, zeros[level]) : SHA256.hash(sides[level], rebuilt);
+        bytes32 rebuilt = emptySubtreeRoots[0];
+        for (uint256 level = 0; level < leftSiblings.length; ++level) {
+            rebuilt = ((count >> level) & 1) == 0
+                ? SHA256.hash(rebuilt, emptySubtreeRoots[level])
+                : SHA256.hash(leftSiblings[level], rebuilt);
         }
-        assertEq(rebuilt, root, "the sides and zeros should reproduce the root");
+        assertEq(rebuilt, root, "the left siblings and empty subtree roots should reproduce the root");
     }
 }

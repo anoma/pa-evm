@@ -129,9 +129,9 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     }
 
     function test_run_resumes_a_run_that_stopped_after_the_commitment_tree() public {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
         vm.prank(DEFAULT_SENDER);
-        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(leftSiblings);
 
         _migrationScript.run({isProduction: false});
         _finalizationScript.run({isProduction: false});
@@ -144,9 +144,9 @@ contract MigrateProtocolAdapterStateTest is MigrationFixture {
     function test_run_resumes_a_run_that_stopped_inside_the_nullifier_set() public {
         uint256 copied = _migrationScript.NULLIFIERS_PER_BATCH() + 1;
         assertLt(copied, _NULLIFIER_COUNT, "the earlier run should leave nullifiers to copy");
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
         vm.startPrank(DEFAULT_SENDER);
-        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(leftSiblings);
         MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: copied});
         vm.stopPrank();
 

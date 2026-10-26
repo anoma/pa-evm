@@ -106,8 +106,8 @@ contract MigrateProtocolAdapterState is MigrationScript {
     }
 
     /// @notice Copies the commitment tree of the legacy protocol adapter into the proxy, unless an earlier
-    /// run did. The tree's sides come from its storage, since it exposes no getter for them; the slot is checked
-    /// against its own getters first, and the proxy rejects sides that do not reproduce the root.
+    /// run did. The tree's left siblings come from its storage, since it exposes no getter for them; the slot is
+    /// checked against its own getters first, and the proxy rejects left siblings that do not reproduce the root.
     /// @param legacyProtocolAdapter The stopped legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _migrateCommitmentTree(address legacyProtocolAdapter, address proxy) internal {
@@ -124,15 +124,15 @@ contract MigrateProtocolAdapterState is MigrationScript {
         });
         _checkSlot({target: legacyProtocolAdapter, slot: _LEGACY_PROTOCOL_ADAPTER_SIDES_SLOT, expected: treeDepth});
 
-        bytes32[] memory sides = new bytes32[](treeDepth);
+        bytes32[] memory leftSiblings = new bytes32[](treeDepth);
         uint256 firstElementSlot = uint256(keccak256(abi.encode(_LEGACY_PROTOCOL_ADAPTER_SIDES_SLOT)));
         for (uint256 i = 0; i < treeDepth; ++i) {
-            sides[i] = vm.load({target: legacyProtocolAdapter, slot: bytes32(firstElementSlot + i)});
+            leftSiblings[i] = vm.load({target: legacyProtocolAdapter, slot: bytes32(firstElementSlot + i)});
         }
 
         address owner = MigrationalProtocolAdapter(proxy).owner();
         vm.broadcast(owner);
-        MigrationalProtocolAdapter(proxy).migrateCommitmentTree(sides);
+        MigrationalProtocolAdapter(proxy).migrateCommitmentTree(leftSiblings);
     }
 
     /// @notice Copies the nullifiers into the proxy, `NULLIFIERS_PER_BATCH` per transaction, from the first one that an
@@ -240,7 +240,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     }
 
     /// @notice Checks that a storage slot of the legacy protocol adapter holds what its public getter
-    /// reports, which pins the layout this script reads the tree sides from.
+    /// reports, which pins the layout this script reads the left siblings from.
     /// @param target The legacy protocol adapter.
     /// @param slot The storage slot to read.
     /// @param expected The value the matching getter reports.

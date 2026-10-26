@@ -4,9 +4,9 @@
 |                                          3985009 |           18690 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
-| EMPTY_KIND_TREE_ROOT                             |             301 |    301 |    301 |    301 |      10 |
+| EMPTY_KIND_TREE_ROOT                             |             279 |    279 |    279 |    279 |      10 |
 | RISC_ZERO_VERIFIER_ROUTER                        |             351 |    351 |    351 |    351 |       2 |
-| RISC_ZERO_VERIFIER_SELECTOR                      |             640 |    640 |    640 |    640 |       4 |
+| RISC_ZERO_VERIFIER_SELECTOR                      |             662 |    662 |    662 |    662 |       4 |
 | UPGRADE_INTERFACE_VERSION                        |             814 |    814 |    814 |    814 |       2 |
 | VERSION                                          |            1051 |   1051 |   1051 |   1051 |       3 |
 | commitmentCount                                  |            2693 |   2693 |   2693 |   2693 |      16 |
@@ -22,13 +22,13 @@
 | migrateNullifierSet                              |             693 |    693 |    693 |    693 |       2 |
 | owner                                            |             542 |   2354 |   2542 |   2542 |      32 |
 | pause                                            |            2526 |  21611 |  25815 |  25815 |      12 |
-| paused                                           |            2394 |   2394 |   2394 |   2394 |      16 |
-| proxiableUUID                                    |             284 |    284 |    284 |    284 |      15 |
+| paused                                           |            2372 |   2372 |   2372 |   2372 |      16 |
+| proxiableUUID                                    |             262 |    262 |    262 |    262 |      15 |
 | riscZeroVerifierPaused                           |           10945 |  10945 |  10945 |  10945 |       5 |
 | setKindTreeRoot                                  |             575 |   6967 |   8700 |   8700 |       7 |
 | transferOwnership                                |            5450 |   5450 |   5450 |   5450 |       3 |
 | unpause                                          |            2328 |   6369 |   8390 |   8390 |       3 |
-| upgradeToAndCall                                 |            3010 |   8760 |   3190 |  23920 |       5 |
+| upgradeToAndCall                                 |            3010 |   8742 |   3168 |  23898 |       5 |
 
 | src/examples/BlockTimeForwarder.sol:BlockTimeForwarder Contract |                 |     |        |     |         |
 |-----------------------------------------------------------------|-----------------|-----|--------|-----|---------|
@@ -45,12 +45,12 @@
 |                                                             |                 |       |        |       |         |
 | Function Name                                               | Min             | Avg   | Median | Max   | # Calls |
 | addCommitment                                               |           12415 | 33894 |  15155 | 96556 |      57 |
-| addCommitmentTreeRoot                                       |            2460 | 18358 |  23658 | 23658 |       4 |
+| addCommitmentTreeRoot                                       |            2482 | 18380 |  23680 | 23680 |       4 |
 | commitmentCount                                             |            2355 |  2355 |   2355 |  2355 |      42 |
 | commitmentTreeCapacity                                      |            2452 |  2452 |   2452 |  2452 |       1 |
 | commitmentTreeDepth                                         |            2317 |  2317 |   2317 |  2317 |      36 |
-| commitmentTreeSides                                         |            2730 | 12114 |  14045 | 16308 |      34 |
-| commitmentTreeZeros                                         |            4839 | 14149 |  16154 | 18417 |      35 |
+| commitmentTreeEmptySubtreeRoots                             |            4971 | 14281 |  16286 | 18549 |      35 |
+| commitmentTreeLeftSiblings                                  |            2576 | 11960 |  13891 | 16154 |      34 |
 | initialize                                                  |            2522 | 86661 |  93677 | 93677 |      23 |
 | isCommitmentTreeRootHistorical                              |            2498 |  2498 |   2498 |  2498 |       4 |
 | latestCommitmentTreeRoot                                    |            4485 | 12681 |  12888 | 20263 |      45 |
