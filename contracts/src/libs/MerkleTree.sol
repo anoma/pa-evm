@@ -72,13 +72,15 @@ library MerkleTree {
         bytes32 zero = SHA256.EMPTY_HASH;
         bytes32 node = zero;
         for (uint256 level = 0; level < treeDepth; ++level) {
+            bytes32 nextZero = SHA256.hash(zero, zero);
             if (isRightChild(nodeIndex)) {
                 node = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, node);
             } else {
-                node = SHA256.hash(node, zero);
+                // `SHA256.hash(zero, zero)` is `nextZero`, so an empty node needs no hash.
+                node = node == zero ? nextZero : SHA256.hash(node, zero);
             }
 
-            zero = SHA256.hash(zero, zero);
+            zero = nextZero;
             nodeIndex >>= 1;
         }
         treeRoot = node;
