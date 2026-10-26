@@ -44,7 +44,7 @@ library MerkleTree {
         // subtree that the leaf completes. The level counts the trailing ones of the index.
         bytes32 node = leaf;
         uint256 level = 0;
-        for (uint256 currentIndex = index; !isLeftChild(currentIndex); currentIndex >>= 1) {
+        for (uint256 currentIndex = index; isRightChild(currentIndex); currentIndex >>= 1) {
             node = SHA256.hash(Arrays.unsafeAccess(self._sides, level).value, node);
             ++level;
         }
@@ -74,10 +74,10 @@ library MerkleTree {
         bytes32 zero = SHA256.EMPTY_HASH;
         treeRoot = zero;
         for (uint256 i = 0; i < treeDepth; ++i) {
-            if (isLeftChild(index)) {
-                treeRoot = SHA256.hash(treeRoot, zero);
-            } else {
+            if (isRightChild(index)) {
                 treeRoot = SHA256.hash(Arrays.unsafeAccess(self._sides, i).value, treeRoot);
+            } else {
+                treeRoot = SHA256.hash(treeRoot, zero);
             }
 
             zero = SHA256.hash(zero, zero);
@@ -125,10 +125,10 @@ library MerkleTree {
         treeCapacity = uint256(1) << depth(self); // 2^treeDepth
     }
 
-    /// @notice Checks whether a node is the left or right child according to its index.
-    /// @param index The index to check.
-    /// @return isLeft Whether this node is the left or right child.
-    function isLeftChild(uint256 index) internal pure returns (bool isLeft) {
-        isLeft = (index & 1) == 0;
+    /// @notice Checks whether a node is the right child of its parent, according to its index on its level.
+    /// @param index The index of the node on its level.
+    /// @return isRight Whether the node is a right child.
+    function isRightChild(uint256 index) internal pure returns (bool isRight) {
+        isRight = (index & 1) == 1;
     }
 }
