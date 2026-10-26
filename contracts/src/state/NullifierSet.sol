@@ -52,9 +52,7 @@ abstract contract NullifierSet is INullifierSet, Initializable {
     /// @param nullifier The nullifier to check.
     /// @return isContained Whether the nullifier is contained or not.
     function _isNullifierContained(bytes32 nullifier) internal view returns (bool isContained) {
-        NullifierSetStorage storage $ = _getNullifierSetStorage();
-
-        isContained = $._nullifiers[nullifier];
+        isContained = _getNullifierSetStorage()._nullifiers[nullifier];
     }
 
     /// @notice Returns the storage from the nullifier set storage location.
