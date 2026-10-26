@@ -23,7 +23,9 @@ import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {NullifierSet} from "../src/state/NullifierSet.sol";
 import {TxGen} from "./libs/TxGen.sol";
 import {LegacyProtocolAdapterMock} from "./mocks/LegacyProtocolAdapter.m.sol";
-import {MigrationalProtocolAdapterZeroHashesMock} from "./mocks/MigrationalProtocolAdapterZeroHashes.m.sol";
+import {
+    MigrationalProtocolAdapterEmptySubtreeRootsMock
+} from "./mocks/MigrationalProtocolAdapterEmptySubtreeRoots.m.sol";
 
 /// @dev The legacy protocol adapter is a stand-in with the storage layout of the deployed one. The
 /// migrational adapter reads every value from it, so the test fills it, stops it, and then checks what the migrational
@@ -60,8 +62,8 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa = _deployMigrationalProxy(address(_legacyProtocolAdapter));
     }
 
-    function test_zeroHashes_match_the_zeros_a_grown_tree_stores() public {
-        MigrationalProtocolAdapterZeroHashesMock mock = new MigrationalProtocolAdapterZeroHashesMock(
+    function test_computeEmptySubtreeRoots_matches_the_empty_subtree_roots_a_grown_tree_stores() public {
+        MigrationalProtocolAdapterEmptySubtreeRootsMock mock = new MigrationalProtocolAdapterEmptySubtreeRootsMock(
             address(_router), _verifier.SELECTOR(), address(_legacyProtocolAdapter)
         );
 
@@ -70,11 +72,11 @@ contract MigrationalProtocolAdapterTest is Test {
             _grownTree.push(keccak256(abi.encode("leaf", i)));
         }
 
-        bytes32[] memory hashes = mock.zeroHashes(_grownTree.depth());
+        bytes32[] memory roots = mock.computeEmptySubtreeRoots(_grownTree.depth());
 
-        assertEq(hashes.length, _grownTree._zeros.length, "zero hash count differs");
-        for (uint256 i = 0; i < hashes.length; ++i) {
-            assertEq(hashes[i], _grownTree._zeros[i], "a zero hash differs");
+        assertEq(roots.length, _grownTree._emptySubtreeRoots.length, "the number of empty subtree roots differs");
+        for (uint256 i = 0; i < roots.length; ++i) {
+            assertEq(roots[i], _grownTree._emptySubtreeRoots[i], "an empty subtree root differs");
         }
     }
 
@@ -179,25 +181,25 @@ contract MigrationalProtocolAdapterTest is Test {
         assertTrue(_pa.isNullifierContained(TxGen.collectNullifiers(txn)[0]), "the transaction did not settle");
     }
 
-    function test_migrateCommitmentTree_reverts_on_sides_that_do_not_reproduce_the_root_of_the_legacy_protocol_adapter()
+    function test_migrateCommitmentTree_reverts_on_left_siblings_that_do_not_reproduce_the_root_of_the_legacy_protocol_adapter()
         public
     {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
-        sides[0] = bytes32(uint256(sides[0]) ^ 1);
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
+        leftSiblings[0] = bytes32(uint256(leftSiblings[0]) ^ 1);
 
         vm.prank(_OWNER);
         vm.expectRevert();
-        _pa.migrateCommitmentTree(sides);
+        _pa.migrateCommitmentTree(leftSiblings);
     }
 
     function test_migrateCommitmentTree_reverts_if_the_tree_is_not_empty() public {
         _migrateCommitmentTree();
 
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_OWNER);
         vm.expectRevert(MigrationalProtocolAdapter.CommitmentTreeNotEmpty.selector);
-        _pa.migrateCommitmentTree(sides);
+        _pa.migrateCommitmentTree(leftSiblings);
     }
 
     function test_migrateCommitmentTree_reverts_on_an_empty_tree_of_the_legacy_protocol_adapter() public {
@@ -205,18 +207,18 @@ contract MigrationalProtocolAdapterTest is Test {
         empty.emergencyStop();
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(empty));
 
-        bytes32[] memory sides = empty.commitmentTreeSides();
+        bytes32[] memory leftSiblings = empty.commitmentTreeSides();
 
         vm.prank(_OWNER);
         vm.expectRevert(MigrationalProtocolAdapter.EmptyCommitmentTreeNotAllowed.selector);
-        pa.migrateCommitmentTree(sides);
+        pa.migrateCommitmentTree(leftSiblings);
     }
 
     function test_migrateCommitmentTree_reverts_if_the_leaf_count_exceeds_the_capacity() public {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
-        bytes32[] memory tooFew = new bytes32[](sides.length - 1);
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory tooFew = new bytes32[](leftSiblings.length - 1);
         for (uint256 i = 0; i < tooFew.length; ++i) {
-            tooFew[i] = sides[i];
+            tooFew[i] = leftSiblings[i];
         }
         uint256 capacity = uint256(1) << tooFew.length;
 
@@ -233,7 +235,7 @@ contract MigrationalProtocolAdapterTest is Test {
         LegacyProtocolAdapterMock running = _deployLegacyProtocolAdapter({commitments: 1, nullifiers: 0});
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(running));
 
-        bytes32[] memory sides = running.commitmentTreeSides();
+        bytes32[] memory leftSiblings = running.commitmentTreeSides();
 
         vm.prank(_OWNER);
         vm.expectRevert(
@@ -241,15 +243,15 @@ contract MigrationalProtocolAdapterTest is Test {
                 MigrationalProtocolAdapter.LegacyProtocolAdapterNotStopped.selector, address(running)
             )
         );
-        pa.migrateCommitmentTree(sides);
+        pa.migrateCommitmentTree(leftSiblings);
     }
 
     function test_migrateCommitmentTree_reverts_for_an_unauthorized_caller() public {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER));
-        _pa.migrateCommitmentTree(sides);
+        _pa.migrateCommitmentTree(leftSiblings);
     }
 
     function test_migrateNullifierSet_copies_the_batches_at_the_indices_of_the_legacy_protocol_adapter() public {
@@ -340,10 +342,10 @@ contract MigrationalProtocolAdapterTest is Test {
         LegacyProtocolAdapterMock legacyProtocolAdapter = _deployLegacyProtocolAdapter({commitments: 1, nullifiers: 0});
         legacyProtocolAdapter.emergencyStop();
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(legacyProtocolAdapter));
-        bytes32[] memory sides = legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
-        pa.migrateCommitmentTree(sides);
+        pa.migrateCommitmentTree(leftSiblings);
         pa.unpause();
         vm.stopPrank();
 
@@ -359,11 +361,11 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_seeding_reverts_once_unpaused() public {
         _seedState();
 
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
         vm.expectRevert(Pausable.ExpectedPause.selector);
-        _pa.migrateCommitmentTree(sides);
+        _pa.migrateCommitmentTree(leftSiblings);
 
         vm.expectRevert(Pausable.ExpectedPause.selector);
         _pa.migrateNullifierSet({start: 0, count: 1});
@@ -466,10 +468,10 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function _migrateCommitmentTree() internal {
-        bytes32[] memory sides = _legacyProtocolAdapter.commitmentTreeSides();
+        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.prank(_OWNER);
-        _pa.migrateCommitmentTree(sides);
+        _pa.migrateCommitmentTree(leftSiblings);
     }
 
     function _copyInEverything() internal {
