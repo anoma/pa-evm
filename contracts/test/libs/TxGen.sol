@@ -438,7 +438,7 @@ library TxGen {
     function computeActionTreeRoot(
         IProtocolAdapter.Consumed[] memory consumed,
         IProtocolAdapter.Created[] memory created
-    ) internal pure returns (bytes32 root) {
+    ) internal view returns (bytes32 root) {
         bytes32[] memory tags = new bytes32[](consumed.length + created.length);
 
         uint256 n = 0;

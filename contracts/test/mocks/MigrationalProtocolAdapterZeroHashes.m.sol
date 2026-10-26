@@ -11,7 +11,7 @@ contract MigrationalProtocolAdapterZeroHashesMock is MigrationalProtocolAdapter 
     {}
 
     /// @notice Returns the empty-subtree roots the migrational protocol adapter writes for a tree of the given depth.
-    function zeroHashes(uint8 treeDepth) external pure returns (bytes32[] memory hashes) {
+    function zeroHashes(uint8 treeDepth) external view returns (bytes32[] memory hashes) {
         hashes = _zeroHashes(treeDepth);
     }
 }

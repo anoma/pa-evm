@@ -21,7 +21,14 @@ library SHA256 {
     /// @param a The first value to hash.
     /// @param b The second value to hash.
     /// @return hab The resulting hash.
-    function hash(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
-        hab = sha256(abi.encode(a, b));
+    function hash(bytes32 a, bytes32 b) internal view returns (bytes32 hab) {
+        // Hash in the scratch space instead of allocating memory for `abi.encode(a, b)`.
+        // forge-lint: disable-next-item(inline-assembly)
+        assembly ("memory-safe") {
+            mstore(0x00, a)
+            mstore(0x20, b)
+            if iszero(staticcall(gas(), 0x02, 0x00, 0x40, 0x00, 0x20)) { revert(0x00, 0x00) }
+            hab := mload(0x00)
+        }
     }
 }

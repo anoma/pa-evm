@@ -17,7 +17,7 @@ library MerkleTreeReference {
     /// @param treeDepth The depth of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal pure returns (bytes32 root) {
+    function computeRoot(bytes32[] memory leaves, uint8 treeDepth) internal view returns (bytes32 root) {
         uint256 treeCapacity = uint256(1) << treeDepth; // 2^treeDepth
 
         // Create array of full leaf set with padding if necessary
@@ -47,7 +47,7 @@ library MerkleTreeReference {
     /// @param leaves The leaves of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
+    function computeRoot(bytes32[] memory leaves) internal view returns (bytes32 root) {
         root = computeRoot({leaves: leaves, treeDepth: computeMinimalTreeDepth(leaves.length)});
     }
 
@@ -56,7 +56,7 @@ library MerkleTreeReference {
     /// @param leaves The leaves of the tree.
     /// @return root The computed root.
     /// @dev This method should only be used for trees with low depth.
-    function computeCommitmentTreeRoot(bytes32[] memory leaves) internal pure returns (bytes32 root) {
+    function computeCommitmentTreeRoot(bytes32[] memory leaves) internal view returns (bytes32 root) {
         uint8 treeDepth = 0;
         for (uint256 x = leaves.length; x > 0; x >>= 1) {
             ++treeDepth;
