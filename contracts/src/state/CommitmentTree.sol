@@ -36,37 +36,27 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
 
     /// @inheritdoc ICommitmentTree
     function commitmentCount() external view override returns (uint256 count) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        count = $._merkleTree.leafCount();
+        count = _getCommitmentTreeStorage()._merkleTree.leafCount();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeDepth() external view override returns (uint8 depth) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        depth = $._merkleTree.depth();
+        depth = _getCommitmentTreeStorage()._merkleTree.depth();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeCapacity() external view override returns (uint256 capacity) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        capacity = $._merkleTree.capacity();
+        capacity = _getCommitmentTreeStorage()._merkleTree.capacity();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeLeftSiblings() external view override returns (bytes32[] memory leftSiblings) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        leftSiblings = $._merkleTree.leftSiblings();
+        leftSiblings = _getCommitmentTreeStorage()._merkleTree.leftSiblings();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeEmptySubtreeRoots() external view override returns (bytes32[] memory emptySubtreeRoots) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        emptySubtreeRoots = $._merkleTree.emptySubtreeRoots();
+        emptySubtreeRoots = _getCommitmentTreeStorage()._merkleTree.emptySubtreeRoots();
     }
 
     /// @inheritdoc ICommitmentTree
@@ -76,9 +66,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
 
     /// @inheritdoc ICommitmentTree
     function latestCommitmentTreeRoot() public view override returns (bytes32 root) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        root = $._merkleTree.currentRoot();
+        root = _getCommitmentTreeStorage()._merkleTree.currentRoot();
     }
 
     /// @notice Initializes the commitment tree by setting up the underlying Merkle tree and storing the initial root.
@@ -96,9 +84,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     /// @notice Adds a commitment to the accumulator.
     /// @param commitment The commitment to add.
     function _addCommitment(bytes32 commitment) internal {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        $._merkleTree.push(commitment);
+        _getCommitmentTreeStorage()._merkleTree.push(commitment);
     }
 
     /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
@@ -116,9 +102,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     /// @param root The commitment tree root to look up.
     /// @return isHistorical Whether a consumed resource can reference the root.
     function _isCommitmentTreeRootHistorical(bytes32 root) internal view returns (bool isHistorical) {
-        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
-
-        isHistorical = $._historicalRoots[root];
+        isHistorical = _getCommitmentTreeStorage()._historicalRoots[root];
     }
 
     /// @notice Returns the storage from the commitment tree storage location.
