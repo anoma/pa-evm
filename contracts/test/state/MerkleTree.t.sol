@@ -75,9 +75,9 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         }
     }
 
-    /// @dev A push writes the leaf count and one side, the root of the subtree the leaf completes, and grows the
-    /// arrays only when the capacity is reached.
-    function test_push_writes_one_side() public {
+    /// @dev A push writes the leaf count and one left sibling, the root of the subtree the leaf completes, and grows
+    /// the arrays only when the capacity is reached.
+    function test_push_writes_one_left_sibling() public {
         _merkleTree.setup();
 
         // Leaf index 5 has one trailing one: it completes the pair of leaves 4 and 5, inside a tree of depth 3.
@@ -85,15 +85,21 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
             _merkleTree.push(keccak256(abi.encode(i)));
         }
         uint256 depthBefore = _merkleTree.depth();
-        uint256 zerosBefore = _merkleTree._zeros.length;
-        bytes32 untouched = _merkleTree._sides[2];
+        uint256 emptySubtreeRootsBefore = _merkleTree._emptySubtreeRoots.length;
+        bytes32 untouched = _merkleTree._leftSiblings[2];
 
         _merkleTree.push(keccak256("sixth"));
-        // Only the side at level 1 changes, to the root of the pair.
-        assertEq(_merkleTree._sides[1], SHA256.hash(keccak256(abi.encode(4)), keccak256("sixth")), "level 1 side");
-        assertEq(_merkleTree._sides[2], untouched, "a higher side must not change");
+        // Only the left sibling at level 1 changes, to the root of the pair.
+        assertEq(
+            _merkleTree._leftSiblings[1],
+            SHA256.hash(keccak256(abi.encode(4)), keccak256("sixth")),
+            "the left sibling at level 1"
+        );
+        assertEq(_merkleTree._leftSiblings[2], untouched, "a higher left sibling must not change");
         assertEq(_merkleTree.depth(), depthBefore, "the depth must not change");
-        assertEq(_merkleTree._zeros.length, zerosBefore, "the zeros must not change");
+        assertEq(
+            _merkleTree._emptySubtreeRoots.length, emptySubtreeRootsBefore, "the empty subtree roots must not change"
+        );
     }
 
     function testFuzz_push_returns_the_same_roots(bytes32[] memory leaves) public {

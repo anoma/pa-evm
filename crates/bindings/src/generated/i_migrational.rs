@@ -8,7 +8,7 @@ interface IMigrational {
     event NullifierBatchMigrated(uint256 start, uint256 count);
 
     function getLegacyProtocolAdapter() external view returns (address legacyProtocolAdapter);
-    function migrateCommitmentTree(bytes32[] memory sides) external;
+    function migrateCommitmentTree(bytes32[] memory leftSiblings) external;
     function migrateNullifierSet(uint256 start, uint256 count) external;
 }
 ```
@@ -34,7 +34,7 @@ interface IMigrational {
     "name": "migrateCommitmentTree",
     "inputs": [
       {
-        "name": "sides",
+        "name": "leftSiblings",
         "type": "bytes32[]",
         "internalType": "bytes32[]"
       }
@@ -634,13 +634,13 @@ function getLegacyProtocolAdapter() external view returns (address legacyProtoco
     #[derive(Default, Debug, PartialEq, Eq, Hash)]
     /**Function with signature `migrateCommitmentTree(bytes32[])` and selector `0xfa83dd8f`.
 ```solidity
-function migrateCommitmentTree(bytes32[] memory sides) external;
+function migrateCommitmentTree(bytes32[] memory leftSiblings) external;
 ```*/
     #[allow(non_camel_case_types, non_snake_case, clippy::pub_underscore_fields)]
     #[derive(Clone)]
     pub struct migrateCommitmentTreeCall {
         #[allow(missing_docs)]
-        pub sides: alloy::sol_types::private::Vec<
+        pub leftSiblings: alloy::sol_types::private::Vec<
             alloy::sol_types::private::FixedBytes<32>,
         >,
     }
@@ -686,7 +686,7 @@ function migrateCommitmentTree(bytes32[] memory sides) external;
             impl ::core::convert::From<migrateCommitmentTreeCall>
             for UnderlyingRustTuple<'_> {
                 fn from(value: migrateCommitmentTreeCall) -> Self {
-                    (value.sides,)
+                    (value.leftSiblings,)
                 }
             }
             #[automatically_derived]
@@ -694,7 +694,7 @@ function migrateCommitmentTree(bytes32[] memory sides) external;
             impl ::core::convert::From<UnderlyingRustTuple<'_>>
             for migrateCommitmentTreeCall {
                 fn from(tuple: UnderlyingRustTuple<'_>) -> Self {
-                    Self { sides: tuple.0 }
+                    Self { leftSiblings: tuple.0 }
                 }
             }
         }
@@ -769,7 +769,7 @@ function migrateCommitmentTree(bytes32[] memory sides) external;
                 (
                     <alloy::sol_types::sol_data::Array<
                         alloy::sol_types::sol_data::FixedBytes<32>,
-                    > as alloy_sol_types::SolType>::tokenize(&self.sides),
+                    > as alloy_sol_types::SolType>::tokenize(&self.leftSiblings),
                 )
             }
             #[inline]
@@ -1580,11 +1580,15 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         ///Creates a new call builder for the [`migrateCommitmentTree`] function.
         pub fn migrateCommitmentTree(
             &self,
-            sides: alloy::sol_types::private::Vec<
+            leftSiblings: alloy::sol_types::private::Vec<
                 alloy::sol_types::private::FixedBytes<32>,
             >,
         ) -> alloy_contract::SolCallBuilder<&P, migrateCommitmentTreeCall, N> {
-            self.call_builder(&migrateCommitmentTreeCall { sides })
+            self.call_builder(
+                &migrateCommitmentTreeCall {
+                    leftSiblings,
+                },
+            )
         }
         ///Creates a new call builder for the [`migrateNullifierSet`] function.
         pub fn migrateNullifierSet(

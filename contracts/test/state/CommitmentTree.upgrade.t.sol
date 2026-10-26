@@ -13,11 +13,11 @@ import {CommitmentTreeLegacyMock, CommitmentTreeUpgradeMock} from "../mocks/Comm
 contract CommitmentTreeUpgradeTest is Test {
     /// @dev A table test, so that each count runs in a fresh execution.
     function tableSmallCounts_roots_stay_those_of_the_padded_tree_across_the_upgrade(uint256 smallCount) public {
-        _pushUpgradePush({beforeCount: smallCount, afterCount: 70, checkSides: true});
+        _pushUpgradePush({beforeCount: smallCount, afterCount: 70, checkLeftSiblings: true});
     }
 
     function tableBoundaryCounts_roots_stay_those_of_the_padded_tree_across_the_upgrade(uint256 boundaryCount) public {
-        _pushUpgradePush({beforeCount: boundaryCount, afterCount: 5, checkSides: false});
+        _pushUpgradePush({beforeCount: boundaryCount, afterCount: 5, checkLeftSiblings: false});
     }
 
     function fixtureSmallCount() public pure returns (uint256[] memory counts) {
@@ -41,7 +41,7 @@ contract CommitmentTreeUpgradeTest is Test {
 
     /// @dev Pushes `beforeCount` leaves through the legacy implementation, upgrades, pushes `afterCount` more, and
     /// compares the root with the padded-tree root after every push.
-    function _pushUpgradePush(uint256 beforeCount, uint256 afterCount, bool checkSides) internal {
+    function _pushUpgradePush(uint256 beforeCount, uint256 afterCount, bool checkLeftSiblings) internal {
         address proxy = UnsafeUpgrades.deployUUPSProxy(
             address(new CommitmentTreeLegacyMock()), abi.encodeCall(CommitmentTreeLegacyMock.initialize, ())
         );
@@ -65,32 +65,38 @@ contract CommitmentTreeUpgradeTest is Test {
         for (uint256 i = beforeCount; i < leaves.length; ++i) {
             tree.addCommitment(leaves[i]);
             assertEq(tree.latestCommitmentTreeRoot(), _root(leaves, i + 1), "root after a push");
-            _assertViews(tree, leaves, i + 1, checkSides);
+            _assertViews(tree, leaves, i + 1, checkLeftSiblings);
         }
     }
 
     /// @dev The stored arrays keep their meaning: one side per level below the root and one zero per level up to it,
     /// and the side of a level where the leaf count has a one bit is the root of the complete left subtree there.
-    function _assertViews(CommitmentTreeUpgradeMock tree, bytes32[] memory leaves, uint256 count, bool checkSides)
-        internal
-        view
-    {
-        bytes32[] memory sides = tree.commitmentTreeSides();
-        bytes32[] memory zeros = tree.commitmentTreeZeros();
+    function _assertViews(
+        CommitmentTreeUpgradeMock tree,
+        bytes32[] memory leaves,
+        uint256 count,
+        bool checkLeftSiblings
+    ) internal view {
+        bytes32[] memory leftSiblings = tree.commitmentTreeLeftSiblings();
+        bytes32[] memory emptySubtreeRoots = tree.commitmentTreeEmptySubtreeRoots();
 
         uint256 treeDepth = 0;
         for (uint256 x = count; x > 0; x >>= 1) {
             ++treeDepth;
         }
         assertEq(tree.commitmentTreeDepth(), treeDepth, "depth");
-        assertEq(sides.length, treeDepth, "the number of sides");
-        assertEq(zeros.length, treeDepth + 1, "the number of zeros");
-        assertEq(zeros[0], SHA256.EMPTY_HASH, "the first zero");
-        for (uint256 level = 1; level < zeros.length; ++level) {
-            assertEq(zeros[level], SHA256.hash(zeros[level - 1], zeros[level - 1]), "a zero");
+        assertEq(leftSiblings.length, treeDepth, "the number of left siblings");
+        assertEq(emptySubtreeRoots.length, treeDepth + 1, "the number of empty subtree roots");
+        assertEq(emptySubtreeRoots[0], SHA256.EMPTY_HASH, "the first empty subtree root");
+        for (uint256 level = 1; level < emptySubtreeRoots.length; ++level) {
+            assertEq(
+                emptySubtreeRoots[level],
+                SHA256.hash(emptySubtreeRoots[level - 1], emptySubtreeRoots[level - 1]),
+                "an empty subtree root"
+            );
         }
 
-        if (!checkSides) {
+        if (!checkLeftSiblings) {
             return;
         }
         for (uint256 level = 0; level < treeDepth; ++level) {
@@ -100,7 +106,9 @@ contract CommitmentTreeUpgradeTest is Test {
                 for (uint256 j = 0; j < subtree.length; ++j) {
                     subtree[j] = leaves[start + j];
                 }
-                assertEq(sides[level], MerkleTreeReference.computeRoot(subtree, uint8(level)), "a complete subtree");
+                assertEq(
+                    leftSiblings[level], MerkleTreeReference.computeRoot(subtree, uint8(level)), "a complete subtree"
+                );
             }
         }
     }
