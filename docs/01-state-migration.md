@@ -48,7 +48,7 @@ flowchart LR
 - Two functions copy the state. These documents call them the **copy-in**. Only the owner can call them, and only while the protocol adapter is paused and the legacy protocol adapter is stopped. So the state that they read does not change.
 - `unpause` lifts the pause only after a complete copy.
 
-**`migrateCommitmentTree(sides)`** writes the commitment tree in one call. It works only on an empty tree. The caller supplies the sides: the hashes that the legacy protocol adapter stores for the left part of each level of its tree. The legacy protocol adapter has no function that returns the sides, so the script reads them from its storage. The function reads the number of commitments and the latest root from the legacy protocol adapter. It takes the depth of the tree from the number of sides, and it calculates the roots of the empty subtrees. Then it calculates the root of the result. If this root is not the latest root of the legacy protocol adapter, the function reverts. So the function cannot write wrong sides. The function also reverts if the legacy commitment tree is empty.
+**`migrateCommitmentTree(leftSiblings)`** writes the commitment tree in one call. It works only on an empty tree. The caller supplies the left siblings: the hashes that the legacy protocol adapter stores as `_sides` for the left part of each level of its tree. The legacy protocol adapter has no function that returns them, so the script reads them from its storage. The function reads the number of commitments and the latest root from the legacy protocol adapter. It takes the depth of the tree from the number of left siblings, and it calculates the roots of the empty subtrees. Then it calculates the root of the result. If this root is not the latest root of the legacy protocol adapter, the function reverts. So the function cannot write wrong left siblings. The function also reverts if the legacy commitment tree is empty.
 
 **`migrateNullifierSet(start, count)`** copies `count` nullifiers. The legacy protocol adapter returns each nullifier by its index, in the order in which it added them. The function copies the nullifiers from the index `start`, and it reads each one from the legacy protocol adapter. It reverts in two cases:
 
@@ -112,7 +112,7 @@ sequenceDiagram
 
     Wallet->>Legacy: emergencyStop()
     Note over Legacy,Proxy: Users cannot transact
-    Wallet->>Proxy: migrateCommitmentTree(sides)
+    Wallet->>Proxy: migrateCommitmentTree(leftSiblings)
     loop Each nullifier batch of 200 nullifiers
         Wallet->>Proxy: migrateNullifierSet(start, count)
     end
