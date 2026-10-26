@@ -1,6 +1,6 @@
 //! The commitment tree of a protocol adapter. The adapter stores only its commitment count and, for each level where
-//! the count has a one bit, the root of the last complete left subtree (its sides), so the tree starts from these and
-//! adds the leaves the tests create.
+//! the count has a one bit, the root of the last complete left subtree (its left siblings), so the tree starts from
+//! these and adds the leaves the tests create.
 
 use alloy::primitives::B256;
 use alloy::providers::DynProvider;
@@ -14,8 +14,8 @@ use risc0_zkvm::Digest;
 pub struct CommitmentTree {
     /// The adapter's commitment count when the tree was read.
     commitment_count: usize,
-    /// The adapter's sides when the tree was read, as `commitmentTreeSides` returns them.
-    sides: Vec<Digest>,
+    /// The adapter's left siblings when the tree was read, as `commitmentTreeLeftSiblings` returns them.
+    left_siblings: Vec<Digest>,
     /// The leaves added since, in order.
     leaves: Vec<Digest>,
 }
@@ -33,22 +33,22 @@ impl CommitmentTree {
         let commitment_count =
             usize::try_from(count).context("the commitment count exceeds usize")?;
 
-        let sides = pa
-            .commitmentTreeSides()
+        let left_siblings = pa
+            .commitmentTreeLeftSiblings()
             .call()
             .await
-            .context("failed to query the commitment tree sides")?;
+            .context("failed to query the commitment tree left siblings")?;
         anyhow::ensure!(
-            sides.len() == depth_at(commitment_count),
-            "the adapter returns {} sides at {commitment_count} leaves",
-            sides.len()
+            left_siblings.len() == depth_at(commitment_count),
+            "the adapter returns {} left siblings at {commitment_count} leaves",
+            left_siblings.len()
         );
 
         let tree = Self {
             commitment_count,
-            sides: sides
+            left_siblings: left_siblings
                 .into_iter()
-                .map(|side| Digest::from_bytes(side.0))
+                .map(|left_sibling| Digest::from_bytes(left_sibling.0))
                 .collect(),
             leaves: Vec::new(),
         };
@@ -83,14 +83,15 @@ impl CommitmentTree {
         self.commitment_count + self.leaves.len()
     }
 
-    /// The node at `level` and `index`, from the added leaves, the sides, or the empty subtree.
+    /// The node at `level` and `index`, from the added leaves, the left siblings, or the empty subtree.
     fn node(&self, level: usize, index: usize) -> Digest {
         if index << level >= self.count() {
             return empty(level);
         }
         if (index + 1) << level <= self.commitment_count {
-            // A path reaches a node over read commitments only as its level's last left node, which the sides hold.
-            return self.sides[level];
+            // A path reaches a node over read commitments only as its level's last left node, which the left
+            // siblings hold.
+            return self.left_siblings[level];
         }
         if level == 0 {
             return self.leaves[index - self.commitment_count];
@@ -154,10 +155,10 @@ mod tests {
         ActionTree::new(padded)
     }
 
-    /// The tree read after the first `commitment_count` leaves, with the rest added since. A side no path reads
-    /// stays zero.
+    /// The tree read after the first `commitment_count` leaves, with the rest added since. A left sibling no path
+    /// reads stays zero.
     fn read_after(leaves: &[Digest], commitment_count: usize) -> CommitmentTree {
-        let sides = (0..depth_at(commitment_count))
+        let left_siblings = (0..depth_at(commitment_count))
             .map(|level| {
                 let node = commitment_count >> level;
                 if node.is_multiple_of(2) {
@@ -171,7 +172,7 @@ mod tests {
             .collect();
         CommitmentTree {
             commitment_count,
-            sides,
+            left_siblings,
             leaves: leaves[commitment_count..].to_vec(),
         }
     }
