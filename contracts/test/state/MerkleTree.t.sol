@@ -280,7 +280,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
         }
     }
 
-    function _paddedTreeRoot(bytes32[] memory leaves, uint256 count) internal pure returns (bytes32 root) {
+    function _paddedTreeRoot(bytes32[] memory leaves, uint256 count) internal view returns (bytes32 root) {
         bytes32[] memory prefix = new bytes32[](count);
         for (uint256 i = 0; i < count; ++i) {
             prefix[i] = leaves[i];
@@ -292,7 +292,7 @@ contract MerkleTreeTest is Test, MerkleTreeExample {
     /// @param a The first value to hash.
     /// @param b The second value to hash.
     /// @return hab The resulting hash.
-    function _hashPair(bytes32 a, bytes32 b) internal pure returns (bytes32 hab) {
+    function _hashPair(bytes32 a, bytes32 b) internal view returns (bytes32 hab) {
         hab = SHA256.hash(a, b);
     }
 
