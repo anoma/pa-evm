@@ -22,9 +22,8 @@ interface IMigrational {
 
     /// @notice Copies the commitment tree of the legacy protocol adapter in. Allowed once, while paused, and
     /// only while the legacy protocol adapter is stopped.
-    /// @param leftSiblings The stored left siblings of the tree of the legacy protocol adapter, one per level. This is
-    /// the one part of the tree that it does not expose through a getter, so it is passed in and checked against its
-    /// root.
+    /// @param leftSiblings The left siblings that the legacy protocol adapter stores but does not return, one per level
+    /// below the root. The function checks them against the latest root of the legacy commitment tree.
     function migrateCommitmentTree(bytes32[] calldata leftSiblings) external;
 
     /// @notice Copies `count` nullifiers of the legacy protocol adapter in, from index `start` on. Allowed

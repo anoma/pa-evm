@@ -6,12 +6,12 @@ pragma solidity ^0.8.30;
 /// @notice The functions of the commitment tree of the legacy protocol adapter that the state migration reads.
 /// @custom:security-contact security@anoma.foundation
 interface ILegacyCommitmentTree {
-    /// @notice Returns the number of commitments that have been added to the tree.
-    /// @return count The number of commitments in the tree.
+    /// @notice Returns the number of commitments in the commitment tree.
+    /// @return count The number of commitments, which is also the index of the next commitment.
     function commitmentCount() external view returns (uint256 count);
 
-    /// @notice Returns the commitment tree depth.
-    /// @return depth The depth of the tree.
+    /// @notice Returns the depth of the commitment tree.
+    /// @return depth The number of levels below the root.
     function commitmentTreeDepth() external view returns (uint8 depth);
 
     /// @notice Returns the latest commitment tree root.

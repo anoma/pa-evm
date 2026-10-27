@@ -7,7 +7,7 @@ import {SHA256} from "../libs/SHA256.sol";
 
 /// @title MerkleTree
 /// @author Anoma Foundation, 2025
-/// @notice A Merkle tree implementation populating a tree of variable depth from left to right.
+/// @notice A Merkle tree that adds leaves from left to right and increases its depth by one each time a leaf fills it.
 /// @dev The tree stores its left siblings instead of its leaves.
 /// @custom:security-contact security@anoma.foundation
 library MerkleTree {
@@ -17,30 +17,27 @@ library MerkleTree {
         bytes32[] _emptySubtreeRoots;
     }
 
-    /// @notice Sets up the tree with an initial capacity (i.e. number of leaves) of 1
-    /// and returns the initial root of the empty tree.
-    /// @param self The tree data structure.
-    /// @return initialRoot The initial root of the empty tree.
+    /// @notice Sets up an empty tree of depth 0 and returns its root.
+    /// @param self The tree, which must not be set up yet.
+    /// @return initialRoot The root of the empty tree.
     function setup(Tree storage self) internal returns (bytes32 initialRoot) {
         initialRoot = SHA256.EMPTY_HASH;
 
-        // Store the root of the empty subtree of depth 0.
+        // Store the empty subtree root of the leaf level.
         self._emptySubtreeRoots.push(SHA256.EMPTY_HASH);
 
         self._leafCount = 0;
     }
 
-    /// @notice Pushes a leaf to the tree.
-    /// @dev Only the level that the leaf completes is written; other levels may be stale and are read only where the
-    /// leaf count has a one bit. It computes no root; use `currentRoot` for that.
-    /// @param self The tree data structure.
+    /// @notice Adds a leaf to the tree.
+    /// @param self The tree.
     /// @param leaf The leaf to add.
+    /// @dev It writes one left sibling, the root of the subtree that the leaf completes, and computes no tree root.
     function push(Tree storage self, bytes32 leaf) internal {
         // The new leaf's index is the leaf count before the push.
         uint256 leafIndex = self._leafCount++;
 
-        // Fold the leaf with the left siblings while the node is a right child; the result is the root of the
-        // subtree that the leaf completes. The level counts the trailing ones of the leaf index.
+        // The loop ends at the root of the subtree that the leaf completes.
         bytes32 node = leaf;
         uint256 level = 0;
         for (uint256 nodeIndex = leafIndex; isRightChild(nodeIndex); nodeIndex >>= 1) {
@@ -49,28 +46,27 @@ library MerkleTree {
         }
 
         if (level == depth(self)) {
-            // The capacity is reached. The leaf finishes the whole tree, whose root becomes the left sibling on a new
-            // level.
+            // The leaf fills the tree, so the root of the tree becomes the left sibling on a new level.
             self._leftSiblings.push(node);
 
-            // Store the root of the empty subtree of the next depth.
+            // Add the empty subtree root of the level of the new root.
             bytes32 emptySubtreeRoot = Arrays.unsafeAccess(self._emptySubtreeRoots, level).value;
             self._emptySubtreeRoots.push(SHA256.hash(emptySubtreeRoot, emptySubtreeRoot));
         } else {
-            // NOTE: Only this level is written, the next `push` or `currentRoot` reads it.
+            // The node is a left child, so it is the left sibling of the next node on its level.
             Arrays.unsafeAccess(self._leftSiblings, level).value = node;
         }
     }
 
-    /// @notice Computes the root of the tree in its current state.
-    /// @dev It hashes the empty subtree roots while folding, which costs less than reading `_emptySubtreeRoots`.
-    /// @param self The tree data structure.
+    /// @notice Computes the root of the tree.
+    /// @param self The tree.
     /// @return treeRoot The root of the tree.
+    /// @dev Hashing the empty subtree roots uses less gas than reading them from `_emptySubtreeRoots`.
     function currentRoot(Tree storage self) internal view returns (bytes32 treeRoot) {
         uint256 treeDepth = depth(self);
         uint256 nodeIndex = self._leafCount;
 
-        // The root of the empty subtree of the current level.
+        // The empty subtree root of the current level.
         bytes32 emptySubtreeRoot = SHA256.EMPTY_HASH;
         bytes32 node = emptySubtreeRoot;
         for (uint256 level = 0; level < treeDepth; ++level) {
@@ -86,24 +82,24 @@ library MerkleTree {
         treeRoot = node;
     }
 
-    /// @notice Returns the tree depth.
-    /// @param self The tree data structure.
-    /// @return treeDepth The depth of the tree.
+    /// @notice Returns the depth of the tree.
+    /// @param self The tree.
+    /// @return treeDepth The number of levels below the root.
     function depth(Tree storage self) internal view returns (uint8 treeDepth) {
         // The tree gains one level per capacity doubling, so the depth cannot reach 256.
         // forge-lint: disable-next-line(unsafe-typecast)
         treeDepth = uint8(self._leftSiblings.length);
     }
 
-    /// @notice Returns the number of leaves that have been added to the tree.
-    /// @param self The tree data structure.
-    /// @return count The number of leaves in the tree.
+    /// @notice Returns the number of leaves in the tree.
+    /// @param self The tree.
+    /// @return count The number of leaves, which is also the index of the next leaf.
     function leafCount(Tree storage self) internal view returns (uint256 count) {
         count = self._leafCount;
     }
 
     /// @notice Returns the left siblings of the tree, one per level below the root.
-    /// @param self The tree data structure.
+    /// @param self The tree.
     /// @return treeLeftSiblings The left siblings, from the leaf level up.
     /// @dev On each level where the leaf count has a one bit, the entry is the sibling on that level in the Merkle path
     /// of the next leaf. The other levels hold stale values.
@@ -111,19 +107,18 @@ library MerkleTree {
         treeLeftSiblings = self._leftSiblings;
     }
 
-    /// @notice Returns the empty subtree roots of the tree: for each level up to the root, the root of an empty
-    /// subtree of that height.
-    /// @param self The tree data structure.
-    /// @return treeEmptySubtreeRoots The empty subtree roots, from the leaf level up.
+    /// @notice Returns the empty subtree roots of the tree, one per level up to the root.
+    /// @param self The tree.
+    /// @return treeEmptySubtreeRoots The roots of subtrees without leaves, from the leaf level up.
     function emptySubtreeRoots(Tree storage self) internal view returns (bytes32[] memory treeEmptySubtreeRoots) {
         treeEmptySubtreeRoots = self._emptySubtreeRoots;
     }
 
-    /// @notice Calculates the capacity of the tree.
-    /// @param self The tree data structure.
-    /// @return treeCapacity The computed tree capacity.
+    /// @notice Computes the capacity of the tree: the number of leaves that fill it at its depth.
+    /// @param self The tree.
+    /// @return treeCapacity Two to the power of the depth.
     function capacity(Tree storage self) internal view returns (uint256 treeCapacity) {
-        treeCapacity = uint256(1) << depth(self); // 2^treeDepth
+        treeCapacity = uint256(1) << depth(self);
     }
 
     /// @notice Checks whether a node is the right child of its parent, according to its index on its level.
