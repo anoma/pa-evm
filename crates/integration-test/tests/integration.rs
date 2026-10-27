@@ -27,13 +27,16 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
     // A nonce outside the `[seed; 32]` default, which the arm-risc0 transaction
     // generator produces too: one such transaction settled on Sepolia, so a fork
     // starts with its nullifier spent.
-    let witnesses = action::build(trivial::resources(
-        1,
-        trivial::Overrides {
-            consumed_nonce: Some(*b"anoma pa-evm e2e trivial nonce 1"),
-            ..trivial::Overrides::default()
-        },
-    ))
+    let witnesses = action::build([
+        trivial::consumed(
+            1,
+            trivial::Overrides {
+                nonce: Some(*b"anoma pa-evm e2e trivial nonce 1"),
+                ..trivial::Overrides::default()
+            },
+        ),
+        trivial::created(1),
+    ])
     .context("failed to build trivial action")?;
     let tx = prove_actions(&env, [&witnesses]).await?;
 
@@ -58,14 +61,13 @@ async fn execute_tx_settles_an_n_to_m_transaction<Env: Environment>(
 
     let before = commitment_root(&env)?;
 
-    let witnesses = action::build(trivial::resources(
-        21,
-        trivial::Overrides {
-            consumed_count: Some(2),
-            created_count: Some(3),
-            ..trivial::Overrides::default()
-        },
-    ))
+    let witnesses = action::build([
+        trivial::consumed(21, trivial::Overrides::default()),
+        trivial::consumed(22, trivial::Overrides::default()),
+        trivial::created(21),
+        trivial::created(22),
+        trivial::created(23),
+    ])
     .context("failed to build an n:m trivial action")?;
     let tx = prove_actions(&env, [&witnesses]).await?;
 
@@ -91,7 +93,12 @@ async fn execute_tx_settles_a_multi_action_transaction<Env: Environment>(
     let before = commitment_root(&env)?;
 
     let actions = (31..=33)
-        .map(|seed| action::build(trivial::resources(seed, trivial::Overrides::default())))
+        .map(|seed| {
+            action::build([
+                trivial::consumed(seed, trivial::Overrides::default()),
+                trivial::created(seed),
+            ])
+        })
         .collect::<anyhow::Result<Vec<_>>>()
         .context("failed to build trivial actions")?;
     let tx = prove_actions(&env, &actions).await?;
@@ -116,19 +123,12 @@ async fn execute_tx_settles_consume_only_transactions_without_a_root_change<Env:
 
     let before = commitment_root(&env)?;
 
-    let consume_only = |seed| {
-        action::build(trivial::resources(
-            seed,
-            trivial::Overrides {
-                consumed_count: Some(2),
-                created_count: Some(0),
-                ..trivial::Overrides::default()
-            },
-        ))
-        .context("failed to build a consume-only trivial action")
+    let consume_only = |seeds: [u8; 2]| {
+        action::build(seeds.map(|seed| trivial::consumed(seed, trivial::Overrides::default())))
+            .context("failed to build a consume-only trivial action")
     };
 
-    let tx = prove_actions(&env, [&consume_only(41)?]).await?;
+    let tx = prove_actions(&env, [&consume_only([41, 42])?]).await?;
     execute_tx(&mut env, tx).await?;
 
     anyhow::ensure!(
@@ -138,7 +138,7 @@ async fn execute_tx_settles_consume_only_transactions_without_a_root_change<Env:
 
     // A second consume-only transaction settles as well — no root is stored,
     // so no pre-existing-root collision can occur.
-    let tx = prove_actions(&env, [&consume_only(42)?]).await?;
+    let tx = prove_actions(&env, [&consume_only([43, 44])?]).await?;
     execute_tx(&mut env, tx).await?;
 
     anyhow::ensure!(
@@ -162,10 +162,10 @@ async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env.expect("env setup failed");
 
-    let bad = action::build(trivial::resources(
-        7,
-        trivial::Overrides::invalid_nonzero_quantity(),
-    ))
+    let bad = action::build([
+        trivial::consumed(7, trivial::Overrides::invalid_nonzero_quantity()),
+        trivial::created(7),
+    ])
     .expect("failed to build invalid trivial action");
 
     assert_err(prove_actions(&env, [&bad]).await)
@@ -185,10 +185,10 @@ async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env.expect("env setup failed");
 
-    let bad = action::build(trivial::resources(
-        8,
-        trivial::Overrides::invalid_consumed_non_ephemeral(),
-    ))
+    let bad = action::build([
+        trivial::consumed(8, trivial::Overrides::invalid_non_ephemeral()),
+        trivial::created(8),
+    ])
     .expect("failed to build invalid trivial action");
 
     assert_err(prove_actions(&env, [&bad]).await)
@@ -217,8 +217,11 @@ async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
 ) -> anyhow::Result<()> {
     let mut env = env.context("env setup failed")?;
 
-    let witnesses = action::build(trivial::resources(11, trivial::Overrides::default()))
-        .context("failed to build trivial action")?;
+    let witnesses = action::build([
+        trivial::consumed(11, trivial::Overrides::default()),
+        trivial::created(11),
+    ])
+    .context("failed to build trivial action")?;
     let mut tx = prove_actions(&env, [&witnesses])
         .await
         .context("valid witnesses should prove before tampering")?;
