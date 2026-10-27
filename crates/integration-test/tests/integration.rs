@@ -4,7 +4,7 @@ use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_testkit::assert::{Needle, expect_integration_panic};
 use anoma_pa_testkit::environment::Environment;
-use anoma_pa_testkit::fixtures::trivial;
+use anoma_pa_testkit::fixtures::{action, trivial};
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
 use anoma_risc0_verifier_bindings::generated::risc_zero_mock_verifier::RiscZeroMockVerifier;
@@ -27,16 +27,15 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
     // A nonce outside the `[seed; 32]` default, which the arm-risc0 transaction
     // generator produces too: one such transaction settled on Sepolia, so a fork
     // starts with its nullifier spent.
-    let action = trivial::build(
+    let witnesses = action::build(trivial::resources(
         1,
         trivial::Overrides {
             consumed_nonce: Some(*b"anoma pa-evm e2e trivial nonce 1"),
             ..trivial::Overrides::default()
         },
-    )
-    .context("failed to build trivial action")?
-    .witnesses;
-    let tx = prove_actions(&env, &[action]).await?;
+    ))
+    .context("failed to build trivial action")?;
+    let tx = prove_actions(&env, [&witnesses]).await?;
 
     execute_tx(&mut env, tx).await?;
 
@@ -59,17 +58,16 @@ async fn execute_tx_settles_an_n_to_m_transaction<Env: Environment>(
 
     let before = commitment_root(&env)?;
 
-    let action = trivial::build(
+    let witnesses = action::build(trivial::resources(
         21,
         trivial::Overrides {
             consumed_count: Some(2),
             created_count: Some(3),
             ..trivial::Overrides::default()
         },
-    )
-    .context("failed to build an n:m trivial action")?
-    .witnesses;
-    let tx = prove_actions(&env, &[action]).await?;
+    ))
+    .context("failed to build an n:m trivial action")?;
+    let tx = prove_actions(&env, [&witnesses]).await?;
 
     execute_tx(&mut env, tx).await?;
 
@@ -92,7 +90,10 @@ async fn execute_tx_settles_a_multi_action_transaction<Env: Environment>(
 
     let before = commitment_root(&env)?;
 
-    let actions = trivial::build_many(3, 31).context("failed to build trivial actions")?;
+    let actions = (31..=33)
+        .map(|seed| action::build(trivial::resources(seed, trivial::Overrides::default())))
+        .collect::<anyhow::Result<Vec<_>>>()
+        .context("failed to build trivial actions")?;
     let tx = prove_actions(&env, &actions).await?;
 
     execute_tx(&mut env, tx).await?;
@@ -116,18 +117,18 @@ async fn execute_tx_settles_consume_only_transactions_without_a_root_change<Env:
     let before = commitment_root(&env)?;
 
     let consume_only = |seed| {
-        trivial::build(
+        action::build(trivial::resources(
             seed,
             trivial::Overrides {
                 consumed_count: Some(2),
                 created_count: Some(0),
                 ..trivial::Overrides::default()
             },
-        )
+        ))
         .context("failed to build a consume-only trivial action")
     };
 
-    let tx = prove_actions(&env, &[consume_only(41)?.witnesses]).await?;
+    let tx = prove_actions(&env, [&consume_only(41)?]).await?;
     execute_tx(&mut env, tx).await?;
 
     anyhow::ensure!(
@@ -137,7 +138,7 @@ async fn execute_tx_settles_consume_only_transactions_without_a_root_change<Env:
 
     // A second consume-only transaction settles as well — no root is stored,
     // so no pre-existing-root collision can occur.
-    let tx = prove_actions(&env, &[consume_only(42)?.witnesses]).await?;
+    let tx = prove_actions(&env, [&consume_only(42)?]).await?;
     execute_tx(&mut env, tx).await?;
 
     anyhow::ensure!(
@@ -161,10 +162,13 @@ async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env.expect("env setup failed");
 
-    let bad = trivial::build(7, trivial::Overrides::invalid_nonzero_quantity())
-        .expect("failed to build invalid trivial action");
+    let bad = action::build(trivial::resources(
+        7,
+        trivial::Overrides::invalid_nonzero_quantity(),
+    ))
+    .expect("failed to build invalid trivial action");
 
-    assert_err(prove_actions(&env, &[bad.witnesses]).await)
+    assert_err(prove_actions(&env, [&bad]).await)
 }
 
 #[rstest]
@@ -181,10 +185,13 @@ async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
 ) -> anyhow::Result<()> {
     let env = env.expect("env setup failed");
 
-    let bad = trivial::build(8, trivial::Overrides::invalid_consumed_non_ephemeral())
-        .expect("failed to build invalid trivial action");
+    let bad = action::build(trivial::resources(
+        8,
+        trivial::Overrides::invalid_consumed_non_ephemeral(),
+    ))
+    .expect("failed to build invalid trivial action");
 
-    assert_err(prove_actions(&env, &[bad.witnesses]).await)
+    assert_err(prove_actions(&env, [&bad]).await)
 }
 
 #[rstest]
@@ -210,8 +217,9 @@ async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
 ) -> anyhow::Result<()> {
     let mut env = env.context("env setup failed")?;
 
-    let actions = trivial::build_many(1, 11).context("failed to build trivial actions")?;
-    let mut tx = prove_actions(&env, &actions)
+    let witnesses = action::build(trivial::resources(11, trivial::Overrides::default()))
+        .context("failed to build trivial action")?;
+    let mut tx = prove_actions(&env, [&witnesses])
         .await
         .context("valid witnesses should prove before tampering")?;
 

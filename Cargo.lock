@@ -1069,9 +1069,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-pa-testkit"
-version = "1.0.0-rc.4"
+version = "1.0.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed9fb12caf145f4754efed1d9993c97c087bed87634c6271072a2311faaf4b03"
+checksum = "f330139292100a80487d3c746b729f699aa9f9017e076d3083ecef22fe4b621b"
 dependencies = [
  "anoma-rm-risc0",
  "anoma-rm-risc0-gadgets",
