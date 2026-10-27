@@ -9,8 +9,8 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 /// @title CommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice A commitment tree being inherited by the protocol adapter.
-/// @dev The tree is a modified version of OpenZeppelin's `MerkleTree`, and the set of historical roots neither counts
-/// nor lists its roots.
+/// @dev The tree counts its commitments but does not list them, and the set of historical roots neither counts nor
+/// lists its roots.
 /// @custom:security-contact security@anoma.foundation
 abstract contract CommitmentTree is ICommitmentTree, Initializable {
     using MerkleTree for MerkleTree.Tree;
@@ -50,6 +50,8 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
+    /// @dev On each level where the commitment count has a one bit, the entry is the sibling on that level in the
+    /// Merkle path of the next commitment. The other levels hold stale values.
     function commitmentTreeLeftSiblings() external view override returns (bytes32[] memory leftSiblings) {
         leftSiblings = _getCommitmentTreeStorage()._merkleTree.leftSiblings();
     }
@@ -69,7 +71,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         root = _getCommitmentTreeStorage()._merkleTree.currentRoot();
     }
 
-    /// @notice Initializes the commitment tree by setting up the underlying Merkle tree and storing the initial root.
+    /// @notice Sets up the empty commitment tree and adds its root to the set of historical roots.
     // forge-lint: disable-next-line(mixed-case-function)
     function __CommitmentTree_init() internal onlyInitializing {
         CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
@@ -81,7 +83,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         emit CommitmentTreeRootAdded({root: initialRoot});
     }
 
-    /// @notice Adds a commitment to the accumulator.
+    /// @notice Adds a commitment as the next leaf of the commitment tree.
     /// @param commitment The commitment to add.
     function _addCommitment(bytes32 commitment) internal {
         _getCommitmentTreeStorage()._merkleTree.push(commitment);
