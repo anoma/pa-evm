@@ -38,6 +38,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     }
 
     /// @inheritdoc ILogicRefDenylist
+    /// @dev The call reverts if a logic reference is zero or already on its denylist.
     function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external override {
         _authorizeLogicRefDenylistChange();
 

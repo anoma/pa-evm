@@ -13,7 +13,6 @@ interface IKindTreeRoot {
     /// @notice Sets the stored kind tree root. A transaction is proven against the stored kind table or against
     /// the empty kind table.
     /// @param newKindTreeRoot The Merkle root of the new kind table.
-    /// @dev The root changes whenever the set of supported resource kinds changes.
     function setKindTreeRoot(bytes32 newKindTreeRoot) external;
 
     /// @notice Returns the stored kind tree root. A transaction is proven against the stored kind table or
