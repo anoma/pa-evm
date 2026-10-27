@@ -12,7 +12,12 @@ use anoma_rm_risc0::transaction::Transaction as ArmTxn;
 #[tokio::test]
 async fn proven_transaction_into_pa_transaction_yields_actions_and_delta_proof() {
     let actions = (1..=2)
-        .map(|seed| action::build(trivial::resources(seed, trivial::Overrides::default())))
+        .map(|seed| {
+            action::build([
+                trivial::consumed(seed, trivial::Overrides::default()),
+                trivial::created(seed),
+            ])
+        })
         .collect::<anyhow::Result<Vec<_>>>()
         .expect("must build trivial action witnesses");
     let tx = LocalProver

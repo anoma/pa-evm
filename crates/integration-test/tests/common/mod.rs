@@ -21,8 +21,11 @@ pub async fn prove_trivial_tx<Env>(env: &Env) -> anyhow::Result<Transaction>
 where
     Env: Environment<Transaction = Transaction>,
 {
-    let witnesses = action::build(trivial::resources(1, trivial::Overrides::default()))
-        .context("failed to build trivial action")?;
+    let witnesses = action::build([
+        trivial::consumed(1, trivial::Overrides::default()),
+        trivial::created(1),
+    ])
+    .context("failed to build trivial action")?;
 
     prove_actions(env, [&witnesses]).await
 }
