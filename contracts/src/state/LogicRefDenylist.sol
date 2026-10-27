@@ -38,6 +38,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     }
 
     /// @inheritdoc ILogicRefDenylist
+    /// @dev The call reverts if a logic reference is zero or already on its denylist.
     function denyLogicRefs(DeniedLogicRef[] calldata logicRefs) external override {
         _authorizeLogicRefDenylistChange();
 
@@ -63,7 +64,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
 
     /// @notice Adds a logic reference to a denylist and emits the `LogicRefDenied` event.
     /// @param logicRef The logic reference to deny.
-    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    /// @param consumed Whether the denylist is the one for consumed resources.
     function _denyLogicRef(bytes32 logicRef, bool consumed) internal {
         require(logicRef != bytes32(0), ZeroLogicRefNotAllowed());
 
@@ -81,7 +82,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
 
     /// @notice Checks that the denylist for the side of a resource does not contain its logic reference.
     /// @param logicRef The logic reference of the resource.
-    /// @param consumed `true` for a consumed resource, `false` for a created resource.
+    /// @param consumed Whether the resource is consumed.
     function _checkLogicRefNotDenied(bytes32 logicRef, bool consumed) internal view {
         require(
             !_isLogicRefDenied(logicRef, consumed), ResourceWithDeniedLogicRef({logicRef: logicRef, consumed: consumed})
@@ -90,7 +91,7 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
 
     /// @notice Returns whether the denylist for consumed or for created resources contains a logic reference.
     /// @param logicRef The logic reference to check.
-    /// @param consumed `true` for the denylist for consumed resources, `false` for the one for created resources.
+    /// @param consumed Whether the denylist is the one for consumed resources.
     /// @return isDenied Whether the denylist contains the logic reference or not.
     function _isLogicRefDenied(bytes32 logicRef, bool consumed) internal view returns (bool isDenied) {
         Denial storage denial = _getLogicRefDenylistStorage()._denials[logicRef];
