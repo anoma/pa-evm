@@ -8,6 +8,7 @@ import {SHA256} from "../libs/SHA256.sol";
 /// @title MerkleTree
 /// @author Anoma Foundation, 2025
 /// @notice A Merkle tree implementation populating a tree of variable depth from left to right.
+/// @dev The tree stores its left siblings instead of its leaves.
 /// @custom:security-contact security@anoma.foundation
 library MerkleTree {
     struct Tree {
@@ -101,11 +102,11 @@ library MerkleTree {
         count = self._leafCount;
     }
 
-    /// @notice Returns the left siblings of the tree: for each level below the root, the root of the last complete
-    /// left subtree on that level. `push` keeps them to add leaves without storing the earlier ones. Only the levels
-    /// where the leaf count has a one bit are meaningful.
+    /// @notice Returns the left siblings of the tree, one per level below the root.
     /// @param self The tree data structure.
     /// @return treeLeftSiblings The left siblings, from the leaf level up.
+    /// @dev On each level where the leaf count has a one bit, the entry is the sibling on that level in the Merkle path
+    /// of the next leaf. The other levels hold stale values.
     function leftSiblings(Tree storage self) internal view returns (bytes32[] memory treeLeftSiblings) {
         treeLeftSiblings = self._leftSiblings;
     }

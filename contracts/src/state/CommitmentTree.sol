@@ -50,6 +50,8 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     }
 
     /// @inheritdoc ICommitmentTree
+    /// @dev On each level where the commitment count has a one bit, the entry is the sibling on that level in the
+    /// Merkle path of the next commitment. The other levels hold stale values.
     function commitmentTreeLeftSiblings() external view override returns (bytes32[] memory leftSiblings) {
         leftSiblings = _getCommitmentTreeStorage()._merkleTree.leftSiblings();
     }
