@@ -5,14 +5,20 @@
 
 use anoma_pa_evm_bindings::generated::protocol_adapter::IProtocolAdapter;
 use anoma_pa_testkit::environment::Prover;
-use anoma_pa_testkit::fixtures::trivial;
+use anoma_pa_testkit::fixtures::{action, trivial};
 use anoma_pa_testkit::prover::LocalProver;
 use anoma_rm_risc0::transaction::Transaction as ArmTxn;
 
 #[tokio::test]
 async fn proven_transaction_into_pa_transaction_yields_actions_and_delta_proof() {
-    let actions = trivial::build_many(2, 1).expect("must build trivial action witnesses");
-    let tx = LocalProver.prove(&actions).await.unwrap();
+    let actions = (1..=2)
+        .map(|seed| action::build(trivial::resources(seed, trivial::Overrides::default())))
+        .collect::<anyhow::Result<Vec<_>>>()
+        .expect("must build trivial action witnesses");
+    let tx = LocalProver
+        .prove(&actions.iter().collect::<Vec<_>>())
+        .await
+        .unwrap();
     let arm_tx: ArmTxn = tx.into_arm();
 
     let pa_tx: IProtocolAdapter::Transaction = arm_tx.into();
