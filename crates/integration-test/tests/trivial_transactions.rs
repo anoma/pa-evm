@@ -1,3 +1,6 @@
+//! Checks that the protocol adapter executes transactions of trivial resources, and that proving or
+//! execution fails on an invalid resource or seal.
+
 use alloy::sol_types::SolError;
 #[cfg(feature = "e2e")]
 use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
