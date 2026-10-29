@@ -23,7 +23,7 @@ where
 {
     let witnesses = action::build([
         trivial::consumed(1, trivial::Overrides::default()),
-        trivial::created(1),
+        trivial::created(),
     ])
     .context("failed to build trivial action")?;
 
