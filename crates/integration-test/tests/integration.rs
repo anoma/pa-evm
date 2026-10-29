@@ -35,7 +35,7 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
                 ..trivial::Overrides::default()
             },
         ),
-        trivial::created(1),
+        trivial::created(),
     ])
     .context("failed to build trivial action")?;
     let tx = prove_actions(&env, [&witnesses]).await?;
@@ -64,9 +64,9 @@ async fn execute_tx_settles_an_n_to_m_transaction<Env: Environment>(
     let witnesses = action::build([
         trivial::consumed(21, trivial::Overrides::default()),
         trivial::consumed(22, trivial::Overrides::default()),
-        trivial::created(21),
-        trivial::created(22),
-        trivial::created(23),
+        trivial::created(),
+        trivial::created(),
+        trivial::created(),
     ])
     .context("failed to build an n:m trivial action")?;
     let tx = prove_actions(&env, [&witnesses]).await?;
@@ -96,7 +96,7 @@ async fn execute_tx_settles_a_multi_action_transaction<Env: Environment>(
         .map(|seed| {
             action::build([
                 trivial::consumed(seed, trivial::Overrides::default()),
-                trivial::created(seed),
+                trivial::created(),
             ])
         })
         .collect::<anyhow::Result<Vec<_>>>()
@@ -164,7 +164,7 @@ async fn prove_actions_errors_on_nonzero_quantity<Env: Environment>(
 
     let bad = action::build([
         trivial::consumed(7, trivial::Overrides::invalid_nonzero_quantity()),
-        trivial::created(7),
+        trivial::created(),
     ])
     .expect("failed to build invalid trivial action");
 
@@ -187,7 +187,7 @@ async fn prove_actions_errors_on_non_ephemeral_consumed<Env: Environment>(
 
     let bad = action::build([
         trivial::consumed(8, trivial::Overrides::invalid_non_ephemeral()),
-        trivial::created(8),
+        trivial::created(),
     ])
     .expect("failed to build invalid trivial action");
 
@@ -219,7 +219,7 @@ async fn execute_tx_reverts_on_invalid_seal<Env: Environment>(
 
     let witnesses = action::build([
         trivial::consumed(11, trivial::Overrides::default()),
-        trivial::created(11),
+        trivial::created(),
     ])
     .context("failed to build trivial action")?;
     let mut tx = prove_actions(&env, [&witnesses])

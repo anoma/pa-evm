@@ -15,7 +15,7 @@ async fn proven_transaction_into_pa_transaction_yields_actions_and_delta_proof()
         .map(|seed| {
             action::build([
                 trivial::consumed(seed, trivial::Overrides::default()),
-                trivial::created(seed),
+                trivial::created(),
             ])
         })
         .collect::<anyhow::Result<Vec<_>>>()
