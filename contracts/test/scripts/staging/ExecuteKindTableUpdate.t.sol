@@ -6,6 +6,7 @@ import {ExecuteKindTableUpdate} from "../../../script/staging/ExecuteKindTableUp
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {ExecuteKindTableUpdateMock} from "../../mocks/ExecuteKindTableUpdate.m.sol";
 
 /// @notice Checks the staging-only kind table update script.
 contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
@@ -24,7 +25,7 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
     }
 
     function test_run_sets_the_kind_tree_root() public {
-        new ExecuteKindTableUpdate().run({proxy: _stagingProxy, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+        new ExecuteKindTableUpdateMock(_stagingProxy).run({isProduction: false, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
 
         assertEq(
             ProtocolAdapter(_stagingProxy).getKindTreeRoot(),
@@ -34,9 +35,9 @@ contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
-        ExecuteKindTableUpdate script = new ExecuteKindTableUpdate();
+        ExecuteKindTableUpdate script = new ExecuteKindTableUpdateMock(_productionProxy);
 
         vm.expectRevert(abi.encodeWithSelector(StagingScript.NotAStagingDeployment.selector, _productionProxy));
-        script.run({proxy: _productionProxy, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+        script.run({isProduction: false, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
     }
 }
