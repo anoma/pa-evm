@@ -1,14 +1,17 @@
+mod common;
+
 use alloy::sol_types::SolError;
 #[cfg(feature = "e2e")]
 use anoma_pa_evm_integration_test::envs::e2e::Environment as EvmE2eEnv;
 use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
 use anoma_pa_testkit::assert::{Needle, expect_integration_panic};
 use anoma_pa_testkit::environment::Environment;
-use anoma_pa_testkit::fixtures::{action, trivial};
+use anoma_pa_testkit::fixtures::action;
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_pa_testkit::{commitment_root, execute_tx, prove_actions};
 use anoma_risc0_verifier_bindings::generated::risc_zero_mock_verifier::RiscZeroMockVerifier;
 use anyhow::Context;
+use common::trivial;
 use rstest::*;
 
 #[rstest]
@@ -24,17 +27,8 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
 
     let before = commitment_root(&env)?;
 
-    // A nonce outside the `[seed; 32]` default, which the arm-risc0 transaction
-    // generator produces too: one such transaction settled on Sepolia, so a fork
-    // starts with its nullifier spent.
     let witnesses = action::build([
-        trivial::consumed(
-            1,
-            trivial::Overrides {
-                nonce: Some(*b"anoma pa-evm e2e trivial nonce 1"),
-                ..trivial::Overrides::default()
-            },
-        ),
+        trivial::consumed(1, trivial::Overrides::default()),
         trivial::created(),
     ])
     .context("failed to build trivial action")?;

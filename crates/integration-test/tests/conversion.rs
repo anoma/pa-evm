@@ -3,11 +3,14 @@
 //! themselves live in the testkit; this asserts the EVM conversion seam, which
 //! needs the bindings.)
 
+mod common;
+
 use anoma_pa_evm_bindings::generated::protocol_adapter::IProtocolAdapter;
 use anoma_pa_testkit::environment::Prover;
-use anoma_pa_testkit::fixtures::{action, trivial};
+use anoma_pa_testkit::fixtures::action;
 use anoma_pa_testkit::prover::LocalProver;
 use anoma_rm_risc0::transaction::Transaction as ArmTxn;
+use common::trivial;
 
 #[tokio::test]
 async fn proven_transaction_into_pa_transaction_yields_actions_and_delta_proof() {

@@ -3,13 +3,15 @@
 // Each test binary compiles only the subset of helpers it uses.
 #![allow(dead_code)]
 
+pub mod trivial;
+
 use alloy::primitives::B256;
 use alloy::providers::DynProvider;
 use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
 use anoma_pa_evm_integration_test::state::actors::default_signer;
 use anoma_pa_evm_integration_test::state::pa::pa_address;
 use anoma_pa_testkit::environment::Environment;
-use anoma_pa_testkit::fixtures::{action, trivial};
+use anoma_pa_testkit::fixtures::action;
 use anoma_pa_testkit::prove_actions;
 use anoma_pa_testkit::transaction::Transaction;
 use anoma_risc0_verifier_bindings::generated::risc_zero_verifier_router::RiscZeroVerifierRouter;
