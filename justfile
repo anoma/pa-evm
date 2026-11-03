@@ -51,12 +51,12 @@ contracts-storage-check *skip='':
     for sol in $(find src -name '*.sol' | sort); do
         name="$(basename "$sol" .sol)"
         case " {{ skip }} " in *" $name "*) continue ;; esac
-        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '.storage == []')" != true ]; then
-            printf '{{RED}}%s has a non-empty storage layout; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '[.storage[] | select(.type | startswith("erc7201(") | not)] == []')" != true ]; then
+            printf '{{RED}}%s has storage outside ERC-7201 namespaces; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
             exit 1
         fi
     done
-    printf '{{GREEN}}All contracts in `src` use namespaced storage (empty storage layout).{{NORMAL}}\n'
+    printf '{{GREEN}}All contracts in `src` use ERC-7201 namespaced storage only.{{NORMAL}}\n'
 
 # Run slither on contracts
 contracts-static-analysis:

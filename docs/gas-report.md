@@ -32,7 +32,7 @@
 | src/examples/BlockTimeForwarder.sol:BlockTimeForwarder Contract |                 |     |        |     |         |
 |-----------------------------------------------------------------|-----------------|-----|--------|-----|---------|
 | Deployment Cost                                                 | Deployment Size |     |        |     |         |
-|                                                               0 |             569 |     |        |     |         |
+|                                                          169807 |             569 |     |        |     |         |
 |                                                                 |                 |     |        |     |         |
 | Function Name                                                   | Min             | Avg | Median | Max | # Calls |
 | forwardCall                                                     |             620 | 639 |    648 | 649 |       3 |
