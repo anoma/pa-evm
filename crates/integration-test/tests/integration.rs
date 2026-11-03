@@ -24,17 +24,8 @@ async fn execute_tx_settles_a_trivial_transaction<Env: Environment>(
 
     let before = commitment_root(&env)?;
 
-    // A nonce outside the `[seed; 32]` default, which the arm-risc0 transaction
-    // generator produces too: one such transaction settled on Sepolia, so a fork
-    // starts with its nullifier spent.
     let witnesses = action::build([
-        trivial::consumed(
-            1,
-            trivial::Overrides {
-                nonce: Some(*b"anoma pa-evm e2e trivial nonce 1"),
-                ..trivial::Overrides::default()
-            },
-        ),
+        trivial::consumed(1, trivial::Overrides::default()),
         trivial::created(),
     ])
     .context("failed to build trivial action")?;
