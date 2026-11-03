@@ -7,6 +7,8 @@
 A protocol adapter (PA) contract written in Solidity enabling Anoma Resource Machine transaction settlement on EVM-compatible
 chains.
 
+The [documentation](./docs/README.md) specifies the protocol adapter: its upgradeability and ownership, its proofs, state and events, the kind tree root and the denylists, the order of the external calls, and the migration from the legacy protocol adapter.
+
 ## Project Structure
 
 This monorepo is structured as follows:
