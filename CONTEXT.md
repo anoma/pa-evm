@@ -39,7 +39,7 @@ A check that a circuit makes: a proof of the circuit is valid only if the check 
 A check outside the circuits, for example a check that the PA makes on chain.
 
 **Compliance unit / Aggregation proof / Delta proof**:
-Each action has one compliance unit. Its compliance proof shows the **compliance checks**: the in-circuit checks that the action follows the rules of the ARM. The aggregation proof aggregates the compliance proofs and the resource logic proofs of a transaction into one proof, so the PA verifies only the aggregation proof and the delta proof. The delta proof shows that a transaction balances: for each kind point, the consumed and the created quantities are equal.
+Each action has one compliance unit. Its compliance proof shows the **compliance checks**: the in-circuit checks that the action follows the rules of the ARM. The aggregation proof aggregates the compliance proofs and the resource logic proofs of a transaction into one proof, so the PA verifies only the aggregation proof and the delta proof. The delta proof shows that a transaction balances: for each kind base, the consumed and the created quantities are equal.
 
 **Aggregation journal**:
 The public statement the aggregation proof attests to — the compliance verifying key, the kind tree root, and the transaction's actions. The PA reconstructs it from calldata, injecting the compliance verifying key, and verifies the aggregation proof against its digest.
@@ -47,11 +47,12 @@ The public statement the aggregation proof attests to — the compliance verifyi
 **Kind**:
 The hash to curve of the logic ref and the label ref of a resource: a point on an elliptic curve.
 
-**Kind point**:
-The point that the compliance circuit multiplies by the quantity of a resource: its kind, or the point that a kind tree gives its kind. Two resources balance against each other only if they have the same kind point.
+**Kind base**:
+The point that the compliance circuit multiplies by the quantity of a resource: its kind, or the point that a kind tree gives its kind. Two resources balance against each other only if they have the same kind base.
+_Avoid_: kind point
 
 **Kind tree**:
-A Merkle tree of entries, each of which gives a kind a kind point. Two kinds with the same kind point are **aliases**.
+A Merkle tree of entries, each of which gives a kind a kind base. Two kinds with the same kind base are **aliases**.
 _Avoid_: kind table
 
 **Kind tree root**:
@@ -145,7 +146,7 @@ The one-time copy of the commitment tree and the nullifier set of a chain's lega
 _Avoid_: migration (on its own)
 
 **Conversion**:
-A transaction that consumes resources of one kind and creates resources of another kind with the same kind point. The stored kind tree gives one kind the kind point of the other, so the transaction balances. Only a conversion needs the stored kind tree.
+A transaction that consumes resources of one kind and creates resources of another kind with the same kind base. The stored kind tree gives one kind the kind base of the other, so the transaction balances. Only a conversion needs the stored kind tree.
 
 **Soft migration**:
 The process in which users convert their resources of a deprecated logic ref into resources of the active logic ref. The PA still consumes resources of the deprecated logic ref, so their circuit must still be trusted.
