@@ -35,8 +35,8 @@ The copy emits no event for each commitment or nullifier, only `CommitmentTreeRo
 - **The pause lasts until the tokens of the legacy ERC20 forwarder move.** `unpause` checks the copy, but not the move of the tokens. The kind tree lets legacy-forwarder resources convert and unwrap at the ERC20 forwarder, which holds the tokens that back them only after the move. If the pause ends before the move, legacy-forwarder resources can unwrap tokens that back other resources.
 - **The logic ref of the legacy ERC20 forwarder is deprecated before the pause ends.** The kind tree makes the kinds of the legacy-forwarder resources and the kinds of the ERC20 forwarder aliases in both directions. Without the deprecation, a transaction could convert resources of the ERC20 forwarder into new legacy-forwarder resources.
 - **The pause ends before the upgrade to the plain implementation.** The `_authorizeUpgrade` of the migrational implementation checks neither the copy nor the pause. Only `unpause` checks the copy.
-- **The deployment wallet controls the state migration.** It owns the protocol adapter in both environments, and it receives the legacy protocol adapter from the PA Safe and stops it. In production, the PA Safe receives the protocol adapter after the upgrade to the plain implementation. Each transfer of ownership completes in one step.
-- **A protocol adapter with an incomplete copy stays paused.** No other deployment can take its CREATE2 address, so the copy must complete.
+- **The deployment wallet uses its ownership only for the state migration.** It owns the protocol adapter in both environments, and it receives the legacy protocol adapter from the PA Safe and stops it. In production, the PA Safe receives the protocol adapter after the upgrade to the plain implementation. Each transfer of ownership completes in one step.
+- **The copy completes.** A protocol adapter with an incomplete copy stays paused, and no other deployment can take its CREATE2 address.
 
 ## 5. Parameters
 

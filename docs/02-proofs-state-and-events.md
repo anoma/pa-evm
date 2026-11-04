@@ -44,4 +44,4 @@ The migrational implementation emits three more events ([`06-state-migration.md`
 
 ## 5. Trust assumptions
 
-- **The aggregation proof binds the calldata.** The protocol adapter uses the fields of each resource (consumed or created, tag, logic ref, commitment tree root, app data), the delta and the action tree root of each action, and the kind tree root as the transaction gives them. It trusts them because the journal digest, which it calculates from these fields, must match the aggregation proof. So the in-circuit checks apply to the fields that the protocol adapter processes.
+- **The RISC Zero verifier accepts only valid proofs.** The protocol adapter uses the fields of each resource (consumed or created, tag, logic ref, commitment tree root, app data), the delta and the action tree root of each action, and the kind tree root as the transaction gives them. It trusts them because the journal digest, which it calculates from these fields, must match the aggregation proof. So the in-circuit checks apply to the fields that the protocol adapter processes.

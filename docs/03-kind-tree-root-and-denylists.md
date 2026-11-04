@@ -43,9 +43,9 @@ The lists contain logic refs, not kinds. So an entry applies to the resources of
 
 ## 4. Trust assumptions
 
-- **The stored kind tree decides which kinds are aliases.** An entry that makes two kinds aliases lets users convert one into the other at the same quantity. A wrong entry can therefore let users take tokens that back other resources. So the owner sets only roots that the kind trees repository published after a review.
-- **An upgrade can remove a denylist entry.** No function removes an entry, but a new implementation can change the lists.
-- **The denylists apply to all applications.** The owner can stop the resources of any resource logic.
+- **The owner sets only reviewed kind tree roots.** The stored kind tree decides which kinds are aliases. An entry that makes two kinds aliases lets users convert one into the other at the same quantity, so a wrong entry can let users take tokens that back other resources. The kind trees repository publishes roots after a review.
+- **No upgrade removes a denylist entry.** No function removes an entry, but a new implementation can change the lists.
+- **The owner deprecates or denies only replaced or flawed logic refs.** The denylists apply to all applications, so the owner can stop the resources of any resource logic.
 
 ## 5. Parameters
 
