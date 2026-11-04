@@ -77,6 +77,9 @@ A contract of an application that the PA calls, for example the ERC20 forwarder 
 A call that the PA makes to a forwarder when it processes a resource. The external payload of the resource carries it, and the resource logic proof covers it. The PA passes the logic ref of the resource. Each forwarder must accept only the logic refs of its own resources.
 _Avoid_: forwarder call (identifiers such as `ForwarderCallExecuted` keep it)
 
+**App data / Deletion criterion**:
+The app data of a resource holds four lists of blobs: the resource payload, the discovery payload, the external payload and the application payload. The deletion criterion of a blob is `Never` or `Immediately`. The PA emits each blob with `Never` as an event. Each blob of the external payload is an external call, whatever its deletion criterion.
+
 **ERC20 forwarder**:
 The forwarder of AnomaPay that holds the tokens that back the ERC20 resources. A **wrap** takes tokens from a user and creates ERC20 resources. An **unwrap** consumes ERC20 resources and sends the tokens that back them.
 
