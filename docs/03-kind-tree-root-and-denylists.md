@@ -4,7 +4,7 @@ This document specifies two controls of the protocol adapter: the kind tree root
 
 ## 1. The kind tree root
 
-The compliance circuit can read the kind point of a resource from a kind tree instead of calculating it from the kind. Its proof shows the root of the kind tree that it used. The repository risc0-kind-trees makes the kind trees and publishes their roots.
+The compliance circuit can read the kind base of a resource from a kind tree instead of calculating it from the kind. Its proof shows the root of the kind tree that it used. The repository risc0-kind-trees makes the kind trees and publishes their roots.
 
 The protocol adapter stores one kind tree root. A transaction states the kind tree root of its proofs in `Transaction.kindTreeRoot`, and the aggregation proof covers this value. The protocol adapter accepts two values ([ADR-0004](./adr/0004-the-transaction-carries-the-kind-tree-root.md)):
 
@@ -13,7 +13,7 @@ The protocol adapter stores one kind tree root. A transaction states the kind tr
 
 It makes this out-of-circuit check before it processes the actions. On any other value, it reverts with `UnacceptedKindTreeRoot`.
 
-With the empty kind tree, each kind point comes from its kind. So a transaction that balances with the empty kind tree also balances with the stored kind tree. Only a conversion between aliases needs the stored kind tree. For this reason, a kind tree can make kinds aliases, but it cannot stop a kind. A prover that converts nothing can always use the empty kind tree, and its proofs stay valid when the owner sets a new root.
+With the empty kind tree, each kind base comes from its kind. So a transaction that balances with the empty kind tree also balances with the stored kind tree. Only a conversion between aliases needs the stored kind tree. For this reason, a kind tree can make kinds aliases, but it cannot stop a kind. A prover that converts nothing can always use the empty kind tree, and its proofs stay valid when the owner sets a new root.
 
 `setKindTreeRoot(root)` sets the stored root and emits `KindTreeRootUpdated`. It reverts with `ZeroKindTreeRootNotAllowed` for zero. `getKindTreeRoot()` returns the stored root.
 
