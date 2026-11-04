@@ -6,7 +6,7 @@ This document specifies the proofs that the protocol adapter verifies, the stora
 
 The protocol adapter verifies two proofs for each transaction, after it processed all actions. Both verifications are out-of-circuit checks:
 
-- **The delta proof.** An ECDSA signature over the Keccak-256 hash of the concatenated action tree roots. The protocol adapter adds the deltas of all actions and checks that the signer is the key that this sum gives (`DeltaMismatch`). This hash is also the transaction ID.
+- **The delta proof.** An ECDSA signature over the Keccak-256 hash of the action tree roots, concatenated in the order of the actions. So the signature also fixes the order of the actions. The protocol adapter adds the deltas of all actions and checks that the signer is the key that this sum gives (`DeltaMismatch`). This hash is also the transaction ID.
 - **The aggregation proof.** One RISC Zero proof of the batch aggregation circuit for the EVM (`VerifyingKeys._BATCH_AGGREGATION_EVM`). It aggregates the compliance proof of each action and the resource logic proof of each resource, so it shows their in-circuit checks.
 
 The protocol adapter does not receive the journal of the aggregation proof. It calculates the journal digest itself: the SHA-256 hash of the ABI encoding of the verifying key of the compliance circuit (`VerifyingKeys._COMPLIANCE`), the kind tree root of the transaction and the actions. So the transaction cannot select another compliance circuit ([ADR-0001](./adr/0001-journal-constants-are-injected-not-passed-in-calldata.md)), and the journal has the ABI encoding ([ADR-0002](./adr/0002-the-aggregation-journal-is-abi-encoded-not-risc0-serde.md)). Only an upgrade of the protocol adapter can change the verifying keys.
@@ -45,4 +45,3 @@ The migrational implementation emits three more events ([`06-state-migration.md`
 ## 5. Trust assumptions
 
 - **The aggregation proof binds the calldata.** The protocol adapter uses the fields of each resource (consumed or created, tag, logic ref, commitment tree root, app data), the delta and the action tree root of each action, and the kind tree root as the transaction gives them. It trusts them because the journal digest, which it calculates from these fields, must match the aggregation proof. So the in-circuit checks apply to the fields that the protocol adapter processes.
-- **The delta proof binds the actions to their order.** The signed hash covers the action tree roots in the order of the actions.
