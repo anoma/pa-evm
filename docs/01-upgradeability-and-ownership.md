@@ -41,10 +41,10 @@ The protocol adapter accepts every valid proof, from any prover. So only contrac
 
 ## 4. Trust assumptions
 
-- **The owner can change every rule.** An upgrade replaces all code, also the code that reads and writes the state. In production, the PA Safe signers decide each upgrade.
-- **The ownership can be lost.** `transferOwnership` completes in one step, so a transfer to a wrong address cannot be undone. `renounceOwnership()` removes the owner. Without an owner, nobody can upgrade, pause or deny.
+- **The owner upgrades only to reviewed code.** An upgrade replaces all code, also the code that reads and writes the state, so the owner can change every rule. In production, the PA Safe signers decide each upgrade.
+- **The owner transfers the ownership only to a correct address.** `transferOwnership` completes in one step, so nobody can undo a transfer to a wrong address. `renounceOwnership()` removes the owner, and without an owner nobody can upgrade, pause or deny.
 - **The PA Safe signers respond to a flaw in time.** In production, each response is a Safe transaction, except the emergency stop of a RISC Zero verifier by a guardian that is not the PA Safe. On BSC, the PA Safe owns the RISC Zero router and is the guardian.
-- **The owner of the RISC Zero router can stop the protocol adapter, but cannot make it accept a false proof.** The owner can remove the verifier of a selector. Then `execute` and `riscZeroVerifierPaused()` revert with `SelectorRemoved`. The router does not let its owner replace the verifier of a selector in use (`SelectorInUse`). The package `anoma-risc0-deployments` records for each chain whether the team deployed the router (`isAnomaDeployed`). RISC Zero deployed the others.
+- **The owner of the RISC Zero router removes a verifier only after a flaw.** The owner can remove the verifier of a selector, and then `execute` and `riscZeroVerifierPaused()` revert with `SelectorRemoved`. The router does not let its owner replace the verifier of a selector in use (`SelectorInUse`), so the owner cannot make the protocol adapter accept a false proof. The package `anoma-risc0-deployments` records for each chain whether the team deployed the router (`isAnomaDeployed`). RISC Zero deployed the others.
 
 ## 5. Parameters
 
