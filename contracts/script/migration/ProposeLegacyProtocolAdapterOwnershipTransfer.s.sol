@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwnerManager.sol";
-import {Safe} from "safe-utils-0.0.22/src/Safe.sol";
+import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {Parameters} from "../Parameters.sol";
 

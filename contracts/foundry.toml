@@ -52,16 +52,16 @@ remappings = [
     "safe-smart-account-1.5.0/=dependencies/safe-smart-account-1.5.0/",
     "safe-smart-account/common/Enum.sol=dependencies/safe-smart-account-1.5.0/contracts/libraries/Enum.sol",
     "safe-smart-account/libraries/=dependencies/safe-smart-account-1.5.0/contracts/libraries/",
-    "safe-utils-0.0.22/=dependencies/safe-utils-0.0.22/",
+    "safe-utils-0.0.24/=dependencies/safe-utils-0.0.24/",
     "solady-0.1.26/=dependencies/solady-0.1.26/",
-    "solidity-http/=dependencies/safe-utils-0.0.22/lib/solidity-http/src/",
+    "solidity-http/=dependencies/safe-utils-0.0.24/lib/solidity-http/src/",
 ]
 ignored_warnings_from = [
     "dependencies/@openzeppelin-contracts-5.7.0/utils",      # Warning 6335: "error" and "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/openzeppelin-foundry-upgrades-0.4.2/src",  # Warning 2018: Function state mutability can be restricted to pure
     "dependencies/risc0-risc0-ethereum-3.0.1/contracts/src", # Warning 9170: Comparison of variables of contract type is deprecated
     "dependencies/safe-smart-account-1.5.0/contracts",       # Warning 6335: "error" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
-    "dependencies/safe-utils-0.0.22/lib/solidity-http/src/", # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
+    "dependencies/safe-utils-0.0.24/lib/solidity-http/src/", # Warning 6335: "at" will be promoted to keyword in the future and will not be allowed as an identifier anymore.
     "dependencies/solady-0.1.26/src/utils",                  # Warning 2424: Natspec memory-safe-assembly special comment for inline assembly is deprecated
 ]
 
@@ -84,7 +84,7 @@ ignore = ["test/**/*.sol"] # Relaxed the way `.solhint.other.json` relaxes them.
 "openzeppelin-foundry-upgrades" = "0.4.2"
 "risc0-risc0-ethereum" = "3.0.1"
 "safe-smart-account" = { version = "1.5.0", git = "https://github.com/safe-global/safe-smart-account.git", tag = "v1.5.0" }
-"safe-utils" = { version = "0.0.22", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.22" }
+"safe-utils" = { version = "0.0.24", git = "https://github.com/Recon-Fuzz/safe-utils.git", tag = "v0.0.24" }
 "solady" = "0.1.26"
 
 [soldeer]
