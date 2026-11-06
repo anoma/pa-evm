@@ -14,7 +14,7 @@ contract ExecuteKindTableUpdate is StagingScript {
     /// @notice Updates the kind tree root as the proxy owner. Without `--broadcast`, the update is simulated
     /// locally.
     /// @param proxy The staging environment protocol adapter proxy to update.
-    /// @param newKindTreeRoot The Merkle root of the new kind table.
+    /// @param newKindTreeRoot The Merkle root of the new kind tree.
     function run(address proxy, bytes32 newKindTreeRoot) public {
         address owner = _stagingOwner({proxy: proxy});
 

@@ -214,8 +214,8 @@ library TxGen {
         });
     }
 
-    /// @dev Mock-proves the aggregation against a kind table: the transaction carries its root, and the seal
-    /// commits to the journal the protocol adapter reconstructs with it and the compliance key.
+    /// @dev Mock-proves the aggregation against a kind tree: the transaction carries its root, and the seal
+    /// commits to the journal the protocol adapter reconstructs with it and the compliance verifying key.
     function transactionAggregation(
         RiscZeroMockVerifier mockVerifier,
         IProtocolAdapter.Transaction memory txn,
