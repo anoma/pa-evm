@@ -9,6 +9,8 @@ chains.
 
 The [documentation](./docs/README.md) specifies the protocol adapter: its upgradeability and ownership, its proofs, state and events, the kind tree root and the denylists, the order of the external calls, and the migration from the legacy protocol adapter.
 
+The protocol adapter stores one kind tree root, which its owner sets. The kind tree decides which kinds of resources are aliases: kinds whose resources balance against each other. The protocol adapter accepts a transaction only if its proofs use this kind tree or the empty kind tree. The repository [risc0-kind-trees](https://github.com/anoma/risc0-kind-trees) records the kind tree root that each protocol adapter must store, in `crates/kind-trees/data/generated/<environment>/roots.json`. Its branch `staging` holds the roots of the staging environment, and its branch `main` holds the roots of the production environment.
+
 ## Project Structure
 
 This monorepo is structured as follows:
