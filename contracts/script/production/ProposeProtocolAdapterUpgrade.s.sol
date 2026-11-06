@@ -13,30 +13,16 @@ import {ProductionScript} from "./ProductionScript.s.sol";
 /// proxy. The Safe owners confirm and execute the proposed upgrade in the Safe app.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeProtocolAdapterUpgrade is ProductionScript {
-    /// @notice Proposes the upgrade to the Safe owning the proxy.
-    /// @param proxy The production environment protocol adapter proxy to upgrade.
+    /// @notice Proposes the upgrade of the recorded production proxy to the implementation this source version
+    /// predicts to the Safe owning the proxy.
     /// @param proposer The Safe owner or delegate proposing the transaction.
-    /// @param newImplementation The implementation contract to upgrade to, which must be the one this source version
-    /// deploys to. Take it from the deployment that produced it, not from this source, so that the check below
-    /// compares two independent derivations.
-    function run(address proxy, address proposer, address newImplementation) public {
+    function run(address proposer) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        // forge-lint: disable-next-line(unused-return)
-        (address predictedImplementation,) = implementationDeployScript.predict();
-
-        require(
-            newImplementation == predictedImplementation,
-            DeployProtocolAdapterImplementation.UnexpectedImplementation(predictedImplementation, newImplementation)
-        );
-        require(
-            newImplementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(newImplementation)
-        );
+        address implementation = _requireDeployedImplementation(implementationDeployScript);
 
         _propose({
-            proxy: proxy,
             callData: abi.encodeCall(
-                UUPSUpgradeable.upgradeToAndCall, (newImplementation, implementationDeployScript.INITIALIZATION_DATA())
+                UUPSUpgradeable.upgradeToAndCall, (implementation, implementationDeployScript.INITIALIZATION_DATA())
             ),
             proposer: proposer
         });

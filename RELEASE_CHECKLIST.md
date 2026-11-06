@@ -97,7 +97,7 @@ These apply to all three cases and are done once per session.
   export IS_MIGRATIONAL=false
   ```
 
-  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read them; every other recipe takes its addresses as arguments.
+  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read `IS_MIGRATIONAL`. `IS_PRODUCTION` also selects the record that the migration recipes and the recipes the deployment wallet executes directly (`contracts-*-staging-*`) read the proxy from. The recipes that propose to the Safe (`contracts-*-production-*`) always read the production proxy.
 
 ## Releasing a new Protocol Adapter Version
 
@@ -143,7 +143,7 @@ For each chain in the `staging` section of the record:
   just contracts-deploy-impl deployer <CHAIN>
   ```
 
-- [ ] Export the address of the newly deployed implementation, and the proxy address recorded for this chain, with
+- [ ] Export the address of the newly deployed implementation, and the proxy address recorded for this chain, for the verification and the confirmation below, with
 
   ```sh
   export IMPL_ADDRESS=<ADDRESS>
@@ -161,13 +161,15 @@ For each chain in the `staging` section of the record:
 - [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade <CHAIN>
   ```
+
+  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed.
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-upgrade deployer $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-execute-staging-upgrade deployer <CHAIN>
   ```
 
 - [ ] Confirm the proxy now delegates to the new implementation with
@@ -241,13 +243,13 @@ For each chain in the `production` section of the record:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the upgrade, by running
 
   ```sh
-  just contracts-simulate-production-upgrade-proposal $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-production-upgrade-proposal <PROPOSER> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-upgrade deployer $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-propose-production-upgrade deployer <PROPOSER> <CHAIN>
   ```
 
   where `<PROPOSER>` is a Safe owner or delegate.
@@ -423,13 +425,13 @@ For **staging**:
 - [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <PROXY> <ROOT> <CHAIN>
+  just contracts-simulate-staging-kind-table-update <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-kind-table-update deployer <PROXY> <ROOT> <CHAIN>
+  just contracts-execute-staging-kind-table-update deployer <ROOT> <CHAIN>
   ```
 
 For **production**:
@@ -437,13 +439,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the update, by running
 
   ```sh
-  just contracts-simulate-production-kind-table-proposal <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-simulate-production-kind-table-proposal <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-kind-table-update deployer <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-propose-production-kind-table-update deployer <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
@@ -457,13 +459,13 @@ For **staging**:
 - [ ] **Simulate** the pause by running
 
   ```sh
-  just contracts-simulate-staging-pause <PROXY> <CHAIN>
+  just contracts-simulate-staging-pause <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-pause deployer <PROXY> <CHAIN>
+  just contracts-execute-staging-pause deployer <CHAIN>
   ```
 
 For **production**:
@@ -471,13 +473,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the pause, by running
 
   ```sh
-  just contracts-simulate-production-pause-proposal <PROXY> <PROPOSER> <CHAIN>
+  just contracts-simulate-production-pause-proposal <PROPOSER> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-pause deployer <PROXY> <PROPOSER> <CHAIN>
+  just contracts-propose-production-pause deployer <PROPOSER> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
@@ -493,13 +495,13 @@ For **staging**:
 - [ ] **Simulate** the denial by running
 
   ```sh
-  just contracts-simulate-staging-logic-ref-denial <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-staging-logic-ref-denial <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-logic-ref-denial deployer <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-execute-staging-logic-ref-denial deployer <LOGIC_REFS> <CHAIN>
   ```
 
 For **production**:
@@ -507,13 +509,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the denial, by running
 
   ```sh
-  just contracts-simulate-production-logic-ref-denial-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-production-logic-ref-denial-proposal <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-logic-ref-denial deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-propose-production-logic-ref-denial deployer <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

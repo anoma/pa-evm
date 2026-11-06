@@ -11,10 +11,9 @@ import {ProductionScript} from "./ProductionScript.s.sol";
 /// transaction until the Safe calls `unpause`.
 /// @custom:security-contact security@anoma.foundation
 contract ProposeProtocolAdapterPause is ProductionScript {
-    /// @notice Proposes the pause to the Safe owning the proxy.
-    /// @param proxy The production environment protocol adapter proxy to pause.
+    /// @notice Proposes the pause of the recorded production proxy to the Safe owning the proxy.
     /// @param proposer The Safe owner or delegate proposing the transaction.
-    function run(address proxy, address proposer) public {
-        _propose({proxy: proxy, callData: abi.encodeCall(IProtocolAdapter.pause, ()), proposer: proposer});
+    function run(address proposer) public {
+        _propose({callData: abi.encodeCall(IProtocolAdapter.pause, ()), proposer: proposer});
     }
 }

@@ -7,9 +7,11 @@ import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtoco
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeProtocolAdapterUpgrade} from "../../../script/production/ProposeProtocolAdapterUpgrade.s.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {ProposeProtocolAdapterUpgradeMock} from "../../mocks/ProposeProtocolAdapterUpgrade.m.sol";
 
 /// @notice Checks the production-only upgrade proposal script against a Safe-owned production proxy. Outside
 /// broadcast mode, the script simulates the Safe executing the upgrade, so the proxy must end up on the new
@@ -37,14 +39,14 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
     }
 
     function test_run_upgrades_the_proxy() public {
-        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
+        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgradeMock(_productionProxy);
 
         vm.expectEmit({
             checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _productionProxy
         });
         emit IERC1967.Upgraded(_implementation);
 
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
 
         assertEq(
             ProtocolAdapter(_productionProxy).getImplementation(),
@@ -54,14 +56,14 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
+        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgradeMock(_stagingProxy);
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
     }
 
     function test_run_reverts_if_the_implementation_is_not_deployed() public {
-        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
+        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgradeMock(_productionProxy);
 
         vm.etch(_implementation, "");
 
@@ -70,18 +72,17 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
                 DeployProtocolAdapterImplementation.ImplementationNotDeployed.selector, _implementation
             )
         );
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: _implementation});
+        script.run({proposer: _owner});
     }
 
-    function test_run_reverts_if_the_implementation_is_unexpected() public {
+    function test_run_reverts_if_the_proxy_is_not_recorded() public {
         ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
-        address unexpected = makeAddr("unexpected implementation");
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                DeployProtocolAdapterImplementation.UnexpectedImplementation.selector, _implementation, unexpected
+                RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", block.chainid
             )
         );
-        script.run({proxy: _productionProxy, proposer: _owner, newImplementation: unexpected});
+        script.run({proposer: _owner});
     }
 }
