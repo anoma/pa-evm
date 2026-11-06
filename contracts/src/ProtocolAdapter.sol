@@ -321,7 +321,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
-    /// the empty logic reference denylists and the empty kind table.
+    /// the empty logic reference denylists and the root of the empty kind tree.
     /// @param initialOwner The account receiving ownership.
     // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -364,7 +364,7 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
+        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind tree
         // root the transaction carries.
         bytes32 journalDigest =
             sha256(abi.encode(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, transaction.actions));

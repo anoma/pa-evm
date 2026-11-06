@@ -68,7 +68,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     error OwnerMismatch(address expected, address actual);
 
     /// @notice Copies the state of the legacy protocol adapter into the proxy. The proxy stays paused, so no
-    /// transaction can use the kind table before the ERC20 forwarder balances move. Without `--broadcast` the run is
+    /// transaction can use the kind tree before the ERC20 forwarder balances move. Without `--broadcast` the run is
     /// simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every

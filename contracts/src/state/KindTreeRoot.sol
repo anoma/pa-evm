@@ -8,8 +8,8 @@ import {SHA256} from "../libs/SHA256.sol";
 
 /// @title KindTreeRoot
 /// @author Anoma Foundation, 2026
-/// @notice The kind tree root being inherited by the protocol adapter. A transaction is proven against the kind
-/// table it commits to or against the empty kind table.
+/// @notice The kind tree root being inherited by the protocol adapter. A transaction is proven against the stored
+/// kind tree or against the empty kind tree.
 /// @custom:security-contact security@anoma.foundation
 abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
     /// @custom:storage-location erc7201:anoma.storage.KindTreeRoot
@@ -58,7 +58,7 @@ abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
     function _authorizeKindTreeRootChange() internal virtual;
 
     /// @notice Sets the kind tree root and emits the `KindTreeRootUpdated` event.
-    /// @param newKindTreeRoot The Merkle root of the new kind table.
+    /// @param newKindTreeRoot The Merkle root of the new kind tree.
     function _setKindTreeRoot(bytes32 newKindTreeRoot) internal {
         require(newKindTreeRoot != bytes32(0), ZeroKindTreeRootNotAllowed());
 
@@ -68,16 +68,16 @@ abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
     }
 
     /// @notice Returns the stored kind tree root.
-    /// @return kindTreeRoot The Merkle root of the current kind table.
+    /// @return kindTreeRoot The Merkle root of the current kind tree.
     function _getKindTreeRoot() internal view returns (bytes32 kindTreeRoot) {
         kindTreeRoot = _getKindTreeRootStorage()._kindTreeRoot;
     }
 
-    /// @notice Checks whether a transaction can be proven against a kind table: the stored one or the empty one.
+    /// @notice Checks whether a transaction can be proven against a kind tree: the stored one or the empty one.
     /// @param kindTreeRoot The kind tree root to check.
     /// @return isAccepted Whether the kind tree root is accepted or not.
-    /// @dev The empty kind table merges no kinds, so a transaction that balances with it also balances with the stored
-    /// kind table.
+    /// @dev The empty kind tree has no aliases, so a transaction that balances with it also balances with the stored
+    /// kind tree.
     function _isKindTreeRootAccepted(bytes32 kindTreeRoot) internal view returns (bool isAccepted) {
         isAccepted = kindTreeRoot == _getKindTreeRoot() || kindTreeRoot == EMPTY_KIND_TREE_ROOT;
     }
