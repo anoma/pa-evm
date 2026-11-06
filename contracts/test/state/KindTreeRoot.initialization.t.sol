@@ -39,7 +39,7 @@ contract KindTreeRootInitializationTest is Test {
         assertEq(
             _kindTreeRoot.getKindTreeRoot(),
             _kindTreeRoot.EMPTY_KIND_TREE_ROOT(),
-            "the initial root should be the empty table's"
+            "the initial root should be the empty kind tree's"
         );
     }
 
