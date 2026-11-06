@@ -9,7 +9,7 @@ import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 
-/// @notice Checks the production-only kind table update proposal script against a Safe-owned production proxy.
+/// @notice Checks the production-only kind tree update proposal script against a Safe-owned production proxy.
 /// Outside broadcast mode, the script simulates the Safe executing the update, so the proxy must end up on the new
 /// kind tree root.
 contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {

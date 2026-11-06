@@ -69,7 +69,7 @@ impl Environment {
             })?;
         let pa = protocol_adapter(pa_address, provider.clone());
 
-        // The fixtures prove against the empty kind table, which the adapter accepts whatever kind table it stores.
+        // The fixtures prove against the empty kind tree, which the adapter accepts whatever kind tree root it stores.
         let protocol_adapter = ProtocolAdapter::new(pa).await?;
 
         let prover = QueueProver::new(&config.queue_base_url, &config.queue_auth_token)
