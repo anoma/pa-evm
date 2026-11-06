@@ -63,9 +63,9 @@ rev = "dc437e8fba8b4805d76bcbd1c668c9fd3d1e83be"
 
 [[dependencies]]
 name = "safe-utils"
-version = "0.0.22"
+version = "0.0.24"
 git = "https://github.com/Recon-Fuzz/safe-utils.git"
-rev = "273945a35ade03a78648a350140aace72707d5a7"
+rev = "637e04202bb9bb879803f6b42137e2d5d035fbe0"
 
 [[dependencies]]
 name = "solady"
