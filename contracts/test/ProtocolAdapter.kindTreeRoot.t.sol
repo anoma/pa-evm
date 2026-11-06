@@ -44,7 +44,7 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.setKindTreeRoot(bytes32(uint256(1)));
     }
 
-    function test_execute_executes_a_transaction_proven_against_the_stored_kind_table() public {
+    function test_execute_executes_a_transaction_proven_against_the_stored_kind_tree() public {
         _setKindTreeRoot(_STORED_ROOT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(_STORED_ROOT);
@@ -54,8 +54,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_executes_a_transaction_proven_against_the_empty_kind_table() public {
-        assertNotEq(_STORED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the stored kind table must not be empty");
+    function test_execute_executes_a_transaction_proven_against_the_empty_kind_tree() public {
+        assertNotEq(_STORED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the stored kind tree must not be empty");
         _setKindTreeRoot(_STORED_ROOT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(_mockPa.EMPTY_KIND_TREE_ROOT());
@@ -65,8 +65,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_for_a_transaction_proven_against_a_replaced_kind_table() public {
-        assertNotEq(_REPLACED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the replaced kind table must not be empty");
+    function test_execute_reverts_for_a_transaction_proven_against_a_replaced_kind_tree() public {
+        assertNotEq(_REPLACED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the replaced kind tree must not be empty");
         _setKindTreeRoot(_REPLACED_ROOT);
         IProtocolAdapter.Transaction memory txn = _transaction(_REPLACED_ROOT);
 
