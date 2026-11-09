@@ -20,7 +20,8 @@ interface IKindTreeRoot {
     /// @return kindTreeRoot The Merkle root of the current kind tree.
     function getKindTreeRoot() external view returns (bytes32 kindTreeRoot);
 
-    /// @notice The root of the empty kind tree, under which every resource kind is derived via hash-to-curve.
+    /// @notice The root of the empty kind tree. In a transaction proven against the empty kind tree, a resource
+    /// balances only against resources of the same kind.
     /// @return emptyKindTreeRoot The Merkle root of the empty kind tree: its padding leaf `SHA256.EMPTY_HASH`.
     function EMPTY_KIND_TREE_ROOT() external view returns (bytes32 emptyKindTreeRoot);
 }

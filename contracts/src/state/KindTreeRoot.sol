@@ -45,8 +45,7 @@ abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
         kindTreeRoot = _getKindTreeRoot();
     }
 
-    /// @notice Initializes the kind tree root to the root of the empty kind tree, under which every resource kind is
-    /// derived via hash-to-curve.
+    /// @notice Initializes the kind tree root to the root of the empty kind tree.
     // forge-lint: disable-next-line(mixed-case-function)
     function __KindTreeRoot_init() internal onlyInitializing {
         _getKindTreeRootStorage()._kindTreeRoot = EMPTY_KIND_TREE_ROOT;
@@ -76,8 +75,6 @@ abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
     /// @notice Checks whether a transaction can be proven against a kind tree: the stored one or the empty one.
     /// @param kindTreeRoot The kind tree root to check.
     /// @return isAccepted Whether the kind tree root is accepted or not.
-    /// @dev The empty kind tree has no aliases, so a transaction that balances with it also balances with the stored
-    /// kind tree.
     function _isKindTreeRootAccepted(bytes32 kindTreeRoot) internal view returns (bool isAccepted) {
         isAccepted = kindTreeRoot == _getKindTreeRoot() || kindTreeRoot == EMPTY_KIND_TREE_ROOT;
     }
