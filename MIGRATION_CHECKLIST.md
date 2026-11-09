@@ -55,8 +55,8 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 - [ ] Install the chain's kind tree root on the proxy. Generate the tree after the forwarders are recorded, so that it carries the entries under the label of the legacy ERC20 forwarder. The proxy can take the root while paused, so install it before the stop of the legacy protocol adapter. The migration and completion runs do not change it. Simulate, run, and read it back:
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <PROXY> <KIND_TREE_ROOT> <CHAIN>
-  just contracts-execute-staging-kind-table-update deployer <PROXY> <KIND_TREE_ROOT> <CHAIN>
+  just contracts-simulate-staging-kind-tree-root-update <PROXY> <KIND_TREE_ROOT> <CHAIN>
+  just contracts-execute-staging-kind-tree-root-update deployer <PROXY> <KIND_TREE_ROOT> <CHAIN>
   cast call <PROXY> "getKindTreeRoot()(bytes32)" --rpc-url <CHAIN>
   ```
 

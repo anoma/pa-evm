@@ -423,13 +423,13 @@ For **staging**:
 - [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-table-update <PROXY> <ROOT> <CHAIN>
+  just contracts-simulate-staging-kind-tree-root-update <PROXY> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-kind-table-update deployer <PROXY> <ROOT> <CHAIN>
+  just contracts-execute-staging-kind-tree-root-update deployer <PROXY> <ROOT> <CHAIN>
   ```
 
 For **production**:
@@ -437,13 +437,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the update, by running
 
   ```sh
-  just contracts-simulate-production-kind-table-proposal <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-simulate-production-kind-tree-root-update-proposal <PROXY> <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-kind-table-update deployer <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-propose-production-kind-tree-root-update deployer <PROXY> <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
