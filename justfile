@@ -169,7 +169,7 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging kind table update (dry-run): runs it locally as the staging proxy owner
+# Simulate the staging kind tree update (dry-run): runs it locally as the staging proxy owner
 contracts-simulate-staging-kind-table-update proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
@@ -177,7 +177,7 @@ contracts-simulate-staging-kind-table-update proxy root chain *args:
         --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
-# Execute the staging kind table update as the proxy owner
+# Execute the staging kind tree update as the proxy owner
 contracts-execute-staging-kind-table-update deployer proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
@@ -185,7 +185,7 @@ contracts-execute-staging-kind-table-update deployer proxy root chain *args:
         --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the production kind table update proposal (dry-run): simulates the Safe executing the update
+# Simulate the production kind tree update proposal (dry-run): simulates the Safe executing the update
 contracts-simulate-production-kind-table-proposal proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean

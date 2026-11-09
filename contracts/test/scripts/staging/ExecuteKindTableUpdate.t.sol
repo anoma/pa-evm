@@ -7,7 +7,7 @@ import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 
-/// @notice Checks the staging-only kind table update script.
+/// @notice Checks the staging-only kind tree update script.
 contract ExecuteKindTableUpdateTest is RiscZeroRouterFixture {
     bytes32 internal constant _NEW_KIND_TREE_ROOT = keccak256("new kind tree root");
 
