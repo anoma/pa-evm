@@ -7,6 +7,9 @@ pragma solidity ^0.8.30;
 /// @custom:security-contact security@anoma.foundation
 interface IKindTreeRoot {
     /// @notice Emitted when the kind tree root is set.
+    /// @dev The owner can set the root from inside a forwarder call, so this event can precede the
+    /// `TransactionExecuted` event of a transaction proven against the previous root. A transaction's kind tree root
+    /// is `Transaction.kindTreeRoot`, not the root last emitted before it.
     /// @param kindTreeRoot The Merkle root of the stored kind tree.
     event KindTreeRootUpdated(bytes32 indexed kindTreeRoot);
 
