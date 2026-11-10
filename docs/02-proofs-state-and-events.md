@@ -15,11 +15,11 @@ The protocol adapter does not receive the journal of the aggregation proof. It c
 
 ## 2. Commitment tree
 
-The commitment tree stores its left siblings instead of its leaves. On each level where the commitment count has a one bit, the left sibling is the sibling on that level in the Merkle path of the next commitment. The other entries are old values, which the tree does not read.
+The commitment tree stores the commitment count, one left sibling for each level below the root and one empty subtree root for each level up to the root, instead of its leaves. On each level where the commitment count has a one bit, the left sibling is the sibling on that level in the Merkle path of the next commitment. The other left siblings are old values, which the tree does not read.
 
-- At setup, the tree stores one entry. It adds one level each time a commitment fills it.
-- To add a commitment, the tree writes one left sibling and the commitment count, and it calculates no root.
-- The tree calculates the latest root when the root is read, from the left siblings.
+- At setup, the tree stores the empty subtree root of the leaf level. Each commitment that fills the tree adds a level: one left sibling and one empty subtree root. So the depth of the tree, the number of levels below the root, is the number of binary digits of the commitment count. For example, a tree with four commitments has depth 3.
+- To add a commitment that does not fill the tree, the tree writes one left sibling and the commitment count, and it calculates no root.
+- The tree calculates the latest root when the root is read, from the left siblings. It calculates the empty subtree roots again, so the stored ones enter no root.
 - After the last action of a transaction that adds commitments, the protocol adapter stores the latest root as a historical root. A mapping only shows whether a root is historical (`isCommitmentTreeRootHistorical`).
 
 `commitmentTreeLeftSiblings()` and `commitmentTreeEmptySubtreeRoots()` return the stored values, so that a client can calculate Merkle paths and check the tree.

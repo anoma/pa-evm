@@ -24,7 +24,7 @@ The proxy of a migrated chain starts on `MigrationalProtocolAdapter`, a `Protoco
 
 **The upgrade to the plain implementation** removes the copy functions, so each state migration ends with it. The migrational implementation emits `MigrationFinalized` when it authorizes the upgrade. It has no storage of its own.
 
-**Historical roots.** The legacy protocol adapter keeps every root that it stored. The protocol adapter keeps two: the root of the empty tree, against which a transaction proves each consumed ephemeral resource, and the latest root of the legacy protocol adapter. A prover with a Merkle path for an older root calculates a new Merkle path for the latest root.
+**Historical roots.** The legacy protocol adapter keeps every root that it stored. The protocol adapter keeps two: the root of the empty tree and the latest root of the legacy protocol adapter. A prover with a Merkle path for an older root calculates a new Merkle path for the latest root. A transaction proves a consumed ephemeral resource against a historical root that its prover chooses, by default the root of the empty tree.
 
 ## 3. Events and indexers
 
