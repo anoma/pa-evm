@@ -150,10 +150,13 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         super._unpause();
     }
 
-    /// @notice Authorizes an upgrade of the proxy and reports the migration as finished.
+    /// @notice Authorizes an upgrade of the proxy as the base does, and reports the migration as finished.
+    /// @param newImplementation The implementation that the proxy upgrades to.
     /// @dev The upgrade away from this implementation is the last step of the migration, so it is what the event
-    /// marks. The base authorizes the same way and emits nothing.
-    function _authorizeUpgrade(address) internal override onlyOwner {
+    /// marks.
+    function _authorizeUpgrade(address newImplementation) internal override {
+        super._authorizeUpgrade(newImplementation);
+
         emit MigrationFinalized();
     }
 
