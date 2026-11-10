@@ -250,7 +250,7 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Executes a call to a an external, untrusted forwarder contract.
+    /// @notice Executes a call to an external, untrusted forwarder contract.
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the external call instruction.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
