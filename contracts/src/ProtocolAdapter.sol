@@ -259,7 +259,7 @@ contract ProtocolAdapter is
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
 
-        // NOTE: Each action carries its own forwarder call, so the call belongs inside the loop over the actions.
+        // NOTE: Each resource carries its own external calls, so the calls belong inside the loop over the resources.
         // forge-lint: disable-next-item(calls-loop)
         bytes memory actualOutput =
             IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
