@@ -1,6 +1,6 @@
 # Kind Tree Root and Denylists
 
-This document specifies two controls of the protocol adapter: the kind tree root, which decides which kinds are aliases, and the two denylists, which stop the creation or the consumption of resources with a logic ref. Only the owner changes them, and both changes are possible while the protocol adapter is paused. The soft migration and the hard migration use these controls. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
+This document specifies two controls of the protocol adapter: the kind tree root, which decides which kinds are aliases, and the two denylists, which stop the creation or the consumption of resources with a logic ref. Only the owner changes them. Both changes are possible while the protocol adapter is paused, but not while `execute` runs. The soft migration and the hard migration use these controls. The glossary [`CONTEXT.md`](../CONTEXT.md#language) defines the terms.
 
 ## 1. The kind tree root
 
