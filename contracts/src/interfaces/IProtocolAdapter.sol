@@ -87,7 +87,8 @@ interface IProtocolAdapter {
 
     /// @notice Emitted when a transaction is executed.
     /// @param transactionId The Keccak-256 hash of the concatenated action tree roots — the message the delta proof
-    /// signs, unique per transaction and known to the sender before submission.
+    /// signs, unique among the transactions that this protocol adapter executes, and known to the sender before
+    /// submission.
     event TransactionExecuted(bytes32 indexed transactionId);
 
     /// @notice Emitted when an action is executed.
@@ -107,7 +108,8 @@ interface IProtocolAdapter {
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
     /// @param input The input data for the forwarded call.
-    /// @param output The expected output data from the forwarded call.
+    /// @param output The output data that the forwarded call returned, which the protocol adapter checked to be equal
+    /// to the expected output.
     event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
 
     /// @notice Emitted to store a resource payload blob persistently.

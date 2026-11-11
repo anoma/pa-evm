@@ -250,7 +250,7 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Executes a call to a an external, untrusted forwarder contract.
+    /// @notice Executes a call to an external, untrusted forwarder contract.
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the external call instruction.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
@@ -259,7 +259,7 @@ contract ProtocolAdapter is
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
 
-        // NOTE: Each action carries its own forwarder call, so the call belongs inside the loop over the actions.
+        // NOTE: Each resource carries its own external calls, so the calls belong inside the loop over the resources.
         // forge-lint: disable-next-item(calls-loop)
         bytes memory actualOutput =
             IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
