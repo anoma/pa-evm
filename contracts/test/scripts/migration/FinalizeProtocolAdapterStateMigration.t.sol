@@ -111,14 +111,14 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         script.run({isProduction: true});
     }
 
-    function test_run_resumes_a_run_that_stopped_after_the_unpause() public {
-        bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
+    function test_run_resumes_a_run_that_stopped_after_the_upgrade() public {
+        _migrationScript.run({isProduction: false});
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
+        (address implementation,) = implementationDeployScript.predict();
+        bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();
 
-        vm.startPrank(DEFAULT_SENDER);
-        MigrationalProtocolAdapter(_proxy).migrateCommitmentTree(leftSiblings);
-        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT});
-        MigrationalProtocolAdapter(_proxy).unpause();
-        vm.stopPrank();
+        vm.prank(DEFAULT_SENDER);
+        MigrationalProtocolAdapter(_proxy).upgradeToAndCall(implementation, initializationData);
 
         _finalizationScript.run({isProduction: true});
 

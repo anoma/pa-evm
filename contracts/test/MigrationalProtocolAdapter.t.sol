@@ -140,25 +140,27 @@ contract MigrationalProtocolAdapterTest is Test {
         );
     }
 
-    function test_unpause_reverts_if_the_empty_tree_root_is_missing() public {
+    function test_upgrade_reverts_if_the_empty_tree_root_is_missing() public {
         _copyInEverything();
         _removeHistoricalRoot(SHA256.EMPTY_HASH);
+        address newImplementation = _deployPlainImplementation();
 
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(MigrationalProtocolAdapter.MissingHistoricalRoot.selector, SHA256.EMPTY_HASH)
         );
-        _pa.unpause();
+        _pa.upgradeToAndCall(newImplementation, "");
     }
 
-    function test_unpause_reverts_if_the_latest_root_of_the_legacy_protocol_adapter_is_missing() public {
+    function test_upgrade_reverts_if_the_latest_root_of_the_legacy_protocol_adapter_is_missing() public {
         _copyInEverything();
         bytes32 root = _legacyProtocolAdapter.latestCommitmentTreeRoot();
         _removeHistoricalRoot(root);
+        address newImplementation = _deployPlainImplementation();
 
         vm.prank(_OWNER);
         vm.expectRevert(abi.encodeWithSelector(MigrationalProtocolAdapter.MissingHistoricalRoot.selector, root));
-        _pa.unpause();
+        _pa.upgradeToAndCall(newImplementation, "");
     }
 
     function test_migrateCommitmentTree_emits_the_migrated_root_as_a_commitment_tree_root() public {
@@ -170,7 +172,7 @@ contract MigrationalProtocolAdapterTest is Test {
     /// @dev A resource that is created and consumed in the same transaction carries the root of the empty tree, so
     /// dropping that root would stop every wrap and every unwrap on the migrated chain.
     function test_execute_settles_a_transaction_that_proves_against_the_empty_tree_root() public {
-        _seedState();
+        _finalizeMigration();
 
         (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _verifier,
@@ -316,18 +318,21 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.migrateNullifierSet({start: 0, count: 1});
     }
 
-    function test_unpause_reverts_before_the_commitment_tree_is_copied_in() public {
+    function test_upgrade_reverts_before_the_commitment_tree_is_copied_in() public {
+        address newImplementation = _deployPlainImplementation();
+
         vm.prank(_OWNER);
         vm.expectRevert(
             abi.encodeWithSelector(
                 MigrationalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
             )
         );
-        _pa.unpause();
+        _pa.upgradeToAndCall(newImplementation, "");
     }
 
-    function test_unpause_reverts_while_nullifiers_are_missing() public {
+    function test_upgrade_reverts_while_nullifiers_are_missing() public {
         _migrateCommitmentTree();
+        address newImplementation = _deployPlainImplementation();
         vm.startPrank(_OWNER);
         _pa.migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT - 1});
 
@@ -337,46 +342,65 @@ contract MigrationalProtocolAdapterTest is Test {
                 _legacyProtocolAdapter.nullifierAtIndex(_NULLIFIER_COUNT - 1)
             )
         );
-        _pa.unpause();
+        _pa.upgradeToAndCall(newImplementation, "");
         vm.stopPrank();
     }
 
-    function test_unpause_succeeds_for_a_legacy_protocol_adapter_without_nullifiers() public {
+    function test_upgrade_succeeds_for_a_legacy_protocol_adapter_without_nullifiers() public {
         LegacyProtocolAdapterMock legacyProtocolAdapter = _deployLegacyProtocolAdapter({commitments: 1, nullifiers: 0});
         legacyProtocolAdapter.emergencyStop();
         MigrationalProtocolAdapter pa = _deployMigrationalProxy(address(legacyProtocolAdapter));
         bytes32[] memory leftSiblings = legacyProtocolAdapter.commitmentTreeSides();
+        address newImplementation = _deployPlainImplementation();
 
         vm.startPrank(_OWNER);
         pa.migrateCommitmentTree(leftSiblings);
-        pa.unpause();
+        pa.upgradeToAndCall(newImplementation, "");
         vm.stopPrank();
 
-        assertFalse(pa.paused(), "the protocol adapter should be unpaused");
+        assertEq(pa.getImplementation(), newImplementation, "the proxy should run the new implementation");
     }
 
-    function test_unpause_succeeds_once_the_state_matches_the_legacy_protocol_adapter() public {
-        _seedState();
+    function test_upgrade_lifts_the_pause() public {
+        _copyInEverything();
+        assertTrue(_pa.paused(), "the migrational adapter must be paused before the upgrade");
+        address newImplementation = _deployPlainImplementation();
 
-        assertFalse(_pa.paused(), "the protocol adapter should be unpaused");
+        vm.expectEmit(address(_pa));
+        emit Pausable.Unpaused(_OWNER);
+        vm.prank(_OWNER);
+        _pa.upgradeToAndCall(newImplementation, "");
+
+        assertFalse(_pa.paused(), "the upgrade should lift the pause");
     }
 
-    function test_seeding_reverts_once_unpaused() public {
-        _seedState();
+    function test_unpause_reverts_once_the_state_matches_the_legacy_protocol_adapter() public {
+        _copyInEverything();
 
+        vm.prank(_OWNER);
+        vm.expectRevert(MigrationalProtocolAdapter.UnpauseNotAllowed.selector, address(_pa));
+        _pa.unpause();
+    }
+
+    function test_copy_in_reverts_once_an_upgrade_lifted_the_pause() public {
+        _copyInEverything();
+        address newImplementation = _deployMigrationalImplementation();
         bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
-        vm.expectRevert(Pausable.ExpectedPause.selector);
+        _pa.upgradeToAndCall(newImplementation, "");
+        assertFalse(_pa.paused(), "the upgrade must lift the pause, so that the copy-in meets an unpaused adapter");
+
+        vm.expectRevert(Pausable.ExpectedPause.selector, address(_pa));
         _pa.migrateCommitmentTree(leftSiblings);
 
-        vm.expectRevert(Pausable.ExpectedPause.selector);
+        vm.expectRevert(Pausable.ExpectedPause.selector, address(_pa));
         _pa.migrateNullifierSet({start: 0, count: 1});
         vm.stopPrank();
     }
 
     function test_the_copied_tree_grows_as_the_tree_of_the_legacy_protocol_adapter_would_have() public {
-        _seedState();
+        _finalizeMigration();
 
         (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
             mockVerifier: _verifier,
@@ -402,7 +426,7 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function test_upgrade_to_the_base_adapter_keeps_the_state_and_drops_the_copy_in() public {
-        _seedState();
+        _copyInEverything();
 
         Options memory opts;
         opts.constructorData = abi.encode(_router, _verifier.SELECTOR());
@@ -423,7 +447,6 @@ contract MigrationalProtocolAdapterTest is Test {
                 base.isNullifierContained(_legacyProtocolAdapter.nullifierAtIndex(i)), "the nullifiers should survive"
             );
         }
-        assertFalse(base.paused(), "the adapter should stay unpaused");
 
         vm.prank(_OWNER);
         vm.expectRevert();
@@ -431,8 +454,8 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function test_upgrade_emits_the_MigrationFinalized_event() public {
-        _seedState();
-        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+        _copyInEverything();
+        address newImplementation = _deployPlainImplementation();
 
         vm.expectEmit(address(_pa));
         emit IMigrational.MigrationFinalized();
@@ -440,9 +463,9 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.upgradeToAndCall(newImplementation, "");
     }
 
-    function test_upgrade_reverts_for_an_unauthorized_caller() public {
-        _seedState();
-        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+    function test_upgrade_reverts_for_an_unauthorized_caller_before_it_checks_the_copy() public {
+        assertEq(_pa.commitmentCount(), 0, "the copy must be incomplete, so that the copy check would revert");
+        address newImplementation = _deployPlainImplementation();
 
         vm.prank(_UNAUTHORIZED_CALLER);
         vm.expectRevert(
@@ -452,11 +475,15 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function test_upgrade_reverts_on_a_reentrant_call_before_the_owner_check() public {
-        _seedState();
+        _copyInEverything();
+        address migrationalImplementation = _deployMigrationalImplementation();
+        vm.prank(_OWNER);
+        _pa.upgradeToAndCall(migrationalImplementation, "");
+        assertFalse(_pa.paused(), "the upgrade must lift the pause, so that a transaction can execute");
         address fwd = address(new ForwarderExample({protocolAdapter: address(_pa), logicRef: _CARRIER_LOGIC_REF}));
         assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
-        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+        address newImplementation = _deployPlainImplementation();
         IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
             mockVerifier: _verifier,
             forwarder: fwd,
@@ -521,10 +548,21 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.migrateNullifierSet({start: 0, count: _NULLIFIER_COUNT});
     }
 
-    function _seedState() internal {
+    function _finalizeMigration() internal {
         _copyInEverything();
+        address newImplementation = _deployPlainImplementation();
         vm.prank(_OWNER);
-        _pa.unpause();
+        _pa.upgradeToAndCall(newImplementation, "");
+    }
+
+    function _deployPlainImplementation() internal returns (address implementation) {
+        implementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+    }
+
+    function _deployMigrationalImplementation() internal returns (address implementation) {
+        implementation = address(
+            new MigrationalProtocolAdapter(address(_router), _verifier.SELECTOR(), address(_legacyProtocolAdapter))
+        );
     }
 
     /// @dev Removes a root from the set of historical roots, after checking that the set is where this test writes.
