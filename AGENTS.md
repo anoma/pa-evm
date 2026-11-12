@@ -37,14 +37,27 @@ PRs into `staging` and `main` also run the promotion gate (`VERIFY_*_DEPLOYMENTS
 recorded chain) and `just crates-test-e2e`. Without the flags the gate tests skip and
 `cargo test` still exits 0, so say which suites ran.
 
-## When you change X, also do Y
+## Finishing a change
 
-- An ABI or `deployments.json` change: `just contracts-gen`. A gas change:
-  `just contracts-gen-gas-report`. CI fails on either drift.
-- State, initializers, constructors or owner functions: read
-  [upgrade-safety](.agents/skills/upgrade-safety/SKILL.md). A `VERSION` bump: RELEASE_CHECKLIST
-  step 1. A soldeer dependency: `[dependencies]`, the versioned `remappings`, every import of the
-  old path, and `soldeer.lock`.
+CI fails on stale generated files. It does not notice stale prose or a missing test, and those
+are what follow-up PRs keep fixing (#772, #773, #777, #778). Before opening a PR:
+
+1. Regenerate what CI diffs: `just contracts-gen` (bindings and `RecordedDeployments.sol`) after
+   an ABI or `deployments.json` change, `just contracts-gen-gas-report` after a gas change.
+2. Sweep every renamed identifier or term: `git grep -in` the old name in each spelling
+   (`kindTable`, `kind_table`, `kind table`) and fix every hit, including NatSpec, comments, test
+   names, assertion messages, justfile recipes and comments, `docs/`, ADRs, `CONTEXT.md`, the
+   checklists and the READMEs.
+3. A behavior change brings a test that fails on `next` and passes with the change, and updates
+   the NatSpec and the `docs/NN-*.md` section that states the behavior. A new term goes in
+   `CONTEXT.md`.
+4. A changed recipe or script: update each checklist step that runs it.
+5. New or changed state, initializers, constructors or owner functions: read
+   [upgrade-safety](.agents/skills/upgrade-safety/SKILL.md). A `VERSION` bump: RELEASE_CHECKLIST
+   step 1. A soldeer dependency: `[dependencies]`, the versioned `remappings`, every import of the
+   old path, and `soldeer.lock`.
+
+In the PR description, say which of these applied and what you swept for.
 
 ## Never without asking
 
