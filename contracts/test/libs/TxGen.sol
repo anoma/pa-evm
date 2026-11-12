@@ -41,6 +41,12 @@ library TxGen {
         IProtocolAdapter.AppData appData;
     }
 
+    uint256 internal constant MAX_MOCK_ACTION_COUNT = 5;
+    uint256 internal constant MAX_MOCK_RESOURCE_COUNT = 5;
+
+    /// @notice Thrown when a mock action would have no consumed resource, which the compliance circuit rejects.
+    error NoConsumedResource();
+
     /// @dev Builds one action of each resource list, with the resources in list order. The caller balances the
     /// quantities across the transaction.
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ActionResource[][] memory actionResources)
@@ -129,6 +135,8 @@ library TxGen {
         pure
         returns (ActionResource[] memory resources, bytes32 updatedNonce)
     {
+        require(consumedCount != 0, NoConsumedResource());
+
         resources = new ActionResource[](consumedCount + createdCount);
 
         for (uint256 i = 0; i < resources.length; ++i) {
@@ -148,6 +156,27 @@ library TxGen {
         }
 
         updatedNonce = bytes32(uint256(nonce) + resources.length);
+    }
+
+    /// @dev 1 to `MAX_MOCK_ACTION_COUNT` mock actions. Each has 1 to `MAX_MOCK_RESOURCE_COUNT` consumed and 0 to
+    /// `MAX_MOCK_RESOURCE_COUNT` created resources of its own kind, in an order that `seed` sets, and balances.
+    function mockActionResources(bytes32 nonce, uint256 seed)
+        internal
+        pure
+        returns (ActionResource[][] memory actionResources, bytes32 updatedNonce)
+    {
+        updatedNonce = nonce;
+        actionResources = new ActionResource[][](1 + _random(seed, 0) % MAX_MOCK_ACTION_COUNT);
+
+        for (uint256 i = 0; i < actionResources.length; ++i) {
+            uint256 actionSeed = _random(seed, i + 1);
+            (actionResources[i], updatedNonce) = mockResources({
+                nonce: updatedNonce,
+                consumedCount: 1 + _random(actionSeed, 0) % MAX_MOCK_RESOURCE_COUNT,
+                createdCount: _random(actionSeed, 1) % (MAX_MOCK_RESOURCE_COUNT + 1)
+            });
+            _shuffle(actionResources[i], actionSeed);
+        }
     }
 
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
@@ -217,6 +246,36 @@ library TxGen {
         returns (bytes32[] memory commitments)
     {
         commitments = _collectTags({txn: txn, isConsumed: false});
+    }
+
+    /// @dev The position of a consumed resource of `txn` that `choice` selects.
+    function consumedResourceIndices(IProtocolAdapter.Transaction memory txn, uint256 choice)
+        internal
+        pure
+        returns (uint256 actionIndex, uint256 resourceIndex)
+    {
+        actionIndex = choice % txn.actions.length;
+        IProtocolAdapter.ResourceInstance[] memory resources = txn.actions[actionIndex].resources;
+
+        uint256 consumedIndex = (choice / txn.actions.length) % actionNullifiers(txn.actions[actionIndex]).length;
+        for (resourceIndex = 0; resourceIndex < resources.length; ++resourceIndex) {
+            if (resources[resourceIndex].consumed) {
+                if (consumedIndex == 0) {
+                    break;
+                }
+                --consumedIndex;
+            }
+        }
+    }
+
+    /// @dev The position of a resource of `txn` that `choice` selects.
+    function resourceIndices(IProtocolAdapter.Transaction memory txn, uint256 choice)
+        internal
+        pure
+        returns (uint256 actionIndex, uint256 resourceIndex)
+    {
+        actionIndex = choice % txn.actions.length;
+        resourceIndex = (choice / txn.actions.length) % txn.actions[actionIndex].resources.length;
     }
 
     function actionNullifiers(IProtocolAdapter.Action memory action)
@@ -404,6 +463,18 @@ library TxGen {
                 ++n;
             }
         }
+    }
+
+    /// @dev Reorders `resources` in place, in an order that `seed` sets.
+    function _shuffle(ActionResource[] memory resources, uint256 seed) private pure {
+        for (uint256 i = resources.length; i > 1; --i) {
+            uint256 j = _random(seed, i) % i;
+            (resources[i - 1], resources[j]) = (resources[j], resources[i - 1]);
+        }
+    }
+
+    function _random(uint256 seed, uint256 index) private pure returns (uint256 value) {
+        value = uint256(keccak256(abi.encode(seed, index)));
     }
 
     function _kind(Resource memory resource) private pure returns (uint256 hash) {
