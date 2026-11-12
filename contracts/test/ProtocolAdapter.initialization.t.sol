@@ -3,15 +3,15 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
 import {
     RiscZeroVerifierEmergencyStop
-} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierEmergencyStop.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierEmergencyStop.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 

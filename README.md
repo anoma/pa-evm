@@ -7,6 +7,10 @@
 A protocol adapter (PA) contract written in Solidity enabling Anoma Resource Machine transaction settlement on EVM-compatible
 chains.
 
+The [documentation](./docs/README.md) specifies the protocol adapter: its upgradeability and ownership, its proofs, state and events, the kind tree root and the denylists, the order of the external calls, and the migration from the legacy protocol adapter.
+
+The protocol adapter stores a kind tree root. The kind tree decides which kinds of resources can convert into each other. The repository [risc0-kind-trees](https://github.com/anoma/risc0-kind-trees) records the kind tree of each protocol adapter.
+
 ## Project Structure
 
 This monorepo is structured as follows:

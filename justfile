@@ -51,12 +51,12 @@ contracts-storage-check *skip='':
     for sol in $(find src -name '*.sol' | sort); do
         name="$(basename "$sol" .sol)"
         case " {{ skip }} " in *" $name "*) continue ;; esac
-        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '.storage == []')" != true ]; then
-            printf '{{RED}}%s has a non-empty storage layout; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '[.storage[] | select(.type | startswith("erc7201(") | not)] == []')" != true ]; then
+            printf '{{RED}}%s has storage outside ERC-7201 namespaces; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
             exit 1
         fi
     done
-    printf '{{GREEN}}All contracts in `src` use namespaced storage (empty storage layout).{{NORMAL}}\n'
+    printf '{{GREEN}}All contracts in `src` use ERC-7201 namespaced storage only.{{NORMAL}}\n'
 
 # Run slither on contracts
 contracts-static-analysis:
@@ -169,35 +169,35 @@ contracts-propose-production-upgrade deployer proxy proposer implementation chai
         --sig "run(address,address,address)" {{proxy}} {{proposer}} {{implementation}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the staging kind table update (dry-run): runs it locally as the staging proxy owner
-contracts-simulate-staging-kind-table-update proxy root chain *args:
+# Simulate the staging kind tree root update (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-kind-tree-root-update proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
+    cd contracts && forge script script/staging/ExecuteKindTreeRootUpdate.s.sol:ExecuteKindTreeRootUpdate \
         --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
-# Execute the staging kind table update as the proxy owner
-contracts-execute-staging-kind-table-update deployer proxy root chain *args:
+# Execute the staging kind tree root update as the proxy owner
+contracts-execute-staging-kind-tree-root-update deployer proxy root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/staging/ExecuteKindTableUpdate.s.sol:ExecuteKindTableUpdate \
+    cd contracts && forge script script/staging/ExecuteKindTreeRootUpdate.s.sol:ExecuteKindTreeRootUpdate \
         --sig "run(address,bytes32)" {{proxy}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the production kind table update proposal (dry-run): simulates the Safe executing the update
-contracts-simulate-production-kind-table-proposal proxy proposer root chain *args:
+# Simulate the production kind tree root update proposal (dry-run): simulates the Safe executing the update
+contracts-simulate-production-kind-tree-root-update-proposal proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+    cd contracts && forge script script/production/ProposeKindTreeRootUpdate.s.sol:ProposeKindTreeRootUpdate \
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
         --rpc-url {{chain}} {{ args }}
 
 # Propose updating the production kind tree root to the owning Safe (proposer = unlocked deployer)
-contracts-propose-production-kind-table-update deployer proxy proposer root chain *args:
+contracts-propose-production-kind-tree-root-update deployer proxy proposer root chain *args:
     @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/production/ProposeKindTableUpdate.s.sol:ProposeKindTableUpdate \
+    cd contracts && forge script script/production/ProposeKindTreeRootUpdate.s.sol:ProposeKindTreeRootUpdate \
         --sig "run(address,address,bytes32)" {{proxy}} {{proposer}} {{root}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
@@ -276,7 +276,7 @@ contracts-execute-migration deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the completion run of one chain as the proxy owner (dry-run): unpause, upgrade and, in production, the ownership transfer
+# Simulate the completion run of one chain as the proxy owner (dry-run): the upgrade, which lifts the pause, and, in production, the ownership transfer
 contracts-simulate-migration-completion chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
@@ -313,8 +313,15 @@ contracts-verify-custom address contract chain verifier-url *args:
     cd contracts && forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
-# Verify a contract on both sourcify and etherscan
-contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
+# Verify a contract on both sourcify and etherscan; a failure on one explorer does not stop the other
+contracts-verify address contract chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    failed=""
+    for explorer in sourcify etherscan; do
+        just contracts-verify-$explorer {{address}} {{contract}} {{chain}} || failed+=" $explorer"
+    done
+    if [ -n "$failed" ]; then echo "Verification of {{address}} failed on:$failed" >&2; exit 1; fi
 
 # Verify the plain implementation that `contracts-deploy-impl` deploys on both explorers
 contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
@@ -332,10 +339,15 @@ initial_impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
     error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
 }
 
-# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers
-contracts-verify-deployment implementation proxy chain: \
-    (contracts-verify implementation initial_impl_contract chain) \
-    (contracts-verify-proxy proxy chain)
+# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers;
+# a failure on the implementation does not stop the proxy
+contracts-verify-deployment implementation proxy chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    status=0
+    just contracts-verify {{implementation}} {{initial_impl_contract}} {{chain}} || status=1
+    just contracts-verify-proxy {{proxy}} {{chain}} || status=1
+    exit $status
 
 # Publish contracts at the version `ProtocolAdapter` compiles to
 contracts-publish *args:

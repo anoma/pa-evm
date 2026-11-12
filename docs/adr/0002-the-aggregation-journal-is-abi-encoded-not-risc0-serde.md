@@ -20,7 +20,7 @@ Two candidate formats:
 The journal is the ABI **arguments** encoding of the `AggregationInstance`
 fields: `abi.encode(complianceKey, kindTreeRoot, actions)` on-chain,
 equivalently `abi_encode_params` over
-`(compliance_key, kind_table_root, actions)` in Rust — no outer tuple
+`(compliance_key, kind_tree_root, actions)` in Rust — no outer tuple
 offset.
 
 The journal's only consumer that pays per byte of encoding logic is the EVM.

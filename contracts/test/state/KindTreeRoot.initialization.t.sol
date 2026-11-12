@@ -9,14 +9,14 @@ import {IKindTreeRoot} from "../../src/interfaces/IKindTreeRoot.sol";
 import {KindTreeRootMock} from "../mocks/KindTreeRoot.m.sol";
 
 contract KindTreeRootInitializationTest is Test {
-    KindTreeRootMock internal _kindTable;
+    KindTreeRootMock internal _kindTreeRoot;
 
     constructor() {
-        _kindTable = _deployKindTreeRootMock();
+        _kindTreeRoot = _deployKindTreeRootMock();
     }
 
-    function test_initialize_emits_the_KindTreeRootUpdated_event_for_the_empty_kind_table() public {
-        bytes32 emptyKindTreeRoot = _kindTable.EMPTY_KIND_TREE_ROOT();
+    function test_initialize_emits_the_KindTreeRootUpdated_event_for_the_empty_kind_tree() public {
+        bytes32 emptyKindTreeRoot = _kindTreeRoot.EMPTY_KIND_TREE_ROOT();
 
         vm.expectEmit();
         emit IKindTreeRoot.KindTreeRootUpdated({kindTreeRoot: emptyKindTreeRoot});
@@ -24,8 +24,8 @@ contract KindTreeRootInitializationTest is Test {
     }
 
     function test_initialize_reverts_when_called_twice() public {
-        vm.expectRevert(Initializable.InvalidInitialization.selector, address(_kindTable));
-        _kindTable.initialize();
+        vm.expectRevert(Initializable.InvalidInitialization.selector, address(_kindTreeRoot));
+        _kindTreeRoot.initialize();
     }
 
     function test_initialize_reverts_on_implementation_contract() public {
@@ -37,9 +37,9 @@ contract KindTreeRootInitializationTest is Test {
 
     function test_initialize_sets_the_empty_kind_tree_root() public view {
         assertEq(
-            _kindTable.getKindTreeRoot(),
-            _kindTable.EMPTY_KIND_TREE_ROOT(),
-            "the initial root should be the empty table's"
+            _kindTreeRoot.getKindTreeRoot(),
+            _kindTreeRoot.EMPTY_KIND_TREE_ROOT(),
+            "the initial root should be the empty kind tree's"
         );
     }
 

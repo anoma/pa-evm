@@ -3,16 +3,16 @@ pragma solidity ^0.8.30;
 
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
-import {ProposeKindTableUpdate} from "../../../script/production/ProposeKindTableUpdate.s.sol";
+import {ProposeKindTreeRootUpdate} from "../../../script/production/ProposeKindTreeRootUpdate.s.sol";
 import {IKindTreeRoot} from "../../../src/interfaces/IKindTreeRoot.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
 
-/// @notice Checks the production-only kind table update proposal script against a Safe-owned production proxy.
+/// @notice Checks the production-only kind tree root update proposal script against a Safe-owned production proxy.
 /// Outside broadcast mode, the script simulates the Safe executing the update, so the proxy must end up on the new
 /// kind tree root.
-contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
+contract ProposeKindTreeRootUpdateTest is RiscZeroRouterFixture, SafeFixture {
     bytes32 internal constant _NEW_KIND_TREE_ROOT = keccak256("new kind tree root");
 
     address internal _owner;
@@ -41,23 +41,23 @@ contract ProposeKindTableUpdateTest is RiscZeroRouterFixture, SafeFixture {
         });
         emit IKindTreeRoot.KindTreeRootUpdated(_NEW_KIND_TREE_ROOT);
 
-        new ProposeKindTableUpdate()
+        new ProposeKindTreeRootUpdate()
             .run({proxy: _productionProxy, proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
 
         assertEq(ProtocolAdapter(_productionProxy).getKindTreeRoot(), _NEW_KIND_TREE_ROOT, "kind tree root differs");
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeKindTableUpdate script = new ProposeKindTableUpdate();
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdate();
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
         script.run({proxy: _stagingProxy, proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
     }
 
     function test_run_reverts_if_the_simulated_update_fails() public {
-        ProposeKindTableUpdate script = new ProposeKindTableUpdate();
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdate();
 
-        // The protocol adapter rejects the zero commitment, so the simulated Safe execution fails.
+        // The protocol adapter rejects the zero kind tree root, so the simulated Safe execution fails.
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
         script.run({proxy: _productionProxy, proposer: _owner, newKindTreeRoot: bytes32(0)});
     }

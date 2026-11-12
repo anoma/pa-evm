@@ -1,8 +1,8 @@
 //! Pins the protocol adapter's Solidity aggregation-journal encoding to the
-//! risc0 serde encoding of arm-risc0's `AggregationInstance`: the mock seal
+//! ABI encoding of arm-risc0's `AggregationInstance`: the mock seal
 //! the local prover mints over the Rust-built instance must pass an `eth_call`
 //! of `execute`. A revert means the encodings diverge — including the injected
-//! compliance key and the carried kind table commitment.
+//! compliance verifying key and the carried kind tree root.
 
 mod common;
 

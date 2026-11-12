@@ -10,7 +10,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/uti
 import {IForwarder} from "anoma-forwarder-bases-3.1.0/src/interfaces/IForwarder.sol";
 import {IImplementation} from "anoma-forwarder-bases-3.1.0/src/interfaces/IImplementation.sol";
 import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";
@@ -42,7 +42,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.15";
+    string public constant override VERSION = "2.0.0-rc.16";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -135,12 +135,14 @@ contract ProtocolAdapter is
     // slither-disable-end reentrancy-no-eth,reentrancy-benign
 
     /// @inheritdoc IProtocolAdapter
-    function pause() external override onlyOwner {
+    /// @dev Reverts while `execute` runs, so that the pause state does not change during a transaction.
+    function pause() external override nonReentrant onlyOwner {
         _pause();
     }
 
     /// @inheritdoc IProtocolAdapter
-    function unpause() external override onlyOwner {
+    /// @dev Reverts while `execute` runs, so that the pause state does not change during a transaction.
+    function unpause() external override nonReentrant onlyOwner {
         _unpause();
     }
 
@@ -250,7 +252,7 @@ contract ProtocolAdapter is
         }
     }
 
-    /// @notice Executes a call to a an external, untrusted forwarder contract.
+    /// @notice Executes a call to an external, untrusted forwarder contract.
     /// @param carrierLogicRef The logic reference of the carrier resource.
     /// @param callBlob The blob containing the external call instruction.
     /// @dev This function allows arbitrary code execution through the protocol adapter but is constrained through
@@ -259,7 +261,7 @@ contract ProtocolAdapter is
         (address untrustedForwarder, bytes memory input, bytes memory expectedOutput) =
             abi.decode(callBlob, (address, bytes, bytes));
 
-        // NOTE: Each action carries its own forwarder call, so the call belongs inside the loop over the actions.
+        // NOTE: Each resource carries its own external calls, so the calls belong inside the loop over the resources.
         // forge-lint: disable-next-item(calls-loop)
         bytes memory actualOutput =
             IForwarder(untrustedForwarder).forwardCall({logicRef: carrierLogicRef, input: input});
@@ -321,7 +323,7 @@ contract ProtocolAdapter is
     }
 
     /// @notice Initializes the protocol adapter state: ownership, the pause, the commitment tree, the nullifier set,
-    /// the empty logic reference denylists and the empty kind table.
+    /// the empty logic reference denylists and the root of the empty kind tree.
     /// @param initialOwner The account receiving ownership.
     // forge-lint: disable-next-line(mixed-case-function)
     function __ProtocolAdapter_init(address initialOwner) internal onlyInitializing {
@@ -336,15 +338,18 @@ contract ProtocolAdapter is
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
     }
 
-    /// @inheritdoc UUPSUpgradeable
-    // slither-disable-next-line dead-code
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+    /// @notice Allows only the owner to upgrade the proxy.
+    /// @param newImplementation The implementation that the proxy upgrades to.
+    /// @dev Reverts while `execute` runs, so that the implementation does not change during a transaction.
+    function _authorizeUpgrade(address newImplementation) internal virtual override nonReentrant onlyOwner {}
 
     /// @notice Allows only the owner to set the kind tree root.
-    function _authorizeKindTreeRootChange() internal override onlyOwner {}
+    /// @dev Reverts while `execute` runs, so that the kind tree root does not change during a transaction.
+    function _authorizeKindTreeRootChange() internal override nonReentrant onlyOwner {}
 
     /// @notice Allows only the owner to add logic references to the denylists.
-    function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
+    /// @dev Reverts while `execute` runs, so that the denylists do not change during a transaction.
+    function _authorizeLogicRefDenylistChange() internal override nonReentrant onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,
@@ -364,7 +369,7 @@ contract ProtocolAdapter is
         // Check the delta proof.
         transaction.deltaProof.verify({instance: transactionDelta, verifyingKey: transactionId});
 
-        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind table
+        // Reconstruct the aggregation journal from the injected compliance circuit verifying key and the kind tree
         // root the transaction carries.
         bytes32 journalDigest =
             sha256(abi.encode(VerifyingKeys._COMPLIANCE, transaction.kindTreeRoot, transaction.actions));

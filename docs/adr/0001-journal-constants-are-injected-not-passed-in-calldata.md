@@ -1,6 +1,6 @@
 # Journal constants are injected, not passed in calldata
 
-ADR-0004 replaces the kind table part of this decision: the transaction carries the kind tree root. The verifying keys stay injected.
+ADR-0004 replaces the kind tree root part of this decision: the transaction carries the kind tree root. The verifying keys stay injected.
 
 ## Context
 
@@ -14,13 +14,13 @@ are not per-transaction data:
 ```rust
 pub struct AggregationInstance {
     pub compliance_key: Digest,          // the compliance circuit VK
-    pub kind_table_root: Digest,   // SHA-256 over the supported kinds
+    pub kind_tree_root: Digest,          // the Merkle root of the kind tree
     pub actions: Vec<ActionAggregated>,
 }
 ```
 
 The aggregation guest verifies each action's compliance proof against
-`compliance_key`, and `kind_table_root` appears inside every
+`compliance_key`, and `kind_tree_root` appears inside every
 `ComplianceInstance` as well.
 
 Two ways to obtain them when encoding the journal on chain:
@@ -44,7 +44,7 @@ Two ways to obtain them when encoding the journal on chain:
   change only on a circuit vulnerability or a new protocol version, and both of
   those require a new implementation anyway.
 
-The protocol adapter therefore accepts exactly one kind table — the current one
+The protocol adapter therefore accepts exactly one kind tree — the current one
 — and exactly one pair of circuit keys. A transaction proven against any other
 is not rejected by a check; it is simply unencodable, and its journal digest
 will not match.
@@ -64,6 +64,6 @@ the verified source.
   on the way to Solidity, and the protocol adapter re-adds them when encoding
   the journal. Anyone comparing the two type sets will notice the gap; this ADR
   is the reason.
-- Rotating the kind table is an owner transaction; rotating a circuit verifying
+- Rotating the kind tree root is an owner transaction; rotating a circuit verifying
   key is an implementation upgrade.
 - Every transaction saves the 64 bytes the two digests would have cost.

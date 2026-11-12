@@ -18,10 +18,10 @@ library DeltaProof {
     /// @notice The y-coordinate of the curve generator point.
     uint256 internal constant _GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
 
-    // @notice The coefficient a of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
+    /// @notice The coefficient a of the secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _AA = 0;
 
-    // @notice The coefficient b of th secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
+    /// @notice The coefficient b of the secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).
     uint256 internal constant _BB = 7;
 
     /// @notice The field prime modulus (2^256 - 2^32 - 977) of the secp256k1 (K-256) elliptic curve (y² = x³ + ax + b).

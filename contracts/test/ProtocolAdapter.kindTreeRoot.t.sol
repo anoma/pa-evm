@@ -2,12 +2,12 @@
 pragma solidity ^0.8.30;
 
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-1.2.5/test/script/DeployRiscZeroContractsMock.s.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
-import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {IProtocolAdapter} from "../src/interfaces/IProtocolAdapter.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
@@ -44,7 +44,7 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.setKindTreeRoot(bytes32(uint256(1)));
     }
 
-    function test_execute_executes_a_transaction_proven_against_the_stored_kind_table() public {
+    function test_execute_executes_a_transaction_proven_against_the_stored_kind_tree() public {
         _setKindTreeRoot(_STORED_ROOT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(_STORED_ROOT);
@@ -54,8 +54,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_executes_a_transaction_proven_against_the_empty_kind_table() public {
-        assertNotEq(_STORED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the stored kind table must not be empty");
+    function test_execute_executes_a_transaction_proven_against_the_empty_kind_tree() public {
+        assertNotEq(_STORED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the stored kind tree must not be empty");
         _setKindTreeRoot(_STORED_ROOT);
 
         IProtocolAdapter.Transaction memory txn = _transaction(_mockPa.EMPTY_KIND_TREE_ROOT());
@@ -65,8 +65,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
         _mockPa.execute(txn);
     }
 
-    function test_execute_reverts_for_a_transaction_proven_against_a_replaced_kind_table() public {
-        assertNotEq(_REPLACED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the replaced kind table must not be empty");
+    function test_execute_reverts_for_a_transaction_proven_against_a_replaced_kind_tree() public {
+        assertNotEq(_REPLACED_ROOT, _mockPa.EMPTY_KIND_TREE_ROOT(), "the replaced kind tree must not be empty");
         _setKindTreeRoot(_REPLACED_ROOT);
         IProtocolAdapter.Transaction memory txn = _transaction(_REPLACED_ROOT);
 
