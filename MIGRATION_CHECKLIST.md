@@ -4,7 +4,7 @@ How to move a chain from its legacy protocol adapter to the protocol adapter and
 
 ## How it works
 
-A chain that ran a legacy protocol adapter cannot start the protocol adapter empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the state of the legacy protocol adapter in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) unpauses, upgrades the proxy to `ProtocolAdapter` and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
+A chain that ran a legacy protocol adapter cannot start the protocol adapter empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the state of the legacy protocol adapter in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) upgrades the proxy to `ProtocolAdapter`, which lifts the pause, and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
 
 The ERC20 forwarder balances move between the two runs. The kind tree on the proxy carries entries under the label of the legacy ERC20 forwarder, which let a legacy-forwarder resource unwrap from the environment's ERC20 forwarder. A paused proxy executes nothing, so no legacy-forwarder resource can unwrap before the environment's ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
 
@@ -13,7 +13,7 @@ The migrational implementation adds two functions. Both are owner-only, and both
 - `migrateCommitmentTree` writes the tree in one call. The caller supplies the stored left siblings, the one part of the tree that the legacy protocol adapter exposes through no getter. The leaf count and the root come from the legacy protocol adapter, and the empty-subtree roots are recomputed from the depth. The call reverts unless the result reproduces the root of the legacy protocol adapter, so every left sibling that the tree reads is correct.
 - `migrateNullifierSet` copies a batch of nullifiers, reading each one from the legacy protocol adapter. The caller gives the index in the legacy protocol adapter that the batch starts at. The call reverts unless the batch starts where the copied nullifiers end, so no nullifier can be skipped or copied twice.
 
-`unpause` proceeds only once the adapter holds what the stopped legacy protocol adapter holds: the same commitment count, the same latest root, and every nullifier. The batches copy the nullifiers of the legacy protocol adapter in order, so the adapter checks only the last one. The historical roots are the one difference that stays. The legacy protocol adapter keeps every root it had. This adapter keeps two: the empty-tree root, against which a transaction proves each consumed ephemeral resource, and the latest root of the legacy protocol adapter.
+The upgrade proceeds only once the adapter holds what the stopped legacy protocol adapter holds: the same commitment count, the same latest root, and every nullifier. It lifts the pause in the same call, and `unpause` alone reverts. The batches copy the nullifiers of the legacy protocol adapter in order, so the adapter checks only the last one. The historical roots are the one difference that stays. The legacy protocol adapter keeps every root it had. This adapter keeps two: the empty-tree root, against which a transaction proves each consumed ephemeral resource, and the latest root of the legacy protocol adapter.
 
 Neither function is closed by the contract. The upgrade to the plain implementation removes them, so a migration must always reach the end of the completion run.
 
@@ -70,7 +70,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 ## Per chain
 
-The stop in step 1 leaves users unable to transact, and the unpause in step 7 lets them transact again. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 7 run after it, and step 5 needs a transaction of the forwarder multisig.
+The stop in step 1 leaves users unable to transact, and the upgrade in step 7 lets them transact again. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 7 run after it, and step 5 needs a transaction of the forwarder multisig.
 
 1. [ ] Transfer the legacy protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the transfer is a Safe transaction. Besides the `Ownable` functions, its owner can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
 
@@ -127,9 +127,9 @@ The stop in step 1 leaves users unable to transact, and the unpause in step 7 le
    just contracts-execute-migration-completion deployer <CHAIN>
    ```
 
-   The run unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the production proxy owner, the Safe `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`. The transfer takes effect at once, and only a Safe transaction can move ownership back. The run sends one transaction each for the unpause, the upgrade and, in production, the transfer.
+   The run upgrades to the plain implementation, which lifts the pause, and, in production, transfers the proxy to the production proxy owner, the Safe `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`. The transfer takes effect at once, and only a Safe transaction can move ownership back. The run sends one transaction for the upgrade and, in production, one for the transfer.
 
-   A proxy that is short of a batch refuses to unpause, so a half-migrated chain stays paused instead of running on part of the state. If the run stops early, fix the cause and repeat it.
+   A proxy that is short of a batch refuses the upgrade, so a half-migrated chain stays paused instead of running on part of the state. If the run stops early, fix the cause and repeat it.
 
 8. [ ] Check the result, reading from the chain:
 
