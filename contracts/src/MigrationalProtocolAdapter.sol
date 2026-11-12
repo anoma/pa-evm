@@ -39,6 +39,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error NullifierBatchLeavesGap(uint256 start);
     error MissingNullifier(bytes32 nullifier);
     error UnpauseNotAllowed();
+    error UpgradeToMigrationalNotAllowed(address newImplementation);
 
     /// @notice Reverts unless the legacy protocol adapter is stopped, so that its state cannot change while
     /// it is read.
@@ -152,10 +153,23 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     /// marks.
     function _authorizeUpgrade(address newImplementation) internal override {
         super._authorizeUpgrade(newImplementation);
+        _checkNotMigrational(newImplementation);
         _checkStateMigrationIsComplete();
         super._unpause();
 
         emit MigrationFinalized();
+    }
+
+    /// @notice Reverts if the new implementation is a migrational implementation too. The upgrade lifts the pause, so
+    /// the new implementation would execute transactions. The first one that adds a commitment makes the copy check
+    /// fail for good, so every later upgrade would revert and the proxy could never leave the migrational code.
+    /// @param newImplementation The implementation that the proxy upgrades to.
+    function _checkNotMigrational(address newImplementation) internal view {
+        // The call only probes whether the implementation is migrational, so its return value is not needed.
+        // slither-disable-next-line unused-return
+        try IMigrational(newImplementation).getLegacyProtocolAdapter() returns (address) {
+            revert UpgradeToMigrationalNotAllowed(newImplementation);
+        } catch {} // solhint-disable-line no-empty-blocks
     }
 
     /// @notice Reverts unless this protocol adapter holds the commitment tree and the nullifier set of the legacy

@@ -14,6 +14,7 @@
 | execute                                          |             662 | 165271 | 183623 | 420621 |      55 |
 | getImplementation                                |             617 |    759 |    617 |   2617 |      14 |
 | getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       4 |
+| getLegacyProtocolAdapter                         |             693 |    693 |    693 |    693 |      18 |
 | initialize                                       |            3032 | 150504 | 152876 | 152876 |     118 |
 | isLogicRefDenied                                 |            2423 |   2426 |   2426 |   2430 |      12 |
 | isNullifierContained                             |            2755 |   2755 |   2755 |   2755 |    2713 |

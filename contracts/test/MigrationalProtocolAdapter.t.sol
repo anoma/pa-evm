@@ -361,6 +361,21 @@ contract MigrationalProtocolAdapterTest is Test {
         assertEq(pa.getImplementation(), newImplementation, "the proxy should run the new implementation");
     }
 
+    function test_upgrade_reverts_for_a_migrational_implementation() public {
+        _copyInEverything();
+        address newImplementation = _deployMigrationalImplementation();
+
+        vm.prank(_OWNER);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationalProtocolAdapter.UpgradeToMigrationalNotAllowed.selector, newImplementation
+            ),
+            address(_pa)
+        );
+        _pa.upgradeToAndCall(newImplementation, "");
+        assertTrue(_pa.paused(), "the proxy should stay paused");
+    }
+
     function test_upgrade_lifts_the_pause() public {
         _copyInEverything();
         assertTrue(_pa.paused(), "the migrational adapter must be paused before the upgrade");
@@ -382,14 +397,12 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.unpause();
     }
 
-    function test_copy_in_reverts_once_an_upgrade_lifted_the_pause() public {
+    function test_copy_in_reverts_while_the_adapter_is_unpaused() public {
         _copyInEverything();
-        address newImplementation = _deployMigrationalImplementation();
+        _liftThePause();
         bytes32[] memory leftSiblings = _legacyProtocolAdapter.commitmentTreeSides();
 
         vm.startPrank(_OWNER);
-        _pa.upgradeToAndCall(newImplementation, "");
-        assertFalse(_pa.paused(), "the upgrade must lift the pause, so that the copy-in meets an unpaused adapter");
 
         vm.expectRevert(Pausable.ExpectedPause.selector, address(_pa));
         _pa.migrateCommitmentTree(leftSiblings);
@@ -476,10 +489,7 @@ contract MigrationalProtocolAdapterTest is Test {
 
     function test_upgrade_reverts_on_a_reentrant_call_before_the_owner_check() public {
         _copyInEverything();
-        address migrationalImplementation = _deployMigrationalImplementation();
-        vm.prank(_OWNER);
-        _pa.upgradeToAndCall(migrationalImplementation, "");
-        assertFalse(_pa.paused(), "the upgrade must lift the pause, so that a transaction can execute");
+        _liftThePause();
         address fwd = address(new ForwarderExample({protocolAdapter: address(_pa), logicRef: _CARRIER_LOGIC_REF}));
         assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
@@ -563,6 +573,14 @@ contract MigrationalProtocolAdapterTest is Test {
         implementation = address(
             new MigrationalProtocolAdapter(address(_router), _verifier.SELECTOR(), address(_legacyProtocolAdapter))
         );
+    }
+
+    /// @dev Lifts the pause by writing the storage of `Pausable`, because no call of the migrational implementation can
+    /// lift it.
+    function _liftThePause() internal {
+        bytes32 slot = 0xcd5ed15c6e187e77e9aee88184c21f4f2182ab5827cb3b7e07fbedcd63f03300;
+        vm.store({target: address(_pa), slot: slot, value: bytes32(0)});
+        assertFalse(_pa.paused(), "the pause is not stored where this test writes");
     }
 
     /// @dev Removes a root from the set of historical roots, after checking that the set is where this test writes.
