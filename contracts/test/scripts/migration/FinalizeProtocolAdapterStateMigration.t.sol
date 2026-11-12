@@ -51,7 +51,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         _migrationScript.verify({isProduction: true});
     }
 
-    function test_run_unpauses_before_it_upgrades_and_transfers() public {
+    function test_run_unpauses_before_it_upgrades_and_transfers_the_ownership() public {
         _migrationScript.run({isProduction: false});
 
         vm.recordLogs();
@@ -111,7 +111,7 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         script.run({isProduction: true});
     }
 
-    function test_run_resumes_a_run_that_stopped_after_the_upgrade() public {
+    function test_run_resumes_a_run_that_stopped_after_the_upgrade_and_transfers_the_ownership() public {
         _migrationScript.run({isProduction: false});
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         (address implementation,) = implementationDeployScript.predict();
