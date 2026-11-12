@@ -1,6 +1,5 @@
 # CLAUDE.md
 
-Agent instructions for this repo live in [AGENTS.md](AGENTS.md), shared with every other
-agent harness. Skills live in `.agents/skills/`; `.claude/skills` links to them.
+Agent instructions live in [AGENTS.md](AGENTS.md); skills in `.agents/skills/`, linked from `.claude/skills`.
 
 @AGENTS.md
