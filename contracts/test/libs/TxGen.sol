@@ -193,38 +193,6 @@ library TxGen {
         txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: emptyKindTreeRoot()});
     }
 
-    /// @dev Builds a transaction of one consumed and one created resource of one kind. The created resource makes the
-    /// protocol adapter call `forwarder` with `input` and expect `output`.
-    function transactionWithForwarderCall(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        address forwarder,
-        bytes32 logicRef,
-        bytes memory input,
-        bytes memory output
-    ) internal returns (IProtocolAdapter.Transaction memory txn) {
-        bytes32 labelRef = sha256(abi.encode(forwarder));
-
-        IProtocolAdapter.AppData memory carrierAppData = emptyAppData();
-        carrierAppData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
-        carrierAppData.externalPayload[0] = IProtocolAdapter.ExpirableBlob({
-            deletionCriterion: IProtocolAdapter.DeletionCriterion.Never, blob: abi.encode(forwarder, input, output)
-        });
-
-        ResourceLists[] memory resourceLists = new ResourceLists[](1);
-        resourceLists[0] = ResourceLists({consumed: new ResourceAndAppData[](1), created: new ResourceAndAppData[](1)});
-        resourceLists[0].consumed[0] = ResourceAndAppData({
-            resource: mockResource({nonce: bytes32(0), logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-            appData: emptyAppData()
-        });
-        resourceLists[0].created[0] = ResourceAndAppData({
-            resource: mockResource({nonce: bytes32(uint256(1)), logicRef: logicRef, labelRef: labelRef, quantity: 1}),
-            appData: carrierAppData
-        });
-
-        txn = transaction({vm: vm, mockVerifier: mockVerifier, actionResources: resourceLists});
-    }
-
     /// @dev Assembles the transaction and its delta proof.
     function transactionFromActions(VmSafe vm, IProtocolAdapter.Action[] memory actions)
         internal
@@ -425,6 +393,18 @@ library TxGen {
             nonce: nonce,
             randSeed: 0,
             ephemeral: true
+        });
+    }
+
+    /// @dev The external payload blob of a forwarder call: the protocol adapter calls `forwarder` with `input` and
+    /// requires `output` as the output of the call.
+    function forwarderCall(address forwarder, bytes memory input, bytes memory output)
+        internal
+        pure
+        returns (IProtocolAdapter.ExpirableBlob memory call)
+    {
+        call = IProtocolAdapter.ExpirableBlob({
+            deletionCriterion: IProtocolAdapter.DeletionCriterion.Never, blob: abi.encode(forwarder, input, output)
         });
     }
 

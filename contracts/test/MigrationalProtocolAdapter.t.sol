@@ -484,13 +484,32 @@ contract MigrationalProtocolAdapterTest is Test {
         assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
         address newImplementation = _deployPlainImplementation();
-        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
-            mockVerifier: _verifier,
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+        consumed[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            appData: TxGen.emptyAppData()
+        });
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+        created[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            appData: TxGen.emptyAppData()
+        });
+        created[0].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
+        created[0].appData.externalPayload[0] = TxGen.forwarderCall({
             forwarder: fwd,
-            logicRef: _CARRIER_LOGIC_REF,
             input: abi.encode(address(_pa), abi.encodeCall(_pa.upgradeToAndCall, (newImplementation, bytes("")))),
             output: ""
         });
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn =
+            vm.transaction({mockVerifier: _verifier, actionResources: resourceLists});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_pa));
         _pa.execute(txn);

@@ -505,7 +505,8 @@ contract ProtocolAdapterMockVerifierTest is Test {
         TxGen.ResourceAndAppData[] memory consumed = _exampleResourceAndEmptyAppData({nonce: 0});
         TxGen.ResourceAndAppData[] memory created = _exampleCarrierResourceAndAppData({nonce: 1, fwdList: _fwdList});
 
-        created[0].appData.externalPayload[0].blob = abi.encode(_fwd, _input, fakeOutput);
+        created[0].appData.externalPayload[0] =
+            TxGen.forwarderCall({forwarder: _fwd, input: _input, output: fakeOutput});
 
         TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
         resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
@@ -776,10 +777,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
         IProtocolAdapter.ExpirableBlob[] memory externalBlobs = new IProtocolAdapter.ExpirableBlob[](nCalls);
         for (uint256 i = 0; i < nCalls; ++i) {
-            externalBlobs[i] = IProtocolAdapter.ExpirableBlob({
-                deletionCriterion: IProtocolAdapter.DeletionCriterion.Never,
-                blob: abi.encode(address(fwdList[i]), _input, EXPECTED_OUTPUT)
-            });
+            externalBlobs[i] = TxGen.forwarderCall({forwarder: fwdList[i], input: _input, output: EXPECTED_OUTPUT});
         }
         data[0].appData.externalPayload = externalBlobs;
     }
