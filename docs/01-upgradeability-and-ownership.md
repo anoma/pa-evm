@@ -16,13 +16,14 @@ This document specifies how the protocol adapter can change after its deployment
 | Staging     | The deployment wallet `0x61462bE56782568376f9cB069382EFa72764a407` |
 | Production  | The PA Safe `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`           |
 
-The owner can do these actions. All of them except `pause()` also work while the protocol adapter is paused. All of them except `transferOwnership` revert while `execute` runs, so that they cannot change a transaction in progress ([`04-resource-order-and-external-calls.md`](./04-resource-order-and-external-calls.md#4-properties-of-the-external-calls)).
+The owner can do these actions. All of them except `pause()` also work while the protocol adapter is paused. All of them except `transferOwnership` and `renounceOwnership` revert while `execute` runs, so that they cannot change a transaction in progress ([`04-resource-order-and-external-calls.md`](./04-resource-order-and-external-calls.md#4-properties-of-the-external-calls)).
 
 - `upgradeToAndCall(newImplementation, data)` replaces the implementation.
 - `pause()` stops `execute`, and `unpause()` lets it run again.
 - `setKindTreeRoot(root)` sets the kind tree root.
 - `denyLogicRefs(entries)` deprecates or denies logic refs.
 - `transferOwnership(newOwner)` gives the ownership to another account in one step.
+- `renounceOwnership()` removes the owner.
 
 ## 3. Controls for a flaw
 
