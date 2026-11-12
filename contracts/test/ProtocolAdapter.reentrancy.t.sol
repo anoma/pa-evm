@@ -78,46 +78,19 @@ contract ProtocolAdapterReentrancyTest is Test {
         );
     }
 
+    /// @dev Executes a transaction whose created resource makes the forwarder call the protocol adapter with `payload`.
     function _expectExecuteToRevertOnCallBack(bytes memory payload) internal {
         assertEq(_mockPa.owner(), _fwd, "the forwarder must own the protocol adapter");
 
-        IProtocolAdapter.Transaction memory txn = _transactionCallingTheProtocolAdapter(payload);
+        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
+            mockVerifier: _mockVerifier,
+            forwarder: _fwd,
+            logicRef: _CARRIER_LOGIC_REF,
+            input: abi.encode(address(_mockPa), payload),
+            output: ""
+        });
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_mockPa));
         _mockPa.execute(txn);
-    }
-
-    /// @dev Builds a transaction whose created resource makes the forwarder call the protocol adapter with `payload`.
-    function _transactionCallingTheProtocolAdapter(bytes memory payload)
-        internal
-        returns (IProtocolAdapter.Transaction memory txn)
-    {
-        bytes32 labelRef = sha256(abi.encode(_fwd));
-
-        IProtocolAdapter.AppData memory carrierAppData = TxGen.emptyAppData();
-        carrierAppData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
-        carrierAppData.externalPayload[0] = IProtocolAdapter.ExpirableBlob({
-            deletionCriterion: IProtocolAdapter.DeletionCriterion.Never,
-            blob: abi.encode(_fwd, abi.encode(address(_mockPa), payload), bytes(""))
-        });
-
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({
-            consumed: new TxGen.ResourceAndAppData[](1), created: new TxGen.ResourceAndAppData[](1)
-        });
-        resourceLists[0].consumed[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: labelRef, quantity: 1
-            }),
-            appData: TxGen.emptyAppData()
-        });
-        resourceLists[0].created[0] = TxGen.ResourceAndAppData({
-            resource: TxGen.mockResource({
-                nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: labelRef, quantity: 1
-            }),
-            appData: carrierAppData
-        });
-
-        txn = vm.transaction(_mockVerifier, resourceLists);
     }
 }
