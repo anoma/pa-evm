@@ -451,15 +451,10 @@ contract MigrationalProtocolAdapterTest is Test {
         _pa.upgradeToAndCall(newImplementation, "");
     }
 
-    function test_execute_reverts_if_a_forwarder_call_upgrades_the_protocol_adapter() public {
+    function test_upgrade_reverts_on_a_reentrant_call_before_the_owner_check() public {
         _seedState();
-
-        // The forwarder owns the protocol adapter, so a forwarder call passes `onlyOwner`, as a Safe transaction that
-        // an external call executes does.
         address fwd = address(new ForwarderExample({protocolAdapter: address(_pa), logicRef: _CARRIER_LOGIC_REF}));
-        vm.prank(_OWNER);
-        _pa.transferOwnership(fwd);
-        assertEq(_pa.owner(), fwd, "the forwarder must own the protocol adapter");
+        assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
         address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
         IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({

@@ -11,10 +11,10 @@
 | VERSION                                          |            1057 |   1057 |   1057 |   1057 |       3 |
 | commitmentCount                                  |             699 |   1699 |   1699 |   2699 |      12 |
 | denyLogicRefs                                    |             434 |  29455 |  28122 |  53410 |      12 |
-| execute                                          |             662 | 159553 | 167125 | 420621 |      52 |
+| execute                                          |             662 | 164080 | 183623 | 420621 |      53 |
 | getImplementation                                |             617 |    783 |    617 |   2617 |      12 |
-| getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       2 |
-| initialize                                       |            3032 | 150484 | 152876 | 152876 |     117 |
+| getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       4 |
+| initialize                                       |            3032 | 150504 | 152876 | 152876 |     118 |
 | isLogicRefDenied                                 |            2423 |   2426 |   2426 |   2430 |      12 |
 | isNullifierContained                             |            2755 |   2755 |   2755 |   2755 |    2712 |
 | latestCommitmentTreeRoot                         |            4842 |   9320 |   8533 |  13270 |      16 |
@@ -24,8 +24,8 @@
 | paused                                           |            2378 |   2378 |   2378 |   2378 |      15 |
 | proxiableUUID                                    |             268 |    268 |    268 |    268 |      12 |
 | riscZeroVerifierPaused                           |           10951 |  10951 |  10951 |  10951 |       5 |
-| setKindTreeRoot                                  |             536 |   6471 |   8051 |   9051 |       8 |
-| transferOwnership                                |            5450 |   6783 |   7450 |   7450 |       9 |
+| setKindTreeRoot                                  |             536 |   6135 |   8051 |   9051 |      10 |
+| transferOwnership                                |            5450 |   5450 |   5450 |   5450 |       3 |
 | unpause                                          |             309 |   5094 |   5660 |   8747 |       4 |
 | upgradeToAndCall                                 |             997 |   7736 |   3531 |  24267 |       6 |
 
