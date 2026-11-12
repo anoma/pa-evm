@@ -338,9 +338,9 @@ contract ProtocolAdapter is
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
     }
 
-    /// @inheritdoc UUPSUpgradeable
+    /// @notice Allows only the owner to upgrade the proxy.
+    /// @param newImplementation The implementation that the proxy upgrades to.
     /// @dev Reverts while `execute` runs, so that the implementation does not change during a transaction.
-    // slither-disable-next-line dead-code
     function _authorizeUpgrade(address newImplementation) internal virtual override nonReentrant onlyOwner {}
 
     /// @notice Allows only the owner to set the kind tree root.
