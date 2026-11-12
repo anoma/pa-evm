@@ -313,8 +313,15 @@ contracts-verify-custom address contract chain verifier-url *args:
     cd contracts && forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
-# Verify a contract on both sourcify and etherscan
-contracts-verify address contract chain: (contracts-verify-sourcify address contract chain) (contracts-verify-etherscan address contract chain)
+# Verify a contract on both sourcify and etherscan; a failure on one explorer does not stop the other
+contracts-verify address contract chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    failed=""
+    for explorer in sourcify etherscan; do
+        just contracts-verify-$explorer {{address}} {{contract}} {{chain}} || failed+=" $explorer"
+    done
+    if [ -n "$failed" ]; then echo "Verification of {{address}} failed on:$failed" >&2; exit 1; fi
 
 # Verify the plain implementation that `contracts-deploy-impl` deploys on both explorers
 contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
@@ -332,10 +339,15 @@ initial_impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
     error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
 }
 
-# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers
-contracts-verify-deployment implementation proxy chain: \
-    (contracts-verify implementation initial_impl_contract chain) \
-    (contracts-verify-proxy proxy chain)
+# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers;
+# a failure on the implementation does not stop the proxy
+contracts-verify-deployment implementation proxy chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    status=0
+    just contracts-verify {{implementation}} {{initial_impl_contract}} {{chain}} || status=1
+    just contracts-verify-proxy {{proxy}} {{chain}} || status=1
+    exit $status
 
 # Publish contracts at the version `ProtocolAdapter` compiles to
 contracts-publish *args:
