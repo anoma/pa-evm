@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {VmSafe} from "forge-std-1.17.0/src/Vm.sol";
-import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
 import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
 import {DeltaProof} from "../../src/libs/DeltaProof.sol";

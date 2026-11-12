@@ -10,7 +10,7 @@ import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/uti
 import {IForwarder} from "anoma-forwarder-bases-3.1.0/src/interfaces/IForwarder.sol";
 import {IImplementation} from "anoma-forwarder-bases-3.1.0/src/interfaces/IImplementation.sol";
 import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
-import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.0.1/contracts/src/RiscZeroVerifierRouter.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 import {DeltaProof} from "./libs/DeltaProof.sol";

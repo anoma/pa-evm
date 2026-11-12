@@ -23,10 +23,10 @@ integrity = "0ad41f829796f2a75e0553ba6962e28b70433293bc417de387f481798f15f04a"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
-version = "1.2.5"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/1_2_5_22-10-2026_17:13:58_contracts.zip"
-checksum = "616d97f83d5138783c8e2f4b29749292c640433813a2c7fe82807784c7269054"
-integrity = "05ba75998053ddbe1d0c2c33c0db07d812c0ca0bcc168c1a521a7409f5a26684"
+version = "2.0.0"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/2_0_0_12-11-2026_09:11:55_contracts.zip"
+checksum = "e6c9383f2c1b2db2d7001530f8656d9a44d7bcaef4a235375b91ce8a5d945ecf"
+integrity = "509cb39a31fe2b86b456346ed964a10da11d3f099044dcc65dc58cb1f0dc9d33"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -50,10 +50,9 @@ integrity = "64c8d2d87ba2d2e3ee5946f3638d386e05d0f37b137b0588058b7bbdf7fb233d"
 
 [[dependencies]]
 name = "risc0-risc0-ethereum"
-version = "3.0.1"
-url = "https://soldeer-revisions.s3.amazonaws.com/risc0-risc0-ethereum/3_0_1_09-11-2025_11:23:36_risc0-risc0-ethereum-3.0.zip"
-checksum = "894cb1442a71fcbef5f7e8984aab7e1cb3079ee8876a080926f0c66e07e50e58"
-integrity = "374345ff10e8661aae5d28498e3e1b841b98d0c274392669579f8bf443b4be0e"
+version = "3.1.0"
+git = "https://github.com/risc0/risc0-ethereum.git"
+rev = "ff30da77ba4afdd496290ebebedb205348b15d83"
 
 [[dependencies]]
 name = "safe-smart-account"
