@@ -35,11 +35,13 @@ The lists contain logic refs, not kinds. So an entry applies to the resources of
 
 ## 3. Use in the soft and the hard migration
 
-|           | Soft migration                                                                                              | Hard migration (draft)                                                                                                                                                                                                                      |
+|           | Soft migration                                                                                              | Hard migration                                                                                                                                                                                                                              |
 | --------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Purpose   | Users replace resources of a resource logic that is still trusted.                                          | Users replace resources of a resource logic with a flaw.                                                                                                                                                                                    |
 | Denylists | The owner deprecates the old logic ref. No transaction creates old resources.                               | The owner denies the old logic ref. No transaction consumes or creates old resources.                                                                                                                                                       |
 | Kind tree | Each old kind is an alias of a new kind. A conversion consumes old resources with a proof of the old logic. | Not used for the old resources. The in-circuit checks of the new logic show that the user owns them. The application makes out-of-circuit checks against the protocol adapter that they exist and are unspent, and stores their nullifiers. |
+
+Each application implements its own migrations. The ERC20 forwarder specifies both, and its implementation of the hard migration is a draft.
 
 ## 4. Trust assumptions
 
