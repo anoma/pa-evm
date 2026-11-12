@@ -28,4 +28,3 @@ thiserror = "2.0.21"
 tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 
 anoma-pa-evm-bindings = { path = "crates/bindings" }
-anoma-pa-evm-integration-test = { path = "crates/integration-test" }
