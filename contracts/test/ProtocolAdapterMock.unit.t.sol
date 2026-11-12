@@ -33,7 +33,6 @@ import {TxGen} from "./libs/TxGen.sol";
 import {CommitmentTreeMock} from "./mocks/CommitmentTree.m.sol";
 
 contract ProtocolAdapterMockVerifierTest is Test {
-    using TxGen for IProtocolAdapter.Action[];
     using TxGen for IProtocolAdapter.Action;
     using TxGen for Vm;
 
@@ -120,13 +119,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_created_carrier_resource() public {
-        IProtocolAdapter.Transaction memory txn = vm.transaction(
-            _mockVerifier,
-            _oneAction(
-                _exampleResource({consumed: true, nonce: 0, appData: TxGen.emptyAppData()}),
-                _exampleResource({consumed: false, nonce: 1, appData: _carrierAppData(_fwdList)})
-            )
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), TxGen.emptyAppData());
+        resources[1] = TxGen.created(_carrierResource(1), _carrierAppData(_fwdList));
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -136,13 +132,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_the_ForwarderCallExecuted_event_on_consumed_carrier_resource() public {
-        IProtocolAdapter.Transaction memory txn = vm.transaction(
-            _mockVerifier,
-            _oneAction(
-                _exampleResource({consumed: true, nonce: 0, appData: _carrierAppData(_fwdList)}),
-                _exampleResource({consumed: false, nonce: 1, appData: TxGen.emptyAppData()})
-            )
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), _carrierAppData(_fwdList));
+        resources[1] = TxGen.created(_carrierResource(1), TxGen.emptyAppData());
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -160,13 +153,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         fwdList[0] = _fwd;
         fwdList[1] = fwd2;
 
-        IProtocolAdapter.Transaction memory txn = vm.transaction(
-            _mockVerifier,
-            _oneAction(
-                _exampleResource({consumed: true, nonce: 0, appData: TxGen.emptyAppData()}),
-                _exampleResource({consumed: false, nonce: 1, appData: _carrierAppData(fwdList)})
-            )
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), TxGen.emptyAppData());
+        resources[1] = TxGen.created(_carrierResource(1), _carrierAppData(fwdList));
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ForwarderCallExecuted({
@@ -182,8 +172,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_calls_the_forwarders_in_the_order_of_the_resources() public {
-        (IProtocolAdapter.Transaction memory txn, address[] memory forwarders) =
-            _carrierTransaction(_sides(false, true, true, false));
+        bool[] memory consumed = new bool[](4);
+        (consumed[0], consumed[1], consumed[2], consumed[3]) = (false, true, true, false);
+        (IProtocolAdapter.Transaction memory txn, address[] memory forwarders) = _carrierTransaction(consumed);
 
         for (uint256 i = 0; i < forwarders.length; ++i) {
             _expectForwarderCall(forwarders[i]);
@@ -192,7 +183,9 @@ contract ProtocolAdapterMockVerifierTest is Test {
     }
 
     function test_execute_emits_the_tags_in_the_order_of_the_resources() public {
-        (IProtocolAdapter.Transaction memory txn,) = _carrierTransaction(_sides(false, true, false, true));
+        bool[] memory consumed = new bool[](4);
+        (consumed[0], consumed[1], consumed[2], consumed[3]) = (false, true, false, true);
+        (IProtocolAdapter.Transaction memory txn,) = _carrierTransaction(consumed);
         IProtocolAdapter.ResourceInstance[] memory built = txn.actions[0].resources;
 
         vm.expectEmit(address(_mockPa));
@@ -237,19 +230,16 @@ contract ProtocolAdapterMockVerifierTest is Test {
         _mockPa.execute(txn);
     }
 
-    /// @dev `TxGen.expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
+    /// @dev `_expirableBlobs` carries an `Immediately` blob at index 0 and a `Never` blob at index 1, so one
     /// execution exercises both deletion criteria per payload kind.
     function test_execute_emits_the_persistent_app_data_blobs_only() public {
-        IProtocolAdapter.Transaction memory txn = vm.transaction(
-            _mockVerifier,
-            _oneAction(
-                _exampleResource({consumed: true, nonce: 0, appData: TxGen.emptyAppData()}),
-                _exampleResource({consumed: false, nonce: 1, appData: _blobAppData()})
-            )
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), TxGen.emptyAppData());
+        resources[1] = TxGen.created(_carrierResource(1), _blobAppData());
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
 
         bytes32 tag = TxGen.actionCommitments(txn.actions[0])[0];
-        bytes memory persistent = TxGen.expirableBlobs()[1].blob;
+        bytes memory persistent = _expirableBlobs()[1].blob;
 
         vm.expectEmit(address(_mockPa));
         emit IProtocolAdapter.ResourcePayload({tag: tag, index: 1, blob: persistent});
@@ -491,16 +481,13 @@ contract ProtocolAdapterMockVerifierTest is Test {
     function testFuzz_execute_reverts_on_unexpected_forwarder_call_output(bytes memory fakeOutput) public {
         vm.assume(keccak256(fakeOutput) != keccak256(EXPECTED_OUTPUT));
 
-        IProtocolAdapter.AppData memory appData = _carrierAppData(_fwdList);
-        appData.externalPayload[0] = TxGen.forwarderCall({forwarder: _fwd, input: _input, output: fakeOutput});
+        IProtocolAdapter.AppData memory appData =
+            TxGen.forwarderCallAppData({forwarder: _fwd, input: _input, output: fakeOutput});
 
-        IProtocolAdapter.Transaction memory txn = vm.transaction(
-            _mockVerifier,
-            _oneAction(
-                _exampleResource({consumed: true, nonce: 0, appData: TxGen.emptyAppData()}),
-                _exampleResource({consumed: false, nonce: 1, appData: appData})
-            )
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), TxGen.emptyAppData());
+        resources[1] = TxGen.created(_carrierResource(1), appData);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
 
         // Expect output mismatch.
         vm.expectRevert(
@@ -511,16 +498,15 @@ contract ProtocolAdapterMockVerifierTest is Test {
 
     function testFuzz_execute_reverts_on_ubalanced_delta(uint128 createdQuantity, uint128 consumedQuantity) public {
         vm.assume(createdQuantity != consumedQuantity);
-        TxGen.ActionResource[][] memory actionResources = _oneAction(
-            _exampleResource({consumed: true, nonce: 0, appData: TxGen.emptyAppData()}),
-            _exampleResource({consumed: false, nonce: 0, appData: TxGen.emptyAppData()})
-        );
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(_carrierResource(0), TxGen.emptyAppData());
+        resources[1] = TxGen.created(_carrierResource(1), TxGen.emptyAppData());
 
         // Make transaction unbalanced by offsettig the deltas.
-        actionResources[0][0].resource.quantity = consumedQuantity;
-        actionResources[0][1].resource.quantity = createdQuantity;
+        resources[0].resource.quantity = consumedQuantity;
+        resources[1].resource.quantity = createdQuantity;
 
-        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, actionResources);
+        IProtocolAdapter.Transaction memory txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
         vm.expectPartialRevert(DeltaProof.DeltaMismatch.selector);
         _mockPa.execute(txn);
     }
@@ -645,8 +631,7 @@ contract ProtocolAdapterMockVerifierTest is Test {
             }
         }
 
-        TxGen.ActionResource[][] memory actionResources = new TxGen.ActionResource[][](1);
-        actionResources[0] = new TxGen.ActionResource[](consumed.length);
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](consumed.length);
 
         forwarders = new address[](consumed.length);
         for (uint256 i = 0; i < consumed.length; ++i) {
@@ -656,12 +641,13 @@ contract ProtocolAdapterMockVerifierTest is Test {
             address[] memory fwdList = new address[](1);
             fwdList[0] = forwarders[i];
 
-            actionResources[0][i] =
-                _exampleResource({consumed: consumed[i], nonce: i, appData: _carrierAppData(fwdList)});
-            actionResources[0][i].resource.quantity = consumed[i] ? createdCount : consumedCount;
+            resources[i] = TxGen.ActionResource({
+                consumed: consumed[i], resource: _carrierResource(i), appData: _carrierAppData(fwdList)
+            });
+            resources[i].resource.quantity = consumed[i] ? createdCount : consumedCount;
         }
 
-        txn = vm.transaction(_mockVerifier, actionResources);
+        txn = vm.transaction(_mockVerifier, TxGen.oneAction(resources));
     }
 
     function _expectForwarderCall(address forwarder) private {
@@ -671,17 +657,10 @@ contract ProtocolAdapterMockVerifierTest is Test {
         });
     }
 
-    function _exampleResource(bool consumed, uint256 nonce, IProtocolAdapter.AppData memory appData)
-        private
-        view
-        returns (TxGen.ActionResource memory actionResource)
-    {
-        actionResource = TxGen.ActionResource({
-            consumed: consumed,
-            resource: TxGen.mockResource({
-                nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
-            }),
-            appData: appData
+    /// @dev A resource of quantity 1 with the carrier logic ref and label ref.
+    function _carrierResource(uint256 nonce) private view returns (TxGen.Resource memory resource) {
+        resource = TxGen.mockResource({
+            nonce: bytes32(nonce), logicRef: _CARRIER_LOGIC_REF, labelRef: _carrierLabelRef, quantity: 1
         });
     }
 
@@ -695,22 +674,23 @@ contract ProtocolAdapterMockVerifierTest is Test {
         }
     }
 
-    function _oneAction(TxGen.ActionResource memory first, TxGen.ActionResource memory second)
-        private
-        pure
-        returns (TxGen.ActionResource[][] memory actionResources)
-    {
-        actionResources = new TxGen.ActionResource[][](1);
-        actionResources[0] = new TxGen.ActionResource[](2);
-        (actionResources[0][0], actionResources[0][1]) = (first, second);
-    }
-
     function _blobAppData() private pure returns (IProtocolAdapter.AppData memory appData) {
         appData = IProtocolAdapter.AppData({
-            resourcePayload: TxGen.expirableBlobs(),
-            discoveryPayload: TxGen.expirableBlobs(),
+            resourcePayload: _expirableBlobs(),
+            discoveryPayload: _expirableBlobs(),
             externalPayload: new IProtocolAdapter.ExpirableBlob[](0),
-            applicationPayload: TxGen.expirableBlobs()
+            applicationPayload: _expirableBlobs()
+        });
+    }
+
+    function _expirableBlobs() private pure returns (IProtocolAdapter.ExpirableBlob[] memory blobs) {
+        blobs = new IProtocolAdapter.ExpirableBlob[](2);
+        blobs[0] = IProtocolAdapter.ExpirableBlob({
+            blob: hex"1f0000003f0000005f0000007f000000",
+            deletionCriterion: IProtocolAdapter.DeletionCriterion.Immediately
+        });
+        blobs[1] = IProtocolAdapter.ExpirableBlob({
+            blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: IProtocolAdapter.DeletionCriterion.Never
         });
     }
 
@@ -736,11 +716,6 @@ contract ProtocolAdapterMockVerifierTest is Test {
     /// @dev Flips all bits of a seal byte to invalidate the proof it belongs to.
     function _flipBits(bytes1 sealByte) private pure returns (bytes1 flipped) {
         flipped = sealByte ^ bytes1(0xff);
-    }
-
-    function _sides(bool first, bool second, bool third, bool fourth) private pure returns (bool[] memory consumed) {
-        consumed = new bool[](4);
-        (consumed[0], consumed[1], consumed[2], consumed[3]) = (first, second, third, fourth);
     }
 
     function _pair(bytes32 first, bytes32 second) private pure returns (bytes32[] memory pair) {

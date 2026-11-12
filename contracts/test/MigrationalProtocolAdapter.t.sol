@@ -475,31 +475,26 @@ contract MigrationalProtocolAdapterTest is Test {
         assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
         address newImplementation = _deployPlainImplementation();
-        TxGen.ActionResource[][] memory actionResources = new TxGen.ActionResource[][](1);
-        actionResources[0] = new TxGen.ActionResource[](2);
-        actionResources[0][0] = TxGen.ActionResource({
-            consumed: true,
-            resource: TxGen.mockResource({
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(
+            TxGen.mockResource({
                 nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
-            appData: TxGen.emptyAppData()
-        });
-        actionResources[0][1] = TxGen.ActionResource({
-            consumed: false,
-            resource: TxGen.mockResource({
+            TxGen.emptyAppData()
+        );
+        resources[1] = TxGen.created(
+            TxGen.mockResource({
                 nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
-            appData: TxGen.emptyAppData()
-        });
-        actionResources[0][1].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
-        actionResources[0][1].appData.externalPayload[0] = TxGen.forwarderCall({
-            forwarder: fwd,
-            input: abi.encode(address(_pa), abi.encodeCall(_pa.upgradeToAndCall, (newImplementation, bytes("")))),
-            output: ""
-        });
+            TxGen.forwarderCallAppData({
+                forwarder: fwd,
+                input: abi.encode(address(_pa), abi.encodeCall(_pa.upgradeToAndCall, (newImplementation, bytes("")))),
+                output: ""
+            })
+        );
 
         IProtocolAdapter.Transaction memory txn =
-            vm.transaction({mockVerifier: _verifier, actionResources: actionResources});
+            vm.transaction({mockVerifier: _verifier, actionResources: TxGen.oneAction(resources)});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_pa));
         _pa.execute(txn);
