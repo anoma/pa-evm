@@ -15,8 +15,8 @@ import {ProtocolAdapter} from "./ProtocolAdapter.sol";
 /// @author Anoma Foundation, 2026
 /// @notice The protocol adapter implementation that takes over the state of a chain's legacy protocol
 /// adapter. It starts paused and copies the state in — the commitment tree and the nullifier set — reading every value
-/// from the legacy protocol adapter itself. It refuses to unpause until its commitment tree and its nullifier set
-/// hold what the legacy protocol adapter holds.
+/// from the legacy protocol adapter itself. Only the upgrade away from it lifts the pause, and it refuses the upgrade
+/// until its commitment tree and its nullifier set hold what the legacy protocol adapter holds.
 /// @dev The contract holds no storage of its own, so upgrading away from it leaves no namespace behind.
 /// @custom:security-contact security@anoma.foundation
 contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
@@ -38,6 +38,7 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     error NullifierBatchOutOfRange(uint256 end, uint256 nullifierCount);
     error NullifierBatchLeavesGap(uint256 start);
     error MissingNullifier(bytes32 nullifier);
+    error UnpauseNotAllowed();
 
     /// @notice Reverts unless the legacy protocol adapter is stopped, so that its state cannot change while
     /// it is read.
@@ -60,10 +61,10 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         _LEGACY_PROTOCOL_ADAPTER = legacyProtocolAdapter;
     }
 
-    /// @notice Initializes the protocol adapter contract and pauses it, so that nothing executes before the state
-    /// is in.
+    /// @notice Initializes the protocol adapter contract and pauses it, so that no transaction executes on this
+    /// implementation.
     /// @param initialOwner The account receiving ownership, and with it the authority to copy the state in and to
-    /// unpause.
+    /// upgrade the proxy, which lifts the pause.
     function initialize( /* solhint-disable-line comprehensive-interface*/
         address initialOwner
     )
@@ -144,18 +145,15 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
         legacyProtocolAdapter = _LEGACY_PROTOCOL_ADAPTER;
     }
 
-    /// @notice Lifts the pause, once the copy-in is complete.
-    function _unpause() internal override {
-        _checkStateMigrationIsComplete();
-        super._unpause();
-    }
-
-    /// @notice Authorizes an upgrade of the proxy as the base does, and reports the migration as finished.
+    /// @notice Authorizes an upgrade of the proxy as the base does once the copy-in is complete, lifts the pause and
+    /// reports the migration as finished.
     /// @param newImplementation The implementation that the proxy upgrades to.
     /// @dev The upgrade away from this implementation is the last step of the migration, so it is what the event
     /// marks.
     function _authorizeUpgrade(address newImplementation) internal override {
         super._authorizeUpgrade(newImplementation);
+        _checkStateMigrationIsComplete();
+        super._unpause();
 
         emit MigrationFinalized();
     }
@@ -192,6 +190,11 @@ contract MigrationalProtocolAdapter is IMigrational, ProtocolAdapter {
     /// @notice Reverts unless the legacy protocol adapter is stopped.
     function _requireLegacyProtocolAdapterStopped() internal view {
         require(Pausable(_LEGACY_PROTOCOL_ADAPTER).paused(), LegacyProtocolAdapterNotStopped(_LEGACY_PROTOCOL_ADAPTER));
+    }
+
+    /// @notice Reverts, because only the upgrade away from this implementation lifts the pause.
+    function _unpause() internal pure override {
+        revert UnpauseNotAllowed();
     }
 
     /// @notice Returns the roots of the empty subtrees, one per level, for a tree of the given depth.

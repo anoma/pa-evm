@@ -8,20 +8,20 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title FinalizeProtocolAdapterStateMigration
 /// @author Anoma Foundation, 2026
-/// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. It
-/// unpauses the proxy that `MigrateProtocolAdapterState` copied the state of the legacy protocol adapter
-/// into, upgrades it from `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation and, in
-/// production, transfers it to the production proxy owner. The unpause compares the copied state against the legacy
-/// protocol adapter and reverts on a difference, so no run reaches the upgrade with the wrong state. Every step skips
-/// once it is done, so a run that stops early is repeated until it reaches the end.
+/// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. The
+/// proxy holds the state that `MigrateProtocolAdapterState` copied from the legacy protocol adapter. The script
+/// upgrades it from `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation, which lifts the
+/// pause, and, in production, transfers it to the production proxy owner. The upgrade compares the copied state
+/// against the legacy protocol adapter and reverts on a difference, so no run lifts the pause with the wrong state.
+/// Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
 /// `--account` alone forge runs it as its default sender.
 /// @custom:security-contact security@anoma.foundation
 contract FinalizeProtocolAdapterStateMigration is MigrationScript {
-    /// @notice Unpauses, upgrades to the plain implementation and, in production, transfers the proxy to the production
-    /// proxy owner. The unpause is what checks the copied state against the legacy protocol adapter. Without
-    /// `--broadcast` the run is simulated locally.
+    /// @notice Upgrades to the plain implementation, which lifts the pause, and, in production, transfers the proxy to
+    /// the production proxy owner. The upgrade is what checks the copied state against the legacy protocol adapter.
+    /// Without `--broadcast` the run is simulated locally.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run `MigrateProtocolAdapterState.verify`
@@ -38,11 +38,6 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
 
         if (protocolAdapter.getImplementation() != implementation) {
             _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
-
-            if (protocolAdapter.paused()) {
-                vm.broadcast(owner);
-                protocolAdapter.unpause();
-            }
 
             // Read before the broadcast: `vm.broadcast` arms only the next call, and a view call would take it.
             bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();

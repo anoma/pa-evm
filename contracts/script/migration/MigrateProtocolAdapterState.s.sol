@@ -18,9 +18,9 @@ import {MigrationScript} from "./MigrationScript.s.sol";
 /// @notice A script to copy one chain's state from the stopped legacy protocol adapter into a proxy running
 /// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
 /// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
-/// unpauses, upgrades the proxy to the plain `ProtocolAdapter` implementation and, in production, transfers it to the
-/// production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips once it is done, so a
-/// run that stops early is repeated until it reaches the end.
+/// upgrades the proxy to the plain `ProtocolAdapter` implementation, which lifts the pause, and, in production,
+/// transfers it to the production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips
+/// once it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
 /// `--account` alone forge runs it as its default sender.

@@ -276,7 +276,7 @@ contracts-execute-migration deployer chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the completion run of one chain as the proxy owner (dry-run): unpause, upgrade and, in production, the ownership transfer
+# Simulate the completion run of one chain as the proxy owner (dry-run): the upgrade, which lifts the pause, and, in production, the ownership transfer
 contracts-simulate-migration-completion chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \

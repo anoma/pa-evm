@@ -122,7 +122,7 @@ The immutable ERC20 forwarder of the legacy protocol adapter.
 An ERC20 resource whose label ref names the legacy ERC20 forwarder.
 
 **Migrational implementation**:
-`MigrationalProtocolAdapter`, the implementation that the proxy of a chain that ran a legacy protocol adapter starts on. It is a protocol adapter that begins paused and accepts the state of the legacy protocol adapter. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
+`MigrationalProtocolAdapter`, the implementation that the proxy of a chain that ran a legacy protocol adapter starts on. It is a protocol adapter that begins paused, accepts the state of the legacy protocol adapter, and lifts the pause only in the upgrade away from it. Its proxy is owned by the deployment wallet in both environments; a production one moves to the Safe after the upgrade to the plain implementation.
 _Avoid_: transition implementation, migration contract
 
 **Plain implementation**:
@@ -136,7 +136,7 @@ _Avoid_: seeding (the function names say it; the act has its own word), import
 One execution of `MigrateProtocolAdapterState.run` for one chain: the copy-in. The proxy stays paused, so the ERC20 forwarder balances move before anyone can transact. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Completion run**:
-One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the unpause, which checks the copied state against the legacy protocol adapter, the upgrade and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+One execution of `FinalizeProtocolAdapterStateMigration.run` for one chain, after the ERC20 forwarder balances moved: the upgrade, which checks the copied state against the legacy protocol adapter and lifts the pause, and, in production, the transfer to the production proxy owner. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 
 **Left siblings**:
 The hashes that a commitment tree stores instead of its leaves: on each level where the leaf count has a one bit, the sibling on that level in the Merkle path of the next leaf; the other levels hold stale values. The legacy protocol adapter stores them as `_sides` and exposes no getter for them, so the script reads them from its storage, and the migrational implementation checks that they reproduce its root.
