@@ -34,7 +34,7 @@ Changes flow one way, `next` → `staging` → `main`, and the promotion pull re
 
 In both environments, a proxy deployed with `IS_MIGRATIONAL=true` may run the migrational implementation of the source version until its completion run. The deployment wallet owns it until then, so the production gate fails for a production proxy until the completion run transfers it to the Safe.
 
-The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.
+The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and read no chain.
 
 Deploy or upgrade **every** chain of an environment before opening its promotion pull request — one chain left behind blocks the promotion for all of them.
 
@@ -189,7 +189,7 @@ For each chain in the `staging` section of the record:
 
 ### 4. Promote `next` into `staging`
 
-- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests fork every chain in the staging section and check that it runs the implementation this source predicts. CI also runs the e2e cases against the staging deployment on Sepolia, proven by the queue the `QUEUE_BASE_URL` secret names.
+- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests read every chain in the staging section and check that it runs the implementation this source predicts. CI also runs the e2e cases against the staging deployment on Sepolia, proven by the queue the `QUEUE_BASE_URL` secret names.
 
 - [ ] Merge it once green.
 
