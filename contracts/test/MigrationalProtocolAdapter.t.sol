@@ -89,11 +89,8 @@ contract MigrationalProtocolAdapterTest is Test {
     }
 
     function test_execute_reverts_while_paused() public {
-        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
         _pa.execute(txn);
@@ -174,11 +171,8 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_execute_settles_a_transaction_that_proves_against_the_empty_tree_root() public {
         _finalizeMigration();
 
-        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
         assertEq(txn.actions[0].resources[0].commitmentTreeRoot, SHA256.EMPTY_HASH, "the fixture uses another root");
 
         _pa.execute(txn);
@@ -402,11 +396,8 @@ contract MigrationalProtocolAdapterTest is Test {
     function test_the_copied_tree_grows_as_the_tree_of_the_legacy_protocol_adapter_would_have() public {
         _finalizeMigration();
 
-        (IProtocolAdapter.Transaction memory txn,) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 2, consumedCount: 1, createdCount: 2})
-        });
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, actionCount: 2, consumedCount: 1, createdCount: 2});
         _pa.execute(txn);
 
         // The legacy protocol adapter receives the same commitments in the same order.
@@ -484,32 +475,31 @@ contract MigrationalProtocolAdapterTest is Test {
         assertNotEq(_pa.owner(), fwd, "the owner check must reject the forwarder");
 
         address newImplementation = _deployPlainImplementation();
-        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-        consumed[0] = TxGen.ResourceAndAppData({
+        TxGen.ActionResource[][] memory actionResources = new TxGen.ActionResource[][](1);
+        actionResources[0] = new TxGen.ActionResource[](2);
+        actionResources[0][0] = TxGen.ActionResource({
+            consumed: true,
             resource: TxGen.mockResource({
                 nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
             appData: TxGen.emptyAppData()
         });
-
-        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-        created[0] = TxGen.ResourceAndAppData({
+        actionResources[0][1] = TxGen.ActionResource({
+            consumed: false,
             resource: TxGen.mockResource({
                 nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
             appData: TxGen.emptyAppData()
         });
-        created[0].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
-        created[0].appData.externalPayload[0] = TxGen.forwarderCall({
+        actionResources[0][1].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
+        actionResources[0][1].appData.externalPayload[0] = TxGen.forwarderCall({
             forwarder: fwd,
             input: abi.encode(address(_pa), abi.encodeCall(_pa.upgradeToAndCall, (newImplementation, bytes("")))),
             output: ""
         });
 
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
         IProtocolAdapter.Transaction memory txn =
-            vm.transaction({mockVerifier: _verifier, actionResources: resourceLists});
+            vm.transaction({mockVerifier: _verifier, actionResources: actionResources});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_pa));
         _pa.execute(txn);

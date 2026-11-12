@@ -127,29 +127,28 @@ contract ProtocolAdapterReentrancyTest is SafeFixture {
     /// @dev Executes a transaction whose created resource makes the forwarder call `target` with `payload`. The
     /// protocol adapter requires `output` as the output of the call.
     function _expectExecuteToRevertOnForwarderCall(address target, bytes memory payload, bytes memory output) internal {
-        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
-        consumed[0] = TxGen.ResourceAndAppData({
+        TxGen.ActionResource[][] memory actionResources = new TxGen.ActionResource[][](1);
+        actionResources[0] = new TxGen.ActionResource[](2);
+        actionResources[0][0] = TxGen.ActionResource({
+            consumed: true,
             resource: TxGen.mockResource({
                 nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
             appData: TxGen.emptyAppData()
         });
-
-        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
-        created[0] = TxGen.ResourceAndAppData({
+        actionResources[0][1] = TxGen.ActionResource({
+            consumed: false,
             resource: TxGen.mockResource({
                 nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
             }),
             appData: TxGen.emptyAppData()
         });
-        created[0].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
-        created[0].appData.externalPayload[0] =
+        actionResources[0][1].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
+        actionResources[0][1].appData.externalPayload[0] =
             TxGen.forwarderCall({forwarder: _fwd, input: abi.encode(target, payload), output: output});
 
-        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
-        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
         IProtocolAdapter.Transaction memory txn =
-            vm.transaction({mockVerifier: _mockVerifier, actionResources: resourceLists});
+            vm.transaction({mockVerifier: _mockVerifier, actionResources: actionResources});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_mockPa));
         _mockPa.execute(txn);

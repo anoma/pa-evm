@@ -44,11 +44,8 @@ contract ProtocolAdapterUpgradeTest is Test {
 
     function test_upgrade_allows_replacing_the_risc_zero_verifier_selector_after_an_emergency_stop() public {
         // Execute a transaction proven against the old verifier.
-        (IProtocolAdapter.Transaction memory oldTxn, bytes32 nonce) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory oldTxn, bytes32 nonce) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
         _pa.execute(oldTxn);
 
         bytes32 latestRootBeforeUpgrade = _pa.latestCommitmentTreeRoot();
@@ -63,11 +60,8 @@ contract ProtocolAdapterUpgradeTest is Test {
         // A fresh transaction proven against the stopped verifier reverts on proof verification. A fresh
         // transaction is needed because the state transition — rejecting the replayed nullifiers of `oldTxn` —
         // precedes proof verification.
-        (IProtocolAdapter.Transaction memory secondOldTxn,) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: nonce,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory secondOldTxn,) =
+            vm.transaction({mockVerifier: _verifier, nonce: nonce, actionCount: 1, consumedCount: 1, createdCount: 1});
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_emergencyStop));
         _pa.execute(secondOldTxn);
 
@@ -96,9 +90,7 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // Transactions proven against the new verifier execute.
         (IProtocolAdapter.Transaction memory newTxn,) = vm.transaction({
-            mockVerifier: newVerifier,
-            nonce: bytes32(uint256(1000)),
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
+            mockVerifier: newVerifier, nonce: bytes32(uint256(1000)), actionCount: 1, consumedCount: 1, createdCount: 1
         });
         _pa.execute(newTxn);
 
@@ -117,11 +109,8 @@ contract ProtocolAdapterUpgradeTest is Test {
     /// implementation is live but still paused.
     function test_upgrade_lifts_the_pause_in_the_same_transaction() public {
         // Execute a transaction while the protocol adapter is operational.
-        (IProtocolAdapter.Transaction memory txnBeforePause, bytes32 nonce) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txnBeforePause, bytes32 nonce) =
+            vm.transaction({mockVerifier: _verifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
         _pa.execute(txnBeforePause);
 
         bytes32 latestRootBeforePause = _pa.latestCommitmentTreeRoot();
@@ -135,11 +124,8 @@ contract ProtocolAdapterUpgradeTest is Test {
 
         // Execution is halted. The `whenNotPaused` modifier rejects the transaction before it touches any state, so
         // this very transaction can be replayed once the pause is lifted.
-        (IProtocolAdapter.Transaction memory txnAfterPause,) = vm.transaction({
-            mockVerifier: _verifier,
-            nonce: nonce,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txnAfterPause,) =
+            vm.transaction({mockVerifier: _verifier, nonce: nonce, actionCount: 1, consumedCount: 1, createdCount: 1});
 
         vm.expectRevert(Pausable.EnforcedPause.selector, address(_pa));
         _pa.execute(txnAfterPause);
