@@ -127,13 +127,29 @@ contract ProtocolAdapterReentrancyTest is SafeFixture {
     /// @dev Executes a transaction whose created resource makes the forwarder call `target` with `payload`. The
     /// protocol adapter requires `output` as the output of the call.
     function _expectExecuteToRevertOnForwarderCall(address target, bytes memory payload, bytes memory output) internal {
-        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
-            mockVerifier: _mockVerifier,
-            forwarder: _fwd,
-            logicRef: _CARRIER_LOGIC_REF,
-            input: abi.encode(target, payload),
-            output: output
+        TxGen.ResourceAndAppData[] memory consumed = new TxGen.ResourceAndAppData[](1);
+        consumed[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            appData: TxGen.emptyAppData()
         });
+
+        TxGen.ResourceAndAppData[] memory created = new TxGen.ResourceAndAppData[](1);
+        created[0] = TxGen.ResourceAndAppData({
+            resource: TxGen.mockResource({
+                nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            appData: TxGen.emptyAppData()
+        });
+        created[0].appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
+        created[0].appData.externalPayload[0] =
+            TxGen.forwarderCall({forwarder: _fwd, input: abi.encode(target, payload), output: output});
+
+        TxGen.ResourceLists[] memory resourceLists = new TxGen.ResourceLists[](1);
+        resourceLists[0] = TxGen.ResourceLists({consumed: consumed, created: created});
+        IProtocolAdapter.Transaction memory txn =
+            vm.transaction({mockVerifier: _mockVerifier, actionResources: resourceLists});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_mockPa));
         _mockPa.execute(txn);
