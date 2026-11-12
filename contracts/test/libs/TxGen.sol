@@ -34,159 +34,73 @@ library TxGen {
         bool ephemeral;
     }
 
-    struct ActionConfig {
-        uint256 consumedCount;
-        uint256 createdCount;
-    }
-
-    struct ResourceAndAppData {
+    /// @notice A resource of an action. `createAction` derives its `IProtocolAdapter.ResourceInstance` from it.
+    struct ActionResource {
+        bool consumed;
         Resource resource;
         IProtocolAdapter.AppData appData;
     }
 
-    struct ResourceLists {
-        ResourceAndAppData[] consumed;
-        ResourceAndAppData[] created;
-    }
-
-    /// @dev Builds an action from resource lists, with the consumed resources before the created ones in `resources`.
-    /// The action delta is the sum of the per-resource deltas — the caller is responsible for quantity balance
-    /// across the transaction.
-    function createAction(VmSafe vm, ResourceAndAppData[] memory consumed, ResourceAndAppData[] memory created)
+    /// @dev Builds an action of the resources in list order. The caller balances the quantities across the transaction.
+    function createAction(VmSafe vm, ActionResource[] memory resources)
         internal
         returns (IProtocolAdapter.Action memory action)
     {
-        uint256 consumedCount = consumed.length;
-        uint256 createdCount = created.length;
-
-        IProtocolAdapter.ResourceInstance[] memory resources =
-            new IProtocolAdapter.ResourceInstance[](consumedCount + createdCount);
+        IProtocolAdapter.ResourceInstance[] memory instances = new IProtocolAdapter.ResourceInstance[](resources.length);
 
         IProtocolAdapter.Delta memory actionDelta;
 
-        for (uint256 i = 0; i < consumedCount; ++i) {
-            resources[i] = IProtocolAdapter.ResourceInstance({
-                consumed: true,
-                tag: nullifier(consumed[i].resource, 0),
-                logicRef: consumed[i].resource.logicRef,
-                commitmentTreeRoot: initialRoot(),
-                appData: consumed[i].appData
-            });
+        for (uint256 i = 0; i < resources.length; ++i) {
+            instances[i] = resourceInstance(resources[i]);
 
             IProtocolAdapter.Delta memory resourceDelta = DeltaGen.generateInstance(
                 vm,
                 DeltaGen.InstanceInputs({
-                    kind: kind(consumed[i].resource),
-                    quantity: consumed[i].resource.quantity,
-                    consumed: true,
-                    valueCommitmentRandomness: valueCommitmentRandomness(resources[i].tag)
+                    kind: kind(resources[i].resource),
+                    quantity: resources[i].resource.quantity,
+                    consumed: resources[i].consumed,
+                    valueCommitmentRandomness: valueCommitmentRandomness(instances[i].tag)
                 })
             );
             actionDelta = (i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
         }
 
-        for (uint256 i = 0; i < createdCount; ++i) {
-            resources[consumedCount + i] = IProtocolAdapter.ResourceInstance({
-                consumed: false,
-                tag: commitment(created[i].resource),
-                logicRef: created[i].resource.logicRef,
-                commitmentTreeRoot: bytes32(0),
-                appData: created[i].appData
-            });
-
-            IProtocolAdapter.Delta memory resourceDelta = DeltaGen.generateInstance(
-                vm,
-                DeltaGen.InstanceInputs({
-                    kind: kind(created[i].resource),
-                    quantity: created[i].resource.quantity,
-                    consumed: false,
-                    valueCommitmentRandomness: valueCommitmentRandomness(resources[consumedCount + i].tag)
-                })
-            );
-            actionDelta = (consumedCount == 0 && i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
-        }
-
         action = IProtocolAdapter.Action({
-            resources: resources, unitDelta: actionDelta, actionTreeRoot: computeActionTreeRoot(resources)
+            resources: instances, unitDelta: actionDelta, actionTreeRoot: computeActionTreeRoot(instances)
         });
     }
 
-    /// @dev Builds an action of `consumedCount` consumed and `createdCount` created mock resources sharing one
-    /// kind. Quantities are chosen so the action balances: each consumed resource has quantity `createdCount`,
-    /// each created resource quantity `consumedCount`.
-    function createDefaultAction(VmSafe vm, bytes32 nonce, uint256 consumedCount, uint256 createdCount)
-        internal
-        returns (IProtocolAdapter.Action memory action, bytes32 updatedNonce)
-    {
-        updatedNonce = nonce;
-
-        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](consumedCount);
-        ResourceAndAppData[] memory created = new ResourceAndAppData[](createdCount);
-
-        bytes32 kindRef = nonce;
-
-        for (uint256 i = 0; i < consumedCount; ++i) {
-            consumed[i] = ResourceAndAppData({
-                resource: mockResource({
-                    nonce: updatedNonce,
-                    logicRef: kindRef,
-                    labelRef: kindRef,
-                    // Counts are small test inputs, so the cast cannot truncate.
-                    // forge-lint: disable-next-line(unsafe-typecast)
-                    quantity: uint128(createdCount)
-                }),
-                appData: emptyAppData()
-            });
-            updatedNonce = bytes32(uint256(updatedNonce) + 1);
-        }
-
-        for (uint256 i = 0; i < createdCount; ++i) {
-            created[i] = ResourceAndAppData({
-                resource: mockResource({
-                    nonce: updatedNonce,
-                    logicRef: kindRef,
-                    labelRef: kindRef,
-                    // Counts are small test inputs, so the cast cannot truncate.
-                    // forge-lint: disable-next-line(unsafe-typecast)
-                    quantity: uint128(consumedCount)
-                }),
-                appData: emptyAppData()
-            });
-            updatedNonce = bytes32(uint256(updatedNonce) + 1);
-        }
-
-        action = createAction({vm: vm, consumed: consumed, created: created});
-    }
-
-    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ResourceLists[] memory actionResources)
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ActionResource[][] memory actionResources)
         internal
         returns (IProtocolAdapter.Transaction memory txn)
     {
         IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
-            actions[i] =
-                createAction({vm: vm, consumed: actionResources[i].consumed, created: actionResources[i].created});
+            actions[i] = createAction({vm: vm, resources: actionResources[i]});
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
         txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: emptyKindTreeRoot()});
     }
 
-    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, bytes32 nonce, ActionConfig[] memory configs)
-        internal
-        returns (IProtocolAdapter.Transaction memory txn, bytes32 updatedNonce)
-    {
+    /// @dev Builds a transaction of `actionCount` mock actions, each of the resources that `mockResources` gives.
+    function transaction(
+        VmSafe vm,
+        RiscZeroMockVerifier mockVerifier,
+        bytes32 nonce,
+        uint256 actionCount,
+        uint256 consumedCount,
+        uint256 createdCount
+    ) internal returns (IProtocolAdapter.Transaction memory txn, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
-        IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](configs.length);
-        for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) = createDefaultAction({
-                vm: vm,
-                nonce: updatedNonce,
-                consumedCount: configs[i].consumedCount,
-                createdCount: configs[i].createdCount
-            });
+        IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](actionCount);
+        for (uint256 i = 0; i < actionCount; ++i) {
+            ActionResource[] memory resources;
+            (resources, updatedNonce) =
+                mockResources({nonce: updatedNonce, consumedCount: consumedCount, createdCount: createdCount});
+            actions[i] = createAction({vm: vm, resources: resources});
         }
 
         txn = transactionFromActions({vm: vm, actions: actions});
@@ -229,15 +143,47 @@ library TxGen {
         mockVerifier.mockProve({imageId: VerifyingKeys._BATCH_AGGREGATION_EVM, journalDigest: journalDigest}).seal;
     }
 
-    function generateActionConfigs(uint256 actionCount, uint256 consumedCount, uint256 createdCount)
+    function resourceInstance(ActionResource memory actionResource)
         internal
         pure
-        returns (ActionConfig[] memory configs)
+        returns (IProtocolAdapter.ResourceInstance memory instance)
     {
-        configs = new TxGen.ActionConfig[](actionCount);
-        for (uint256 i = 0; i < actionCount; ++i) {
-            configs[i] = TxGen.ActionConfig({consumedCount: consumedCount, createdCount: createdCount});
+        bool consumed = actionResource.consumed;
+        instance = IProtocolAdapter.ResourceInstance({
+            consumed: consumed,
+            tag: consumed ? nullifier(actionResource.resource, 0) : commitment(actionResource.resource),
+            logicRef: actionResource.resource.logicRef,
+            commitmentTreeRoot: consumed ? initialRoot() : bytes32(0),
+            appData: actionResource.appData
+        });
+    }
+
+    /// @dev `consumedCount` consumed, then `createdCount` created resources of one kind. A consumed resource has
+    /// quantity `createdCount` and a created one `consumedCount`, so the action balances.
+    function mockResources(bytes32 nonce, uint256 consumedCount, uint256 createdCount)
+        internal
+        pure
+        returns (ActionResource[] memory resources, bytes32 updatedNonce)
+    {
+        resources = new ActionResource[](consumedCount + createdCount);
+
+        for (uint256 i = 0; i < resources.length; ++i) {
+            bool consumed = i < consumedCount;
+            resources[i] = ActionResource({
+                consumed: consumed,
+                resource: mockResource({
+                    nonce: bytes32(uint256(nonce) + i),
+                    logicRef: nonce,
+                    labelRef: nonce,
+                    // Counts are small test inputs, so the cast cannot truncate.
+                    // forge-lint: disable-next-line(unsafe-typecast)
+                    quantity: uint128(consumed ? createdCount : consumedCount)
+                }),
+                appData: emptyAppData()
+            });
         }
+
+        updatedNonce = bytes32(uint256(nonce) + resources.length);
     }
 
     /// @dev The root of the empty kind tree: its padding leaf, matching the protocol adapter's initialization default.

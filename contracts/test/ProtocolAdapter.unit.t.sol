@@ -136,11 +136,8 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_reverts_if_the_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
-        (IProtocolAdapter.Transaction memory txnWithMockProof,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txnWithMockProof,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
 
         vm.expectRevert(
             abi.encodeWithSelector(
