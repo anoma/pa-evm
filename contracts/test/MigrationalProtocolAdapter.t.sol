@@ -3,6 +3,8 @@ pragma solidity ^0.8.30;
 
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderExample.sol";
 import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
@@ -36,6 +38,7 @@ contract MigrationalProtocolAdapterTest is Test {
 
     address internal constant _OWNER = address(uint160(1));
     address internal constant _UNAUTHORIZED_CALLER = address(uint160(2));
+    bytes32 internal constant _CARRIER_LOGIC_REF = bytes32(uint256(123));
     /// @dev `CommitmentTree._COMMITMENT_TREE_STORAGE_SLOT`, which the base declares as internal.
     bytes32 internal constant _COMMITMENT_TREE_STORAGE_SLOT =
         0x762a46a11c460b9bcb2bb98651da03b192a02e2a33ab26da9bf9ed53826bc900;
@@ -425,6 +428,50 @@ contract MigrationalProtocolAdapterTest is Test {
         vm.prank(_OWNER);
         vm.expectRevert();
         _pa.migrateNullifierSet({start: 0, count: 1});
+    }
+
+    function test_upgrade_emits_the_MigrationFinalized_event() public {
+        _seedState();
+        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+
+        vm.expectEmit(address(_pa));
+        emit IMigrational.MigrationFinalized();
+        vm.prank(_OWNER);
+        _pa.upgradeToAndCall(newImplementation, "");
+    }
+
+    function test_upgrade_reverts_for_an_unauthorized_caller() public {
+        _seedState();
+        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+
+        vm.prank(_UNAUTHORIZED_CALLER);
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, _UNAUTHORIZED_CALLER), address(_pa)
+        );
+        _pa.upgradeToAndCall(newImplementation, "");
+    }
+
+    function test_execute_reverts_if_a_forwarder_call_upgrades_the_protocol_adapter() public {
+        _seedState();
+
+        // The forwarder owns the protocol adapter, so a forwarder call passes `onlyOwner`, as a Safe transaction that
+        // an external call executes does.
+        address fwd = address(new ForwarderExample({protocolAdapter: address(_pa), logicRef: _CARRIER_LOGIC_REF}));
+        vm.prank(_OWNER);
+        _pa.transferOwnership(fwd);
+        assertEq(_pa.owner(), fwd, "the forwarder must own the protocol adapter");
+
+        address newImplementation = address(new ProtocolAdapter(address(_router), _verifier.SELECTOR()));
+        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
+            mockVerifier: _verifier,
+            forwarder: fwd,
+            logicRef: _CARRIER_LOGIC_REF,
+            input: abi.encode(address(_pa), abi.encodeCall(_pa.upgradeToAndCall, (newImplementation, bytes("")))),
+            output: ""
+        });
+
+        vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_pa));
+        _pa.execute(txn);
     }
 
     function test_initialize_starts_paused_and_records_the_legacy_protocol_adapter() public view {

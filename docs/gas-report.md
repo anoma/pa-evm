@@ -22,7 +22,7 @@
 | owner                                            |             548 |   2390 |   2548 |   2548 |      38 |
 | pause                                            |             507 |  20300 |  26172 |  26172 |      13 |
 | paused                                           |            2378 |   2378 |   2378 |   2378 |      15 |
-| proxiableUUID                                    |             268 |    268 |    268 |    268 |      11 |
+| proxiableUUID                                    |             268 |    268 |    268 |    268 |      12 |
 | riscZeroVerifierPaused                           |           10951 |  10951 |  10951 |  10951 |       5 |
 | setKindTreeRoot                                  |             536 |   6471 |   8051 |   9051 |       8 |
 | transferOwnership                                |            5450 |   6783 |   7450 |   7450 |       9 |
