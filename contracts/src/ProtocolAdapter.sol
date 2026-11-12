@@ -135,12 +135,14 @@ contract ProtocolAdapter is
     // slither-disable-end reentrancy-no-eth,reentrancy-benign
 
     /// @inheritdoc IProtocolAdapter
-    function pause() external override onlyOwner {
+    /// @dev Reverts while `execute` runs, so that the pause state does not change during a transaction.
+    function pause() external override nonReentrant onlyOwner {
         _pause();
     }
 
     /// @inheritdoc IProtocolAdapter
-    function unpause() external override onlyOwner {
+    /// @dev Reverts while `execute` runs, so that the pause state does not change during a transaction.
+    function unpause() external override nonReentrant onlyOwner {
         _unpause();
     }
 
@@ -336,15 +338,18 @@ contract ProtocolAdapter is
         require(!riscZeroVerifierPaused(), RiscZeroVerifierPaused());
     }
 
-    /// @inheritdoc UUPSUpgradeable
-    // slither-disable-next-line dead-code
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
+    /// @notice Allows only the owner to upgrade the proxy.
+    /// @param newImplementation The implementation that the proxy upgrades to.
+    /// @dev Reverts while `execute` runs, so that the implementation does not change during a transaction.
+    function _authorizeUpgrade(address newImplementation) internal virtual override nonReentrant onlyOwner {}
 
     /// @notice Allows only the owner to set the kind tree root.
-    function _authorizeKindTreeRootChange() internal override onlyOwner {}
+    /// @dev Reverts while `execute` runs, so that the kind tree root does not change during a transaction.
+    function _authorizeKindTreeRootChange() internal override nonReentrant onlyOwner {}
 
     /// @notice Allows only the owner to add logic references to the denylists.
-    function _authorizeLogicRefDenylistChange() internal override onlyOwner {}
+    /// @dev Reverts while `execute` runs, so that the denylists do not change during a transaction.
+    function _authorizeLogicRefDenylistChange() internal override nonReentrant onlyOwner {}
 
     /// @notice Verifies the global proofs:
     /// * the delta proof ensuring that the transaction is balanced,

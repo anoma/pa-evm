@@ -34,7 +34,7 @@ The swap succeeds only if the unwrap runs before the swap, and the swap before t
 
 - **External calls run before the proofs are checked.** The protocol adapter verifies the delta proof and the aggregation proof after the last action. A failed proof reverts the transaction, with the effects of all external calls.
 - **A forwarder sees a part of the new state.** During an external call, the nullifier set and the commitment tree contain the nullifiers and the commitments of the earlier resources and of the resource that makes the call. The new latest root of the commitment tree is not yet a historical root.
-- **A forwarder cannot call `execute` again.** A transient reentrancy guard on `execute` reverts such a call.
+- **A call back into the protocol adapter cannot change a transaction in progress.** While `execute` runs, a transient reentrancy guard reverts each call of `execute`, `pause`, `unpause`, `setKindTreeRoot`, `denyLogicRefs` and `upgradeToAndCall`, also a call of the owner that an external call starts, for example a Safe transaction that a forwarder executes. So the pause state, the kind tree root, the denylists and the implementation do not change during a transaction.
 - **Each blob of the external payload is a call**, whatever its deletion criterion. A blob that does not decode as a forwarder address, an input and an expected output reverts the transaction.
 - **The forwarder checks the logic ref.** The protocol adapter calls any address that a proven external call names, with the logic ref of the resource. So each forwarder needs an out-of-circuit check that accepts only the logic refs of its own resources. The ERC20 forwarder and the generic call forwarder each accept one logic ref.
 
