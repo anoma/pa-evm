@@ -43,10 +43,10 @@ integrity = "fa706c8a7caf3426c90f75e6aafa3224b0a6c899b490800cf6944e4ec42f9344"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"
-version = "0.4.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_2_05-08-2026_15:52:28_openzeppelin-foundry-upgrades.zip"
-checksum = "52618e6037df7c02671d94599647ef4caccbcad043ad8d663551275bc47f5a2e"
-integrity = "64c8d2d87ba2d2e3ee5946f3638d386e05d0f37b137b0588058b7bbdf7fb233d"
+version = "0.4.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_4_04-11-2026_23:39:32_openzeppelin-foundry-upgrades.zip"
+checksum = "a494ab858a085adcce4bd35a1ebd2bb3ebeca8be7b24628b9bf85ee205cc4397"
+integrity = "ef14beca5f0adf272402e1dfae3dfecd8156550d9d129484c32f358bf14eff95"
 
 [[dependencies]]
 name = "risc0-risc0-ethereum"
