@@ -19,10 +19,10 @@ library.
    curl -L https://risczero.com/install | sh
    ```
 
-3. Install the RISC Zero version 3.0.3 with
+3. Install the RISC Zero version 3.1.0 with
 
    ```sh
-   rzup install cargo-risczero 3.0.3
+   rzup install cargo-risczero 3.1.0
    ```
 
 ## Usage
