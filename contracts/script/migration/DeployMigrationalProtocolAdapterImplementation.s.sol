@@ -4,8 +4,8 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-2.0.0/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
