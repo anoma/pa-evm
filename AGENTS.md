@@ -25,6 +25,24 @@ what the docs do not make obvious. Read these rather than guess:
   `contracts/generated/RecordedDeployments.sol`, `docs/gas-report.md`. Never edit
   `contracts/dependencies/` either.
 
+## The justfile
+
+Every task has a recipe in the root `justfile`, and CI calls the same recipes, so use them rather
+than raw `forge` or `cargo`. `just --list` prints each with its comment.
+
+- Prefixes: `contracts-` (runs inside `contracts/`, so path arguments are relative to it),
+  `bindings-`, `crates-` (the cargo workspace) and `all-`.
+- Trailing arguments pass through: `just contracts-test --match-test test_execute`,
+  `just crates-test -p anoma-pa-evm-bindings`.
+- `contracts-test` always rebuilds (`--force`). `contracts-gen-bindings` and most simulate and
+  broadcast recipes run `forge clean` first, for reproducible bytecode.
+- `just` loads `contracts/.env` if present.
+- Recipes hold two lists: the `--select` regex of `contracts-gen-bindings` (which contracts get
+  Rust bindings) and the `skip` argument of `contracts-storage-check`. `gas_reports` in
+  `foundry.toml` picks the gas report's contracts.
+- A new operation gets a dry-run and a broadcast recipe named like the existing pairs, plus a
+  checklist step.
+
 ## Checks
 
 ```bash
