@@ -31,7 +31,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-verify-impl <IMPLEMENTATION> <CHAIN>
   ```
 
-- [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's legacy protocol adapter from [`RecordedDeployments`](./contracts/generated/RecordedDeployments.sol), which is generated from the `legacy` entries in [`deployments.json`](./crates/bindings/deployments.json).
+- [ ] Deploy the proxy on the migrational implementation. It starts paused. It reads the chain's legacy protocol adapter from the `legacy` entries in [`deployments.json`](./crates/bindings/deployments.json).
 
   ```sh
   export IS_PRODUCTION=<true|false>
@@ -48,7 +48,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-verify-deployment <MIGRATIONAL_IMPLEMENTATION> <PROXY> <CHAIN>
   ```
 
-- [ ] Record the proxy in `deployments.json`, regenerate `RecordedDeployments` and the bindings with `just contracts-gen`, and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the legacy protocol adapter from the regenerated library, so they refuse to start without this record. The kind trees repository takes its chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
+- [ ] Record the proxy in `deployments.json` and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the legacy protocol adapter from this file, so they refuse to start without this record. The kind trees repository takes its chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
 
 - [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's legacy ERC20 forwarder.
 

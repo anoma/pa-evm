@@ -7,9 +7,9 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {Parameters} from "../Parameters.sol";
+import {RecordedDeployments} from "../RecordedDeployments.sol";
 
 /// @title DeployMigrationalProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
@@ -83,7 +83,7 @@ contract DeployMigrationalProtocolAdapterImplementation is SupportedNetworks, Sc
     /// @param chainId The chain ID of the network.
     /// @return legacyProtocolAdapter The legacy protocol adapter the migrational implementation copies the state
     /// from.
-    function getLegacyProtocolAdapter(uint256 chainId) public pure returns (address legacyProtocolAdapter) {
+    function getLegacyProtocolAdapter(uint256 chainId) public view returns (address legacyProtocolAdapter) {
         legacyProtocolAdapter = RecordedDeployments.legacyProtocolAdapter(chainId);
         require(legacyProtocolAdapter != address(0), NoLegacyProtocolAdapter({chainId: chainId}));
     }
