@@ -32,7 +32,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
 
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
         address owner = protocolAdapter.owner();
 

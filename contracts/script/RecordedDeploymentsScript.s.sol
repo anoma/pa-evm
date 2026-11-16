@@ -3,14 +3,13 @@ pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 import {DeploymentRecords} from "./DeploymentRecords.sol";
 import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that act on a recorded protocol adapter proxy. The proxy comes from the records and
-/// this source predicts the implementation, so `--rpc-url` alone names the chain.
+/// @notice The base of the scripts that act on a recorded protocol adapter proxy. The proxy comes from the records, so
+/// `--rpc-url` alone names the chain.
 /// @custom:security-contact security@anoma.foundation
 abstract contract RecordedDeploymentsScript is Script {
     /// @notice Thrown if the environment records no proxy for the chain.
@@ -23,22 +22,6 @@ abstract contract RecordedDeploymentsScript is Script {
     function _requireRecordedProxy(bool isProduction) internal view returns (address proxy) {
         proxy = _recordedProxy(isProduction);
         require(proxy != address(0), DeploymentNotRecorded(DeploymentRecords.environment(isProduction), block.chainid));
-    }
-
-    /// @notice Returns the plain implementation of this source version, and reverts unless it is deployed.
-    /// @param implementationDeployScript The script that predicts the implementation's deterministic address.
-    /// @return implementation The deployed plain implementation.
-    function _requireDeployedImplementation(DeployProtocolAdapterImplementation implementationDeployScript)
-        internal
-        view
-        returns (address implementation)
-    {
-        // forge-lint: disable-next-line(unused-return)
-        (implementation,) = implementationDeployScript.predict();
-        require(
-            implementation.code.length != 0,
-            DeployProtocolAdapterImplementation.ImplementationNotDeployed(implementation)
-        );
     }
 
     /// @notice Returns the proxy the environment records for the chain `--rpc-url` names.

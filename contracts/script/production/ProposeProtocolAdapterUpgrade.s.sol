@@ -18,7 +18,7 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     /// @param proposer The Safe owner or delegate proposing the transaction.
     function run(address proposer) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
 
         _propose({
             callData: abi.encodeCall(

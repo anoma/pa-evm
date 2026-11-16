@@ -76,4 +76,12 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
 
         implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
     }
+
+    /// @notice Returns the implementation of this source version, and reverts unless it is deployed.
+    /// @return implementation The deployed implementation contract.
+    function deployed() public view returns (address implementation) {
+        // forge-lint: disable-next-line(unused-return)
+        (implementation,) = predict();
+        require(implementation.code.length != 0, ImplementationNotDeployed({implementation: implementation}));
+    }
 }

@@ -77,7 +77,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
     function run(bool isProduction) public {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
-        address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
+        address implementation = new DeployProtocolAdapterImplementation().deployed();
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
 
         if (protocolAdapter.getImplementation() != implementation) {

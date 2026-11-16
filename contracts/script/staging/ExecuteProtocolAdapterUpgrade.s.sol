@@ -19,7 +19,7 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
     /// @param isProduction Whether to upgrade the production or the staging proxy.
     function run(bool isProduction) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
         address proxy = _requireRecordedProxy(isProduction);
         address owner = _stagingOwner({proxy: proxy});
 
