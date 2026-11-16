@@ -5,13 +5,13 @@ import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967P
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {DeploymentRecords} from "./DeploymentRecords.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "./migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
-import {Parameters} from "./Parameters.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026

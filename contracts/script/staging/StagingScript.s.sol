@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title StagingScript

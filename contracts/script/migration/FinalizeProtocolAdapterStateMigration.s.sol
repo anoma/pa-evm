@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title FinalizeProtocolAdapterStateMigration

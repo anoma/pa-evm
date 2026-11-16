@@ -10,7 +10,7 @@ import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState

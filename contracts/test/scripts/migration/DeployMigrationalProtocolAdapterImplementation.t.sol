@@ -4,10 +4,10 @@ pragma solidity ^0.8.30;
 import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-2.0.0/src/RiscZeroVerifierSelectors.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
 
+import {RecordedDeployments} from "../../../script/libs/RecordedDeployments.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "../../../script/migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
-import {RecordedDeployments} from "../../../script/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 

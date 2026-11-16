@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {DeploymentRecords} from "./DeploymentRecords.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
+import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
 /// @author Anoma Foundation, 2026

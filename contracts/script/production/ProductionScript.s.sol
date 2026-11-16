@@ -5,7 +5,7 @@ import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwne
 import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {Parameters} from "../Parameters.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title ProductionScript

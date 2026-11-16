@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
-import {RecordedDeployments} from "../RecordedDeployments.sol";
+import {RecordedDeployments} from "../libs/RecordedDeployments.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title MigrationScript

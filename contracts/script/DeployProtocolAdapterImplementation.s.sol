@@ -8,7 +8,7 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Parameters} from "./Parameters.sol";
+import {Parameters} from "./libs/Parameters.sol";
 
 /// @title DeployProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
