@@ -23,7 +23,7 @@ abstract contract MigrationScript is RecordedDeploymentsScript {
     /// @param isProduction Whether to read the production or the staging proxy.
     /// @return legacyProtocolAdapter The legacy protocol adapter, which holds the state.
     /// @return proxy The proxy of the protocol adapter, which receives it.
-    function _configuration(bool isProduction) internal returns (address legacyProtocolAdapter, address proxy) {
+    function _configuration(bool isProduction) internal view returns (address legacyProtocolAdapter, address proxy) {
         legacyProtocolAdapter = _recordedLegacyProtocolAdapter();
         require(legacyProtocolAdapter != address(0), LegacyProtocolAdapterNotRecorded(block.chainid));
         proxy = _requireRecordedProxy(isProduction);

@@ -5,6 +5,7 @@ import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967P
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {DeploymentRecords} from "./DeploymentRecords.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
@@ -61,7 +62,7 @@ contract DeployProtocolAdapterProxy is Script {
         {
             require(
                 !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+                DeploymentAlreadyRecorded(DeploymentRecords.environment(isProduction), block.chainid)
             );
 
             implementation = _predictImplementation(isMigrational);
@@ -99,13 +100,6 @@ contract DeployProtocolAdapterProxy is Script {
             implementation: implementation,
             owner: _proxyOwner({isProduction: isProduction, isMigrational: isMigrational})
         });
-    }
-
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
     }
 
     /// @notice Predicts the implementation the proxy starts on.

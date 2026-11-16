@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "./DeployProtocolAdapterProxy.s.sol";
+import {DeploymentRecords} from "./DeploymentRecords.sol";
 import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
@@ -20,12 +20,9 @@ abstract contract RecordedDeploymentsScript is Script {
     /// recorded.
     /// @param isProduction Whether to read the production or the staging proxy.
     /// @return proxy The recorded proxy.
-    function _requireRecordedProxy(bool isProduction) internal returns (address proxy) {
+    function _requireRecordedProxy(bool isProduction) internal view returns (address proxy) {
         proxy = _recordedProxy(isProduction);
-        if (proxy == address(0)) {
-            // A `require` would create the script on every call: it evaluates the error arguments first.
-            revert DeploymentNotRecorded(new DeployProtocolAdapterProxy().environmentName(isProduction), block.chainid);
-        }
+        require(proxy != address(0), DeploymentNotRecorded(DeploymentRecords.environment(isProduction), block.chainid));
     }
 
     /// @notice Returns the plain implementation of this source version, and reverts unless it is deployed.
