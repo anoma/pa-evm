@@ -251,18 +251,6 @@ contracts-propose-production-logic-ref-denial deployer proxy proposer logic_refs
         --sig "run(address,address,(bytes32,bool)[])" {{proxy}} {{proposer}} {{quote(logic_refs)}} \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Simulate the proposal to transfer the legacy protocol adapter (dry-run): simulates the Safe that owns it executing the transfer
-contracts-simulate-legacy-protocol-adapter-ownership-transfer-proposal legacy_protocol_adapter proposer chain *args:
-    cd contracts && forge script script/migration/ProposeLegacyProtocolAdapterOwnershipTransfer.s.sol:ProposeLegacyProtocolAdapterOwnershipTransfer \
-        --sig "run(address,address)" {{legacy_protocol_adapter}} {{proposer}} \
-        --rpc-url {{chain}} {{ args }}
-
-# Propose to the Safe that owns the legacy protocol adapter to transfer it to the deployment wallet (proposer = unlocked deployer)
-contracts-propose-legacy-protocol-adapter-ownership-transfer deployer legacy_protocol_adapter proposer chain *args:
-    cd contracts && forge script script/migration/ProposeLegacyProtocolAdapterOwnershipTransfer.s.sol:ProposeLegacyProtocolAdapterOwnershipTransfer \
-        --sig "run(address,address)" {{legacy_protocol_adapter}} {{proposer}} \
-        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
-
 # Simulate the migration run of one chain as the proxy owner (dry-run): the copy-in, after which the proxy stays paused
 contracts-simulate-migration chain *args:
     @echo "IS_PRODUCTION: $IS_PRODUCTION"
