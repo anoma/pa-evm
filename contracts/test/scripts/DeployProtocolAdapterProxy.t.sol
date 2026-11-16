@@ -4,7 +4,7 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
-import {DeploymentRecords} from "../../script/libs/DeploymentRecords.sol";
+import {DeploymentsJson} from "../../script/libs/DeploymentsJson.sol";
 import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
@@ -93,7 +93,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
             vm.expectRevert(
                 abi.encodeWithSelector(
                     DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
-                    DeploymentRecords.environment({isProduction: false}),
+                    DeploymentsJson.environment({isProduction: false}),
                     chainId
                 )
             );
@@ -192,7 +192,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
             )
         );
 
-        string memory environment = DeploymentRecords.environment(isProduction);
+        string memory environment = DeploymentsJson.environment(isProduction);
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));

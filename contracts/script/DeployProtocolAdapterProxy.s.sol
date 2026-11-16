@@ -6,7 +6,7 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
-import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
 import {Parameters} from "./libs/Parameters.sol";
 import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 import {
@@ -63,7 +63,7 @@ contract DeployProtocolAdapterProxy is Script {
             require(
                 RecordedDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid})
                     == address(0),
-                DeploymentAlreadyRecorded(DeploymentRecords.environment(isProduction), block.chainid)
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = _predictImplementation(isMigrational);

@@ -3,12 +3,12 @@ pragma solidity ^0.8.30;
 
 import {Vm} from "forge-std-1.17.0/src/Vm.sol";
 
-/// @title DeploymentRecords
+/// @title DeploymentsJson
 /// @author Anoma Foundation, 2026
 /// @notice Reads the `deployments.json` file of a bindings package at run time. Under each key, the file holds a list
 /// of entries, and each entry names its chain in `chainId`.
 /// @custom:security-contact security@anoma.foundation
-library DeploymentRecords {
+library DeploymentsJson {
     /// @notice The cheatcode contract that reads and parses the files.
     Vm private constant _VM = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 

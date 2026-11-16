@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {DeploymentRecords} from "./libs/DeploymentRecords.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
 import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
@@ -21,7 +21,7 @@ abstract contract RecordedDeploymentsScript is Script {
     /// @return proxy The recorded proxy.
     function _requireRecordedProxy(bool isProduction) internal view returns (address proxy) {
         proxy = _recordedProxy(isProduction);
-        require(proxy != address(0), DeploymentNotRecorded(DeploymentRecords.environment(isProduction), block.chainid));
+        require(proxy != address(0), DeploymentNotRecorded(DeploymentsJson.environment(isProduction), block.chainid));
     }
 
     /// @notice Returns the proxy the environment records for the chain `--rpc-url` names.
