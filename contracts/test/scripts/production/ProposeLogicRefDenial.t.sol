@@ -7,6 +7,7 @@ import {ProposeLogicRefDenial} from "../../../script/production/ProposeLogicRefD
 import {ILogicRefDenylist} from "../../../src/interfaces/ILogicRefDenylist.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {ProposeLogicRefDenialMock} from "../../mocks/ProposeLogicRefDenial.m.sol";
 
 /// @notice Checks the production-only logic reference denial proposal script against a Safe-owned production proxy.
 /// Outside broadcast mode, the script simulates the Safe executing the denial, so the proxy must end up with each logic
@@ -42,7 +43,7 @@ contract ProposeLogicRefDenialTest is RiscZeroRouterFixture, SafeFixture {
             emit ILogicRefDenylist.LogicRefDenied({logicRef: logicRefs[i].logicRef, consumed: logicRefs[i].consumed});
         }
 
-        new ProposeLogicRefDenial().run({proxy: _productionProxy, proposer: _owner, logicRefs: logicRefs});
+        new ProposeLogicRefDenialMock(_productionProxy).run({proposer: _owner, logicRefs: logicRefs});
 
         ILogicRefDenylist denylist = ILogicRefDenylist(_productionProxy);
         assertTrue(
@@ -64,21 +65,21 @@ contract ProposeLogicRefDenialTest is RiscZeroRouterFixture, SafeFixture {
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
-        ProposeLogicRefDenial script = new ProposeLogicRefDenial();
+        ProposeLogicRefDenial script = new ProposeLogicRefDenialMock(_stagingProxy);
 
         vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
-        script.run({proxy: _stagingProxy, proposer: _owner, logicRefs: _logicRefs()});
+        script.run({proposer: _owner, logicRefs: _logicRefs()});
     }
 
     function test_run_reverts_if_the_simulated_denial_fails() public {
-        ProposeLogicRefDenial script = new ProposeLogicRefDenial();
+        ProposeLogicRefDenial script = new ProposeLogicRefDenialMock(_productionProxy);
 
         // The protocol adapter rejects the zero logic ref, so the simulated Safe execution fails.
         ILogicRefDenylist.DeniedLogicRef[] memory logicRefs = new ILogicRefDenylist.DeniedLogicRef[](1);
         logicRefs[0] = ILogicRefDenylist.DeniedLogicRef({logicRef: bytes32(0), consumed: true});
 
         vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
-        script.run({proxy: _productionProxy, proposer: _owner, logicRefs: logicRefs});
+        script.run({proposer: _owner, logicRefs: logicRefs});
     }
 
     function _logicRefs() internal pure returns (ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) {

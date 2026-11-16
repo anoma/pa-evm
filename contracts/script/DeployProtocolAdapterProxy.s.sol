@@ -6,11 +6,12 @@ import {Script} from "forge-std-1.17.0/src/Script.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "./migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
-import {Parameters} from "./Parameters.sol";
-import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -60,8 +61,9 @@ contract DeployProtocolAdapterProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+                RecordedDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid})
+                    == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = _predictImplementation(isMigrational);
@@ -99,13 +101,6 @@ contract DeployProtocolAdapterProxy is Script {
             implementation: implementation,
             owner: _proxyOwner({isProduction: isProduction, isMigrational: isMigrational})
         });
-    }
-
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
     }
 
     /// @notice Predicts the implementation the proxy starts on.

@@ -4,10 +4,11 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
+import {DeploymentsJson} from "../../script/libs/DeploymentsJson.sol";
+import {RecordedDeployments} from "../../script/libs/RecordedDeployments.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "../../script/migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
-import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
@@ -80,24 +81,12 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         assertNotEq(plainImplementation, migrationalImplementation, "plain and migrational implementations are equal");
     }
 
-    function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.staging();
+    function test_run_reverts_if_the_chain_has_a_recorded_staging_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: false});
+    }
 
-        for (uint256 i = 0; i < deployments.length; ++i) {
-            uint256 chainId = deployments[i].chainId;
-            vm.chainId(chainId);
-
-            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
-                    script.environmentName({isProduction: false}),
-                    chainId
-                )
-            );
-            script.run({isProduction: false, isMigrational: false});
-        }
+    function test_run_reverts_if_the_chain_has_a_recorded_production_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: true});
     }
 
     function test_run_reverts_if_the_proxy_is_already_deployed() public {
@@ -169,13 +158,6 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         );
     }
 
-    function test_environmentName_names_the_environments() public {
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-
-        assertEq(script.environmentName({isProduction: false}), "staging", "staging environment name differs");
-        assertEq(script.environmentName({isProduction: true}), "production", "production environment name differs");
-    }
-
     /// @notice Runs the deploy script and checks that the proxy lands at the predicted deterministic address, delegates
     /// to a deployed implementation, is owned by the environment owner or, if it is migrational, by the staging proxy
     /// owner, and starts paused on the chain's legacy protocol adapter exactly when it is migrational.
@@ -198,7 +180,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
             )
         );
 
-        string memory environment = script.environmentName(isProduction);
+        string memory environment = DeploymentsJson.environment(isProduction);
 
         assertEq(proxy, predicted, string.concat(environment, ": proxy address differs from the prediction"));
         assertGt(implementation.code.length, 0, string.concat(environment, ": implementation is not deployed"));
@@ -220,6 +202,29 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
                 new DeployMigrationalProtocolAdapterImplementation().getLegacyProtocolAdapter(block.chainid),
                 string.concat(environment, ": proxy records a different legacy protocol adapter")
             );
+        }
+    }
+
+    /// @notice Runs the deploy script on each chain on which the environment records a deployment, and expects each
+    /// run to revert.
+    /// @param isProduction Whether to check the production or the staging environment.
+    function _expectRunRevertsOnRecordedChains(bool isProduction) private {
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            uint256 chainId = deployments[i].chainId;
+            vm.chainId(chainId);
+
+            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
+                    DeploymentsJson.environment(isProduction),
+                    chainId
+                )
+            );
+            script.run({isProduction: isProduction, isMigrational: false});
         }
     }
 }

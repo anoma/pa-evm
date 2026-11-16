@@ -6,6 +6,7 @@ import {ExecuteProtocolAdapterPause} from "../../../script/staging/ExecuteProtoc
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {ExecuteProtocolAdapterPauseMock} from "../../mocks/ExecuteProtocolAdapterPause.m.sol";
 
 /// @notice Checks the staging-only pause script.
 contract ExecuteProtocolAdapterPauseTest is RiscZeroRouterFixture {
@@ -22,15 +23,15 @@ contract ExecuteProtocolAdapterPauseTest is RiscZeroRouterFixture {
     }
 
     function test_run_pauses_the_proxy() public {
-        new ExecuteProtocolAdapterPause().run({proxy: _stagingProxy});
+        new ExecuteProtocolAdapterPauseMock(_stagingProxy).run({isProduction: false});
 
         assertTrue(ProtocolAdapter(_stagingProxy).paused(), "the proxy is not paused");
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
-        ExecuteProtocolAdapterPause script = new ExecuteProtocolAdapterPause();
+        ExecuteProtocolAdapterPause script = new ExecuteProtocolAdapterPauseMock(_productionProxy);
 
         vm.expectRevert(abi.encodeWithSelector(StagingScript.NotAStagingDeployment.selector, _productionProxy));
-        script.run({proxy: _productionProxy});
+        script.run({isProduction: false});
     }
 }

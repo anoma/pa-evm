@@ -8,8 +8,8 @@ import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
 import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
-import {Parameters} from "../Parameters.sol";
-import {RecordedDeployments} from "../RecordedDeployments.sol";
+import {Parameters} from "../libs/Parameters.sol";
+import {RecordedDeployments} from "../libs/RecordedDeployments.sol";
 
 /// @title DeployMigrationalProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
