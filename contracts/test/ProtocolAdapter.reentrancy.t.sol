@@ -127,13 +127,22 @@ contract ProtocolAdapterReentrancyTest is SafeFixture {
     /// @dev Executes a transaction whose created resource makes the forwarder call `target` with `payload`. The
     /// protocol adapter requires `output` as the output of the call.
     function _expectExecuteToRevertOnForwarderCall(address target, bytes memory payload, bytes memory output) internal {
-        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
-            mockVerifier: _mockVerifier,
-            forwarder: _fwd,
-            logicRef: _CARRIER_LOGIC_REF,
-            input: abi.encode(target, payload),
-            output: output
-        });
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(
+            TxGen.mockResource({
+                nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            TxGen.emptyAppData()
+        );
+        resources[1] = TxGen.created(
+            TxGen.mockResource({
+                nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            TxGen.forwarderCallAppData({forwarder: _fwd, input: abi.encode(target, payload), output: output})
+        );
+
+        IProtocolAdapter.Transaction memory txn =
+            vm.transaction({mockVerifier: _mockVerifier, actionResources: TxGen.oneAction(resources)});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_mockPa));
         _mockPa.execute(txn);

@@ -84,11 +84,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
     }
 
     function _transaction(bytes32 kindTreeRoot) internal returns (IProtocolAdapter.Transaction memory txn) {
-        (txn,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
         txn = TxGen.transactionAggregation({mockVerifier: _mockVerifier, txn: txn, kindTreeRoot: kindTreeRoot});
     }
 }

@@ -230,7 +230,9 @@ contract ProtocolAdapterDenylistTest is Test {
         (txn,) = vm.transaction({
             mockVerifier: _mockVerifier,
             nonce: bytes32(uint256(1)),
-            configs: TxGen.generateActionConfigs({actionCount: actionCount, consumedCount: 1, createdCount: 1})
+            actionCount: actionCount,
+            consumedCount: 1,
+            createdCount: 1
         });
     }
 
