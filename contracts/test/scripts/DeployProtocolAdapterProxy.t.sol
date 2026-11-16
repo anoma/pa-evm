@@ -81,24 +81,12 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
         assertNotEq(plainImplementation, migrationalImplementation, "plain and migrational implementations are equal");
     }
 
-    function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
+    function test_run_reverts_if_the_chain_has_a_recorded_staging_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: false});
+    }
 
-        for (uint256 i = 0; i < deployments.length; ++i) {
-            uint256 chainId = deployments[i].chainId;
-            vm.chainId(chainId);
-
-            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
-
-            vm.expectRevert(
-                abi.encodeWithSelector(
-                    DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
-                    DeploymentsJson.environment({isProduction: false}),
-                    chainId
-                )
-            );
-            script.run({isProduction: false, isMigrational: false});
-        }
+    function test_run_reverts_if_the_chain_has_a_recorded_production_deployment() public {
+        _expectRunRevertsOnRecordedChains({isProduction: true});
     }
 
     function test_run_reverts_if_the_proxy_is_already_deployed() public {
@@ -214,6 +202,29 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
                 new DeployMigrationalProtocolAdapterImplementation().getLegacyProtocolAdapter(block.chainid),
                 string.concat(environment, ": proxy records a different legacy protocol adapter")
             );
+        }
+    }
+
+    /// @notice Runs the deploy script on each chain on which the environment records a deployment, and expects each
+    /// run to revert.
+    /// @param isProduction Whether to check the production or the staging environment.
+    function _expectRunRevertsOnRecordedChains(bool isProduction) private {
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments(isProduction);
+
+        for (uint256 i = 0; i < deployments.length; ++i) {
+            uint256 chainId = deployments[i].chainId;
+            vm.chainId(chainId);
+
+            DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    DeployProtocolAdapterProxy.DeploymentAlreadyRecorded.selector,
+                    DeploymentsJson.environment(isProduction),
+                    chainId
+                )
+            );
+            script.run({isProduction: isProduction, isMigrational: false});
         }
     }
 }
