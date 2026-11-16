@@ -41,6 +41,9 @@ library TxGen {
         IProtocolAdapter.AppData appData;
     }
 
+    /// @notice Thrown when a mock action would have no consumed resource, which the compliance circuit rejects.
+    error NoConsumedResource();
+
     /// @dev Builds one action of each resource list, with the resources in list order. The caller balances the
     /// quantities across the transaction.
     function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ActionResource[][] memory actionResources)
@@ -129,6 +132,8 @@ library TxGen {
         pure
         returns (ActionResource[] memory resources, bytes32 updatedNonce)
     {
+        require(consumedCount != 0, NoConsumedResource());
+
         resources = new ActionResource[](consumedCount + createdCount);
 
         for (uint256 i = 0; i < resources.length; ++i) {
@@ -148,6 +153,14 @@ library TxGen {
         }
 
         updatedNonce = bytes32(uint256(nonce) + resources.length);
+    }
+
+    /// @dev Reorders `resources` in place, in an order that `seed` sets.
+    function shuffle(ActionResource[] memory resources, uint256 seed) internal pure {
+        for (uint256 i = resources.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encode(seed, i))) % i;
+            (resources[i - 1], resources[j]) = (resources[j], resources[i - 1]);
+        }
     }
 
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
