@@ -61,7 +61,8 @@ contract DeployProtocolAdapterProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
+                RecordedDeployments.protocolAdapterProxy({isProduction: isProduction, chainId: block.chainid})
+                    == address(0),
                 DeploymentAlreadyRecorded(DeploymentRecords.environment(isProduction), block.chainid)
             );
 

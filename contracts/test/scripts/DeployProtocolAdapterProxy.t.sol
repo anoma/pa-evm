@@ -82,7 +82,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     }
 
     function test_run_reverts_if_the_chain_has_a_recorded_deployment() public {
-        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.staging();
+        RecordedDeployments.Deployment[] memory deployments = RecordedDeployments.deployments({isProduction: false});
 
         for (uint256 i = 0; i < deployments.length; ++i) {
             uint256 chainId = deployments[i].chainId;

@@ -39,14 +39,6 @@ library RecordedDeployments {
     /// @notice The name of the bindings package.
     string internal constant _PACKAGE_NAME = "anoma-pa-evm-bindings";
 
-    /// @notice Returns whether the environment records a deployment for the chain.
-    /// @param isProduction Whether to check the production or the staging environment.
-    /// @param chainId The chain ID to look for.
-    /// @return recorded Whether the environment records a deployment for the chain.
-    function isRecorded(bool isProduction, uint256 chainId) internal view returns (bool recorded) {
-        recorded = protocolAdapterProxy({isProduction: isProduction, chainId: chainId}) != address(0);
-    }
-
     /// @notice Returns the protocol adapter proxy an environment records for a chain.
     /// @param isProduction Whether to read the production or the staging environment.
     /// @param chainId The chain ID to look for.
@@ -65,33 +57,21 @@ library RecordedDeployments {
             DeploymentRecords.addressOf({json: _records(), key: "legacy", chainId: chainId, field: "protocolAdapter"});
     }
 
-    /// @notice Returns the deployments the staging environment records.
-    /// @return deployments The recorded staging deployments.
-    function staging() internal view returns (Deployment[] memory deployments) {
-        deployments = _deployments({isProduction: false});
-    }
-
-    /// @notice Returns the deployments the production environment records.
-    /// @return deployments The recorded production deployments.
-    function production() internal view returns (Deployment[] memory deployments) {
-        deployments = _deployments({isProduction: true});
+    /// @notice Returns the deployments an environment records.
+    /// @param isProduction Whether to return the production or the staging environment.
+    /// @return recorded The recorded deployments.
+    function deployments(bool isProduction) internal view returns (Deployment[] memory recorded) {
+        bytes memory encoded =
+            DeploymentRecords.entries({json: _records(), key: DeploymentRecords.environment(isProduction)});
+        recorded = abi.decode(encoded, (Deployment[]));
     }
 
     /// @notice Returns the legacy protocol adapters, which `anoma-pa-evm-bindings` 2.3.0 records in `addresses.rs`,
     /// except Aurora, which is deprecated.
-    /// @return deployments The recorded deployments of the legacy protocol adapters.
-    function legacy() internal view returns (LegacyDeployment[] memory deployments) {
+    /// @return recorded The recorded deployments of the legacy protocol adapters.
+    function legacy() internal view returns (LegacyDeployment[] memory recorded) {
         bytes memory encoded = DeploymentRecords.entries({json: _records(), key: "legacy"});
-        deployments = abi.decode(encoded, (LegacyDeployment[]));
-    }
-
-    /// @notice Returns the deployments an environment records.
-    /// @param isProduction Whether to return the production or the staging environment.
-    /// @return deployments The recorded deployments.
-    function _deployments(bool isProduction) private view returns (Deployment[] memory deployments) {
-        bytes memory encoded =
-            DeploymentRecords.entries({json: _records(), key: DeploymentRecords.environment(isProduction)});
-        deployments = abi.decode(encoded, (Deployment[]));
+        recorded = abi.decode(encoded, (LegacyDeployment[]));
     }
 
     /// @notice Returns the content of the records file.
