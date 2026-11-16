@@ -70,28 +70,15 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 ## Per chain
 
-The stop in step 1 leaves users unable to transact, and the upgrade in step 7 lets them transact again. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 7 run after it, and step 5 needs a transaction of the forwarder multisig.
+The stop in step 1 leaves users unable to transact, and the upgrade in step 7 lets them transact again. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 7 run after it. Step 1 is a transaction of the production Safe, and step 5 needs a transaction of the forwarder multisig.
 
-1. [ ] Transfer the legacy protocol adapter to the deployment wallet, then stop it from there. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the transfer is a Safe transaction. Besides the `Ownable` functions, its owner can only call `emergencyStop`, so the transfer gives the deployment wallet nothing but the stop. Simulate the proposal, then propose it:
-
-   ```sh
-   just contracts-simulate-legacy-protocol-adapter-ownership-transfer-proposal <LEGACY_PROTOCOL_ADAPTER> <PROPOSER> <CHAIN>
-   just contracts-propose-legacy-protocol-adapter-ownership-transfer deployer <LEGACY_PROTOCOL_ADAPTER> <PROPOSER> <CHAIN>
-   ```
-
-   Ask the Safe signers to confirm and execute it in the [Safe app](https://app.safe.global). The legacy protocol adapter keeps running, so do this before the planned stop and read the new owner back:
+1. [ ] Stop the legacy protocol adapter. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the stop is a Safe transaction that calls `emergencyStop()` on it. Propose it as a Safe owner or delegate, and agree on a signing time with the Safe signers before the planned stop. Ask them to confirm and execute it in the [Safe app](https://app.safe.global/home?safe=0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10), then read the pause back:
 
    ```sh
-   cast call <LEGACY_PROTOCOL_ADAPTER> "owner()(address)" --rpc-url <CHAIN>
+   cast call <LEGACY_PROTOCOL_ADAPTER> "paused()(bool)" --rpc-url <CHAIN>
    ```
 
-   Then stop the legacy protocol adapter from the deployment wallet. The stop and the migration run of step 4 follow each other without a Safe transaction between them, which is why the ownership moves at all:
-
-   ```sh
-   cast send <LEGACY_PROTOCOL_ADAPTER> "emergencyStop()" --rpc-url <CHAIN> --account deployer
-   ```
-
-   The stop cannot be undone: the legacy protocol adapter has no function that lifts it. Nothing transfers it back, and no step needs to.
+   The stop cannot be undone: the legacy protocol adapter has no function that lifts it. The Safe keeps the ownership. The later steps read only the pause, not the owner.
 
 2. [ ] Read and record the `latestCommitmentTreeRoot`, `commitmentCount` and `nullifierCount` of the stopped legacy protocol adapter. They do not change after the stop. Use them to plan the migration run and to compare its result.
 
