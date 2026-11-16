@@ -22,12 +22,12 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
     /// @notice Upgrades to the plain implementation, which lifts the pause, and, in production, transfers the proxy to
     /// the production proxy owner. The upgrade is what checks the copied state against the legacy protocol adapter.
     /// Without `--broadcast` the run is simulated locally.
+    /// @param isProduction Whether to finalize the production or the staging proxy. The production proxy owner
+    /// receives a production proxy.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run `MigrateProtocolAdapterState.verify`
     /// afterwards to assert the result against the chain.
-    /// @param isProduction Whether to finalize the production or the staging proxy. The production proxy owner
-    /// receives a production proxy.
     function run(bool isProduction) public {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
 

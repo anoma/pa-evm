@@ -16,9 +16,9 @@ abstract contract StagingScript is Script {
     error NotAStagingDeployment(address proxy);
 
     /// @notice Returns the owner of the proxy, and reverts unless the proxy belongs to the staging environment.
-    /// @dev The scripts broadcast as this owner, because with `--account` alone forge runs them as its default sender.
     /// @param proxy The staging environment protocol adapter proxy to act on.
     /// @return owner The staging proxy owner, which sends the transactions.
+    /// @dev The scripts broadcast as this owner, because with `--account` alone forge runs them as its default sender.
     function _stagingOwner(address proxy) internal returns (address owner) {
         owner = ProtocolAdapter(proxy).owner();
         require(owner == new DeployProtocolAdapterProxy().PROXY_OWNER_STAGING(), NotAStagingDeployment(proxy));

@@ -70,11 +70,11 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice Copies the state of the legacy protocol adapter into the proxy. The proxy stays paused, so no
     /// transaction can use the kind tree before the ERC20 forwarder balances move. Without `--broadcast` the run is
     /// simulated locally.
+    /// @param isProduction Whether to copy the state into the production or the staging proxy.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run
     /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
-    /// @param isProduction Whether to copy the state into the production or the staging proxy.
     function run(bool isProduction) public {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
         address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
