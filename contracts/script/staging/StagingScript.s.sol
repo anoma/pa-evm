@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title StagingScript
@@ -18,8 +18,8 @@ abstract contract StagingScript is RecordedDeploymentsScript {
     /// @param proxy The staging environment protocol adapter proxy to act on.
     /// @return owner The staging proxy owner, which sends the transactions.
     /// @dev The scripts broadcast as this owner, because with `--account` alone forge runs them as its default sender.
-    function _stagingOwner(address proxy) internal returns (address owner) {
+    function _stagingOwner(address proxy) internal view returns (address owner) {
         owner = ProtocolAdapter(proxy).owner();
-        require(owner == new DeployProtocolAdapterProxy().PROXY_OWNER_STAGING(), NotAStagingDeployment(proxy));
+        require(owner == Parameters.DEPLOYMENT_WALLET, NotAStagingDeployment(proxy));
     }
 }

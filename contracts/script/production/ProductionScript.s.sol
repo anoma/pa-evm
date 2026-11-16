@@ -5,7 +5,7 @@ import {IOwnerManager} from "safe-smart-account-1.5.0/contracts/interfaces/IOwne
 import {Safe} from "safe-utils-0.0.24/src/Safe.sol";
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 import {RecordedDeploymentsScript} from "../RecordedDeploymentsScript.s.sol";
 
 /// @title ProductionScript
@@ -32,7 +32,7 @@ abstract contract ProductionScript is RecordedDeploymentsScript {
     function _propose(bytes memory callData, address proposer) internal {
         address proxy = _requireRecordedProxy({isProduction: true});
         address safe = ProtocolAdapter(proxy).owner();
-        require(safe == new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION(), NotAProductionDeployment(proxy));
+        require(safe == Parameters.PA_MULTISIG, NotAProductionDeployment(proxy));
 
         _safe.initialize(safe);
 

@@ -10,7 +10,7 @@ import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState
@@ -171,7 +171,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
         require(!protocolAdapter.paused(), ProxyPaused(proxy));
 
         if (isProduction) {
-            address expectedOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            address expectedOwner = Parameters.PA_MULTISIG;
             address actualOwner = protocolAdapter.owner();
             require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
         }

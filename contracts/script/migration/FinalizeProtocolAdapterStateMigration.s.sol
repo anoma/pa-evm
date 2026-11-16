@@ -3,7 +3,7 @@ pragma solidity ^0.8.30;
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title FinalizeProtocolAdapterStateMigration
@@ -46,7 +46,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
         }
 
         if (isProduction) {
-            address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            address productionOwner = Parameters.PA_MULTISIG;
             if (protocolAdapter.owner() != productionOwner) {
                 vm.broadcast(owner);
                 protocolAdapter.transferOwnership(productionOwner);
