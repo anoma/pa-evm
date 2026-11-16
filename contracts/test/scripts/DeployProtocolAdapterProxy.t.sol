@@ -3,11 +3,11 @@ pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {DeployProtocolAdapterProxy} from "../../script/DeployProtocolAdapterProxy.s.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "../../script/migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
+import {RecordedDeployments} from "../../script/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";

@@ -40,7 +40,6 @@ contracts-lint:
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
-    cd contracts && bunx --bun solhint --config .solhint.other.json 'generated/**/*.sol'
 
 # Checks that the storage layout of contracts in `src` is empty.
 # `skip` is a space-separated list of contract names to ignore (contract-free files).
@@ -76,10 +75,6 @@ contracts-fmt-check:
 contracts-test *args:
     cd contracts && forge test --force {{ args }}
 
-# Regenerate the recorded deployments library from the deployment records
-contracts-gen-deployments:
-    ./scripts/generate-recorded-deployments.sh
-
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
     # The script directory is built (not skipped) because `ERC1967Proxy` only
@@ -99,9 +94,6 @@ contracts-gen-gas-report:
     # Fuzz and invariant tests use other inputs on each run, so the report counts only the `test_` unit tests.
     # `sed` keeps the gas tables of the output.
     cd contracts && forge test --force --gas-report --md --match-test '^test_' | sed -n '/^|/,/^$/p' > ../docs/gas-report.md
-
-# Regenerate the recorded deployments library, then the Rust bindings
-contracts-gen: contracts-gen-deployments contracts-gen-bindings
 
 # Simulate the implementation deployment (dry-run)
 contracts-simulate-impl chain *args:
@@ -372,10 +364,6 @@ bindings-test *args:
 bindings-check: contracts-gen-bindings
     git diff --exit-code crates/bindings/src/generated/
 
-# Check the recorded deployments library is up-to-date
-contracts-deployments-check: contracts-gen-deployments
-    git diff --exit-code contracts/generated/RecordedDeployments.sol
-
 # Check the gas report is up-to-date
 contracts-gas-report-check: contracts-gen-gas-report
     git diff --exit-code docs/gas-report.md
@@ -477,8 +465,6 @@ all-check:
     @just all-fmt-check
     @echo "==> Linting..."
     @just all-lint
-    @echo "==> Checking the recorded deployments library is up-to-date..."
-    @just contracts-deployments-check
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
     @echo "==> Checking the gas report is up-to-date..."

@@ -4,13 +4,13 @@ pragma solidity ^0.8.30;
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "./migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
 import {Parameters} from "./Parameters.sol";
+import {RecordedDeployments} from "./RecordedDeployments.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026

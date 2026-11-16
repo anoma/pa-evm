@@ -3,10 +3,10 @@ pragma solidity ^0.8.30;
 
 import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {RecordedDeployments} from "../../generated/RecordedDeployments.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {RecordedDeployments} from "../RecordedDeployments.sol";
 
 /// @title MigrationScript
 /// @author Anoma Foundation, 2026
@@ -56,11 +56,11 @@ abstract contract MigrationScript is Script {
     }
 
     /// @notice Returns what the records hold for the chain `--rpc-url` names.
-    /// @dev Tests override it: the records are compiled into the script, so they cannot name a test deployment.
     /// @param isProduction Whether to read the production or the staging proxy.
     /// @return legacyProtocolAdapter The recorded legacy protocol adapter, or the zero address if the
     /// chain records none.
     /// @return proxy The recorded proxy, or the zero address if the environment records none for the chain.
+    /// @dev Tests override it: the records hold only the deployments on the chains, not a test deployment.
     function _recordedDeployments(bool isProduction)
         internal
         view
@@ -73,7 +73,7 @@ abstract contract MigrationScript is Script {
 
     /// @notice Reverts unless the proxy copies its state from the recorded legacy protocol adapter. Only the
     /// migrational implementation has the getter, so the call also rejects any other proxy.
-    /// @param legacyProtocolAdapter The legacy protocol adapter the records name.
+    /// @param legacyProtocolAdapter The recorded legacy protocol adapter.
     /// @param proxy The proxy of the protocol adapter.
     function _requireLegacyProtocolAdapter(address legacyProtocolAdapter, address proxy) internal view {
         address copiedFrom = MigrationalProtocolAdapter(proxy).getLegacyProtocolAdapter();

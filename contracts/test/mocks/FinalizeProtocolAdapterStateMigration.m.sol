@@ -5,8 +5,8 @@ import {
     FinalizeProtocolAdapterStateMigration
 } from "../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
 
-/// @notice The completion run, reading the given deployments instead of the records. The records are compiled in, so
-/// they name no test deployment. A zero address stands for a deployment the records lack.
+/// @notice The completion run, reading the given deployments instead of the records. The records hold only the
+/// deployments on the chains, not a test deployment. A zero address stands for a deployment the records lack.
 contract FinalizeProtocolAdapterStateMigrationMock is FinalizeProtocolAdapterStateMigration {
     address internal immutable _LEGACY_PROTOCOL_ADAPTER;
     address internal immutable _PROXY;

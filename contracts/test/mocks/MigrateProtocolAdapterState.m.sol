@@ -3,8 +3,8 @@ pragma solidity ^0.8.30;
 
 import {MigrateProtocolAdapterState} from "../../script/migration/MigrateProtocolAdapterState.s.sol";
 
-/// @notice The migration run, reading the given deployments instead of the records. The records are compiled in, so
-/// they name no test deployment. A zero address stands for a deployment the records lack.
+/// @notice The migration run, reading the given deployments instead of the records. The records hold only the
+/// deployments on the chains, not a test deployment. A zero address stands for a deployment the records lack.
 contract MigrateProtocolAdapterStateMock is MigrateProtocolAdapterState {
     address internal immutable _LEGACY_PROTOCOL_ADAPTER;
     address internal immutable _PROXY;
