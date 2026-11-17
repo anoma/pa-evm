@@ -8,7 +8,7 @@ The empty kind tree has no entries. With it, the compliance circuit computes eve
 
 ## Decision
 
-The transaction carries the root of the kind tree that its aggregation proof is proven against, in `Transaction.kindTreeRoot`. The protocol adapter accepts two values: the stored root and the root of the empty kind tree, its padding leaf `sha256("EMPTY")`. It checks the value before it processes the actions, so before any forwarder call and before the proof checks. On any other value, it reverts with `UnacceptedKindTreeRoot(kindTreeRoot)`. The aggregation journal embeds the carried root.
+The transaction carries the root of the kind tree that its aggregation proof is proven against, in `Transaction.kindTreeRoot`. The protocol adapter accepts two values: the stored root and the root of the empty kind tree, `EMPTY_KIND_TREE_ROOT` (`sha256("EMPTY")`). It checks the value before it processes the actions, so before any forwarder call and before the proof checks. On any other value, it reverts with `UnacceptedKindTreeRoot(kindTreeRoot)`. The aggregation journal embeds the carried root.
 
 The compliance and aggregation verifying keys stay injected, as ADR-0001 decides.
 
