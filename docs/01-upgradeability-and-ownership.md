@@ -39,6 +39,7 @@ The protocol adapter accepts every valid proof, from any prover. So only contrac
 | The protocol adapter, the compliance circuit or the aggregation circuit | The pause, and an upgrade of the protocol adapter                                                                                                                                           |
 | The RISC Zero verifier                                                  | The pause or the emergency stop of the verifier. The owner of the RISC Zero router adds a correct verifier with a new selector, and an upgrade of the protocol adapter takes that selector. |
 | A resource logic or a forwarder                                         | The pause, the denial of the logic ref of a flawed resource logic, and new contracts of the application                                                                                     |
+| The stored kind tree root                                               | The update of the root to `EMPTY_KIND_TREE_ROOT`, which stops each conversion but no other transaction, or the pause. Then the update of the root to a reviewed root                        |
 
 ## 4. Trust assumptions
 

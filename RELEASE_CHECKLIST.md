@@ -442,6 +442,13 @@ For **production**:
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
 
+### Replacing a Wrong Kind Tree Root
+
+- [ ] **Stop the conversions.** Update the root to `EMPTY_KIND_TREE_ROOT` as above, or pause the protocol adapter (see [Pausing the Protocol Adapter](#pausing-the-protocol-adapter)). With the empty root, each transaction that names the wrong root reverts, and each transaction that names the empty root still executes.
+- [ ] **Store a reviewed root.** Update the root to the last reviewed root or to a corrected one, as above.
+- [ ] **Find the transactions that could name the wrong root.** The `KindTreeRootUpdated` event that stored the wrong root and the event that replaced it bound them. In this range, read `Transaction.kindTreeRoot` from the calldata of each `execute` call, or from its call trace if a contract called `execute`.
+- [ ] If you paused the protocol adapter, lift the pause with `unpause`.
+
 ## Pausing the Protocol Adapter
 
 Not a release. A paused protocol adapter executes no transaction until its owner calls `unpause`. Lifting the pause takes one more owner transaction, which in production is one more Safe transaction.
