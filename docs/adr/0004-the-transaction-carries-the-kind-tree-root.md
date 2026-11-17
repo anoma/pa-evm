@@ -17,6 +17,6 @@ The compliance and aggregation verifying keys stay injected, as ADR-0001 decides
 - A proof made with the empty kind tree stays valid when the owner stores a new root. A prover that converts nothing can always use the empty kind tree.
 - A proof made with a replaced kind tree reverts with `UnacceptedKindTreeRoot`, which names the root, instead of `VerificationFailed()`.
 - A kind tree cannot stop a kind, because a transaction can use the empty kind tree instead. The logic ref denylist stops logic refs.
-- The new field changes the ABI of `execute` and `simulateExecute`. A deployed protocol adapter needs an implementation upgrade, and its clients need a release that sends the field, at the same time.
+- The new field changes the ABI of `execute`. A deployed protocol adapter needs an implementation upgrade, and its clients need a release that sends the field, at the same time.
 - Each transaction carries 32 more bytes of calldata.
 - `crates/bindings/src/conversion.rs` copies the kind tree root from arm-risc0's `AggregationInstance`. It still drops the compliance key.
