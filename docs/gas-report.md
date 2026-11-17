@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3321796 |           15616 |        |        |        |         |
+|                                          3321141 |           15613 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             285 |    285 |    285 |    285 |      10 |

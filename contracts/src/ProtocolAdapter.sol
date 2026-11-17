@@ -69,7 +69,7 @@ contract ProtocolAdapter is
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
 
     /// @notice Thrown if a RISC Zero proof is shorter than the RISC Zero verifier selector.
-    error RiscZeroProofTooShort(uint256 length);
+    error RiscZeroProofTooShort();
 
     /// @notice Thrown if the RISC Zero verifier is paused when the protocol adapter is initialized.
     error RiscZeroVerifierPaused();
@@ -402,7 +402,7 @@ contract ProtocolAdapter is
     /// @param instance The public inputs to the proof, i.e. the digest of the journal.
     /// @param proof The proof to be verified.
     function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
-        require(proof.length >= RISC_ZERO_VERIFIER_SELECTOR.length, RiscZeroProofTooShort(proof.length));
+        require(proof.length >= RISC_ZERO_VERIFIER_SELECTOR.length, RiscZeroProofTooShort());
         _checkSelector(bytes4(proof[0:4]));
 
         RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({

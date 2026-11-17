@@ -154,10 +154,7 @@ contract ProtocolAdapterTest is Test {
         txn.aggregationProof = hex"010203";
         assertLt(txn.aggregationProof.length, _verifierSelector.length, "the proof should be shorter than a selector");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(ProtocolAdapter.RiscZeroProofTooShort.selector, txn.aggregationProof.length),
-            address(_pa)
-        );
+        vm.expectRevert(ProtocolAdapter.RiscZeroProofTooShort.selector, address(_pa));
         _pa.execute(txn);
     }
 
