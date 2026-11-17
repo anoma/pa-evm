@@ -38,6 +38,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
 
         if (protocolAdapter.getImplementation() != implementation) {
             _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
+            implementationDeployScript.requireActiveRiscZeroVerifier(implementation);
 
             // Read before the broadcast: `vm.broadcast` arms only the next call, and a view call would take it.
             bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();

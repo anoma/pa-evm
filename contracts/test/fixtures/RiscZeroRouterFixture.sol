@@ -4,6 +4,9 @@ pragma solidity ^0.8.30;
 import {DeployRiscZeroContracts} from "anoma-risc0-deployments-2.0.0/script/DeployRiscZeroContracts.s.sol";
 import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
 import {Test} from "forge-std-1.17.0/src/Test.sol";
+import {
+    RiscZeroVerifierEmergencyStop
+} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierEmergencyStop.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 /// @notice A test fixture providing the RISC Zero stack locally instead of forking a network.
@@ -18,5 +21,20 @@ abstract contract RiscZeroRouterFixture is SupportedNetworks, Test {
         SupportedNetworks.Data memory data = getRouterData();
         vm.etch(address(data.router), address(router).code);
         vm.copyStorage(address(router), address(data.router));
+    }
+
+    /// @notice Stops the verifier that the cloned router uses for a selector.
+    function _stopRiscZeroVerifier(bytes4 selector) internal {
+        RiscZeroVerifierEmergencyStop emergencyStop =
+            RiscZeroVerifierEmergencyStop(address(getRouterData().router.getVerifier(selector)));
+        vm.prank(emergencyStop.owner());
+        emergencyStop.estop();
+    }
+
+    /// @notice Removes the verifier of a selector from the cloned router.
+    function _removeRiscZeroVerifier(bytes4 selector) internal {
+        RiscZeroVerifierRouter router = getRouterData().router;
+        vm.prank(router.owner());
+        router.removeVerifier(selector);
     }
 }
