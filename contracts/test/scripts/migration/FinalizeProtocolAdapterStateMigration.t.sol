@@ -127,4 +127,16 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
 
         _migrationScript.verify({isProduction: true});
     }
+
+    function test_run_reverts_if_the_risc_zero_verifier_is_stopped() public {
+        _migrationScript.run({isProduction: false});
+        address implementation = new DeployProtocolAdapterImplementation().deployed();
+
+        _stopRiscZeroVerifier(ProtocolAdapter(implementation).RISC_ZERO_VERIFIER_SELECTOR());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployProtocolAdapterImplementation.RiscZeroVerifierPaused.selector, implementation)
+        );
+        _finalizationScript.run({isProduction: false});
+    }
 }

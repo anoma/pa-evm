@@ -20,6 +20,7 @@ contract ExecuteProtocolAdapterUpgrade is StagingScript {
     function run(bool isProduction) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         address implementation = implementationDeployScript.deployed();
+        implementationDeployScript.requireActiveRiscZeroVerifier(implementation);
         address proxy = _requireRecordedProxy(isProduction);
         address owner = _stagingOwner({proxy: proxy});
 

@@ -164,7 +164,7 @@ For each chain in the `staging` section of the record:
   just contracts-simulate-staging-upgrade <CHAIN>
   ```
 
-  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed.
+  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed and the RISC Zero router has an active verifier for its selector.
 
 - [ ] After successful simulation, **execute** it by running
 
@@ -245,6 +245,8 @@ For each chain in the `production` section of the record:
   ```sh
   just contracts-simulate-production-upgrade-proposal <PROPOSER> <CHAIN>
   ```
+
+  The proposal reverts unless the RISC Zero router has an active verifier for the selector of the implementation. On a router of ours, add the verifier first.
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 

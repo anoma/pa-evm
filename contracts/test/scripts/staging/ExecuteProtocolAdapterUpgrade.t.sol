@@ -2,12 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
+import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
 import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {ExecuteProtocolAdapterUpgrade} from "../../../script/staging/ExecuteProtocolAdapterUpgrade.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {ExecuteProtocolAdapterUpgradeMock} from "../../mocks/ExecuteProtocolAdapterUpgrade.m.sol";
 
@@ -61,6 +63,27 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
         vm.expectRevert(
             abi.encodeWithSelector(RecordedDeploymentsScript.DeploymentNotRecorded.selector, "staging", block.chainid)
         );
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_if_the_risc_zero_verifier_is_stopped() public {
+        ExecuteProtocolAdapterUpgrade script = new ExecuteProtocolAdapterUpgradeMock(_stagingProxy);
+
+        _stopRiscZeroVerifier(ProtocolAdapter(_implementation).RISC_ZERO_VERIFIER_SELECTOR());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployProtocolAdapterImplementation.RiscZeroVerifierPaused.selector, _implementation)
+        );
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_if_the_router_has_no_verifier_for_the_selector() public {
+        ExecuteProtocolAdapterUpgrade script = new ExecuteProtocolAdapterUpgradeMock(_stagingProxy);
+
+        bytes4 selector = ProtocolAdapter(_implementation).RISC_ZERO_VERIFIER_SELECTOR();
+        _removeRiscZeroVerifier(selector);
+
+        vm.expectRevert(abi.encodeWithSelector(RiscZeroVerifierRouter.SelectorRemoved.selector, selector));
         script.run({isProduction: false});
     }
 }

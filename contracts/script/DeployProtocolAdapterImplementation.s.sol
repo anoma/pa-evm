@@ -30,6 +30,9 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
+    /// @notice Thrown if the RISC Zero verifier for the selector of an implementation is paused.
+    error RiscZeroVerifierPaused(address implementation);
+
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
     function run() public returns (address implementation) {
@@ -83,5 +86,16 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
         // forge-lint: disable-next-line(unused-return)
         (implementation,) = predict();
         require(implementation.code.length != 0, ImplementationNotDeployed({implementation: implementation}));
+    }
+
+    /// @notice Reverts unless the RISC Zero router has a verifier for the selector of an implementation and this
+    /// verifier is not paused, so that an upgrade to the implementation does not stop `execute`.
+    /// @dev The router reverts with `SelectorUnknown` or `SelectorRemoved` if it has no verifier for the selector.
+    /// @param implementation The implementation to check.
+    function requireActiveRiscZeroVerifier(address implementation) public view {
+        require(
+            !ProtocolAdapter(implementation).riscZeroVerifierPaused(),
+            RiscZeroVerifierPaused({implementation: implementation})
+        );
     }
 }

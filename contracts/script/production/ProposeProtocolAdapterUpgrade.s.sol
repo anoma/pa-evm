@@ -19,6 +19,7 @@ contract ProposeProtocolAdapterUpgrade is ProductionScript {
     function run(address proposer) public {
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
         address implementation = implementationDeployScript.deployed();
+        implementationDeployScript.requireActiveRiscZeroVerifier(implementation);
 
         _propose({
             callData: abi.encodeCall(
