@@ -487,7 +487,7 @@ For **production**:
 
 ## Denying Logic References
 
-Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist.
+Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist. So a list must not name a pair twice, and two denials that wait for Safe signatures at the same time must not share a pair: after the first one runs, the second reverts and must be signed again.
 
 Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, consumed)` pairs: `"[(<LOGIC_REF>,false)]"` deprecates a logic reference, and `"[(<LOGIC_REF>,true),(<LOGIC_REF>,false)]"` denies it.
 
