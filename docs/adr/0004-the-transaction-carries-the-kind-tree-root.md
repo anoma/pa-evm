@@ -2,7 +2,7 @@
 
 ## Context
 
-ADR-0001 injects the stored kind tree root into the aggregation journal. A proof made with another kind tree then fails with `VerificationFailed()`. This happens each time a prover and the protocol adapter use different kind trees. For example, after the owner stores a new root, every proof made with the previous kind tree fails, and a prover fails until it loads the new kind tree.
+Before this decision, the protocol adapter injected its stored kind tree root into the aggregation journal, as it injects the verifying keys (ADR-0001). A proof made with another kind tree then failed with `VerificationFailed()`. This happened each time a prover and the protocol adapter used different kind trees. For example, after the owner stored a new root, every proof made with the previous kind tree failed, and a prover failed until it loaded the new kind tree.
 
 The empty kind tree has no entries. With it, the compliance circuit computes every kind base by hash to curve, so no two kinds share a kind base. A transaction that balances with the empty kind tree therefore also balances with the stored kind tree. Only a conversion between aliases needs the stored kind tree, for example from resources of the legacy ERC20 forwarder to resources of the environment's ERC20 forwarder.
 
