@@ -27,8 +27,17 @@ abstract contract LogicRefDenylist is ILogicRefDenylist, Initializable {
     bytes32 internal constant _LOGIC_REF_DENYLIST_STORAGE_SLOT =
         0x4236e6c1c068f5e3b8927e001e7112af467e55c6094df039f1d58b8530a62900;
 
+    /// @notice Thrown if the logic reference to add to a denylist is zero.
     error ZeroLogicRefNotAllowed();
+
+    /// @notice Thrown if the denylist already contains the logic reference to add.
+    /// @param logicRef The logic reference to add.
+    /// @param consumed Whether the denylist is the one for consumed resources.
     error LogicRefAlreadyDenied(bytes32 logicRef, bool consumed);
+
+    /// @notice Thrown if the denylist for the side of a resource contains its logic reference.
+    /// @param logicRef The logic reference of the resource.
+    /// @param consumed Whether the resource is consumed.
     error ResourceWithDeniedLogicRef(bytes32 logicRef, bool consumed);
 
     /// @notice The constructor disabling the initializers on the implementation contract.

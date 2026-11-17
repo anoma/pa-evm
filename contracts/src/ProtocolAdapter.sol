@@ -52,11 +52,23 @@ contract ProtocolAdapter is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     bytes4 public immutable override RISC_ZERO_VERIFIER_SELECTOR;
 
+    /// @notice Thrown if the constructor gets the zero address as the RISC Zero verifier router.
     error ZeroRiscZeroVerifierRouterNotAllowed();
+
+    /// @notice Thrown if the constructor gets zero as the RISC Zero verifier selector.
     error ZeroRiscZeroVerifierSelectorNotAllowed();
+
+    /// @notice Thrown if a transaction has no actions.
     error EmptyTransactionNotAllowed();
+
+    /// @notice Thrown if the output of a forwarder call is not the expected output of its external payload blob.
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
+
+    /// @notice Thrown if the first four bytes of the aggregation proof are not the RISC Zero verifier selector of the
+    /// protocol adapter.
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
+
+    /// @notice Thrown if the RISC Zero verifier is paused when the protocol adapter is initialized.
     error RiscZeroVerifierPaused();
 
     /// @notice The constructor disabling the initializers on the implementation contract.
