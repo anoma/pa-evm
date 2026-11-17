@@ -403,7 +403,7 @@ contract ProtocolAdapter is
     /// @param proof The proof to be verified.
     function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
         require(proof.length >= RISC_ZERO_VERIFIER_SELECTOR.length, RiscZeroProofTooShort());
-        _checkSelector(bytes4(proof[0:4]));
+        _checkSelector(bytes4(proof[:4]));
 
         RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
             seal: proof, imageId: verifyingKey, journalDigest: instance
