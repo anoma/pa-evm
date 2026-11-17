@@ -100,7 +100,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         require(!$._historicalRoots[root], PreExistingRoot(root));
         $._historicalRoots[root] = true;
 
-        emit CommitmentTreeRootAdded(root);
+        emit CommitmentTreeRootAdded({root: root});
     }
 
     /// @notice Returns whether the set of historical roots contains a commitment tree root.
