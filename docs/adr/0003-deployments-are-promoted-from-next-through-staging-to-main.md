@@ -26,7 +26,7 @@ A deploy happens after the change is reviewed and merged into `next`, and the pr
 
 An entry therefore holds only what the chain cannot answer once the proxy is upgraded: the genesis fields pinning its address. It is written once, at the genesis deploy, and never edited.
 
-The comparison is the promotion gate, and runs only on a pull request into the environment it describes, selected by `github.base_ref` and gated in the tests with `vm.skip`. What survives on every pull request is what holds independently of any deployment: genesis CREATE2 reproducibility, which reads only the record, and the deploy scripts themselves against a fresh chain.
+The comparison is the promotion gate, and runs only on a pull request into the environment it describes, selected by `github.base_ref`, which sets `VERIFY_STAGING_DEPLOYMENTS` or `VERIFY_PRODUCTION_DEPLOYMENTS`. Without the flag, the gated tests skip. What survives on every pull request is what holds independently of any deployment: genesis CREATE2 reproducibility, which reads only the record, and the deploy scripts themselves against a fresh chain.
 
 The e2e integration tests drive a deployed proxy with transactions built from the source, so they are only meaningful where the two agree. They run on promotion pull requests, against the environment being promoted into.
 
@@ -41,6 +41,6 @@ The release bump happens on `next`, and the identical commit is promoted onward:
 - Pull requests into `next` no longer fork the recorded chains, so feature CI is faster and needs no `ALCHEMY_API_KEY`.
 - A proxy upgraded out of band surfaces at the promotion gate rather than when it happens, because the gate reads the chain.
 - The record is the single source of truth for where each environment is deployed, so a genesis deploy owes a pull request into `next`. An upgrade owes none, and leaves no artifact in git: the promotion turning green is the statement that the environment runs this source, on every chain in its section. The per-chain upgrade history stays recoverable from the chain itself, which emits `Upgraded(address indexed implementation)` on every upgrade.
-- `envs::e2e` resolves the proxy for `Environment::Staging`, which has to become configurable so a promotion into `main` exercises production instead. The chain it defaults to must be recorded in the section it targets.
+- `envs::e2e` resolves the proxy of the environment that `E2E_ENVIRONMENT` names, staging by default. The chain it defaults to must be recorded in the section it targets. While the production section records no deployment, a promotion into `main` runs the e2e tests against staging.
 - The bindings crate deserializes only an entry's chain ID and proxy address, both written at the genesis deploy. An upgrade changes nothing a consumer of the published bindings sees, in either environment; a deploy to a new chain adds an address under the environment it belongs to, and `Environment::Staging` is public API, so that too holds for both.
 - Branch names stay `next`, `staging` and `main`. Renaming `main` to `production` would match the record's section names but costs a default-branch change, branch-protection reconfiguration and four raw-content badge URLs that GitHub does not redirect.
