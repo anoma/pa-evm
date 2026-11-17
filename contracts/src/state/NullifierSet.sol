@@ -40,8 +40,9 @@ abstract contract NullifierSet is INullifierSet, Initializable {
     // forge-lint: disable-next-line(mixed-case-function)
     function __NullifierSet_init() internal onlyInitializing {}
 
-    /// @notice Adds a nullifier to the set, if it does not exist already.
+    /// @notice Adds a nullifier to the set.
     /// @param nullifier The nullifier to add.
+    /// @dev Reverts with `PreExistingNullifier` if the set already contains the nullifier.
     function _addNullifier(bytes32 nullifier) internal {
         NullifierSetStorage storage $ = _getNullifierSetStorage();
 
