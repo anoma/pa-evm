@@ -35,15 +35,13 @@ jobs:
         run: just contracts-deps
 
       - name: Install Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Show Bun version
         run: bun --version
-        working-directory: ./contracts
 
-      - name: Install Solhint
-        run: bun install solhint
-        working-directory: ./contracts
+      - name: Install the contract tooling
+        run: just contracts-tooling
 
       - name: Lint contracts
         run: just contracts-lint
