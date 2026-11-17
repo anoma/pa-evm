@@ -32,6 +32,12 @@ library DeltaGen {
     /// @notice The order of the secp256k1 group, used as the modulus for all scalar arithmetic in the delta scheme.
     uint256 internal constant SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141;
 
+    /// @notice The x-coordinate of the secp256k1 generator point.
+    uint256 internal constant SECP256K1_GX = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+
+    /// @notice The y-coordinate of the secp256k1 generator point.
+    uint256 internal constant SECP256K1_GY = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+
     /// @notice Thrown when the value commitment randomness reduces to zero modulo `SECP256K1_ORDER` (not a valid
     /// ECDSA private key).
     error ValueCommitmentRandomnessZero();
