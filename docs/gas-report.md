@@ -1,14 +1,14 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3321141 |           15613 |        |        |        |         |
+|                                          3320625 |           15611 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             285 |    285 |    285 |    285 |      10 |
 | RISC_ZERO_VERIFIER_ROUTER                        |             357 |    357 |    357 |    357 |       1 |
 | RISC_ZERO_VERIFIER_SELECTOR                      |             668 |    668 |    668 |    668 |       7 |
-| UPGRADE_INTERFACE_VERSION                        |             820 |    820 |    820 |    820 |       2 |
-| VERSION                                          |            1057 |   1057 |   1057 |   1057 |       3 |
+| UPGRADE_INTERFACE_VERSION                        |             818 |    818 |    818 |    818 |       2 |
+| VERSION                                          |            1055 |   1055 |   1055 |   1055 |       2 |
 | commitmentCount                                  |             699 |   1775 |   2699 |   2699 |      13 |
 | denyLogicRefs                                    |             434 |  29455 |  28122 |  53410 |      12 |
 | execute                                          |             662 | 165026 | 183589 | 420617 |      56 |
