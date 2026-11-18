@@ -1,7 +1,7 @@
 | src/ProtocolAdapter.sol:ProtocolAdapter Contract |                 |        |        |        |         |
 |--------------------------------------------------|-----------------|--------|--------|--------|---------|
 | Deployment Cost                                  | Deployment Size |        |        |        |         |
-|                                          3259408 |           15326 |        |        |        |         |
+|                                          3321141 |           15613 |        |        |        |         |
 |                                                  |                 |        |        |        |         |
 | Function Name                                    | Min             | Avg    | Median | Max    | # Calls |
 | EMPTY_KIND_TREE_ROOT                             |             285 |    285 |    285 |    285 |      10 |
@@ -11,13 +11,13 @@
 | VERSION                                          |            1057 |   1057 |   1057 |   1057 |       3 |
 | commitmentCount                                  |             699 |   1775 |   2699 |   2699 |      13 |
 | denyLogicRefs                                    |             434 |  29455 |  28122 |  53410 |      12 |
-| execute                                          |             662 | 165271 | 183623 | 420621 |      55 |
+| execute                                          |             662 | 165026 | 183589 | 420617 |      56 |
 | getImplementation                                |             617 |    759 |    617 |   2617 |      14 |
 | getKindTreeRoot                                  |            2831 |   2831 |   2831 |   2831 |       4 |
-| initialize                                       |            3032 | 150654 | 152876 | 152876 |     126 |
+| initialize                                       |            3032 | 150672 | 152876 | 152876 |     127 |
 | isLogicRefDenied                                 |            2423 |   2426 |   2426 |   2430 |      12 |
 | isNullifierContained                             |            2755 |   2755 |   2755 |   2755 |    2713 |
-| latestCommitmentTreeRoot                         |            4842 |   9553 |   9058 |  13270 |      17 |
+| latestCommitmentTreeRoot                         |            4808 |   9532 |   9037 |  13262 |      17 |
 | migrateNullifierSet                              |             693 |    693 |    693 |    693 |       2 |
 | owner                                            |             548 |   2394 |   2548 |   2548 |      39 |
 | pause                                            |             507 |  20300 |  26172 |  26172 |      13 |
