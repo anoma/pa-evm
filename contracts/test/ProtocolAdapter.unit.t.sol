@@ -148,6 +148,15 @@ contract ProtocolAdapterTest is Test {
         _pa.execute(txnWithMockProof);
     }
 
+    function test_execute_reverts_on_an_aggregation_proof_shorter_than_the_selector() public {
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
+        txn.aggregationProof = hex"ffffff";
+
+        vm.expectRevert(ProtocolAdapter.RiscZeroProofTooShort.selector, address(_pa));
+        _pa.execute(txn);
+    }
+
     function test_execute_reverts_on_the_empty_transaction() public {
         vm.expectRevert(ProtocolAdapter.EmptyTransactionNotAllowed.selector, address(_pa));
         _pa.execute(_emptyTx);
