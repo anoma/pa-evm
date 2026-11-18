@@ -11,7 +11,7 @@ homepage = "https://anoma.net/"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "2.5.0", features = ["full", "eip712", "node-bindings"] }
+alloy = { version = "2.6.1", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.39"
 anoma-pa-testkit = "1.0.0-rc.9"
 anoma-risc0-verifier-bindings = "2.0.0"
