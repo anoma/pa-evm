@@ -1,69 +1,37 @@
 # Journal constants are injected, not passed in calldata
 
-ADR-0004 replaces the kind tree root part of this decision: the transaction carries the kind tree root. The verifying keys stay injected.
-
 ## Context
 
-The protocol adapter verifies exactly one RISC Zero proof per transaction — the
-aggregation proof — so it must rebuild the aggregation journal from calldata and
-hash it to obtain the journal digest the verifier router checks against.
+The protocol adapter verifies exactly one RISC Zero proof for each transaction, the aggregation proof. So it rebuilds the aggregation journal from calldata and hashes it to get the journal digest that the verifier router checks.
 
-The journal is arm-risc0's `AggregationInstance`, and two of its three values
-are not per-transaction data:
+The journal is the `AggregationInstance` of arm-risc0:
 
 ```rust
 pub struct AggregationInstance {
-    pub compliance_key: Digest,          // the compliance circuit VK
-    pub kind_tree_root: Digest,          // the Merkle root of the kind tree
+    pub compliance_vk: Digest,          // the verifying key of the compliance circuit
+    pub kind_tree_root: Digest,         // the Merkle root of the kind tree
     pub actions: Vec<ActionAggregated>,
 }
 ```
 
-The aggregation guest verifies each action's compliance proof against
-`compliance_key`, and `kind_tree_root` appears inside every
-`ComplianceInstance` as well.
+The aggregation guest verifies the compliance proof of each action against `compliance_vk`. This value is not data of one transaction: it is the same for all transactions.
 
-Two ways to obtain them when encoding the journal on chain:
+Two ways to get such a value when the protocol adapter encodes the journal:
 
-- **Fields.** Mirror the Rust structs 1:1: carry both values in the
-  `Transaction` calldata and `require`-check them against the contract's own
-  values, with specific errors, before calling the verifier.
-- **Injection.** Leave them out of `Transaction` entirely and have the protocol
-  adapter write its own values into the encoding.
+- **Fields.** Mirror the Rust structs 1:1: carry the value in the `Transaction` calldata and check it against the value of the contract, with a specific error, before the verifier call.
+- **Injection.** Leave the value out of `Transaction` and let the protocol adapter write its own value into the encoding.
 
 ## Decision
 
-**Injection.** Neither value is part of the `Transaction` calldata.
+**Injection.** The compliance and aggregation verifying keys are not part of the `Transaction` calldata. They are compile-time constants (`VerifyingKeys._COMPLIANCE`, `VerifyingKeys._BATCH_AGGREGATION_EVM`). They change only on a circuit vulnerability or a new protocol version, and both need a new implementation anyway.
 
-- `kindTreeRoot` is protocol adapter storage, rotated by the
-  owner-protected `setKindTreeRoot`. The root changes whenever a
-  token is added to the set of supported resources, so it must be mutable
-  without an implementation upgrade.
-- The compliance and aggregation verifying keys are compile-time constants
-  (`VerifyingKeys._COMPLIANCE`, `VerifyingKeys._BATCH_AGGREGATION_EVM`). They
-  change only on a circuit vulnerability or a new protocol version, and both of
-  those require a new implementation anyway.
+So the protocol adapter accepts exactly one pair of circuit verifying keys. No check rejects a transaction proven with other keys: its journal digest does not match. The keys can be read from the verified source.
 
-The protocol adapter therefore accepts exactly one kind tree — the current one
-— and exactly one pair of circuit keys. A transaction proven against any other
-is not rejected by a check; it is simply unencodable, and its journal digest
-will not match.
-
-`getKindTreeRoot` exposes the mutable half, so a client can read what the
-deployed adapter expects and compare it off chain. The keys are readable from
-the verified source.
+The kind tree root is not injected: the transaction carries it (ADR-0004).
 
 ## Consequences
 
-- Wrong values surface as an opaque `VerificationFailed()` from the RISC Zero
-  router rather than as a specific error. Reading the root back is the
-  intended remedy: a client diffs its own against the deployed one before
-  spending gas.
-- The Solidity structs deliberately do not mirror the Rust instances 1:1, which
-  makes `crates/bindings/src/conversion.rs` asymmetric — it drops these fields
-  on the way to Solidity, and the protocol adapter re-adds them when encoding
-  the journal. Anyone comparing the two type sets will notice the gap; this ADR
-  is the reason.
-- Rotating the kind tree root is an owner transaction; rotating a circuit verifying
-  key is an implementation upgrade.
-- Every transaction saves the 64 bytes the two digests would have cost.
+- A proof made with other verifying keys reverts with `VerificationFailed()` from the RISC Zero router, not with a specific error.
+- The Solidity structs do not mirror the Rust instances 1:1. `crates/bindings/src/conversion.rs` drops the compliance verifying key on the way to Solidity, and the protocol adapter adds it again when it encodes the journal.
+- To change a circuit verifying key is an implementation upgrade.
+- Each transaction saves the 32 bytes of the compliance verifying key.
