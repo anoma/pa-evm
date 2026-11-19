@@ -1,6 +1,17 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# Recipes read `ALCHEMY_API_KEY` (fork tests, deploys) from the environment;
+# forge does not load this file itself. The file is absent in CI, where the
+# values come from secrets instead, so loading it stays optional.
+# `IS_PRODUCTION` and `IS_MIGRATIONAL` are deliberately not kept here — see the
+# release checklist, which exports them once per deployment session.
+set dotenv-path := "contracts/.env"
+set dotenv-required := false
+
+# Evaluate a variable only when a recipe uses it, so `initial_impl_contract` stops only the recipes that need it.
+set lazy := true
+
 # Default recipe
 default:
     @just --list
@@ -15,6 +26,10 @@ contracts-deps:
 contracts-deps-clean:
     cd contracts && forge soldeer clean
 
+# Install the contract tooling from the lockfile
+contracts-tooling:
+    cd contracts && bun install --frozen-lockfile
+
 # Clean contracts
 contracts-clean:
     cd contracts && forge clean
@@ -23,12 +38,28 @@ contracts-clean:
 contracts-build *args:
     cd contracts && forge build {{ args }}
 
-# Lint contracts (forge lint + solhint)
+# Lint contracts: forge lint, then solhint for the rules that forge lint lacks
 contracts-lint:
-    cd contracts && forge lint --deny warnings
+    cd contracts && forge lint --deny notes
     cd contracts && bunx --bun solhint --config .solhint.json 'src/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'test/**/*.sol'
     cd contracts && bunx --bun solhint --config .solhint.other.json 'script/**/*.sol'
+
+# Checks that the storage layout of contracts in `src` is empty.
+# `skip` is a space-separated list of contract names to ignore (contract-free files).
+contracts-storage-check *skip='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd contracts
+    for sol in $(find src -name '*.sol' | sort); do
+        name="$(basename "$sol" .sol)"
+        case " {{ skip }} " in *" $name "*) continue ;; esac
+        if [ "$(forge inspect "$sol:$name" storageLayout --json | jq '[.storage[] | select(.type | startswith("erc7201(") | not)] == []')" != true ]; then
+            printf '{{RED}}%s has storage outside ERC-7201 namespaces; upgrade-safe contracts must use ERC-7201 namespaced storage.{{NORMAL}}\n' "$sol"
+            exit 1
+        fi
+    done
+    printf '{{GREEN}}All contracts in `src` use ERC-7201 namespaced storage only.{{NORMAL}}\n'
 
 # Run slither on contracts
 contracts-static-analysis:
@@ -46,92 +77,321 @@ contracts-fmt-check:
 
 # Run contract tests
 contracts-test *args:
-    cd contracts && forge test {{ args }}
+    cd contracts && forge test --force {{ args }}
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    cd contracts && forge clean && forge bind \
-        --skip test --skip script \
-        --select '^(IProtocolAdapter|ProtocolAdapter|IVersion|VersioningLibExternal|ICommitmentTree|INullifierSet|IForwarder)$' \
-        --bindings-path ../bindings/src/generated/ \
+    # Only the files of the contracts in `--select`: with via_ir, the compiled file set changes the bytecode, and a verifier compiles a contract with its own imports only.
+    # `forge bind` builds without bytecode, so it reads these artifacts.
+    cd contracts && forge clean && forge build \
+        src/ProtocolAdapter.sol \
+        src/MigrationalProtocolAdapter.sol \
+        src/interfaces/IProtocolAdapter.sol \
+        src/interfaces/IMigrational.sol \
+        src/interfaces/ICommitmentTree.sol \
+        src/interfaces/INullifierSet.sol \
+        src/interfaces/ILogicRefDenylist.sol \
+        src/interfaces/IKindTreeRoot.sol \
+        dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol \
+        test/DeploymentParameters.sol \
+        && forge bind \
+        --skip-build \
+        --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ILogicRefDenylist|IKindTreeRoot|ERC1967Proxy|DeploymentParameters)$' \
+        --bindings-path ../crates/bindings/src/generated/ \
         --module \
         --overwrite
 
-# Simulate deployment (dry-run)
-contracts-simulate chain *args:
-    @echo "IS_TEST_DEPLOYMENT: $IS_TEST_DEPLOYMENT"
-    @echo "EMERGENCY_STOP_CALLER: $EMERGENCY_STOP_CALLER"
+# Regenerate the gas report of the contracts that `gas_reports` in foundry.toml lists
+contracts-gen-gas-report:
+    # Fuzz and invariant tests use other inputs on each run, so the report counts only the `test_` unit tests.
+    # `sed` keeps the gas tables of the output.
+    cd contracts && forge test --force --gas-report --md --match-test '^test_' | sed -n '/^|/,/^$/p' > ../docs/gas-report.md
+
+# Simulate the implementation deployment (dry-run)
+contracts-simulate-impl chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
+        --sig "run()" \
         --rpc-url {{chain}} {{ args }}
 
-# Deploy protocol adapter
-contracts-deploy deployer chain *args:
+# Deploy the implementation shared by the staging and production environments (idempotent)
+contracts-deploy-impl deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
     @just contracts-clean
-    cd contracts && forge script script/DeployProtocolAdapter.s.sol:DeployProtocolAdapter \
-        --sig "run(bool,address)" $IS_TEST_DEPLOYMENT $EMERGENCY_STOP_CALLER \
+    cd contracts && forge script script/DeployProtocolAdapterImplementation.s.sol:DeployProtocolAdapterImplementation \
+        --sig "run()" \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Execute a transaction binary on a deployed protocol adapter
-contracts-execute-tx deployer pa-address filepath chain *args:
-    cd contracts && forge script script/ExecuteTransaction.s.sol:ExecuteTransaction \
-        --sig "run(address,string)" {{pa-address}} {{filepath}} \
+# Simulate the implementation and proxy deployment (dry-run)
+contracts-simulate-proxy chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "IS_MIGRATIONAL: $IS_MIGRATIONAL"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_MIGRATIONAL \
+        --rpc-url {{chain}} {{ args }}
+
+# Deploy the protocol adapter implementation and proxy
+contracts-deploy-proxy deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/DeployProtocolAdapterProxy.s.sol:DeployProtocolAdapterProxy \
+        --sig "run(bool,bool)" $IS_PRODUCTION $IS_MIGRATIONAL \
         --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
 
-# Verify on sourcify
-contracts-verify-sourcify address chain *args:
-    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
+# Simulate the staging upgrade (dry-run): validates the upgrade and runs it locally as the staging proxy owner
+contracts-simulate-staging-upgrade chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging upgrade to the deployed implementation as the proxy owner
+contracts-execute-staging-upgrade deployer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterUpgrade.s.sol:ExecuteProtocolAdapterUpgrade \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production upgrade proposal (dry-run): simulates the Safe executing the upgrade
+contracts-simulate-production-upgrade-proposal proposer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address)" {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the production upgrade to the deployed implementation to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-upgrade deployer proposer chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeProtocolAdapterUpgrade.s.sol:ProposeProtocolAdapterUpgrade \
+        --sig "run(address)" {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the staging kind tree root update (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-kind-tree-root-update root chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteKindTreeRootUpdate.s.sol:ExecuteKindTreeRootUpdate \
+        --sig "run(bool,bytes32)" $IS_PRODUCTION {{root}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging kind tree root update as the proxy owner
+contracts-execute-staging-kind-tree-root-update deployer root chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/staging/ExecuteKindTreeRootUpdate.s.sol:ExecuteKindTreeRootUpdate \
+        --sig "run(bool,bytes32)" $IS_PRODUCTION {{root}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production kind tree root update proposal (dry-run): simulates the Safe executing the update
+contracts-simulate-production-kind-tree-root-update-proposal proposer root chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeKindTreeRootUpdate.s.sol:ProposeKindTreeRootUpdate \
+        --sig "run(address,bytes32)" {{proposer}} {{root}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose updating the production kind tree root to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-kind-tree-root-update deployer proposer root chain *args:
+    @echo "Cleaning contracts to ensure reproducible build..."
+    @just contracts-clean
+    cd contracts && forge script script/production/ProposeKindTreeRootUpdate.s.sol:ProposeKindTreeRootUpdate \
+        --sig "run(address,bytes32)" {{proposer}} {{root}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# A pause or a logic ref denial deploys no bytecode, so their recipes skip the clean rebuild. In an emergency, that saves time.
+
+# Simulate the staging pause (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-pause chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging pause as the proxy owner
+contracts-execute-staging-pause deployer chain *args:
+    cd contracts && forge script script/staging/ExecuteProtocolAdapterPause.s.sol:ExecuteProtocolAdapterPause \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production pause proposal (dry-run): simulates the Safe executing the pause
+contracts-simulate-production-pause-proposal proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address)" {{proposer}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose pausing the production proxy to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-pause deployer proposer chain *args:
+    cd contracts && forge script script/production/ProposeProtocolAdapterPause.s.sol:ProposeProtocolAdapterPause \
+        --sig "run(address)" {{proposer}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the staging logic ref denial (dry-run): runs it locally as the staging proxy owner
+contracts-simulate-staging-logic-ref-denial logic_refs chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
+        --sig "run(bool,(bytes32,bool)[])" $IS_PRODUCTION {{quote(logic_refs)}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Execute the staging logic ref denial as the proxy owner
+contracts-execute-staging-logic-ref-denial deployer logic_refs chain *args:
+    cd contracts && forge script script/staging/ExecuteLogicRefDenial.s.sol:ExecuteLogicRefDenial \
+        --sig "run(bool,(bytes32,bool)[])" $IS_PRODUCTION {{quote(logic_refs)}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the production logic ref denial proposal (dry-run): simulates the Safe executing the denial
+contracts-simulate-production-logic-ref-denial-proposal proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
+        --sig "run(address,(bytes32,bool)[])" {{proposer}} {{quote(logic_refs)}} \
+        --rpc-url {{chain}} {{ args }}
+
+# Propose the production logic ref denial to the owning Safe (proposer = unlocked deployer)
+contracts-propose-production-logic-ref-denial deployer proposer logic_refs chain *args:
+    cd contracts && forge script script/production/ProposeLogicRefDenial.s.sol:ProposeLogicRefDenial \
+        --sig "run(address,(bytes32,bool)[])" {{proposer}} {{quote(logic_refs)}} \
+        --broadcast --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the migration run of one chain as the proxy owner (dry-run): the copy-in, after which the proxy stays paused
+contracts-simulate-migration chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Copy the state of the legacy protocol adapter into the recorded proxy of one chain as the proxy owner, one transaction at a time; the proxy stays paused
+contracts-execute-migration deployer chain *args:
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Simulate the completion run of one chain as the proxy owner (dry-run): the upgrade, which lifts the pause, and, in production, the ownership transfer
+contracts-simulate-migration-completion chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Complete the migration of one chain as the proxy owner: the upgrade, which lifts the pause, and, in production, the ownership transfer
+contracts-execute-migration-completion deployer chain *args:
+    cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
+        --sig "run(bool)" $IS_PRODUCTION \
+        --broadcast --slow --rpc-url {{chain}} --account {{deployer}} {{ args }}
+
+# Check the recorded proxy of one chain against the stopped legacy protocol adapter and the end state of the completion run, reading both from the chain
+contracts-check-migration chain *args:
+    @echo "IS_PRODUCTION: $IS_PRODUCTION"
+    cd contracts && forge script script/migration/MigrateProtocolAdapterState.s.sol:MigrateProtocolAdapterState \
+        --sig "verify(bool)" $IS_PRODUCTION \
+        --rpc-url {{chain}} {{ args }}
+
+# Verify a contract on sourcify (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter)
+contracts-verify-sourcify address contract chain *args:
+    cd contracts && env -u ETHERSCAN_API_KEY forge verify-contract {{address}} {{contract}} \
         --chain {{chain}} --verifier sourcify --watch {{ args }}
 
-# Verify on etherscan
-contracts-verify-etherscan address chain *args:
-    cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
-        --chain {{chain}} --verifier etherscan --watch {{ args }}
+# Verify a contract on etherscan (e.g. contract=src/ProtocolAdapter.sol:ProtocolAdapter). Reads the constructor
+# args from the on-chain creation code and forces submission past a prior similar match.
+contracts-verify-etherscan address contract chain *args:
+    cd contracts && forge verify-contract {{address}} {{contract}} \
+        --chain {{chain}} --verifier etherscan --watch \
+        --rpc-url {{chain}} --guess-constructor-args --skip-is-verified-check {{ args }}
 
-# Verify on a custom explorer
-contracts-verify-custom address chain verifier-url *args:
-    cd contracts && forge verify-contract {{address}} \
-        src/ProtocolAdapter.sol:ProtocolAdapter \
-        --chain {{chain}} --verifier-url {{verifier-url}}  --watch {{ args }}
+# Verify a contract on a custom explorer
+contracts-verify-custom address contract chain verifier-url *args:
+    cd contracts && forge verify-contract {{address}} {{contract}} \
+        --chain {{chain}} --verifier-url {{verifier-url}} --watch {{ args }}
 
-# Verify on both sourcify and etherscan
-contracts-verify address chain: (contracts-verify-sourcify address chain) (contracts-verify-etherscan address chain)
+# Verify a contract on both sourcify and etherscan; a failure on one explorer does not stop the other
+contracts-verify address contract chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    failed=""
+    for explorer in sourcify etherscan; do
+        just contracts-verify-$explorer {{address}} {{contract}} {{chain}} || failed+=" $explorer"
+    done
+    if [ -n "$failed" ]; then echo "Verification of {{address}} failed on:$failed" >&2; exit 1; fi
 
-# Publish contracts to soldeer. VERSION must be semver (e.g. 1.2.0).
-# Flags such as --dry-run go AFTER the version: `just contracts-publish 1.2.0 --dry-run`.
-contracts-publish version *args:
-    @[[ "{{version}}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]] || { echo "error: invalid version '{{version}}'. Expected semver like 1.2.0. Usage: just contracts-publish <version> [flags] (put --dry-run AFTER the version)." >&2; exit 1; }
-    cd contracts && forge soldeer push anoma-pa-evm~{{version}} {{ args }}
+# Verify the plain implementation that `contracts-deploy-impl` deploys on both explorers
+contracts-verify-impl implementation chain: (contracts-verify implementation "src/ProtocolAdapter.sol:ProtocolAdapter" chain)
+
+# Verify the ERC-1967 proxy — which carries the proxy bytecode, not the implementation's — on both explorers
+contracts-verify-proxy proxy chain: \
+    (contracts-verify proxy "dependencies/@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy" chain)
+
+# The implementation contract a proxy starts on, which `IS_MIGRATIONAL` selects as for `contracts-deploy-proxy`
+initial_impl_contract := if env("IS_MIGRATIONAL", "") == "true" {
+    "src/MigrationalProtocolAdapter.sol:MigrationalProtocolAdapter"
+} else if env("IS_MIGRATIONAL", "") == "false" {
+    "src/ProtocolAdapter.sol:ProtocolAdapter"
+} else {
+    error("IS_MIGRATIONAL must be true or false, not '" + env("IS_MIGRATIONAL", "") + "'")
+}
+
+# Verify a deployment — the implementation the proxy starts on and the ERC-1967 proxy pointing at it — on both explorers;
+# a failure on the implementation does not stop the proxy
+contracts-verify-deployment implementation proxy chain:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    status=0
+    just contracts-verify {{implementation}} {{initial_impl_contract}} {{chain}} || status=1
+    just contracts-verify-proxy {{proxy}} {{chain}} || status=1
+    exit $status
+
+# Publish contracts at the version `ProtocolAdapter` compiles to
+contracts-publish *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Cleaning contracts to ensure reproducible build..."
+    just contracts-clean
+    just contracts-build
+    cd contracts
+    version="$(forge script script/PrintProtocolAdapterVersion.s.sol:PrintProtocolAdapterVersion --sig 'run()(string)' --json \
+        | jq -ser '[.[] | select(has("returns")) | .returns.version.value] | if length == 1 then .[0] else error("expected one version, found \(length)") end')"
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+        printf '{{RED}}The protocol adapter reports "%s", which is not a version.{{NORMAL}}\n' "$version"
+        exit 1
+    fi
+    printf '{{GREEN}}Publishing anoma-pa-evm~%s{{NORMAL}}\n' "$version"
+    forge soldeer push "anoma-pa-evm~$version" {{ args }}
 
 # --- Bindings ---
 
 # Clean bindings
 bindings-clean:
-    cd bindings && cargo clean
+    cd crates/bindings && cargo clean
 
 # Build bindings
 bindings-build *args:
-    cd bindings && cargo build {{ args }}
+    cd crates/bindings && cargo build {{ args }}
 
 # Test bindings
 bindings-test *args:
-    cd bindings && cargo test {{ args }}
+    cd crates/bindings && cargo test {{ args }}
 
 # Check bindings are up-to-date
 bindings-check: contracts-gen-bindings
-    git diff --exit-code bindings/src/generated/
+    git diff --exit-code crates/bindings/src/generated/
+
+# Check the gas report is up-to-date
+contracts-gas-report-check: contracts-gen-gas-report
+    git diff --exit-code docs/gas-report.md
 
 # Publish bindings
 bindings-publish *args:
-    cd bindings && cargo publish {{ args }}
+    cd crates/bindings && cargo publish {{ args }}
 
 # Lint bindings (clippy)
 bindings-lint:
-    cd bindings && cargo clippy --no-deps -- -Dwarnings
-    cd bindings && cargo clippy --no-deps --tests -- -Dwarnings
+    cd crates/bindings && cargo clippy --no-deps -- -Dwarnings
+    cd crates/bindings && cargo clippy --no-deps --tests -- -Dwarnings
 
 # Format bindings
 bindings-fmt:
@@ -141,46 +401,80 @@ bindings-fmt:
 bindings-fmt-check:
     cargo fmt -- --check
 
+# --- Crates (workspace-wide Rust) ---
+
+# Clean all crates
+crates-clean:
+    cargo clean
+
+# Build all crates
+crates-build *args:
+    cargo build {{ args }}
+
+# Test all crates
+crates-test *args:
+    cargo test {{ args }}
+
+# Test the e2e cases on a fork of `E2E_CHAIN_ID` (Sepolia by default), proven by the queue at `QUEUE_BASE_URL`.
+# One thread, unlike the local cases: the queue's CDN blocks bursts.
+crates-test-e2e *args:
+    RUST_TEST_THREADS=1 cargo test --features e2e e2e_test {{ args }}
+
+# Lint all crates (clippy)
+crates-lint:
+    cargo clippy --all-targets --no-deps -- -Dwarnings
+    cargo clippy --all-targets --features e2e --no-deps -- -Dwarnings
+
+# Format all crates
+crates-fmt *args:
+    cargo fmt --all {{ args }}
+
+# Check all crates formatting
+crates-fmt-check:
+    cargo fmt --all -- --check
+
 # --- All ---
 
-# Lint all (contracts + bindings)
+# Lint all (contracts + crates)
 all-lint:
     @echo "==> Linting contracts..."
     @just contracts-lint
-    @echo "==> Linting bindings..."
-    @just bindings-lint
+    @echo "==> Linting crates..."
+    @just crates-lint
 
-# Format all (contracts + bindings)
+# Format all (contracts + crates)
 all-fmt:
     @echo "==> Formatting contracts..."
     @just contracts-fmt
-    @echo "==> Formatting bindings..."
-    @just bindings-fmt
+    @echo "==> Formatting crates..."
+    @just crates-fmt
 
-# Check formatting for all (contracts + bindings)
+# Check formatting for all (contracts + crates)
 all-fmt-check:
     @echo "==> Checking contract formatting..."
     @just contracts-fmt-check
-    @echo "==> Checking bindings formatting..."
-    @just bindings-fmt-check
+    @echo "==> Checking crates formatting..."
+    @just crates-fmt-check
 
-# Build all (contracts + bindings)
+# Build all (contracts + crates)
 all-build:
     @echo "==> Building contracts..."
     @just contracts-build
-    @echo "==> Building bindings..."
-    @just bindings-build
+    @echo "==> Building crates..."
+    @just crates-build
 
-# Test all (contracts + bindings)
+# Test all (contracts + crates)
 all-test:
     @echo "==> Testing contracts..."
     @just contracts-test
-    @echo "==> Testing bindings..."
-    @just bindings-test
+    @echo "==> Testing crates..."
+    @just crates-test
 
 # Prerequisites check (mirrors CI)
 all-check:
     git status
+    @echo "==> Checking storage layouts..."
+    @just contracts-storage-check
     @echo "==> Static analysis with slither..."
     @just contracts-static-analysis
     @echo "==> Checking formatting..."
@@ -189,3 +483,5 @@ all-check:
     @just all-lint
     @echo "==> Checking bindings are up-to-date..."
     @just bindings-check
+    @echo "==> Checking the gas report is up-to-date..."
+    @just contracts-gas-report-check

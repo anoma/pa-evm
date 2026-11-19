@@ -1,44 +1,68 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.5.0/utils/structs/EnumerableSet.sol";
+import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
 import {INullifierSet} from "../interfaces/INullifierSet.sol";
 
 /// @title NullifierSet
 /// @author Anoma Foundation, 2025
 /// @notice A nullifier set being inherited by the protocol adapter.
-/// @dev The implementation is based on OpenZeppelin's `EnumerableSet` implementation.
+/// @dev The set stores whether it contains a nullifier. It neither counts nor lists the nullifiers.
 /// @custom:security-contact security@anoma.foundation
-contract NullifierSet is INullifierSet {
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+abstract contract NullifierSet is INullifierSet, Initializable {
+    /// @custom:storage-location erc7201:anoma.storage.NullifierSet
+    struct NullifierSetStorage {
+        mapping(bytes32 nullifier => bool isContained) _nullifiers;
+    }
 
-    /// @notice The nullifier set data structure.
-    EnumerableSet.Bytes32Set internal _nullifierSet;
+    // keccak256(abi.encode(uint256(keccak256("anoma.storage.NullifierSet")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant _NULLIFIER_SET_STORAGE_SLOT =
+        0x5d2cc44bcf41d6324882f1c0d709f1b9ae20caeebcbf2358127a3d0a8c22cc00;
 
+    /// @notice Thrown if the nullifier set already contains the nullifier to add.
     error PreExistingNullifier(bytes32 nullifier);
+
+    /// @notice The constructor disabling the initializers on the implementation contract.
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @inheritdoc INullifierSet
     function isNullifierContained(bytes32 nullifier) external view override returns (bool isContained) {
-        isContained = _nullifierSet.contains(nullifier);
+        isContained = _isNullifierContained(nullifier);
     }
 
-    /// @inheritdoc INullifierSet
-    function nullifierCount() external view override returns (uint256 count) {
-        count = _nullifierSet.length();
-    }
+    /// @notice Initializes the NullifierSet contract.
+    /// @dev The nullifier set requires no setup. The function exists for consistency with the OpenZeppelin
+    /// initializer convention.
+    // forge-lint: disable-next-line(mixed-case-function)
+    function __NullifierSet_init() internal onlyInitializing {}
 
-    /// @inheritdoc INullifierSet
-    function nullifierAtIndex(uint256 index) external view override returns (bytes32 nullifier) {
-        nullifier = _nullifierSet.at(index);
-    }
-
-    /// @notice Adds a nullifier to the set, if it does not exist already.
+    /// @notice Adds a nullifier to the set.
     /// @param nullifier The nullifier to add.
+    /// @dev Reverts with `PreExistingNullifier` if the set already contains the nullifier.
     function _addNullifier(bytes32 nullifier) internal {
-        (bool success) = _nullifierSet.add(nullifier);
-        if (!success) {
-            revert PreExistingNullifier(nullifier);
+        NullifierSetStorage storage $ = _getNullifierSetStorage();
+
+        require(!$._nullifiers[nullifier], PreExistingNullifier(nullifier));
+        $._nullifiers[nullifier] = true;
+    }
+
+    /// @notice Checks if a nullifier is contained in the set.
+    /// @param nullifier The nullifier to check.
+    /// @return isContained Whether the nullifier is contained or not.
+    function _isNullifierContained(bytes32 nullifier) internal view returns (bool isContained) {
+        isContained = _getNullifierSetStorage()._nullifiers[nullifier];
+    }
+
+    /// @notice Returns the storage from the nullifier set storage location.
+    /// @return nullifierSetStorage The data associated with the nullifier set storage.
+    function _getNullifierSetStorage() internal pure returns (NullifierSetStorage storage nullifierSetStorage) {
+        // forge-lint: disable-next-item(inline-assembly)
+        assembly {
+            nullifierSetStorage.slot := _NULLIFIER_SET_STORAGE_SLOT
         }
     }
 }

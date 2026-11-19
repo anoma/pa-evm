@@ -1,27 +1,115 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Transaction} from "../Types.sol";
-
 /// @title IProtocolAdapter
 /// @author Anoma Foundation, 2025
 /// @notice The interface of the protocol adapter contract verifying and executing resource machine transactions.
 /// @custom:security-contact security@anoma.foundation
 interface IProtocolAdapter {
+    /// @notice An enum representing the supported blob deletion criteria.
+    enum DeletionCriterion {
+        Immediately,
+        Never
+    }
+
+    /// @notice The transaction object containing all required data to conduct a RM state transition
+    /// in which resources get consumed and created.
+    /// @param actions The list of actions to be executed.
+    /// @param deltaProof The proof for the transaction delta value.
+    /// @param aggregationProof The recursive proof of all compliance and resource logics in the transaction — the only
+    /// RISC Zero proof being verified.
+    /// @param kindTreeRoot The root of the kind tree the aggregation proof is proven against: the stored root or
+    /// the root of the empty kind tree.
+    struct Transaction {
+        Action[] actions;
+        bytes deltaProof;
+        bytes aggregationProof;
+        bytes32 kindTreeRoot;
+    }
+
+    /// @notice The action object providing context separation between non-intersecting sets of resources. An action
+    /// corresponds to one compliance unit constraining its consumed and created resources.
+    /// @param resources The part of the aggregation instance for each consumed and created resource, in the order
+    /// in which the protocol adapter processes them.
+    /// @param unitDelta The action's delta value obtained from the underlying compliance unit.
+    /// @param actionTreeRoot The root of the tree whose leaves are the tags of the action's resources, in the order of
+    /// `resources`.
+    struct Action {
+        ResourceInstance[] resources;
+        Delta unitDelta;
+        bytes32 actionTreeRoot;
+    }
+
+    /// @notice The part of the aggregation instance for one resource: its compliance data and the app data of its
+    /// logic proof.
+    /// @param consumed Whether the resource is consumed.
+    /// @param tag The tag of the resource: the nullifier of a consumed resource or the commitment of a created
+    /// resource.
+    /// @param logicRef The reference to (the verifying key of) the resource logic.
+    /// @param commitmentTreeRoot The historical commitment tree root that a consumed resource's inclusion is proven
+    /// against, or `bytes32(0)` for a created resource.
+    /// @param appData The application data associated with the resource.
+    struct ResourceInstance {
+        bool consumed;
+        bytes32 tag;
+        bytes32 logicRef;
+        bytes32 commitmentTreeRoot;
+        AppData appData;
+    }
+
+    /// @notice The elliptic curve point representing the delta value of an action's compliance unit.
+    /// @param x The x component of the point.
+    /// @param y The y component of the point.
+    struct Delta {
+        uint256 x;
+        uint256 y;
+    }
+
+    /// @notice A struct containing payloads of different kinds.
+    /// @param resourcePayload A list of blobs for encoding plaintext info connected to resources.
+    /// @param discoveryPayload A list of blobs for encoding data with public keys for discovery.
+    /// @param externalPayload A list of blobs for encoding data connected with external calls.
+    /// @param applicationPayload A list of blobs for application-specific purposes.
+    struct AppData {
+        ExpirableBlob[] resourcePayload;
+        ExpirableBlob[] discoveryPayload;
+        ExpirableBlob[] externalPayload;
+        ExpirableBlob[] applicationPayload;
+    }
+
+    /// @notice A blob with a deletion criterion attached.
+    /// @param deletionCriterion The deletion criterion.
+    /// @param blob The bytes-encoded blob data.
+    struct ExpirableBlob {
+        DeletionCriterion deletionCriterion;
+        bytes blob;
+    }
+
     /// @notice Emitted when a transaction is executed.
-    /// @param tags The tags of resources being consumed and created in this transaction in alternating order.
-    /// @param logicRefs The logic references of resources being consumed and created in this transaction.
-    event TransactionExecuted(bytes32[] tags, bytes32[] logicRefs);
+    /// @param transactionId The Keccak-256 hash of the concatenated action tree roots — the message the delta proof
+    /// signs, unique among the transactions that this protocol adapter executes, and known to the sender before
+    /// submission.
+    event TransactionExecuted(bytes32 indexed transactionId);
 
     /// @notice Emitted when an action is executed.
     /// @param actionTreeRoot The action tree root.
-    /// @param actionTagCount The number of tags in the action.
-    event ActionExecuted(bytes32 actionTreeRoot, uint256 actionTagCount);
+    /// @param nullifiers The nullifiers of the consumed resources.
+    /// @param consumedLogicRefs The logic references of the consumed resources.
+    /// @param commitments The commitments of the created resources.
+    /// @param createdLogicRefs The logic references of the created resources.
+    event ActionExecuted(
+        bytes32 actionTreeRoot,
+        bytes32[] nullifiers,
+        bytes32[] consumedLogicRefs,
+        bytes32[] commitments,
+        bytes32[] createdLogicRefs
+    );
 
     /// @notice Emitted when a forwarder call is executed.
     /// @param untrustedForwarder The forwarder contract forwarding the call.
     /// @param input The input data for the forwarded call.
-    /// @param output The expected output data from the forwarded call.
+    /// @param output The output data that the forwarded call returned, which the protocol adapter checked to be equal
+    /// to the expected output.
     event ForwarderCallExecuted(address indexed untrustedForwarder, bytes input, bytes output);
 
     /// @notice Emitted to store a resource payload blob persistently.
@@ -36,7 +124,7 @@ interface IProtocolAdapter {
     /// @param blob The blob.
     event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
-    /// @notice Emitted to store a external payload blob persistently.
+    /// @notice Emitted to store an external payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.
@@ -53,26 +141,27 @@ interface IProtocolAdapter {
     /// @param transaction The transaction to execute.
     function execute(Transaction calldata transaction) external;
 
-    /// @notice Simulates a transaction and returns the gas after reverting.
-    /// @param transaction The transaction to simulate execution for.
-    /// @param skipRiscZeroProofVerification Whether to skip RISC Zero proof verification or not.
-    /// @dev This transaction will always revert.
-    function simulateExecute(Transaction calldata transaction, bool skipRiscZeroProofVerification) external;
+    /// @notice Pauses the protocol adapter, so that no transaction executes until `unpause`.
+    function pause() external;
 
-    /// @notice Stops the protocol adapter permanently in case of an emergency.
-    function emergencyStop() external;
+    /// @notice Lifts the pause.
+    function unpause() external;
 
-    /// @notice Returns whether the protocol adapter has been stopped or not. This can have two reasons:
-    /// 1. The RISC Zero verifier associated with the protocol adapter has been stopped.
-    /// 2. The protocol adapter itself was stopped by the owner.
-    /// @return isStopped Whether the protocol adapter has been stopped or not.
-    function isEmergencyStopped() external view returns (bool isStopped);
+    /// @notice Returns whether the owner has paused the protocol adapter or not. A paused protocol adapter
+    /// executes no transaction.
+    /// @return isPaused Whether the protocol adapter is paused or not.
+    function paused() external view returns (bool isPaused);
 
-    /// @notice Returns the RISC Zero verifier router associated with the protocol adapter.
-    /// @return verifierRouter The RISC Zero verifier router.
-    function getRiscZeroVerifierRouter() external view returns (address verifierRouter);
+    /// @notice Returns whether the RISC Zero verifier associated with the protocol adapter is paused or not.
+    /// A paused verifier rejects every proof, so the protocol adapter executes no transaction either.
+    /// @return isPaused Whether the verifier is paused or not.
+    function riscZeroVerifierPaused() external view returns (bool isPaused);
 
-    /// @notice Returns the RISC Zero verifier selector associated with the protocol adapter.
+    /// @notice The trusted RISC Zero verifier router associated with the protocol adapter.
+    /// @return verifierRouter The RISC Zero verifier router address.
+    function RISC_ZERO_VERIFIER_ROUTER() external view returns (address verifierRouter);
+
+    /// @notice The RISC Zero verifier selector associated with the protocol adapter.
     /// @return verifierSelector The RISC Zero verifier selector.
-    function getRiscZeroVerifierSelector() external view returns (bytes4 verifierSelector);
+    function RISC_ZERO_VERIFIER_SELECTOR() external view returns (bytes4 verifierSelector);
 }

@@ -1,0 +1,15 @@
+#[cfg(test)]
+use alloy::primitives::B256;
+
+#[test]
+fn print_verifying_keys() {
+    println!(
+        "COMPLIANCE_VK: {:?}",
+        B256::from_slice(anoma_rm_risc0::constants::COMPLIANCE_VK.as_bytes())
+    );
+
+    println!(
+        "BATCH_AGGREGATION_EVM_VK: {:?}",
+        B256::from_slice(anoma_rm_risc0::constants::BATCH_AGGREGATION_EVM_VK.as_bytes())
+    );
+}

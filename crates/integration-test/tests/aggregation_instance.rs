@@ -1,0 +1,46 @@
+//! Pins the protocol adapter's Solidity aggregation-journal encoding to the
+//! ABI encoding of arm-risc0's `AggregationInstance`: the mock seal
+//! the local prover mints over the Rust-built instance must pass an `eth_call`
+//! of `execute`. A revert means the encodings diverge — including the injected
+//! compliance verifying key and the carried kind tree root.
+
+mod common;
+
+use anoma_pa_evm_bindings::generated::protocol_adapter::IProtocolAdapter;
+use anoma_pa_evm_integration_test::deploy::pa::protocol_adapter;
+use anoma_pa_evm_integration_test::envs::local::Environment as EvmLocalEnv;
+use anoma_pa_evm_integration_test::state::actors::default_signer;
+use anoma_pa_evm_integration_test::state::pa::pa_address;
+use anoma_pa_testkit::environment::Environment;
+use anoma_pa_testkit::transaction::Transaction;
+use anyhow::Context;
+use rstest::*;
+
+use common::prove_trivial_tx;
+
+#[rstest]
+#[case::local(EvmLocalEnv::setup_bare())]
+#[tokio::test]
+async fn execute_accepts_an_aggregation_seal_over_the_rust_encoded_instance<Env>(
+    #[future(awt)]
+    #[case]
+    env: anyhow::Result<Env>,
+) -> anyhow::Result<()>
+where
+    Env: Environment<Transaction = Transaction>,
+{
+    let env = env.context("env setup failed")?;
+    let proven = prove_trivial_tx(&env).await?;
+
+    let tx: IProtocolAdapter::Transaction = proven.into_arm().into();
+
+    let provider = default_signer(&env)?;
+    let pa = protocol_adapter(pa_address(&env)?, provider);
+
+    pa.execute(tx)
+        .call()
+        .await
+        .context("execute reverted on the mock seal over the Rust-encoded aggregation instance")?;
+
+    Ok(())
+}

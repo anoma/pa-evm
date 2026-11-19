@@ -1,418 +1,166 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {VmSafe} from "forge-std-1.14.0/src/Vm.sol";
-import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.0.1/contracts/src/test/RiscZeroMockVerifier.sol";
+import {VmSafe} from "forge-std-1.17.0/src/Vm.sol";
+import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
-import {MerkleTree} from "../../src/libs/MerkleTree.sol";
-import {Aggregation} from "../../src/libs/proving/Aggregation.sol";
-import {Compliance} from "../../src/libs/proving/Compliance.sol";
-import {Delta} from "../../src/libs/proving/Delta.sol";
-import {Logic} from "../../src/libs/proving/Logic.sol";
-import {RiscZeroUtils} from "../../src/libs/RiscZeroUtils.sol";
+import {IProtocolAdapter} from "../../src/interfaces/IProtocolAdapter.sol";
+import {DeltaProof} from "../../src/libs/DeltaProof.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
-import {Transaction, Action, Resource} from "./../../src/Types.sol";
-import {DeltaGen} from "./../proofs/DeltaProof.t.sol";
+import {VerifyingKeys} from "../../src/libs/VerifyingKeys.sol";
+import {DeltaGen} from "./DeltaGen.sol";
+import {MerkleTreeReference} from "./MerkleTreeReference.sol";
 
 library TxGen {
-    using MerkleTree for bytes32[];
-    using RiscZeroUtils for Aggregation.Instance;
-    using RiscZeroUtils for Compliance.Instance;
-    using RiscZeroUtils for Logic.Instance;
-    using Logic for Logic.VerifierInput[];
-    using Logic for Logic.VerifierInput;
+    using MerkleTreeReference for bytes32[];
 
-    struct ActionConfig {
-        uint256 complianceUnitCount;
+    /// @notice The resource object constituting the atomic unit of state in the Anoma protocol.
+    /// @param  logicRef The hash of the resource logic function.
+    /// @param  labelRef The hash of the resource label, which can contain arbitrary data.
+    /// @param  valueRef The hash of the resource value, which can contain arbitrary data.
+    /// @param  nullifierKeyCommitment The commitment to the nullifier key.
+    /// @param  quantity The quantity that the resource represents.
+    /// @param  nonce The nonce guaranteeing the resource's uniqueness.
+    /// @param  randSeed The randomness seed that can be used to derive pseudo-randomness for applications.
+    /// @param  ephemeral The resource's ephemerality.
+    struct Resource {
+        bytes32 logicRef;
+        bytes32 labelRef;
+        bytes32 valueRef;
+        bytes32 nullifierKeyCommitment;
+        bytes32 nonce;
+        bytes32 randSeed;
+        uint128 quantity;
+        bool ephemeral;
     }
 
-    struct ResourceAndAppData {
+    /// @notice A resource of an action. `transaction` derives its `IProtocolAdapter.ResourceInstance` from it.
+    struct ActionResource {
+        bool consumed;
         Resource resource;
-        Logic.AppData appData;
+        IProtocolAdapter.AppData appData;
     }
 
-    struct ResourceLists {
-        ResourceAndAppData[] consumed;
-        ResourceAndAppData[] created;
-    }
+    /// @notice Thrown when a mock action would have no consumed resource, which the compliance circuit rejects.
+    error NoConsumedResource();
 
-    error ConsumedCreatedCountMismatch(uint256 nConsumed, uint256 nCreated);
-    error NonExistingTag(bytes32 tag);
-    error TransactionTagCountMismatch();
-
-    function complianceVerifierInput(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 commitmentTreeRoot, // historical root
-        Resource memory consumed,
-        Resource memory created
-    ) internal returns (Compliance.VerifierInput memory unit) {
-        bytes32 nf = nullifier(consumed, 0);
-        bytes32 cm = commitment(created);
-
-        // Construct the delta for consumption based on kind and quantity
-        Delta.Point memory unitDelta = DeltaGen.generateInstance(
-            vm,
-            DeltaGen.InstanceInputs({
-                kind: kind(consumed), quantity: consumed.quantity, consumed: true, valueCommitmentRandomness: 1
-            })
-        );
-        // Construct the delta for creation based on kind and quantity
-        unitDelta = Delta.add(
-            unitDelta,
-            DeltaGen.generateInstance(
-                vm,
-                DeltaGen.InstanceInputs({
-                    kind: kind(created), quantity: created.quantity, consumed: false, valueCommitmentRandomness: 1
-                })
-            )
-        );
-
-        Compliance.Instance memory instance = Compliance.Instance({
-            consumed: Compliance.ConsumedRefs({
-                nullifier: nf, commitmentTreeRoot: commitmentTreeRoot, logicRef: consumed.logicRef
-            }),
-            created: Compliance.CreatedRefs({commitment: cm, logicRef: created.logicRef}),
-            unitDeltaX: bytes32(unitDelta.x),
-            unitDeltaY: bytes32(unitDelta.y)
-        });
-
-        unit = Compliance.VerifierInput({
-            proof: mockVerifier.mockProve({
-                imageId: Compliance._VERIFYING_KEY, journalDigest: sha256(instance.toJournal())
-            }).seal,
-            instance: instance
-        });
-    }
-
-    function createAction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        ResourceAndAppData[] memory consumed,
-        ResourceAndAppData[] memory created
-    ) internal returns (Action memory action) {
-        if (consumed.length != created.length) {
-            revert ConsumedCreatedCountMismatch({nConsumed: consumed.length, nCreated: created.length});
-        }
-        uint256 complianceUnitCount = consumed.length;
-
-        Logic.VerifierInput[] memory logicVerifierInputs = new Logic.VerifierInput[](2 * complianceUnitCount);
-        Compliance.VerifierInput[] memory complianceVerifierInputs = new Compliance.VerifierInput[](complianceUnitCount);
-
-        bytes32[] memory actionTreeTags = new bytes32[](2 * complianceUnitCount);
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = (i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-            actionTreeTags[index] = nullifier(consumed[i].resource, 0);
-            actionTreeTags[index + 1] = commitment(created[i].resource);
-        }
-
-        bytes32 actionTreeRoot = actionTreeTags.computeRoot();
-
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            uint256 index = i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT;
-
-            logicVerifierInputs[index] = logicVerifierInput({
-                mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
-                resource: consumed[i].resource,
-                isConsumed: true,
-                appData: consumed[i].appData
-            });
-
-            logicVerifierInputs[index + 1] = logicVerifierInput({
-                mockVerifier: mockVerifier,
-                actionTreeRoot: actionTreeRoot,
-                resource: created[i].resource,
-                isConsumed: false,
-                appData: created[i].appData
-            });
-
-            complianceVerifierInputs[i] = complianceVerifierInput({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                commitmentTreeRoot: initialRoot(),
-                consumed: consumed[i].resource,
-                created: created[i].resource
-            });
-        }
-        action = Action({logicVerifierInputs: logicVerifierInputs, complianceVerifierInputs: complianceVerifierInputs});
-    }
-
-    function createDefaultAction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 nonce,
-        uint256 complianceUnitCount
-    ) internal returns (Action memory action, bytes32 updatedNonce) {
-        updatedNonce = nonce;
-
-        ResourceAndAppData[] memory consumed = new ResourceAndAppData[](complianceUnitCount);
-        ResourceAndAppData[] memory created = new ResourceAndAppData[](complianceUnitCount);
-
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            consumed[i] = ResourceAndAppData({
-                resource: TxGen.mockResource({
-                    nonce: updatedNonce,
-                    logicRef: bytes32(i),
-                    labelRef: bytes32(i),
-                    quantity: uint128(1 + uint256(nonce))
-                }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](0),
-                    externalPayload: new Logic.ExpirableBlob[](0),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
-            });
-            updatedNonce = bytes32(uint256(updatedNonce) + 1);
-            created[i] = ResourceAndAppData({
-                resource: TxGen.mockResource({
-                    nonce: updatedNonce,
-                    logicRef: bytes32(i),
-                    labelRef: bytes32(i),
-                    quantity: uint128(1 + uint256(nonce))
-                }),
-                appData: Logic.AppData({
-                    discoveryPayload: new Logic.ExpirableBlob[](0),
-                    resourcePayload: new Logic.ExpirableBlob[](0),
-                    externalPayload: new Logic.ExpirableBlob[](0),
-                    applicationPayload: new Logic.ExpirableBlob[](0)
-                })
-            });
-            updatedNonce = bytes32(uint256(updatedNonce) + 1);
-        }
-
-        action = createAction({vm: vm, mockVerifier: mockVerifier, consumed: consumed, created: created});
-    }
-
-    function transaction(
-        VmSafe vm,
-        RiscZeroMockVerifier mockVerifier,
-        ResourceLists[] memory actionResources,
-        bool isProofAggregated
-    ) internal returns (Transaction memory txn) {
-        Action[] memory actions = new Action[](actionResources.length);
+    /// @dev Builds one action of each resource list, with the resources in list order. The caller balances the
+    /// quantities across the transaction.
+    function transaction(VmSafe vm, RiscZeroMockVerifier mockVerifier, ActionResource[][] memory actionResources)
+        internal
+        returns (IProtocolAdapter.Transaction memory txn)
+    {
+        IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](actionResources.length);
 
         for (uint256 i = 0; i < actionResources.length; ++i) {
-            if (actionResources[i].consumed.length != actionResources[i].created.length) {
-                revert ConsumedCreatedCountMismatch(
-                    actionResources[i].consumed.length, actionResources[i].created.length
-                );
-            }
-
-            actions[i] = createAction({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                consumed: actionResources[i].consumed,
-                created: actionResources[i].created
-            });
+            actions[i] = _createAction({vm: vm, resources: actionResources[i]});
         }
 
-        // Grab the tags that will be signed over
-        bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
-        bytes memory proof = "";
-        if (tags.length != 0) {
-            proof = DeltaGen.generateProof(
-                vm,
-                DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
-                })
-            );
-        }
-        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
-
-        if (isProofAggregated) {
-            txn = transactionAggregation(mockVerifier, txn);
-        }
+        txn = _transactionFromActions({vm: vm, actions: actions});
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: _emptyKindTreeRoot()});
     }
 
+    /// @dev Builds a transaction of `actionCount` mock actions, each of the resources that `mockResources` gives.
     function transaction(
         VmSafe vm,
         RiscZeroMockVerifier mockVerifier,
         bytes32 nonce,
-        ActionConfig[] memory configs,
-        bool isProofAggregated
-    ) internal returns (Transaction memory txn, bytes32 updatedNonce) {
+        uint256 actionCount,
+        uint256 consumedCount,
+        uint256 createdCount
+    ) internal returns (IProtocolAdapter.Transaction memory txn, bytes32 updatedNonce) {
         updatedNonce = nonce;
 
-        Action[] memory actions = new Action[](configs.length);
-        for (uint256 i = 0; i < configs.length; ++i) {
-            (actions[i], updatedNonce) = createDefaultAction({
-                vm: vm,
-                mockVerifier: mockVerifier,
-                nonce: updatedNonce,
-                complianceUnitCount: configs[i].complianceUnitCount
+        IProtocolAdapter.Action[] memory actions = new IProtocolAdapter.Action[](actionCount);
+        for (uint256 i = 0; i < actionCount; ++i) {
+            ActionResource[] memory resources;
+            (resources, updatedNonce) =
+                mockResources({nonce: updatedNonce, consumedCount: consumedCount, createdCount: createdCount});
+            actions[i] = _createAction({vm: vm, resources: resources});
+        }
+
+        txn = _transactionFromActions({vm: vm, actions: actions});
+        txn = transactionAggregation({mockVerifier: mockVerifier, txn: txn, kindTreeRoot: _emptyKindTreeRoot()});
+    }
+
+    /// @dev Mock-proves the aggregation against a kind tree: the transaction carries its root, and the seal
+    /// commits to the journal the protocol adapter reconstructs with it and the compliance verifying key.
+    function transactionAggregation(
+        RiscZeroMockVerifier mockVerifier,
+        IProtocolAdapter.Transaction memory txn,
+        bytes32 kindTreeRoot
+    ) internal view returns (IProtocolAdapter.Transaction memory aggregatedTxn) {
+        bytes32 journalDigest = sha256(abi.encode(VerifyingKeys._COMPLIANCE, kindTreeRoot, txn.actions));
+
+        aggregatedTxn = txn;
+        aggregatedTxn.kindTreeRoot = kindTreeRoot;
+        aggregatedTxn.aggregationProof =
+        mockVerifier.mockProve({imageId: VerifyingKeys._BATCH_AGGREGATION_EVM, journalDigest: journalDigest}).seal;
+    }
+
+    /// @dev The resource lists of a transaction with one action of `resources`.
+    function oneAction(ActionResource[] memory resources)
+        internal
+        pure
+        returns (ActionResource[][] memory actionResources)
+    {
+        actionResources = new ActionResource[][](1);
+        actionResources[0] = resources;
+    }
+
+    function consumed(Resource memory resource, IProtocolAdapter.AppData memory appData)
+        internal
+        pure
+        returns (ActionResource memory actionResource)
+    {
+        actionResource = ActionResource({consumed: true, resource: resource, appData: appData});
+    }
+
+    function created(Resource memory resource, IProtocolAdapter.AppData memory appData)
+        internal
+        pure
+        returns (ActionResource memory actionResource)
+    {
+        actionResource = ActionResource({consumed: false, resource: resource, appData: appData});
+    }
+
+    /// @dev `consumedCount` consumed, then `createdCount` created resources of one kind. A consumed resource has
+    /// quantity `createdCount` and a created one `consumedCount`, so the action balances. `nonce` is also the logic
+    /// ref and the label ref, so it sets the kind.
+    function mockResources(bytes32 nonce, uint256 consumedCount, uint256 createdCount)
+        internal
+        pure
+        returns (ActionResource[] memory resources, bytes32 updatedNonce)
+    {
+        require(consumedCount != 0, NoConsumedResource());
+
+        resources = new ActionResource[](consumedCount + createdCount);
+
+        for (uint256 i = 0; i < resources.length; ++i) {
+            bool isConsumed = i < consumedCount;
+            resources[i] = ActionResource({
+                consumed: isConsumed,
+                resource: mockResource({
+                    nonce: bytes32(uint256(nonce) + i),
+                    logicRef: nonce,
+                    labelRef: nonce,
+                    // Counts are small test inputs, so the cast cannot truncate.
+                    // forge-lint: disable-next-line(unsafe-typecast)
+                    quantity: uint128(isConsumed ? createdCount : consumedCount)
+                }),
+                appData: emptyAppData()
             });
         }
 
-        // Grab the tags that will be signed over
-        bytes32[] memory tags = TxGen.collectTags(actions);
-        // Generate a proof over the tags where valueCommitmentRandomness value is the expected total
-        bytes memory proof = "";
-        if (tags.length != 0) {
-            proof = DeltaGen.generateProof(
-                vm,
-                DeltaGen.ProofInputs({
-                    valueCommitmentRandomness: tags.length, verifyingKey: Delta.computeVerifyingKey(tags)
-                })
-            );
-        }
-        txn = Transaction({actions: actions, deltaProof: proof, aggregationProof: ""});
-
-        if (isProofAggregated) {
-            txn = transactionAggregation(mockVerifier, txn);
-        }
+        updatedNonce = bytes32(uint256(nonce) + resources.length);
     }
 
-    function transactionAggregation(RiscZeroMockVerifier mockVerifier, Transaction memory txn)
-        internal
-        view
-        returns (Transaction memory aggregatedTxn)
-    {
-        aggregatedTxn = txn;
-
-        aggregatedTxn.aggregationProof =
-        mockVerifier.mockProve({
-            imageId: Aggregation._VERIFYING_KEY, journalDigest: sha256(aggregatedInstanceGeneration(txn).toJournal())
-        }).seal;
-    }
-
-    function logicVerifierInput(
-        RiscZeroMockVerifier mockVerifier,
-        bytes32 actionTreeRoot,
-        Resource memory resource,
-        bool isConsumed,
-        Logic.AppData memory appData
-    ) internal view returns (Logic.VerifierInput memory input) {
-        input = Logic.VerifierInput({
-            tag: isConsumed ? nullifier(resource, 0) : commitment(resource),
-            verifyingKey: resource.logicRef,
-            appData: appData,
-            proof: ""
-        });
-
-        input.proof =
-        mockVerifier.mockProve({
-            imageId: resource.logicRef, journalDigest: sha256(input.toInstance(actionTreeRoot, isConsumed).toJournal())
-        }).seal;
-    }
-
-    function generateActionConfigs(uint256 actionCount, uint256 complianceUnitCount)
-        internal
-        pure
-        returns (ActionConfig[] memory configs)
-    {
-        configs = new TxGen.ActionConfig[](actionCount);
-        for (uint256 i = 0; i < actionCount; ++i) {
-            configs[i] = TxGen.ActionConfig({complianceUnitCount: complianceUnitCount});
+    /// @dev Reorders `resources` in place, in an order that `seed` sets.
+    function shuffle(ActionResource[] memory resources, uint256 seed) internal pure {
+        for (uint256 i = resources.length; i > 1; --i) {
+            uint256 j = uint256(keccak256(abi.encode(seed, i))) % i;
+            (resources[i - 1], resources[j]) = (resources[j], resources[i - 1]);
         }
-    }
-
-    function countComplianceUnits(Action[] memory actions) internal pure returns (uint256 complianceUnitCount) {
-        complianceUnitCount = 0;
-
-        for (uint256 i = 0; i < actions.length; ++i) {
-            complianceUnitCount += actions[i].complianceVerifierInputs.length;
-        }
-    }
-
-    function collectTags(Action[] memory actions) internal pure returns (bytes32[] memory tags) {
-        tags = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        uint256 n = 0;
-        for (uint256 i = 0; i < actions.length; ++i) {
-            bytes32[] memory actionTags = collectTags(actions[i]);
-
-            for (uint256 j = 0; j < actionTags.length; ++j) {
-                tags[n++] = actionTags[j];
-            }
-        }
-    }
-
-    /// @dev This function is a duplicated from `TagUtils.sol` with the difference that it uses `memory`.
-    function collectTags(Action memory action) internal pure returns (bytes32[] memory tags) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
-
-        tags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        for (uint256 i = 0; i < complianceUnitCount; ++i) {
-            Compliance.Instance memory instance = action.complianceVerifierInputs[i].instance;
-            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT)] = instance.consumed.nullifier;
-            tags[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1] = instance.created.commitment;
-        }
-    }
-
-    function collectNullifiers(Transaction memory txn) internal pure returns (bytes32[] memory nullifiers) {
-        nullifiers = new bytes32[](countComplianceUnits(txn.actions));
-        bytes32[] memory tagList = collectTags(txn.actions);
-
-        for (uint256 i = 0; i < nullifiers.length; ++i) {
-            nullifiers[i] = tagList[i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT];
-        }
-    }
-
-    function collectCommitments(Transaction memory txn) internal pure returns (bytes32[] memory commitments) {
-        commitments = new bytes32[](countComplianceUnits(txn.actions));
-        bytes32[] memory tagList = collectTags(txn.actions);
-
-        for (uint256 i = 0; i < commitments.length; ++i) {
-            commitments[i] = tagList[(i * Compliance._RESOURCES_PER_COMPLIANCE_UNIT) + 1];
-        }
-    }
-
-    function collectLogicRefs(Action[] memory actions) internal pure returns (bytes32[] memory logicRefs) {
-        logicRefs = new bytes32[](countComplianceUnits(actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        uint256 n = 0;
-        for (uint256 i = 0; i < actions.length; ++i) {
-            uint256 complianceUnitCount = actions[i].complianceVerifierInputs.length;
-
-            for (uint256 j = 0; j < complianceUnitCount; ++j) {
-                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.consumed.logicRef;
-                logicRefs[n++] = actions[i].complianceVerifierInputs[j].instance.created.logicRef;
-            }
-        }
-    }
-
-    function aggregatedInstanceGeneration(Transaction memory txn)
-        internal
-        pure
-        returns (Aggregation.Instance memory aggregationInstance)
-    {
-        uint256 n = 0;
-        bytes32[] memory logicRefs = collectLogicRefs(txn.actions);
-
-        if (countComplianceUnits(txn.actions) * Compliance._RESOURCES_PER_COMPLIANCE_UNIT != logicRefs.length) {
-            revert TransactionTagCountMismatch();
-        }
-
-        Compliance.Instance[] memory complianceInstances = new Compliance.Instance[](logicRefs.length / 2);
-        Logic.Instance[] memory logicInstances = new Logic.Instance[](logicRefs.length);
-        for (uint256 i = 0; i < txn.actions.length; ++i) {
-            for (uint256 j = 0; j < txn.actions[i].complianceVerifierInputs.length; ++j) {
-                Compliance.VerifierInput memory complianceUnit = txn.actions[i].complianceVerifierInputs[j];
-                complianceInstances[n / 2] = complianceUnit.instance;
-                bytes32 actionTreeRoot = computeActionTreeRoot(txn.actions[i]);
-
-                {
-                    uint256 nullifierIndex = getTagIndex(txn.actions[i], complianceUnit.instance.consumed.nullifier);
-                    logicInstances[n++] =
-                        Logic.toInstance(txn.actions[i].logicVerifierInputs[nullifierIndex], actionTreeRoot, true);
-                }
-
-                {
-                    uint256 commitmentIndex = getTagIndex(txn.actions[i], complianceUnit.instance.created.commitment);
-                    logicInstances[n++] =
-                        Logic.toInstance(txn.actions[i].logicVerifierInputs[commitmentIndex], actionTreeRoot, false);
-                }
-            }
-        }
-
-        aggregationInstance = Aggregation.Instance({
-            logicRefs: logicRefs, complianceInstances: complianceInstances, logicInstances: logicInstances
-        });
     }
 
     function mockResource(bytes32 nonce, bytes32 logicRef, bytes32 labelRef, uint128 quantity)
@@ -432,16 +180,88 @@ library TxGen {
         });
     }
 
-    function getTagIndex(Action memory action, bytes32 tag) internal pure returns (uint256 index) {
-        uint256 logicVerifierInputCount = action.logicVerifierInputs.length;
+    /// @dev The external payload blob of a forwarder call: the protocol adapter calls `forwarder` with `input` and
+    /// requires `output` as the output of the call.
+    function forwarderCall(address forwarder, bytes memory input, bytes memory output)
+        internal
+        pure
+        returns (IProtocolAdapter.ExpirableBlob memory call)
+    {
+        call = IProtocolAdapter.ExpirableBlob({
+            deletionCriterion: IProtocolAdapter.DeletionCriterion.Never, blob: abi.encode(forwarder, input, output)
+        });
+    }
 
-        for (uint256 i = 0; i < logicVerifierInputCount; ++i) {
-            if (tag == action.logicVerifierInputs[i].tag) {
-                return (index = i);
-            }
-        }
+    /// @dev App data whose only blob is the `forwarderCall` blob of `forwarder`, `input` and `output`.
+    function forwarderCallAppData(address forwarder, bytes memory input, bytes memory output)
+        internal
+        pure
+        returns (IProtocolAdapter.AppData memory appData)
+    {
+        appData = emptyAppData();
+        appData.externalPayload = new IProtocolAdapter.ExpirableBlob[](1);
+        appData.externalPayload[0] = forwarderCall({forwarder: forwarder, input: input, output: output});
+    }
 
-        revert NonExistingTag(tag);
+    function emptyAppData() internal pure returns (IProtocolAdapter.AppData memory appData) {
+        appData = IProtocolAdapter.AppData({
+            resourcePayload: new IProtocolAdapter.ExpirableBlob[](0),
+            discoveryPayload: new IProtocolAdapter.ExpirableBlob[](0),
+            externalPayload: new IProtocolAdapter.ExpirableBlob[](0),
+            applicationPayload: new IProtocolAdapter.ExpirableBlob[](0)
+        });
+    }
+
+    function transactionId(IProtocolAdapter.Transaction memory txn) internal pure returns (bytes32 id) {
+        id = DeltaProof.computeVerifyingKey(_actionTreeRoots(txn.actions));
+    }
+
+    function collectNullifiers(IProtocolAdapter.Transaction memory txn)
+        internal
+        pure
+        returns (bytes32[] memory nullifiers)
+    {
+        nullifiers = _collectTags({txn: txn, isConsumed: true});
+    }
+
+    function collectCommitments(IProtocolAdapter.Transaction memory txn)
+        internal
+        pure
+        returns (bytes32[] memory commitments)
+    {
+        commitments = _collectTags({txn: txn, isConsumed: false});
+    }
+
+    function actionNullifiers(IProtocolAdapter.Action memory action)
+        internal
+        pure
+        returns (bytes32[] memory nullifiers)
+    {
+        (nullifiers,) = _actionTagsAndLogicRefs({action: action, isConsumed: true});
+    }
+
+    function actionConsumedLogicRefs(IProtocolAdapter.Action memory action)
+        internal
+        pure
+        returns (bytes32[] memory logicRefs)
+    {
+        (, logicRefs) = _actionTagsAndLogicRefs({action: action, isConsumed: true});
+    }
+
+    function actionCommitments(IProtocolAdapter.Action memory action)
+        internal
+        pure
+        returns (bytes32[] memory commitments)
+    {
+        (commitments,) = _actionTagsAndLogicRefs({action: action, isConsumed: false});
+    }
+
+    function actionCreatedLogicRefs(IProtocolAdapter.Action memory action)
+        internal
+        pure
+        returns (bytes32[] memory logicRefs)
+    {
+        (, logicRefs) = _actionTagsAndLogicRefs({action: action, isConsumed: false});
     }
 
     function commitment(Resource memory resource) internal pure returns (bytes32 hash) {
@@ -452,37 +272,183 @@ library TxGen {
         hash = sha256(abi.encode(resource, nullifierKey));
     }
 
-    function kind(Resource memory resource) internal pure returns (uint256 hash) {
+    /// @dev Builds an action of the resources in list order.
+    function _createAction(VmSafe vm, ActionResource[] memory resources)
+        private
+        returns (IProtocolAdapter.Action memory action)
+    {
+        IProtocolAdapter.ResourceInstance[] memory instances = new IProtocolAdapter.ResourceInstance[](resources.length);
+
+        IProtocolAdapter.Delta memory actionDelta;
+
+        for (uint256 i = 0; i < resources.length; ++i) {
+            instances[i] = _resourceInstance(resources[i]);
+
+            IProtocolAdapter.Delta memory resourceDelta = DeltaGen.generateInstance(
+                vm,
+                DeltaGen.InstanceInputs({
+                    kind: _kind(resources[i].resource),
+                    quantity: resources[i].resource.quantity,
+                    consumed: resources[i].consumed,
+                    valueCommitmentRandomness: _valueCommitmentRandomness(instances[i].tag)
+                })
+            );
+            actionDelta = (i == 0) ? resourceDelta : DeltaProof.add(actionDelta, resourceDelta);
+        }
+
+        action = IProtocolAdapter.Action({
+            resources: instances, unitDelta: actionDelta, actionTreeRoot: _computeActionTreeRoot(instances)
+        });
+    }
+
+    /// @dev Assembles the transaction and its delta proof.
+    function _transactionFromActions(VmSafe vm, IProtocolAdapter.Action[] memory actions)
+        private
+        returns (IProtocolAdapter.Transaction memory txn)
+    {
+        bytes memory proof = "";
+        if (_countResources(actions) != 0) {
+            proof = DeltaGen.generateProof(
+                vm,
+                DeltaGen.ProofInputs({
+                    summedValueCommitmentRandomness: _summedValueCommitmentRandomness(actions),
+                    verifyingKey: DeltaProof.computeVerifyingKey(_actionTreeRoots(actions))
+                })
+            );
+        }
+
+        txn = IProtocolAdapter.Transaction({
+            actions: actions, deltaProof: proof, aggregationProof: "", kindTreeRoot: _emptyKindTreeRoot()
+        });
+    }
+
+    function _resourceInstance(ActionResource memory actionResource)
+        private
+        pure
+        returns (IProtocolAdapter.ResourceInstance memory instance)
+    {
+        bool isConsumed = actionResource.consumed;
+        instance = IProtocolAdapter.ResourceInstance({
+            consumed: isConsumed,
+            tag: isConsumed ? nullifier(actionResource.resource, 0) : commitment(actionResource.resource),
+            logicRef: actionResource.resource.logicRef,
+            commitmentTreeRoot: isConsumed ? _initialRoot() : bytes32(0),
+            appData: actionResource.appData
+        });
+    }
+
+    function _actionTreeRoots(IProtocolAdapter.Action[] memory actions) private pure returns (bytes32[] memory roots) {
+        roots = new bytes32[](actions.length);
+        for (uint256 i = 0; i < actions.length; ++i) {
+            roots[i] = actions[i].actionTreeRoot;
+        }
+    }
+
+    function _countResources(IProtocolAdapter.Action[] memory actions) private pure returns (uint256 resourceCount) {
+        for (uint256 i = 0; i < actions.length; ++i) {
+            resourceCount += actions[i].resources.length;
+        }
+    }
+
+    function _summedValueCommitmentRandomness(IProtocolAdapter.Action[] memory actions)
+        private
+        pure
+        returns (uint256 summedRandomness)
+    {
+        for (uint256 i = 0; i < actions.length; ++i) {
+            for (uint256 j = 0; j < actions[i].resources.length; ++j) {
+                summedRandomness = addmod(
+                    summedRandomness, _valueCommitmentRandomness(actions[i].resources[j].tag), DeltaGen.SECP256K1_ORDER
+                );
+            }
+        }
+    }
+
+    /// @dev The tags of the consumed or the created resources of a transaction, in the order of the actions and of
+    /// their resources.
+    function _collectTags(IProtocolAdapter.Transaction memory txn, bool isConsumed)
+        private
+        pure
+        returns (bytes32[] memory tags)
+    {
+        uint256 count = 0;
+        for (uint256 i = 0; i < txn.actions.length; ++i) {
+            for (uint256 j = 0; j < txn.actions[i].resources.length; ++j) {
+                if (txn.actions[i].resources[j].consumed == isConsumed) {
+                    ++count;
+                }
+            }
+        }
+
+        tags = new bytes32[](count);
+
+        uint256 n = 0;
+        for (uint256 i = 0; i < txn.actions.length; ++i) {
+            for (uint256 j = 0; j < txn.actions[i].resources.length; ++j) {
+                if (txn.actions[i].resources[j].consumed == isConsumed) {
+                    tags[n++] = txn.actions[i].resources[j].tag;
+                }
+            }
+        }
+    }
+
+    /// @dev The tags and logic references of the consumed or the created resources of an action, in the order of
+    /// `resources`, as the protocol adapter emits them.
+    function _actionTagsAndLogicRefs(IProtocolAdapter.Action memory action, bool isConsumed)
+        private
+        pure
+        returns (bytes32[] memory tags, bytes32[] memory logicRefs)
+    {
+        uint256 count = 0;
+        for (uint256 i = 0; i < action.resources.length; ++i) {
+            if (action.resources[i].consumed == isConsumed) {
+                ++count;
+            }
+        }
+
+        tags = new bytes32[](count);
+        logicRefs = new bytes32[](count);
+
+        uint256 n = 0;
+        for (uint256 i = 0; i < action.resources.length; ++i) {
+            if (action.resources[i].consumed == isConsumed) {
+                tags[n] = action.resources[i].tag;
+                logicRefs[n] = action.resources[i].logicRef;
+                ++n;
+            }
+        }
+    }
+
+    function _kind(Resource memory resource) private pure returns (uint256 hash) {
         hash = uint256(sha256(abi.encode(resource.logicRef, resource.labelRef)));
     }
 
-    function expirableBlobs() internal pure returns (Logic.ExpirableBlob[] memory blobs) {
-        blobs = new Logic.ExpirableBlob[](2);
-        blobs[0] = Logic.ExpirableBlob({
-            blob: hex"1f0000003f0000005f0000007f000000", deletionCriterion: Logic.DeletionCriterion.Immediately
-        });
-        blobs[1] = Logic.ExpirableBlob({
-            blob: hex"9f000000bf000000df000000ff000000", deletionCriterion: Logic.DeletionCriterion.Never
-        });
+    /// @dev Derives the randomness from the resource tag, so that each action gets a distinct delta and the delta
+    /// proof can sum the randomness from the actions.
+    function _valueCommitmentRandomness(bytes32 tag) private pure returns (uint256 randomness) {
+        randomness = DeltaGen.modOrder(uint256(tag));
     }
 
-    function initialRoot() internal pure returns (bytes32 root) {
+    /// @dev The root of the kind tree without entries: its padding leaf, as in `KindTreeRoot.EMPTY_KIND_TREE_ROOT`.
+    function _emptyKindTreeRoot() private pure returns (bytes32 root) {
         root = SHA256.EMPTY_HASH;
     }
 
-    function computeActionTreeRoot(Action memory action) internal pure returns (bytes32 root) {
-        uint256 complianceUnitCount = action.complianceVerifierInputs.length;
+    function _initialRoot() private pure returns (bytes32 root) {
+        root = SHA256.EMPTY_HASH;
+    }
 
-        bytes32[] memory actionTreeTags = new bytes32[](complianceUnitCount * Compliance._RESOURCES_PER_COMPLIANCE_UNIT);
-
-        // The order in which the tags are added to the tree is provided by the compliance units.
-        for (uint256 j = 0; j < complianceUnitCount; ++j) {
-            Compliance.VerifierInput memory complianceUnit = action.complianceVerifierInputs[j];
-
-            actionTreeTags[2 * j] = complianceUnit.instance.consumed.nullifier;
-            actionTreeTags[(2 * j) + 1] = complianceUnit.instance.created.commitment;
+    /// @dev The action tree leaves are the tags in the order of the resources.
+    function _computeActionTreeRoot(IProtocolAdapter.ResourceInstance[] memory resources)
+        private
+        pure
+        returns (bytes32 root)
+    {
+        bytes32[] memory tags = new bytes32[](resources.length);
+        for (uint256 i = 0; i < resources.length; ++i) {
+            tags[i] = resources[i].tag;
         }
 
-        root = actionTreeTags.computeRoot();
+        root = tags.computeRoot();
     }
 }

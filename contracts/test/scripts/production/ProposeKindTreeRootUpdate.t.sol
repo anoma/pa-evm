@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
+import {ProposeKindTreeRootUpdate} from "../../../script/production/ProposeKindTreeRootUpdate.s.sol";
+import {IKindTreeRoot} from "../../../src/interfaces/IKindTreeRoot.sol";
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
+import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
+import {ProposeKindTreeRootUpdateMock} from "../../mocks/ProposeKindTreeRootUpdate.m.sol";
+
+/// @notice Checks the production-only kind tree root update proposal script against a Safe-owned production proxy.
+/// Outside broadcast mode, the script simulates the Safe executing the update, so the proxy must end up on the new
+/// kind tree root.
+contract ProposeKindTreeRootUpdateTest is RiscZeroRouterFixture, SafeFixture {
+    bytes32 internal constant _NEW_KIND_TREE_ROOT = keccak256("new kind tree root");
+
+    address internal _owner;
+    address internal _safe;
+    address internal _productionProxy;
+    address internal _stagingProxy;
+
+    function setUp() public {
+        // Keep the script on the simulation branch regardless of the shell environment.
+        vm.setEnv("SAFE_BROADCAST", "false");
+
+        _deployRiscZeroRouter();
+
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
+
+        _owner = makeAddr("safe owner");
+        _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());
+
+        (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
+        (_stagingProxy,,,) = deployScript.run({isProduction: false, isMigrational: false});
+    }
+
+    function test_run_updates_the_kind_tree_root() public {
+        vm.expectEmit({
+            checkTopic1: true, checkTopic2: false, checkTopic3: false, checkData: true, emitter: _productionProxy
+        });
+        emit IKindTreeRoot.KindTreeRootUpdated(_NEW_KIND_TREE_ROOT);
+
+        new ProposeKindTreeRootUpdateMock(_productionProxy)
+            .run({proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+
+        assertEq(ProtocolAdapter(_productionProxy).getKindTreeRoot(), _NEW_KIND_TREE_ROOT, "kind tree root differs");
+    }
+
+    function test_run_reverts_if_the_proxy_is_not_a_production_deployment() public {
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdateMock(_stagingProxy);
+
+        vm.expectRevert(abi.encodeWithSelector(ProductionScript.NotAProductionDeployment.selector, _stagingProxy));
+        script.run({proposer: _owner, newKindTreeRoot: _NEW_KIND_TREE_ROOT});
+    }
+
+    function test_run_reverts_if_the_simulated_update_fails() public {
+        ProposeKindTreeRootUpdate script = new ProposeKindTreeRootUpdateMock(_productionProxy);
+
+        // The protocol adapter rejects the zero kind tree root, so the simulated Safe execution fails.
+        vm.expectRevert(ProductionScript.TransactionSimulationFailed.selector);
+        script.run({proposer: _owner, newKindTreeRoot: bytes32(0)});
+    }
+}

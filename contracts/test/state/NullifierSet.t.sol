@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 import {NullifierSet} from "../../src/state/NullifierSet.sol";
 import {NullifierSetMock} from "../mocks/NullifierSet.m.sol";
 
@@ -26,29 +26,6 @@ contract NullifierSetTest is Test {
             abi.encodeWithSelector(NullifierSet.PreExistingNullifier.selector, _EXAMPLE_NF), address(_nfSet)
         );
         _nfSet.addNullifier(_EXAMPLE_NF);
-    }
-
-    function test_length_returns_the_length() public {
-        assertEq(_nfSet.nullifierCount(), 0, "initial nullifier count should be 0");
-
-        uint256 n = 10;
-        for (uint256 i = 1; i < n; ++i) {
-            _nfSet.addNullifier(bytes32(uint256(i)));
-            assertEq(_nfSet.nullifierCount(), i, "nullifier count should match number added");
-        }
-    }
-
-    function test_atIndex_returns_the_nullifier_at_the_give_index() public {
-        uint256 n = 10;
-        for (uint256 i = 0; i < n; ++i) {
-            bytes32 nf = bytes32(uint256(i));
-            _nfSet.addNullifier(nf);
-        }
-
-        for (uint256 i = 0; i < n; ++i) {
-            bytes32 nf = bytes32(uint256(i));
-            assertEq(_nfSet.nullifierAtIndex(i), nf, "nullifier at index should match");
-        }
     }
 
     function test_contains_returns_true_if_the_nullifier_is_contained() public {

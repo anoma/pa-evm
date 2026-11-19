@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["bindings", "example-tx-generation"]
+members = ["crates/bindings", "crates/integration-test"]
 
 [workspace.package]
 keywords = ["anoma", "evm", "protocol-adapter"]
@@ -11,13 +11,20 @@ homepage = "https://anoma.net/"
 edition = "2024"
 
 [workspace.dependencies]
-alloy = { version = "1.4.0", features = ["full", "eip712", "node-bindings"] }
-alloy-chains = "0.2.27"
-anoma-rm-risc0 = { version = "1.1.1", features = ["bonsai", "aggregation"] }
-anoma-rm-risc0-test-app = { version = "1.1.1", features = ["bonsai"] }
+alloy = { version = "2.6.1", features = ["full", "eip712", "node-bindings"] }
+alloy-chains = "0.2.39"
+anoma-pa-testkit = "1.0.0"
+anoma-risc0-verifier-bindings = "2.0.1"
+anoma-rm-risc0 = { version = "2.0.0", features = ["bonsai", "aggregation"] }
+anyhow = "1.0.104"
 dotenvy = { version = "0.15.7", features = ["cli"] }
-serde = { version = "1.0.228", default-features = false }
-thiserror = "2.0.17"
-tokio = { version = "1.49", features = ["rt-multi-thread"] }
+hex = "0.4.3"
+regex = "1.13.2"
+risc0-zkvm = "3.1.0"
+rstest = "0.28.0"
+serde = { version = "1.0.229", default-features = false }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["rt-multi-thread"] }
 
-anoma-pa-evm-bindings = { path = "bindings" }
+anoma-pa-evm-bindings = { path = "crates/bindings" }

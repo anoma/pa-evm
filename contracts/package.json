@@ -1,5 +1,6 @@
 {
-  "dependencies": {
-    "solhint": "^6.0.3"
+  "devDependencies": {
+    "@openzeppelin/upgrades-core": "^1.48.0",
+    "solhint": "^6.2.5"
   }
 }

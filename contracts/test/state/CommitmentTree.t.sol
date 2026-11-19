@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Test} from "forge-std-1.14.0/src/Test.sol";
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+import {Test} from "forge-std-1.17.0/src/Test.sol";
 
 import {ICommitmentTree} from "../../src/interfaces/ICommitmentTree.sol";
 import {SHA256} from "../../src/libs/SHA256.sol";
@@ -14,43 +15,18 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
 
     constructor() {
         _setupMockTree();
-        _cmAcc = new CommitmentTreeMock();
-    }
-
-    function test_constructor_stores_the_initial_root_being_the_empty_leaf_hash() public {
-        CommitmentTree newCmAcc = new CommitmentTree();
-        assertEq(newCmAcc.latestCommitmentTreeRoot(), SHA256.EMPTY_HASH, "The inital root should be the empty hash.");
-        assertEq(newCmAcc.commitmentTreeRootCount(), 1, "The initial root count should be 1.");
-    }
-
-    function test_constructor_initializes_the_tree_with_depth_0() public {
-        assertEq(new CommitmentTree().commitmentTreeDepth(), 0, "The initial tree depth should be 0.");
-    }
-
-    function test_constructor_initializes_the_tree_with_capacity_1() public {
-        assertEq(new CommitmentTree().commitmentTreeCapacity(), 1, "The initial tree capacity should be 1.");
-    }
-
-    function test_constructor_initializes_the_tree_with_0_leaves() public {
-        assertEq(new CommitmentTree().commitmentCount(), 0, "The initial commitment count should be 0.");
-    }
-
-    function test_constructor_emits_the_CommitmentTreeRootAdded_event() public {
-        vm.expectEmit();
-        emit ICommitmentTree.CommitmentTreeRootAdded({root: SHA256.EMPTY_HASH});
-        new CommitmentTree();
+        _cmAcc = _deployCommitmentTreeMock();
     }
 
     function test_addCommitment_returns_correct_roots() public {
         bytes32 initialRoot = _cmAcc.latestCommitmentTreeRoot();
 
         assertEq(initialRoot, _roots[0], "initial root should match expected root");
-        assertEq(initialRoot, _cmAcc.initialRoot(), "initial root should match initialRoot()");
+        assertTrue(_cmAcc.isCommitmentTreeRootHistorical(initialRoot), "initial root should be a historical root");
 
         for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            assertEq(
-                _cmAcc.addCommitment(_leaves[i + 1][i]), _roots[i + 1], "root should match after adding commitment"
-            );
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
+            assertEq(_cmAcc.latestCommitmentTreeRoot(), _roots[i + 1], "root should match after adding commitment");
         }
     }
 
@@ -80,15 +56,15 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
     function test_addCommitmentTreeRoot_stores_the_root() public {
         bytes32 rootToStore = bytes32(type(uint256).max);
 
-        assertEq(
-            _cmAcc.latestCommitmentTreeRoot(), _cmAcc.initialRoot(), "latest root should be initial root before store"
+        assertFalse(
+            _cmAcc.isCommitmentTreeRootHistorical(rootToStore), "the root should not be historical before it is stored"
         );
-        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), false, "root should not be contained before store");
 
         _cmAcc.addCommitmentTreeRoot(rootToStore);
 
-        assertEq(_cmAcc.latestCommitmentTreeRoot(), rootToStore, "latest root should be the stored root");
-        assertEq(_cmAcc.isCommitmentTreeRootContained(rootToStore), true, "root should be contained after store");
+        assertTrue(
+            _cmAcc.isCommitmentTreeRootHistorical(rootToStore), "the root should be historical after it is stored"
+        );
     }
 
     function test_addCommitmentTreeRoot_emits_the_CommitmentTreeRootAdded_event_on_store_() public {
@@ -100,21 +76,78 @@ contract CommitmentTreeTest is Test, MerkleTreeExample {
         _cmAcc.addCommitmentTreeRoot(rootToStore);
     }
 
-    function test_commitmentTreeRootAtIndex_returns_the_right_index() public {
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            _cmAcc.addCommitmentTreeRoot(_cmAcc.addCommitment(_leaves[i + 1][i]));
-        }
-
-        for (uint256 i = 0; i < _N_LEAVES; ++i) {
-            assertEq(_cmAcc.commitmentTreeRootAtIndex(i), _roots[i], "The returned root should have the expected index");
-        }
-    }
-
     function test_addCommitment_allows_adding_the_same_commitment_multiple_times() public {
         // Note: The compliance circuit will prevent the same commitment being added a second time.
         bytes32 cm = sha256("SOMETHING");
 
         _cmAcc.addCommitment(cm);
         _cmAcc.addCommitment(cm);
+    }
+
+    function test_commitmentTreeEmptySubtreeRoots_returns_the_root_of_an_empty_subtree_per_level() public {
+        for (uint256 i = 0; i < _N_LEAVES; ++i) {
+            _cmAcc.addCommitment(_leaves[i + 1][i]);
+        }
+
+        bytes32[] memory emptySubtreeRoots = _cmAcc.commitmentTreeEmptySubtreeRoots();
+
+        assertEq(
+            emptySubtreeRoots.length,
+            _cmAcc.commitmentTreeDepth() + 1,
+            "the empty subtree roots should cover every level up to the root"
+        );
+        assertEq(
+            emptySubtreeRoots[0], SHA256.EMPTY_HASH, "the empty subtree root of the leaf level should be the empty hash"
+        );
+        for (uint256 level = 1; level < emptySubtreeRoots.length; ++level) {
+            assertEq(
+                emptySubtreeRoots[level],
+                SHA256.hash(emptySubtreeRoots[level - 1], emptySubtreeRoots[level - 1]),
+                "an empty subtree root should pair the one below"
+            );
+        }
+    }
+
+    function test_commitmentTreeLeftSiblings_and_commitmentTreeEmptySubtreeRoots_reproduce_the_root_after_every_push()
+        public
+    {
+        _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(_cmAcc.latestCommitmentTreeRoot());
+
+        for (uint256 i = 0; i < 33; ++i) {
+            _cmAcc.addCommitment(keccak256(abi.encode(i)));
+            _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(_cmAcc.latestCommitmentTreeRoot());
+        }
+    }
+
+    /// @dev Deploys the mock behind an ERC-1967 proxy, initialized through the proxy constructor because the
+    /// implementation contract disables the initializers.
+    function _deployCommitmentTreeMock() internal returns (CommitmentTreeMock mock) {
+        mock = CommitmentTreeMock(
+            address(
+                new ERC1967Proxy(address(new CommitmentTreeMock()), abi.encodeCall(CommitmentTreeMock.initialize, ()))
+            )
+        );
+    }
+
+    /// @dev Rebuilds the root the way `MerkleTree.currentRoot` does, from the commitment count, the left siblings
+    /// and the empty subtree roots.
+    function _assertTheLeftSiblingsAndEmptySubtreeRootsReproduce(bytes32 root) internal view {
+        uint256 count = _cmAcc.commitmentCount();
+        bytes32[] memory leftSiblings = _cmAcc.commitmentTreeLeftSiblings();
+        bytes32[] memory emptySubtreeRoots = _cmAcc.commitmentTreeEmptySubtreeRoots();
+
+        assertEq(
+            leftSiblings.length,
+            _cmAcc.commitmentTreeDepth(),
+            "the left siblings should cover every level below the root"
+        );
+
+        bytes32 rebuilt = emptySubtreeRoots[0];
+        for (uint256 level = 0; level < leftSiblings.length; ++level) {
+            rebuilt = ((count >> level) & 1) == 0
+                ? SHA256.hash(rebuilt, emptySubtreeRoots[level])
+                : SHA256.hash(leftSiblings[level], rebuilt);
+        }
+        assertEq(rebuilt, root, "the left siblings and empty subtree roots should reproduce the root");
     }
 }

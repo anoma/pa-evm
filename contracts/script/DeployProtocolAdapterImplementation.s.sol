@@ -1,0 +1,101 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-2.0.1/src/RiscZeroVerifierSelectors.sol";
+import {SupportedNetworks} from "anoma-risc0-deployments-2.0.1/src/SupportedNetworks.sol";
+import {Script} from "forge-std-1.17.0/src/Script.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
+
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {Parameters} from "./libs/Parameters.sol";
+
+/// @title DeployProtocolAdapterImplementation
+/// @author Anoma Foundation, 2026
+/// @notice A script to deploy the protocol adapter implementation on supported networks.
+/// @dev `SupportedNetworks` supplies the networks and their RISC Zero verifier router addresses
+/// (see https://dev.risczero.com/api/3.0/blockchain-integration/contracts/verifier).
+/// @custom:security-contact security@anoma.foundation
+contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
+    /// @notice The CREATE2 salt for the implementation deployment, shared by the staging and production environments.
+    bytes32 public constant IMPLEMENTATION_SALT = Parameters.IMPLEMENTATION_SALT;
+
+    /// @notice The initialization data to pass to `upgradeToAndCall` when upgrading a proxy to this implementation —
+    /// empty because the current version requires no reinitialization.
+    bytes public constant INITIALIZATION_DATA = "";
+
+    /// @notice Thrown if the implementation of the current source version is not deployed yet.
+    error ImplementationNotDeployed(address implementation);
+
+    /// @notice Thrown if the implementation of the current source version is already deployed.
+    error ImplementationAlreadyDeployed(address implementation);
+
+    /// @notice Thrown if the RISC Zero verifier for the selector of an implementation is paused.
+    error RiscZeroVerifierPaused(address implementation);
+
+    /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
+    /// @return implementation The protocol adapter implementation contract.
+    function run() public returns (address implementation) {
+        bytes memory constructorData;
+        (implementation, constructorData) = predict();
+        require(implementation.code.length == 0, ImplementationAlreadyDeployed({implementation: implementation}));
+
+        Options memory opts;
+        opts.constructorData = constructorData;
+
+        Upgrades.validateImplementation("ProtocolAdapter.sol", opts);
+
+        vm.startBroadcast();
+        implementation = address(
+            new ProtocolAdapter{salt: IMPLEMENTATION_SALT}({
+                riscZeroVerifierRouter: address(getRouterData().router),
+                riscZeroVerifierSelector: RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR
+            })
+        );
+        vm.stopBroadcast();
+    }
+
+    /// @notice Predicts the deterministic address the implementation of this source version deploys to.
+    /// @return implementation The predicted implementation contract address.
+    /// @return constructorData The constructor arguments the predicted address commits to.
+    function predict() public view returns (address implementation, bytes memory constructorData) {
+        (implementation, constructorData) = predict(block.chainid);
+    }
+
+    /// @notice Predicts the deterministic address the implementation of this source version deploys to on a supported
+    /// network, which needs no fork of it — the router is the only per-chain constructor argument.
+    /// @param chainId The chain ID of the supported network.
+    /// @return implementation The predicted implementation contract address.
+    /// @return constructorData The constructor arguments the predicted address commits to.
+    function predict(uint256 chainId) public view returns (address implementation, bytes memory constructorData) {
+        Data memory data = _riscZeroVerifierRouters[_supportedNetworks[chainId]];
+        require(address(data.router) != address(0), UnsupportedNetwork({chainId: chainId}));
+
+        bytes32 salt = IMPLEMENTATION_SALT;
+        constructorData = abi.encode(address(data.router), RiscZeroVerifierSelectors._GROTH16_VERIFIER_SELECTOR);
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
+        bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
+
+        implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
+    }
+
+    /// @notice Returns the implementation of this source version, and reverts unless it is deployed.
+    /// @return implementation The deployed implementation contract.
+    function deployed() public view returns (address implementation) {
+        // forge-lint: disable-next-line(unused-return)
+        (implementation,) = predict();
+        require(implementation.code.length != 0, ImplementationNotDeployed({implementation: implementation}));
+    }
+
+    /// @notice Reverts unless the RISC Zero router has a verifier for the selector of an implementation and this
+    /// verifier is not paused, so that an upgrade to the implementation does not stop `execute`.
+    /// @dev The router reverts with `SelectorUnknown` or `SelectorRemoved` if it has no verifier for the selector.
+    /// @param implementation The implementation to check.
+    function requireActiveRiscZeroVerifier(address implementation) public view {
+        require(
+            !ProtocolAdapter(implementation).riscZeroVerifierPaused(),
+            RiscZeroVerifierPaused({implementation: implementation})
+        );
+    }
+}

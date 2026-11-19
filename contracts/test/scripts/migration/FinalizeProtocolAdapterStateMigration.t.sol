@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
+import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
+import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
+import {Vm} from "forge-std-1.17.0/src/Vm.sol";
+
+import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
+import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
+import {
+    FinalizeProtocolAdapterStateMigration
+} from "../../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
+import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
+import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
+import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
+import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
+import {FinalizeProtocolAdapterStateMigrationMock} from "../../mocks/FinalizeProtocolAdapterStateMigration.m.sol";
+
+/// @notice Checks the completion run against a stand-in for the legacy protocol adapter, after the migration
+/// run copied the state.
+contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
+    function test_run_unpauses_and_leaves_the_proxy_on_the_plain_implementation() public {
+        ProtocolAdapter pa = ProtocolAdapter(_proxy);
+        _migrationScript.run({isProduction: false});
+
+        _finalizationScript.run({isProduction: false});
+
+        assertFalse(pa.paused(), "the proxy should be unpaused");
+        assertEq(pa.owner(), DEFAULT_SENDER, "a staging proxy should keep its owner");
+        (address implementation,) = new DeployProtocolAdapterImplementation().predict();
+        assertEq(pa.getImplementation(), implementation, "the proxy should run the plain implementation");
+        _migrationScript.verify({isProduction: false});
+
+        // The copy-in is gone with the implementation that carried it.
+        vm.prank(DEFAULT_SENDER);
+        vm.expectRevert();
+        MigrationalProtocolAdapter(_proxy).migrateNullifierSet({start: 0, count: 1});
+    }
+
+    function test_run_transfers_a_production_proxy_to_the_production_proxy_owner() public {
+        _migrationScript.run({isProduction: false});
+
+        _finalizationScript.run({isProduction: true});
+
+        assertEq(
+            ProtocolAdapter(_proxy).owner(),
+            new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION(),
+            "the production proxy owner should own the proxy"
+        );
+        _migrationScript.verify({isProduction: true});
+    }
+
+    function test_run_unpauses_before_it_upgrades_and_transfers_the_ownership() public {
+        _migrationScript.run({isProduction: false});
+
+        vm.recordLogs();
+        _finalizationScript.run({isProduction: true});
+
+        bytes32[3] memory order =
+            [Pausable.Unpaused.selector, IERC1967.Upgraded.selector, Ownable.OwnershipTransferred.selector];
+
+        uint256 found;
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        for (uint256 i = 0; i < logs.length && found < order.length; ++i) {
+            if (logs[i].emitter == _proxy && logs[i].topics[0] == order[found]) ++found;
+        }
+
+        assertEq(found, order.length, "the run should unpause, upgrade and transfer in that order");
+    }
+
+    function test_run_reverts_before_the_state_is_copied() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationalProtocolAdapter.CommitmentCountMismatch.selector, _COMMITMENT_COUNT, uint256(0)
+            )
+        );
+        _finalizationScript.run({isProduction: false});
+    }
+
+    function test_run_reverts_for_a_proxy_that_copies_from_another_legacy_protocol_adapter() public {
+        address other = makeAddr("other legacy protocol adapter");
+        FinalizeProtocolAdapterStateMigration script =
+            new FinalizeProtocolAdapterStateMigrationMock({legacyProtocolAdapter: other, proxy: _proxy});
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                MigrationScript.LegacyProtocolAdapterMismatch.selector, other, address(_legacyProtocolAdapter)
+            )
+        );
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_on_a_chain_that_records_no_legacy_protocol_adapter() public {
+        FinalizeProtocolAdapterStateMigration script = new FinalizeProtocolAdapterStateMigration();
+        uint256 chainId = 31337;
+        vm.chainId(chainId);
+
+        vm.expectRevert(abi.encodeWithSelector(MigrationScript.LegacyProtocolAdapterNotRecorded.selector, chainId));
+        script.run({isProduction: false});
+    }
+
+    function test_run_reverts_if_the_environment_records_no_proxy() public {
+        FinalizeProtocolAdapterStateMigration script = new FinalizeProtocolAdapterStateMigrationMock({
+            legacyProtocolAdapter: address(_legacyProtocolAdapter), proxy: address(0)
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", block.chainid
+            )
+        );
+        script.run({isProduction: true});
+    }
+
+    function test_run_resumes_a_run_that_stopped_after_the_upgrade_and_transfers_the_ownership() public {
+        _migrationScript.run({isProduction: false});
+        DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
+        (address implementation,) = implementationDeployScript.predict();
+        bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();
+
+        vm.prank(DEFAULT_SENDER);
+        MigrationalProtocolAdapter(_proxy).upgradeToAndCall(implementation, initializationData);
+
+        _finalizationScript.run({isProduction: true});
+
+        _migrationScript.verify({isProduction: true});
+    }
+
+    function test_run_reverts_if_the_risc_zero_verifier_is_stopped() public {
+        _migrationScript.run({isProduction: false});
+        address implementation = new DeployProtocolAdapterImplementation().deployed();
+
+        _stopRiscZeroVerifier(ProtocolAdapter(implementation).RISC_ZERO_VERIFIER_SELECTOR());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployProtocolAdapterImplementation.RiscZeroVerifierPaused.selector, implementation)
+        );
+        _finalizationScript.run({isProduction: false});
+    }
+}

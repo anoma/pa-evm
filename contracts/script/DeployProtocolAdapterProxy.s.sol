@@ -1,0 +1,163 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.30;
+
+import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
+
+import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
+import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
+import {
+    DeployMigrationalProtocolAdapterImplementation
+} from "./migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
+import {RecordedDeploymentsScript} from "./RecordedDeploymentsScript.s.sol";
+
+/// @title DeployProtocolAdapterProxy
+/// @author Anoma Foundation, 2026
+/// @notice A script to deploy the protocol adapter implementation and an ERC-1967 proxy pointing to it on supported
+/// networks. A chain that ran a legacy protocol adapter starts its proxy on the migrational implementation
+/// instead, which copies its state in.
+/// @custom:security-contact security@anoma.foundation
+contract DeployProtocolAdapterProxy is RecordedDeploymentsScript {
+    /// @notice The CREATE2 salt for the staging environment proxy deployment.
+    bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
+
+    /// @notice The CREATE2 salt for the production environment proxy deployment.
+    bytes32 public constant PROXY_SALT_PRODUCTION = Parameters.PROXY_SALT_PRODUCTION;
+
+    /// @notice The staging environment proxy owner — the deployment wallet, upgrading instantly.
+    address public constant PROXY_OWNER_STAGING = Parameters.DEPLOYMENT_WALLET;
+
+    /// @notice The production environment proxy owner — the Safe multisig queueing upgrades.
+    address public constant PROXY_OWNER_PRODUCTION = Parameters.PA_MULTISIG;
+
+    /// @notice Thrown if the environment already has a deployment recorded for this chain.
+    error DeploymentAlreadyRecorded(string environment, uint256 chainId);
+
+    /// @notice Thrown if the proxy of this source version is already deployed.
+    error ProxyAlreadyDeployed(address proxy);
+
+    /// @notice Deploys an ERC-1967 proxy pointing to the protocol adapter implementation deterministically. The
+    /// implementation is validated for upgrade safety and deployed first, unless the other environment deployed it
+    /// already.
+    /// @param isProduction Whether to deploy the production or the staging environment proxy, selecting the CREATE2
+    /// salt and, for a plain proxy, the owner receiving the authority to pause the protocol adapter and to authorize
+    /// upgrades.
+    /// @param isMigrational Whether the proxy starts on the migrational implementation, which begins paused and copies
+    /// in the state of the chain's legacy protocol adapter, instead of the plain implementation. The proxy
+    /// address commits to the implementation, so the two land at different addresses. A migrational proxy is owned by
+    /// the staging proxy owner in both environments.
+    /// @return proxy The protocol adapter proxy contract to interact with.
+    /// @return implementation The protocol adapter implementation contract the proxy delegates to.
+    /// @return initializerData The proxy constructor's initializer data, to record in `deployments.json`.
+    /// @return creationCode The ERC-1967 proxy creation code, to record in `deployments.json`.
+    function run(bool isProduction, bool isMigrational)
+        public
+        returns (address proxy, address implementation, bytes memory initializerData, bytes memory creationCode)
+    {
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        // Checks
+        {
+            require(
+                _recordedProxy(isProduction) == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
+            );
+
+            implementation = _predictImplementation(isMigrational);
+
+            (proxy, initializerData, creationCode) = _predict({
+                salt: salt,
+                implementation: implementation,
+                owner: _proxyOwner({isProduction: isProduction, isMigrational: isMigrational})
+            });
+            require(proxy.code.length == 0, ProxyAlreadyDeployed({proxy: proxy}));
+        }
+
+        // Deployment
+        if (implementation.code.length == 0) {
+            _deployImplementation(isMigrational);
+        }
+
+        vm.startBroadcast();
+        proxy = address(new ERC1967Proxy{salt: salt}({implementation: implementation, _data: initializerData}));
+        vm.stopBroadcast();
+    }
+
+    /// @notice Predicts the deterministic address the proxy of this source version deploys to.
+    /// @param isProduction Whether to predict the production or the staging environment proxy.
+    /// @param isMigrational Whether the proxy starts on the migrational or the plain implementation.
+    /// @return proxy The predicted protocol adapter proxy contract address.
+    /// @return implementation The predicted implementation contract address the proxy commits to.
+    function predict(bool isProduction, bool isMigrational) public returns (address proxy, address implementation) {
+        bytes32 salt = isProduction ? PROXY_SALT_PRODUCTION : PROXY_SALT_STAGING;
+
+        implementation = _predictImplementation(isMigrational);
+
+        (proxy,,) = _predict({
+            salt: salt,
+            implementation: implementation,
+            owner: _proxyOwner({isProduction: isProduction, isMigrational: isMigrational})
+        });
+    }
+
+    /// @notice Predicts the implementation the proxy starts on.
+    /// @param isMigrational Whether to predict the migrational or the plain implementation.
+    /// @return implementation The predicted implementation contract address.
+    function _predictImplementation(bool isMigrational) internal returns (address implementation) {
+        if (isMigrational) {
+            // forge-lint: disable-next-line(unused-return)
+            (implementation,) = new DeployMigrationalProtocolAdapterImplementation().predict();
+        } else {
+            // forge-lint: disable-next-line(unused-return)
+            (implementation,) = new DeployProtocolAdapterImplementation().predict();
+        }
+    }
+
+    /// @notice Deploys the implementation the proxy starts on.
+    /// @param isMigrational Whether to deploy the migrational or the plain implementation.
+    function _deployImplementation(bool isMigrational) internal {
+        if (isMigrational) {
+            // forge-lint: disable-next-line(unused-return)
+            new DeployMigrationalProtocolAdapterImplementation().run();
+        } else {
+            // forge-lint: disable-next-line(unused-return)
+            new DeployProtocolAdapterImplementation().run();
+        }
+    }
+
+    /// @notice Returns the owner a proxy is initialized with. A migrational proxy gets the staging proxy owner in both
+    /// environments, because the migration and completion runs send their calls from the owner. A production proxy
+    /// moves to the production proxy owner after the upgrade to the plain implementation.
+    /// @param isProduction Whether the proxy belongs to the production or the staging environment.
+    /// @param isMigrational Whether the proxy starts on the migrational implementation.
+    /// @return owner The account the proxy is initialized with as its owner.
+    function _proxyOwner(bool isProduction, bool isMigrational) internal pure returns (address owner) {
+        owner = (isProduction && !isMigrational) ? PROXY_OWNER_PRODUCTION : PROXY_OWNER_STAGING;
+    }
+
+    /// @notice Derives the deterministic proxy address and the constructor arguments it commits to.
+    /// @param salt The CREATE2 salt of the environment.
+    /// @param implementation The implementation contract the proxy delegates to.
+    /// @param owner The account the proxy is initialized with as its owner.
+    /// @return proxy The deterministic protocol adapter proxy contract address.
+    /// @return initializerData The proxy constructor's initializer data.
+    /// @return creationCode The ERC-1967 proxy creation code.
+    function _predict(bytes32 salt, address implementation, address owner)
+        internal
+        pure
+        returns (address proxy, bytes memory initializerData, bytes memory creationCode)
+    {
+        // The migrational implementation overrides `initialize` with the same signature, so the data serves both.
+        initializerData = abi.encodeCall(ProtocolAdapter.initialize, (owner));
+        creationCode = type(ERC1967Proxy).creationCode;
+
+        bytes memory constructorArgs = abi.encode(implementation, initializerData);
+
+        // The creation code of one fixed type precedes its ABI-encoded arguments, so the split is unambiguous.
+        // forge-lint: disable-next-line(encode-packed-collision)
+        bytes memory initCode = abi.encodePacked(creationCode, constructorArgs);
+
+        proxy = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
+    }
+}

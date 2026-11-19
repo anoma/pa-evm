@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {EnumerableSet} from "@openzeppelin-contracts-5.5.0/utils/structs/EnumerableSet.sol";
+import {Initializable} from "@openzeppelin-contracts-5.7.0/proxy/utils/Initializable.sol";
 
 import {ICommitmentTree} from "../interfaces/ICommitmentTree.sol";
 import {MerkleTree} from "../libs/MerkleTree.sol";
@@ -9,85 +9,113 @@ import {MerkleTree} from "../libs/MerkleTree.sol";
 /// @title CommitmentTree
 /// @author Anoma Foundation, 2025
 /// @notice A commitment tree being inherited by the protocol adapter.
-/// @dev The contract is based on a modified version of OZ's `MerkleTree` implementation and and the unchanged OZ
-/// `EnumerableSet` implementation.
+/// @dev The tree counts its commitments but does not list them, and the set of historical roots neither counts nor
+/// lists its roots.
 /// @custom:security-contact security@anoma.foundation
-contract CommitmentTree is ICommitmentTree {
+abstract contract CommitmentTree is ICommitmentTree, Initializable {
     using MerkleTree for MerkleTree.Tree;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    MerkleTree.Tree internal _merkleTree;
-    EnumerableSet.Bytes32Set internal _roots;
+    /// @custom:storage-location erc7201:anoma.storage.CommitmentTree
+    struct CommitmentTreeStorage {
+        MerkleTree.Tree _merkleTree;
+        mapping(bytes32 root => bool isHistorical) _historicalRoots;
+    }
 
+    // keccak256(abi.encode(uint256(keccak256("anoma.storage.CommitmentTree")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant _COMMITMENT_TREE_STORAGE_SLOT =
+        0x762a46a11c460b9bcb2bb98651da03b192a02e2a33ab26da9bf9ed53826bc900;
+
+    /// @notice Thrown if a consumed resource references a commitment tree root that is not a historical root.
     error NonExistingRoot(bytes32 root);
+
+    /// @notice Thrown if the set of historical roots already contains the commitment tree root to add.
     error PreExistingRoot(bytes32 root);
 
-    /// @notice Initializes the commitment accumulator by setting up a Merkle tree.
+    /// @notice The constructor disabling the initializers on the implementation contract.
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
-        bytes32 initialRoot = _merkleTree.setup();
-
-        // slither-disable-next-line unused-return
-        _roots.add(initialRoot);
-
-        emit CommitmentTreeRootAdded({root: initialRoot});
+        _disableInitializers();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentCount() external view override returns (uint256 count) {
-        count = _merkleTree.leafCount();
+        count = _getCommitmentTreeStorage()._merkleTree.leafCount();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeDepth() external view override returns (uint8 depth) {
-        depth = _merkleTree.depth();
+        depth = _getCommitmentTreeStorage()._merkleTree.depth();
     }
 
     /// @inheritdoc ICommitmentTree
     function commitmentTreeCapacity() external view override returns (uint256 capacity) {
-        capacity = _merkleTree.capacity();
+        capacity = _getCommitmentTreeStorage()._merkleTree.capacity();
     }
 
     /// @inheritdoc ICommitmentTree
-    function isCommitmentTreeRootContained(bytes32 root) external view override returns (bool isContained) {
-        isContained = _isCommitmentTreeRootContained(root);
+    /// @dev On each level where the commitment count has a one bit, the entry is the sibling on that level in the
+    /// Merkle path of the next commitment. The other levels hold stale values.
+    function commitmentTreeLeftSiblings() external view override returns (bytes32[] memory leftSiblings) {
+        leftSiblings = _getCommitmentTreeStorage()._merkleTree.leftSiblings();
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentTreeRootCount() external view override returns (uint256 count) {
-        count = _roots.length();
+    function commitmentTreeEmptySubtreeRoots() external view override returns (bytes32[] memory emptySubtreeRoots) {
+        emptySubtreeRoots = _getCommitmentTreeStorage()._merkleTree.emptySubtreeRoots();
     }
 
     /// @inheritdoc ICommitmentTree
-    function commitmentTreeRootAtIndex(uint256 index) external view override returns (bytes32 root) {
-        root = _roots.at(index);
+    function isCommitmentTreeRootHistorical(bytes32 root) external view override returns (bool isHistorical) {
+        isHistorical = _isCommitmentTreeRootHistorical(root);
     }
 
     /// @inheritdoc ICommitmentTree
-    function latestCommitmentTreeRoot() external view override returns (bytes32 root) {
-        root = _roots.at(_roots.length() - 1);
+    function latestCommitmentTreeRoot() public view override returns (bytes32 root) {
+        root = _getCommitmentTreeStorage()._merkleTree.currentRoot();
     }
 
-    /// @notice Adds a commitment to the accumulator and returns the new root.
+    /// @notice Sets up the empty commitment tree and adds its root to the set of historical roots.
+    // forge-lint: disable-next-line(mixed-case-function)
+    function __CommitmentTree_init() internal onlyInitializing {
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        bytes32 initialRoot = $._merkleTree.setup();
+
+        $._historicalRoots[initialRoot] = true;
+
+        emit CommitmentTreeRootAdded({root: initialRoot});
+    }
+
+    /// @notice Adds a commitment as the next leaf of the commitment tree.
     /// @param commitment The commitment to add.
-    /// @return newRoot The resulting new root.
-    function _addCommitment(bytes32 commitment) internal returns (bytes32 newRoot) {
-        uint256 index;
-        (index, newRoot) = _merkleTree.push(commitment);
+    function _addCommitment(bytes32 commitment) internal {
+        _getCommitmentTreeStorage()._merkleTree.push(commitment);
     }
 
     /// @notice Adds a root to the set of historical roots and emits the `CommitmentTreeRootAdded` event.
     /// @param root The root to store.
     function _addCommitmentTreeRoot(bytes32 root) internal {
-        if (!_roots.add(root)) {
-            revert PreExistingRoot(root);
-        }
-        emit CommitmentTreeRootAdded(root);
+        CommitmentTreeStorage storage $ = _getCommitmentTreeStorage();
+
+        require(!$._historicalRoots[root], PreExistingRoot(root));
+        $._historicalRoots[root] = true;
+
+        emit CommitmentTreeRootAdded({root: root});
     }
 
-    /// @notice Checks if a commitment tree root is contained in the set of historical roots.
-    /// @param root The root to check.
-    /// @return isContained Whether the root exists or not.
-    function _isCommitmentTreeRootContained(bytes32 root) internal view returns (bool isContained) {
-        isContained = _roots.contains(root);
+    /// @notice Returns whether the set of historical roots contains a commitment tree root.
+    /// @param root The commitment tree root to look up.
+    /// @return isHistorical Whether a consumed resource can reference the root.
+    function _isCommitmentTreeRootHistorical(bytes32 root) internal view returns (bool isHistorical) {
+        isHistorical = _getCommitmentTreeStorage()._historicalRoots[root];
+    }
+
+    /// @notice Returns the storage from the commitment tree storage location.
+    /// @return commitmentTreeStorage The data associated with the commitment tree storage.
+    function _getCommitmentTreeStorage() internal pure returns (CommitmentTreeStorage storage commitmentTreeStorage) {
+        // forge-lint: disable-next-item(inline-assembly)
+        assembly {
+            commitmentTreeStorage.slot := _COMMITMENT_TREE_STORAGE_SLOT
+        }
     }
 }
