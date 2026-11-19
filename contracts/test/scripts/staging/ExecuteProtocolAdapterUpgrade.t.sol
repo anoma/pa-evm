@@ -58,7 +58,7 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
     }
 
     function test_run_reverts_if_the_proxy_is_not_recorded() public {
-        ExecuteProtocolAdapterUpgrade script = new ExecuteProtocolAdapterUpgrade();
+        ExecuteProtocolAdapterUpgrade script = new ExecuteProtocolAdapterUpgradeMock(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(RecordedDeploymentsScript.DeploymentNotRecorded.selector, "staging", block.chainid)

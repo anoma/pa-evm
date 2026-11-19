@@ -77,7 +77,7 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
     }
 
     function test_run_reverts_if_the_proxy_is_not_recorded() public {
-        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgrade();
+        ProposeProtocolAdapterUpgrade script = new ProposeProtocolAdapterUpgradeMock(address(0));
 
         vm.expectRevert(
             abi.encodeWithSelector(
