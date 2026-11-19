@@ -271,7 +271,7 @@ contracts-simulate-migration-completion chain *args:
         --sig "run(bool)" $IS_PRODUCTION \
         --rpc-url {{chain}} {{ args }}
 
-# Complete the migration of one chain as the proxy owner, once the ERC20 forwarder balances moved
+# Complete the migration of one chain as the proxy owner: the upgrade, which lifts the pause, and, in production, the ownership transfer
 contracts-execute-migration-completion deployer chain *args:
     cd contracts && forge script script/migration/FinalizeProtocolAdapterStateMigration.s.sol:FinalizeProtocolAdapterStateMigration \
         --sig "run(bool)" $IS_PRODUCTION \
