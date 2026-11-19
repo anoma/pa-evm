@@ -14,7 +14,7 @@ edition = "2024"
 alloy = { version = "2.6.1", features = ["full", "eip712", "node-bindings"] }
 alloy-chains = "0.2.39"
 anoma-pa-testkit = "1.0.0-rc.9"
-anoma-risc0-verifier-bindings = "2.0.0"
+anoma-risc0-verifier-bindings = "2.0.1"
 anoma-rm-risc0 = { version = "2.0.0-rc.9", features = ["bonsai", "aggregation"] }
 anyhow = "1.0.104"
 dotenvy = { version = "0.15.7", features = ["cli"] }
