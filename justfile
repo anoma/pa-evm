@@ -81,7 +81,7 @@ contracts-test *args:
 
 # Regenerate Rust bindings from contracts
 contracts-gen-bindings:
-    # Only the bound files: with via_ir, the compiled file set changes the bytecode, and a verifier compiles a contract with its own imports only.
+    # Only the files of the contracts in `--select`: with via_ir, the compiled file set changes the bytecode, and a verifier compiles a contract with its own imports only.
     # `forge bind` builds without bytecode, so it reads these artifacts.
     cd contracts && forge clean && forge build \
         src/ProtocolAdapter.sol \
