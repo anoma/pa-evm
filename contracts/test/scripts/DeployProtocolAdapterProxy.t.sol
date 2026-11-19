@@ -12,6 +12,7 @@ import {
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../fixtures/RiscZeroRouterFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../mocks/DeployProtocolAdapterProxy.m.sol";
 
 /// @notice Checks the proxy deploy script against a fresh chain. The deployments it records are checked against the
 /// chains in the bindings crate, which owns the record.
@@ -46,7 +47,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_gives_the_migrational_proxy_the_staging_owner_in_both_environments() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
         (address stagingProxy,,,) = script.run({isProduction: false, isMigrational: true});
         (address productionProxy,,,) = script.run({isProduction: true, isMigrational: true});
 
@@ -59,7 +60,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_deploys_distinct_proxies_sharing_the_implementation() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
         (address stagingProxy, address stagingImplementation,,) =
             script.run({isProduction: false, isMigrational: false});
         (address productionProxy, address productionImplementation,,) =
@@ -72,7 +73,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_deploys_the_migrational_proxy_apart_from_the_plain_one() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
         (address plainProxy, address plainImplementation,,) = script.run({isProduction: false, isMigrational: false});
         (address migrationalProxy, address migrationalImplementation,,) =
             script.run({isProduction: false, isMigrational: true});
@@ -92,7 +93,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_reverts_if_the_proxy_is_already_deployed() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
         (address proxy,,,) = script.run({isProduction: false, isMigrational: false});
 
         vm.expectRevert(abi.encodeWithSelector(DeployProtocolAdapterProxy.ProxyAlreadyDeployed.selector, proxy));
@@ -102,7 +103,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_run_reverts_for_a_migrational_deployment_on_a_chain_without_a_legacy_protocol_adapter() public {
         vm.chainId(_CHAIN_ID_WITHOUT_LEGACY_PROTOCOL_ADAPTER);
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -116,7 +117,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     function test_predict_matches_the_addresses_run_deploys() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
 
         (address predictedProxy, address predictedImplementation) =
             script.predict({isProduction: false, isMigrational: false});
@@ -164,7 +165,7 @@ contract DeployProtocolAdapterProxyTest is RiscZeroRouterFixture {
     /// @param isProduction Whether to deploy the production or the staging environment proxy.
     /// @param isMigrational Whether to deploy the proxy on the migrational implementation.
     function _expectDeployment(bool isProduction, bool isMigrational) private {
-        DeployProtocolAdapterProxy script = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock script = new DeployProtocolAdapterProxyMock();
         (address proxy, address implementation,,) =
             script.run({isProduction: isProduction, isMigrational: isMigrational});
 

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ExecuteProtocolAdapterPause} from "../../../script/staging/ExecuteProtocolAdapterPause.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ExecuteProtocolAdapterPauseMock} from "../../mocks/ExecuteProtocolAdapterPause.m.sol";
 
 /// @notice Checks the staging-only pause script.
@@ -16,7 +16,7 @@ contract ExecuteProtocolAdapterPauseTest is RiscZeroRouterFixture {
     function setUp() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         (_stagingProxy,,,) = deployScript.run({isProduction: false, isMigrational: false});
         (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
