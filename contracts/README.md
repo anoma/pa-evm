@@ -97,16 +97,7 @@ slither .
 
 #### Rust Bindings
 
-To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run
-
-```sh
-forge clean && forge build --skip test && forge bind \
-  --skip-build \
-  --select '^(ProtocolAdapter|IProtocolAdapter|MigrationalProtocolAdapter|IMigrational|ICommitmentTree|INullifierSet|ERC1967Proxy|DeploymentParameters)$' \
-  --bindings-path ../crates/bindings/src/generated/ \
-  --module \
-  --overwrite
-```
+To regenerate the Rust bindings (see the [forge bind](https://getfoundry.sh/forge/reference/bind/) documentation), run `just contracts-gen-bindings` from the repository root. It builds only the bound files: with `via_ir`, the set of compiled files changes the bytecode, and a verifier such as Etherscan or Sourcify compiles a contract with its own imports only.
 
 #### Documentation
 
