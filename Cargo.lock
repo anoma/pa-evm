@@ -1133,9 +1133,9 @@ dependencies = [
 
 [[package]]
 name = "anoma-risc0-verifier-bindings"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479b842f7e8d54675acc117f66d733733c55204641adf04c246dafede658ce04"
+checksum = "324f3084ebde2d173e170e2b581571629708ad63af7b5c274fd018d32a8a9eb0"
 dependencies = [
  "alloy",
  "serde",
