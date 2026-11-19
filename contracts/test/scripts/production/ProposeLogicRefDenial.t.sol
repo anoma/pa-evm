@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeLogicRefDenial} from "../../../script/production/ProposeLogicRefDenial.s.sol";
 import {ILogicRefDenylist} from "../../../src/interfaces/ILogicRefDenylist.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ProposeLogicRefDenialMock} from "../../mocks/ProposeLogicRefDenial.m.sol";
 
 /// @notice Checks the production-only logic reference denial proposal script against a Safe-owned production proxy.
@@ -27,7 +27,7 @@ contract ProposeLogicRefDenialTest is RiscZeroRouterFixture, SafeFixture {
 
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());

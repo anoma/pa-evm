@@ -5,12 +5,12 @@ import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {ExecuteProtocolAdapterUpgrade} from "../../../script/staging/ExecuteProtocolAdapterUpgrade.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ExecuteProtocolAdapterUpgradeMock} from "../../mocks/ExecuteProtocolAdapterUpgrade.m.sol";
 
 /// @notice Checks the staging-only upgrade execution script. `ProtocolAdapter.upgrade.t.sol` covers the upgrade
@@ -23,7 +23,7 @@ contract ExecuteProtocolAdapterUpgradeTest is RiscZeroRouterFixture {
     function setUp() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         (_stagingProxy, _implementation,,) = deployScript.run({isProduction: false, isMigrational: false});
         (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});

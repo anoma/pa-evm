@@ -3,12 +3,12 @@ pragma solidity ^0.8.30;
 
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeProtocolAdapterPause} from "../../../script/production/ProposeProtocolAdapterPause.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ProposeProtocolAdapterPauseMock} from "../../mocks/ProposeProtocolAdapterPause.m.sol";
 
 /// @notice Checks the production-only pause proposal script against a Safe-owned production proxy. Outside broadcast
@@ -25,7 +25,7 @@ contract ProposeProtocolAdapterPauseTest is RiscZeroRouterFixture, SafeFixture {
 
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeKindTreeRootUpdate} from "../../../script/production/ProposeKindTreeRootUpdate.s.sol";
 import {IKindTreeRoot} from "../../../src/interfaces/IKindTreeRoot.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ProposeKindTreeRootUpdateMock} from "../../mocks/ProposeKindTreeRootUpdate.m.sol";
 
 /// @notice Checks the production-only kind tree root update proposal script against a Safe-owned production proxy.
@@ -27,7 +27,7 @@ contract ProposeKindTreeRootUpdateTest is RiscZeroRouterFixture, SafeFixture {
 
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());

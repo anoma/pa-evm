@@ -5,13 +5,13 @@ import {IERC1967} from "@openzeppelin-contracts-5.7.0/interfaces/IERC1967.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {DeployProtocolAdapterImplementation} from "../../../script/DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ProductionScript} from "../../../script/production/ProductionScript.s.sol";
 import {ProposeProtocolAdapterUpgrade} from "../../../script/production/ProposeProtocolAdapterUpgrade.s.sol";
 import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
 import {SafeFixture} from "../../fixtures/SafeFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
 import {ProposeProtocolAdapterUpgradeMock} from "../../mocks/ProposeProtocolAdapterUpgrade.m.sol";
 
 /// @notice Checks the production-only upgrade proposal script against a Safe-owned production proxy. Outside
@@ -30,7 +30,7 @@ contract ProposeProtocolAdapterUpgradeTest is RiscZeroRouterFixture, SafeFixture
 
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         _owner = makeAddr("safe owner");
         _safe = _deploySafeAt(_owner, deployScript.PROXY_OWNER_PRODUCTION());

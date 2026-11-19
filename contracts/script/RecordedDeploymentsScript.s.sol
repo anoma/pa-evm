@@ -8,8 +8,8 @@ import {RecordedDeployments} from "./libs/RecordedDeployments.sol";
 
 /// @title RecordedDeploymentsScript
 /// @author Anoma Foundation, 2026
-/// @notice The base of the scripts that act on a recorded protocol adapter proxy. The proxy comes from the records, so
-/// `--rpc-url` alone names the chain.
+/// @notice The base of the scripts that read the protocol adapter proxy an environment records for the chain
+/// `--rpc-url` names.
 /// @custom:security-contact security@anoma.foundation
 abstract contract RecordedDeploymentsScript is Script {
     /// @notice Thrown if the environment records no proxy for the chain.
