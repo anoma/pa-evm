@@ -6,7 +6,7 @@ How to move a chain from its legacy protocol adapter to the protocol adapter and
 
 A chain that ran a legacy protocol adapter cannot start the protocol adapter empty. Its proxy starts on [`MigrationalProtocolAdapter`](./contracts/src/MigrationalProtocolAdapter.sol), a protocol adapter that begins paused and lets its owner copy the state of the legacy protocol adapter in. The state moves in two runs. In the migration run, [`MigrateProtocolAdapterState`](./contracts/script/migration/MigrateProtocolAdapterState.s.sol) copies the state, and the proxy stays paused. In the completion run, [`FinalizeProtocolAdapterStateMigration`](./contracts/script/migration/FinalizeProtocolAdapterStateMigration.s.sol) upgrades the proxy to `ProtocolAdapter`, which lifts the pause, and, in production, transfers the proxy to the production proxy owner. After that upgrade the chain runs the same code as every other chain, and the copy-in functions are gone.
 
-The ERC20 forwarder balances move between the two runs. The kind tree on the proxy carries entries under the label of the legacy ERC20 forwarder, which let a legacy-forwarder resource unwrap from the environment's ERC20 forwarder. A paused proxy executes nothing, so no legacy-forwarder resource can unwrap before the environment's ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
+The ERC20 forwarder balances move after the completion run, and the proxy gets the kind tree root of the chain only after that move. The kind tree of the chain carries entries under the label of the legacy ERC20 forwarder, which let a legacy-forwarder resource unwrap from the environment's ERC20 forwarder. A new proxy stores the root of the empty kind tree, and with this root no legacy-forwarder resource can convert. So none can unwrap before the environment's ERC20 forwarder holds the tokens of the legacy ERC20 forwarder.
 
 The migrational implementation adds two functions. Both are owner-only, and both are allowed only while the adapter is paused and the legacy protocol adapter is stopped.
 
@@ -48,19 +48,9 @@ Neither function is closed by the contract. The upgrade to the plain implementat
   just contracts-verify-deployment <MIGRATIONAL_IMPLEMENTATION> <PROXY> <CHAIN>
   ```
 
-- [ ] Record the proxy in `deployments.json` and release the bindings, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the legacy protocol adapter from this file, so they refuse to start without this record. The kind trees repository takes its chains from it too. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain. The production gate also requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it, so that gate fails for this chain until then. Do not promote production before the check at the end.
+- [ ] Record the proxy in `deployments.json`, as for a chain new to an environment in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md). The migration and completion runs read the proxy and the legacy protocol adapter from this file, so they refuse to start without this record. The kind trees repository takes its chains from it too. Release the bindings with the record only after the check in step 7: the production gate requires a Safe to own the proxy, and the deployment wallet owns it until the completion run transfers it. On both promotion gates, the bindings tests accept a recorded proxy that runs the migrational implementation this source predicts, and print an info line for the chain.
 
-- [ ] Deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's legacy ERC20 forwarder.
-
-- [ ] Install the chain's kind tree root on the proxy. Generate the tree after the forwarders are recorded, so that it carries the entries under the label of the legacy ERC20 forwarder. The proxy can take the root while paused, so install it before the stop of the legacy protocol adapter. The migration and completion runs do not change it. Simulate, run, and read it back:
-
-  ```sh
-  just contracts-simulate-staging-kind-tree-root-update <KIND_TREE_ROOT> <CHAIN>
-  just contracts-execute-staging-kind-tree-root-update deployer <KIND_TREE_ROOT> <CHAIN>
-  cast call <PROXY> "getKindTreeRoot()(bytes32)" --rpc-url <CHAIN>
-  ```
-
-- [ ] Deprecate the logic reference that the chain's legacy ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The entries under the label of the legacy ERC20 forwarder make its resources fungible with those of the environment's ERC20 forwarder, in both directions, so without this entry a transaction could convert resources of the environment's ERC20 forwarder into new legacy-forwarder resources. Legacy-forwarder resources stay consumable, so they still convert and unwrap. Take the logic reference from the legacy ERC20 forwarder that the forwarder repository records, and check that the environment's ERC20 forwarder on the chain accepts a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the stop of the legacy protocol adapter. Simulate, run, and read it back:
+- [ ] Deprecate the logic reference that the chain's legacy ERC20 forwarder accepts: add it to the proxy's denylist for created resources. The kind tree of the chain has entries under the label of the legacy ERC20 forwarder, which make its resources fungible with those of the environment's ERC20 forwarder, in both directions. So without this entry a transaction could convert resources of the environment's ERC20 forwarder into new legacy-forwarder resources. Legacy-forwarder resources stay consumable, so they still convert and unwrap. Take the logic reference from the legacy ERC20 forwarder that the forwarder repository records. The environment's ERC20 forwarder must accept a different one: no wrap can create resources of a deprecated logic reference. The proxy can take the entry while paused, so add it before the stop of the legacy protocol adapter. It must be on the denylist before the completion run ends the pause. Simulate, run, and read it back:
 
   ```sh
   just contracts-simulate-staging-logic-ref-denial "[(<LEGACY_ERC20_FORWARDER_LOGIC_REF>,false)]" <CHAIN>
@@ -70,7 +60,7 @@ Neither function is closed by the contract. The upgrade to the plain implementat
 
 ## Per chain
 
-The stop in step 1 leaves users unable to transact, and the upgrade in step 7 lets them transact again. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 7 run after it. Step 1 is a transaction of the production Safe, and step 5 needs a transaction of the forwarder multisig.
+The stop in step 1 leaves users unable to transact, and the upgrade in step 6 lets them transact again. Legacy-forwarder resources can convert only after step 10. Before the stop, do each step that can run before it, and simulate the steps that come after it. Steps 2 to 10 run after it. Step 1 is a transaction of the production Safe, step 9 needs a transaction of the forwarder multisig, and in production step 10 is a transaction of the production Safe.
 
 1. [ ] Stop the legacy protocol adapter. The production Safe, `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10`, owns every legacy protocol adapter, so the stop is a Safe transaction that calls `emergencyStop()` on it. Propose it as a Safe owner or delegate, and agree on a signing time with the Safe signers before the planned stop. Ask them to confirm and execute it in the [Safe app](https://app.safe.global/home?safe=0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10), then read the pause back:
 
@@ -99,16 +89,14 @@ The stop in step 1 leaves users unable to transact, and the upgrade in step 7 le
 
    If the run stops early, fix the cause and repeat it. Every step skips once it is done, so the repeat continues where the run stopped. The copy-in stays open until the upgrade lands, and a proxy left half-migrated cannot be replaced at its address.
 
-5. [ ] Move the balances of the legacy ERC20 forwarder to the environment's ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must stay paused until they moved: the entries under the label of the legacy ERC20 forwarder let legacy-forwarder resources unwrap from the environment's ERC20 forwarder.
-
-6. [ ] Simulate the completion run. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
+5. [ ] Simulate the completion run. `IS_PRODUCTION` decides whether the run ends with the transfer to the production proxy owner:
 
    ```sh
    export IS_PRODUCTION=<true|false>
    just contracts-simulate-migration-completion <CHAIN>
    ```
 
-7. [ ] Run it:
+6. [ ] Run it:
 
    ```sh
    just contracts-execute-migration-completion deployer <CHAIN>
@@ -118,10 +106,26 @@ The stop in step 1 leaves users unable to transact, and the upgrade in step 7 le
 
    A proxy that is short of a batch refuses the upgrade, so a half-migrated chain stays paused instead of running on part of the state. If the run stops early, fix the cause and repeat it.
 
-8. [ ] Check the result, reading from the chain:
+   After the run, the proxy still stores the root of the empty kind tree. Users can transact, but no legacy-forwarder resource can convert before step 10.
+
+7. [ ] Check the result, reading from the chain:
 
    ```sh
    just contracts-check-migration <CHAIN>
    ```
 
    It compares the copied state with the legacy protocol adapter, and it checks that the proxy runs the plain implementation and is unpaused. In production, it also checks that the production proxy owner owns the proxy.
+
+8. [ ] Release the bindings with the record of the proxy, as [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md) describes. Then deploy the ERC20 forwarder and the generic call forwarder against the proxy, and record them in their repositories together with the chain's legacy ERC20 forwarder. Their deploy scripts read the proxy from the released bindings.
+
+9. [ ] Move the balances of the legacy ERC20 forwarder to the environment's ERC20 forwarder, as `anomapay-erc20-forwarder` sets out. The proxy must keep the root of the empty kind tree until they moved: the entries under the label of the legacy ERC20 forwarder let legacy-forwarder resources unwrap from the environment's ERC20 forwarder.
+
+10. [ ] Install the chain's kind tree root on the proxy, only after the balances moved. Generate the tree after the forwarders are recorded, so that it carries the entries under the label of the legacy ERC20 forwarder. In staging, simulate, run, and read it back:
+
+    ```sh
+    just contracts-simulate-staging-kind-tree-root-update <KIND_TREE_ROOT> <CHAIN>
+    just contracts-execute-staging-kind-tree-root-update deployer <KIND_TREE_ROOT> <CHAIN>
+    cast call <PROXY> "getKindTreeRoot()(bytes32)" --rpc-url <CHAIN>
+    ```
+
+    In production, the production proxy owner owns the proxy since step 6. Propose the root to the Safe and ask its signers to execute it, as _Updating the Kind Tree Root_ in [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md#updating-the-kind-tree-root) describes, then read it back.
