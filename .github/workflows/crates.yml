@@ -6,16 +6,28 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Each job states the permissions that it needs.
+permissions: {}
+
+# A new push to a pull request cancels the run of the previous push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   tests:
     name: Crates Tests
     runs-on: macos-latest
+    permissions:
+      contents: read
     env:
       RISC0_SKIP_BUILD_KERNELS: true
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install just
         uses: taiki-e/install-action@v2

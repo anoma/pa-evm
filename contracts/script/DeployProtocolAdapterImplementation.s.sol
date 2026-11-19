@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-2.0.0/src/RiscZeroVerifierSelectors.sol";
-import {SupportedNetworks} from "anoma-risc0-deployments-2.0.0/src/SupportedNetworks.sol";
+import {RiscZeroVerifierSelectors} from "anoma-risc0-deployments-2.0.1/src/RiscZeroVerifierSelectors.sol";
+import {SupportedNetworks} from "anoma-risc0-deployments-2.0.1/src/SupportedNetworks.sol";
 import {Script} from "forge-std-1.17.0/src/Script.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
-import {Parameters} from "./Parameters.sol";
+import {Parameters} from "./libs/Parameters.sol";
 
 /// @title DeployProtocolAdapterImplementation
 /// @author Anoma Foundation, 2026
@@ -30,8 +30,8 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
     /// @notice Thrown if the implementation of the current source version is already deployed.
     error ImplementationAlreadyDeployed(address implementation);
 
-    /// @notice Thrown if an implementation to upgrade to is not the one the current source version deploys to.
-    error UnexpectedImplementation(address expected, address actual);
+    /// @notice Thrown if the RISC Zero verifier for the selector of an implementation is paused.
+    error RiscZeroVerifierPaused(address implementation);
 
     /// @notice Validates the protocol adapter implementation for upgrade safety and deploys it on supported networks.
     /// @return implementation The protocol adapter implementation contract.
@@ -78,5 +78,24 @@ contract DeployProtocolAdapterImplementation is SupportedNetworks, Script {
         bytes memory initCode = abi.encodePacked(type(ProtocolAdapter).creationCode, constructorData);
 
         implementation = vm.computeCreate2Address({salt: salt, initCodeHash: keccak256(initCode)});
+    }
+
+    /// @notice Returns the implementation of this source version, and reverts unless it is deployed.
+    /// @return implementation The deployed implementation contract.
+    function deployed() public view returns (address implementation) {
+        // forge-lint: disable-next-line(unused-return)
+        (implementation,) = predict();
+        require(implementation.code.length != 0, ImplementationNotDeployed({implementation: implementation}));
+    }
+
+    /// @notice Reverts unless the RISC Zero router has a verifier for the selector of an implementation and this
+    /// verifier is not paused, so that an upgrade to the implementation does not stop `execute`.
+    /// @dev The router reverts with `SelectorUnknown` or `SelectorRemoved` if it has no verifier for the selector.
+    /// @param implementation The implementation to check.
+    function requireActiveRiscZeroVerifier(address implementation) public view {
+        require(
+            !ProtocolAdapter(implementation).riscZeroVerifierPaused(),
+            RiscZeroVerifierPaused({implementation: implementation})
+        );
     }
 }

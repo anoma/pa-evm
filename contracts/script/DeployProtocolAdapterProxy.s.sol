@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {ERC1967Proxy} from "@openzeppelin-contracts-5.7.0/proxy/ERC1967/ERC1967Proxy.sol";
-import {Script} from "forge-std-1.17.0/src/Script.sol";
 
-import {RecordedDeployments} from "../generated/RecordedDeployments.sol";
 import {ProtocolAdapter} from "../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "./DeployProtocolAdapterImplementation.s.sol";
+import {DeploymentsJson} from "./libs/DeploymentsJson.sol";
+import {Parameters} from "./libs/Parameters.sol";
 import {
     DeployMigrationalProtocolAdapterImplementation
 } from "./migration/DeployMigrationalProtocolAdapterImplementation.s.sol";
-import {Parameters} from "./Parameters.sol";
+import {RecordedDeploymentsScript} from "./RecordedDeploymentsScript.s.sol";
 
 /// @title DeployProtocolAdapterProxy
 /// @author Anoma Foundation, 2026
@@ -18,7 +18,7 @@ import {Parameters} from "./Parameters.sol";
 /// networks. A chain that ran a legacy protocol adapter starts its proxy on the migrational implementation
 /// instead, which copies its state in.
 /// @custom:security-contact security@anoma.foundation
-contract DeployProtocolAdapterProxy is Script {
+contract DeployProtocolAdapterProxy is RecordedDeploymentsScript {
     /// @notice The CREATE2 salt for the staging environment proxy deployment.
     bytes32 public constant PROXY_SALT_STAGING = Parameters.PROXY_SALT_STAGING;
 
@@ -60,8 +60,8 @@ contract DeployProtocolAdapterProxy is Script {
         // Checks
         {
             require(
-                !RecordedDeployments.isRecorded({isProduction: isProduction, chainId: block.chainid}),
-                DeploymentAlreadyRecorded(environmentName(isProduction), block.chainid)
+                _recordedProxy(isProduction) == address(0),
+                DeploymentAlreadyRecorded(DeploymentsJson.environment(isProduction), block.chainid)
             );
 
             implementation = _predictImplementation(isMigrational);
@@ -99,13 +99,6 @@ contract DeployProtocolAdapterProxy is Script {
             implementation: implementation,
             owner: _proxyOwner({isProduction: isProduction, isMigrational: isMigrational})
         });
-    }
-
-    /// @notice Returns the name of an environment, which keys its deployments in `deployments.json`.
-    /// @param isProduction Whether to name the production or the staging environment.
-    /// @return name The environment name.
-    function environmentName(bool isProduction) public pure returns (string memory name) {
-        name = isProduction ? "production" : "staging";
     }
 
     /// @notice Predicts the implementation the proxy starts on.

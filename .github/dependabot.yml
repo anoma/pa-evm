@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    # Development happens on next, not on the default branch main.
+    target-branch: next
+    schedule:
+      interval: weekly
+    # New versions wait 3 days before an update.
+    cooldown:
+      default-days: 3

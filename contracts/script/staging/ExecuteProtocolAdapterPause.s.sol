@@ -6,14 +6,15 @@ import {StagingScript} from "./StagingScript.s.sol";
 
 /// @title ExecuteProtocolAdapterPause
 /// @author Anoma Foundation, 2026
-/// @notice A script to pause the staging environment protocol adapter proxy, so that it executes no transaction until
-/// the owner calls `unpause`. Staging only: the production proxy is owned by a Safe multisig, whose owners execute the
-/// pause proposed by `production/ProposeProtocolAdapterPause` in the Safe app instead.
+/// @notice A script to pause a recorded protocol adapter proxy that the staging proxy owner owns, so that it executes
+/// no transaction until the owner calls `unpause`. Once a Safe multisig owns the proxy, its owners execute the pause
+/// proposed by `production/ProposeProtocolAdapterPause` in the Safe app instead.
 /// @custom:security-contact security@anoma.foundation
 contract ExecuteProtocolAdapterPause is StagingScript {
-    /// @notice Pauses the protocol adapter as the proxy owner. Without `--broadcast`, the pause is simulated locally.
-    /// @param proxy The staging environment protocol adapter proxy to pause.
-    function run(address proxy) public {
+    /// @notice Pauses the recorded proxy as the proxy owner. Without `--broadcast`, the pause is simulated locally.
+    /// @param isProduction Whether to pause the production or the staging proxy.
+    function run(bool isProduction) public {
+        address proxy = _requireRecordedProxy(isProduction);
         address owner = _stagingOwner({proxy: proxy});
 
         vm.startBroadcast(owner);

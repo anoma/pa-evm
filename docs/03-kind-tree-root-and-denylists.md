@@ -31,6 +31,8 @@ The protocol adapter keeps two denylists of logic refs: one for consumed resourc
 
 An entry only on the list for consumed resources is also possible. Then transactions can create resources that no transaction can consume.
 
+For a resource logic with a flaw, the owner denies both sides in one `denyLogicRefs` call. Then no transaction can create resources of the logic ref between two calls.
+
 The lists contain logic refs, not kinds. So an entry applies to the resources of that logic ref with any label ref, also to the resources of other applications.
 
 ## 3. Use in the soft and the hard migration
@@ -46,7 +48,7 @@ Each application implements its own migrations. The ERC20 forwarder specifies bo
 ## 4. Trust assumptions
 
 - **The owner sets only reviewed kind tree roots.** The stored kind tree decides which kinds are aliases. An entry that makes two kinds aliases lets users convert one into the other at the same quantity, so a wrong entry can let users take tokens that back other resources. The kind trees repository publishes roots after a review.
-- **No upgrade removes a denylist entry.** No function removes an entry, but a new implementation can change the lists.
+- **No upgrade removes a denylist entry, except a wrong entry.** No function removes an entry, but a new implementation can change the lists. So the owner can remove a wrong entry with an upgrade. The owner does this only while no hard migration has replaced resources of that logic ref, because a hard migration relies on the entry: without it, a transaction can consume the replaced resources again.
 - **The owner deprecates or denies only replaced or flawed logic refs.** The denylists apply to all applications, so the owner can stop the resources of any resource logic.
 
 ## 5. Parameters

@@ -6,16 +6,28 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Each job states the permissions that it needs.
+permissions: {}
+
+# A new push to a pull request cancels the run of the previous push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   tests:
     name: Contracts Tests
     runs-on: macos-latest
+    permissions:
+      contents: read
     env:
       FOUNDRY_PROFILE: ci
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install just
         uses: taiki-e/install-action@v2
@@ -35,15 +47,13 @@ jobs:
         run: just contracts-deps
 
       - name: Install Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Show Bun version
         run: bun --version
-        working-directory: ./contracts
 
-      - name: Install Solhint
-        run: bun install solhint
-        working-directory: ./contracts
+      - name: Install the contract tooling
+        run: just contracts-tooling
 
       - name: Lint contracts
         run: just contracts-lint
@@ -62,9 +72,6 @@ jobs:
 
       - name: Run Forge fmt
         run: just contracts-fmt-check
-
-      - name: Check that the recorded deployments library is up-to-date
-        run: just contracts-deployments-check
 
       - name: Check that bindings are up-to-date
         run: just bindings-check

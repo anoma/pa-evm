@@ -3,17 +3,17 @@ pragma solidity ^0.8.30;
 
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title FinalizeProtocolAdapterStateMigration
 /// @author Anoma Foundation, 2026
-/// @notice A script for the completion run of one chain's migration, once the ERC20 forwarder balances moved. The
-/// proxy holds the state that `MigrateProtocolAdapterState` copied from the legacy protocol adapter. The script
-/// upgrades it from `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation, which lifts the
-/// pause, and, in production, transfers it to the production proxy owner. The upgrade compares the copied state
-/// against the legacy protocol adapter and reverts on a difference, so no run lifts the pause with the wrong state.
-/// Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
+/// @notice A script for the completion run of one chain's migration. The proxy holds the state that
+/// `MigrateProtocolAdapterState` copied from the legacy protocol adapter. The script upgrades it from
+/// `MigrationalProtocolAdapter` to the plain `ProtocolAdapter` implementation, which lifts the pause, and, in
+/// production, transfers it to the production proxy owner. The upgrade compares the copied state against the legacy
+/// protocol adapter and reverts on a difference, so no run lifts the pause with the wrong state. Every step skips once
+/// it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
 /// `--account` alone forge runs it as its default sender.
@@ -22,22 +22,23 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
     /// @notice Upgrades to the plain implementation, which lifts the pause, and, in production, transfers the proxy to
     /// the production proxy owner. The upgrade is what checks the copied state against the legacy protocol adapter.
     /// Without `--broadcast` the run is simulated locally.
+    /// @param isProduction Whether to finalize the production or the staging proxy. The production proxy owner
+    /// receives a production proxy.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run `MigrateProtocolAdapterState.verify`
     /// afterwards to assert the result against the chain.
-    /// @param isProduction Whether to finalize the production or the staging proxy. The production proxy owner
-    /// receives a production proxy.
     function run(bool isProduction) public {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
 
         DeployProtocolAdapterImplementation implementationDeployScript = new DeployProtocolAdapterImplementation();
-        address implementation = _requireDeployedImplementation(implementationDeployScript);
+        address implementation = implementationDeployScript.deployed();
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
         address owner = protocolAdapter.owner();
 
         if (protocolAdapter.getImplementation() != implementation) {
             _requireLegacyProtocolAdapter({legacyProtocolAdapter: legacyProtocolAdapter, proxy: proxy});
+            implementationDeployScript.requireActiveRiscZeroVerifier(implementation);
 
             // Read before the broadcast: `vm.broadcast` arms only the next call, and a view call would take it.
             bytes memory initializationData = implementationDeployScript.INITIALIZATION_DATA();
@@ -46,7 +47,7 @@ contract FinalizeProtocolAdapterStateMigration is MigrationScript {
         }
 
         if (isProduction) {
-            address productionOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            address productionOwner = Parameters.PA_MULTISIG;
             if (protocolAdapter.owner() != productionOwner) {
                 vm.broadcast(owner);
                 protocolAdapter.transferOwnership(productionOwner);

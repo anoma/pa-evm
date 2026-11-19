@@ -12,6 +12,7 @@ import {
     FinalizeProtocolAdapterStateMigration
 } from "../../../script/migration/FinalizeProtocolAdapterStateMigration.s.sol";
 import {MigrationScript} from "../../../script/migration/MigrationScript.s.sol";
+import {RecordedDeploymentsScript} from "../../../script/RecordedDeploymentsScript.s.sol";
 import {MigrationalProtocolAdapter} from "../../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../../src/ProtocolAdapter.sol";
 import {MigrationFixture} from "../../fixtures/MigrationFixture.sol";
@@ -106,7 +107,9 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(MigrationScript.DeploymentNotRecorded.selector, "production", block.chainid)
+            abi.encodeWithSelector(
+                RecordedDeploymentsScript.DeploymentNotRecorded.selector, "production", block.chainid
+            )
         );
         script.run({isProduction: true});
     }
@@ -123,5 +126,17 @@ contract FinalizeProtocolAdapterStateMigrationTest is MigrationFixture {
         _finalizationScript.run({isProduction: true});
 
         _migrationScript.verify({isProduction: true});
+    }
+
+    function test_run_reverts_if_the_risc_zero_verifier_is_stopped() public {
+        _migrationScript.run({isProduction: false});
+        address implementation = new DeployProtocolAdapterImplementation().deployed();
+
+        _stopRiscZeroVerifier(ProtocolAdapter(implementation).RISC_ZERO_VERIFIER_SELECTOR());
+
+        vm.expectRevert(
+            abi.encodeWithSelector(DeployProtocolAdapterImplementation.RiscZeroVerifierPaused.selector, implementation)
+        );
+        _finalizationScript.run({isProduction: false});
     }
 }

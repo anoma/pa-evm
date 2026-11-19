@@ -4,11 +4,11 @@ pragma solidity ^0.8.30;
 import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpgradeable.sol";
 import {Address} from "@openzeppelin-contracts-5.7.0/utils/Address.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
-import {ForwarderExample} from "anoma-forwarder-bases-3.1.0/test/examples/ForwarderExample.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
+import {ForwarderExample} from "anoma-forwarder-bases-3.1.1/test/examples/ForwarderExample.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Vm} from "forge-std-1.17.0/src/Test.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 import {Enum} from "safe-smart-account-1.5.0/contracts/libraries/Enum.sol";
@@ -127,13 +127,22 @@ contract ProtocolAdapterReentrancyTest is SafeFixture {
     /// @dev Executes a transaction whose created resource makes the forwarder call `target` with `payload`. The
     /// protocol adapter requires `output` as the output of the call.
     function _expectExecuteToRevertOnForwarderCall(address target, bytes memory payload, bytes memory output) internal {
-        IProtocolAdapter.Transaction memory txn = vm.transactionWithForwarderCall({
-            mockVerifier: _mockVerifier,
-            forwarder: _fwd,
-            logicRef: _CARRIER_LOGIC_REF,
-            input: abi.encode(target, payload),
-            output: output
-        });
+        TxGen.ActionResource[] memory resources = new TxGen.ActionResource[](2);
+        resources[0] = TxGen.consumed(
+            TxGen.mockResource({
+                nonce: bytes32(0), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            TxGen.emptyAppData()
+        );
+        resources[1] = TxGen.created(
+            TxGen.mockResource({
+                nonce: bytes32(uint256(1)), logicRef: _CARRIER_LOGIC_REF, labelRef: _CARRIER_LOGIC_REF, quantity: 1
+            }),
+            TxGen.forwarderCallAppData({forwarder: _fwd, input: abi.encode(target, payload), output: output})
+        );
+
+        IProtocolAdapter.Transaction memory txn =
+            vm.transaction({mockVerifier: _mockVerifier, actionResources: TxGen.oneAction(resources)});
 
         vm.expectRevert(ReentrancyGuardTransient.ReentrancyGuardReentrantCall.selector, address(_mockPa));
         _mockPa.execute(txn);

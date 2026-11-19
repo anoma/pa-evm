@@ -240,7 +240,7 @@ contract DeltaProofTest is Test {
 
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory lhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: lhs.x, _y: lhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -256,7 +256,7 @@ contract DeltaProofTest is Test {
     function testFuzz_add_reverts_when_adding_zero_from_the_right(uint32 k) public {
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory lhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: lhs.x, _y: lhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -276,7 +276,7 @@ contract DeltaProofTest is Test {
 
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory rhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: rhs.x, _y: rhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -299,7 +299,7 @@ contract DeltaProofTest is Test {
 
         // Generate a random point on the curve.
         IProtocolAdapter.Delta memory rhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: rhs.x, _y: rhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -316,7 +316,7 @@ contract DeltaProofTest is Test {
     function testFuzz_add_adding_two_curve_points_produces_a_curve_point(uint32 k1, uint32 k2) public pure {
         // Generate two random points on the curve.
         IProtocolAdapter.Delta memory lhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k1});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k1});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: lhs.x, _y: lhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP
@@ -325,7 +325,7 @@ contract DeltaProofTest is Test {
         );
 
         IProtocolAdapter.Delta memory rhs =
-            _mul({p: IProtocolAdapter.Delta({x: DeltaProof._GX, y: DeltaProof._GY}), k: k2});
+            _mul({p: IProtocolAdapter.Delta({x: DeltaGen.SECP256K1_GX, y: DeltaGen.SECP256K1_GY}), k: k2});
         assertTrue(
             EllipticCurve.isOnCurve({
                 _x: rhs.x, _y: rhs.y, _aa: DeltaProof._AA, _bb: DeltaProof._BB, _pp: DeltaProof._PP

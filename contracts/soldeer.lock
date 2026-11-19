@@ -1,4 +1,4 @@
-version = 1
+version = 2
 
 [[dependencies]]
 name = "@openzeppelin-contracts"
@@ -16,17 +16,17 @@ integrity = "1a08068b2fe262d4f6ae80e0be44965480b1a532d40722c80634d8963337743d"
 
 [[dependencies]]
 name = "anoma-forwarder-bases"
-version = "3.1.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_1_0_22-10-2026_12:15:38_contracts.zip"
-checksum = "8bf86a162ddb2f59d8e2ebff1763660e8796d486cf91e883367c6aabc559ca7d"
-integrity = "0ad41f829796f2a75e0553ba6962e28b70433293bc417de387f481798f15f04a"
+version = "3.1.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-forwarder-bases/3_1_1_18-11-2026_20:08:14_contracts.zip"
+checksum = "f8f1c11c0242b67fa0105fc64e4146048d26abdb43f6854c64f68be8825ec9af"
+integrity = "8525fe0aead22242f99a432e578ff46cc8a9d17d4fcc6e74886acfab4490612e"
 
 [[dependencies]]
 name = "anoma-risc0-deployments"
-version = "2.0.0"
-url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/2_0_0_12-11-2026_09:11:55_contracts.zip"
-checksum = "e6c9383f2c1b2db2d7001530f8656d9a44d7bcaef4a235375b91ce8a5d945ecf"
-integrity = "509cb39a31fe2b86b456346ed964a10da11d3f099044dcc65dc58cb1f0dc9d33"
+version = "2.0.1"
+url = "https://soldeer-revisions.s3.amazonaws.com/anoma-risc0-deployments/2_0_1_18-11-2026_19:09:17_contracts.zip"
+checksum = "c9c4883509a6e85ab69411aeca0245473a056bace995da66318fdfad1688fddc"
+integrity = "dfc120e9e300020f26961aa203aaf2d4cd3fd95fa0f48c768ca8c01b4989f8fc"
 
 [[dependencies]]
 name = "elliptic-curve-solidity"
@@ -43,10 +43,10 @@ integrity = "fa706c8a7caf3426c90f75e6aafa3224b0a6c899b490800cf6944e4ec42f9344"
 
 [[dependencies]]
 name = "openzeppelin-foundry-upgrades"
-version = "0.4.2"
-url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_2_05-08-2026_15:52:28_openzeppelin-foundry-upgrades.zip"
-checksum = "52618e6037df7c02671d94599647ef4caccbcad043ad8d663551275bc47f5a2e"
-integrity = "64c8d2d87ba2d2e3ee5946f3638d386e05d0f37b137b0588058b7bbdf7fb233d"
+version = "0.4.4"
+url = "https://soldeer-revisions.s3.amazonaws.com/openzeppelin-foundry-upgrades/0_4_4_04-11-2026_23:39:32_openzeppelin-foundry-upgrades.zip"
+checksum = "a494ab858a085adcce4bd35a1ebd2bb3ebeca8be7b24628b9bf85ee205cc4397"
+integrity = "ef14beca5f0adf272402e1dfae3dfecd8156550d9d129484c32f358bf14eff95"
 
 [[dependencies]]
 name = "risc0-risc0-ethereum"

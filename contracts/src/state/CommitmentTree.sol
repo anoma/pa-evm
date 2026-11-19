@@ -25,7 +25,10 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
     bytes32 internal constant _COMMITMENT_TREE_STORAGE_SLOT =
         0x762a46a11c460b9bcb2bb98651da03b192a02e2a33ab26da9bf9ed53826bc900;
 
+    /// @notice Thrown if a consumed resource references a commitment tree root that is not a historical root.
     error NonExistingRoot(bytes32 root);
+
+    /// @notice Thrown if the set of historical roots already contains the commitment tree root to add.
     error PreExistingRoot(bytes32 root);
 
     /// @notice The constructor disabling the initializers on the implementation contract.
@@ -97,7 +100,7 @@ abstract contract CommitmentTree is ICommitmentTree, Initializable {
         require(!$._historicalRoots[root], PreExistingRoot(root));
         $._historicalRoots[root] = true;
 
-        emit CommitmentTreeRootAdded(root);
+        emit CommitmentTreeRootAdded({root: root});
     }
 
     /// @notice Returns whether the set of historical roots contains a commitment tree root.

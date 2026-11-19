@@ -25,7 +25,11 @@ abstract contract KindTreeRoot is IKindTreeRoot, Initializable {
     bytes32 internal constant _KIND_TREE_ROOT_STORAGE_SLOT =
         0x3c4f446b1611bef8becaa7ce2dd3faff29493fef5f93c5c3f81ec61f107dcb00;
 
+    /// @notice Thrown if the kind tree root to set is zero.
     error ZeroKindTreeRootNotAllowed();
+
+    /// @notice Thrown if the kind tree root of a transaction is neither the stored root nor the root of the empty
+    /// kind tree.
     error UnacceptedKindTreeRoot(bytes32 kindTreeRoot);
 
     /// @notice The constructor disabling the initializers on the implementation contract.

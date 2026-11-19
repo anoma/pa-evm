@@ -4,15 +4,15 @@ pragma solidity ^0.8.30;
 import {Ownable} from "@openzeppelin-contracts-5.7.0/access/Ownable.sol";
 import {Pausable} from "@openzeppelin-contracts-5.7.0/utils/Pausable.sol";
 
-import {DeployRiscZeroContracts} from "anoma-risc0-deployments-2.0.0/script/DeployRiscZeroContracts.s.sol";
+import {DeployRiscZeroContracts} from "anoma-risc0-deployments-2.0.1/script/DeployRiscZeroContracts.s.sol";
 import {
     DeployRiscZeroContractsMock,
     MOCK_VERIFIER_SELECTOR
-} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
+} from "anoma-risc0-deployments-2.0.1/test/script/DeployRiscZeroContractsMock.s.sol";
 
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 import {RiscZeroGroth16Verifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/groth16/RiscZeroGroth16Verifier.sol";
 import {
     RiscZeroVerifierEmergencyStop
@@ -136,11 +136,8 @@ contract ProtocolAdapterTest is Test {
     }
 
     function test_execute_reverts_if_the_aggregation_proof_has_been_generated_with_another_unstopped_verifier() public {
-        (IProtocolAdapter.Transaction memory txnWithMockProof,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (IProtocolAdapter.Transaction memory txnWithMockProof,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -149,6 +146,15 @@ contract ProtocolAdapterTest is Test {
             address(_pa)
         );
         _pa.execute(txnWithMockProof);
+    }
+
+    function test_execute_reverts_on_an_aggregation_proof_shorter_than_the_selector() public {
+        (IProtocolAdapter.Transaction memory txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
+        txn.aggregationProof = hex"ffffff";
+
+        vm.expectRevert(ProtocolAdapter.RiscZeroProofTooShort.selector, address(_pa));
+        _pa.execute(txn);
     }
 
     function test_execute_reverts_on_the_empty_transaction() public {
@@ -179,17 +185,12 @@ contract ProtocolAdapterTest is Test {
         assertEq(ProtocolAdapter(implementation).getImplementation(), address(0), "implementation should be unset");
     }
 
-    function test_check_that_the_current_version_is_a_not_a_major_release() public view {
-        int256 lt = -1;
-        //int256 eq = 0;
-        int256 gt = 1;
+    /// @dev Fails on a major version bump, so that the bump is deliberate.
+    function test_VERSION_has_the_major_version_2() public view {
+        bytes32 version = LibString.toSmallString(_pa.VERSION());
 
-        assertEq(
-            SemVerLib.cmp(LibString.toSmallString(_pa.VERSION()), "1.0.0"), gt, "version should be greater than 1.0.0"
-        );
-        assertEq(
-            SemVerLib.cmp(LibString.toSmallString(_pa.VERSION()), "2.0.0"), lt, "version should be less than 2.0.0"
-        );
+        assertGe(SemVerLib.cmp(version, "2.0.0"), 0, "the version is below 2.0.0");
+        assertLt(SemVerLib.cmp(version, "3.0.0"), 0, "the version is 3.0.0 or above");
     }
 
     /// @dev `toSmallString` reverts if the version does not fit into `bytes32`, which `SemVerLib` comparisons

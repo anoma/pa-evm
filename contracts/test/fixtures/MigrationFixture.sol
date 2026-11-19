@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 
 import {DeployProtocolAdapterImplementation} from "../../script/DeployProtocolAdapterImplementation.s.sol";
 import {

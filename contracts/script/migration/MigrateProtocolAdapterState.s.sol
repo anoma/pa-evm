@@ -10,17 +10,16 @@ import {INullifierSet} from "../../src/interfaces/INullifierSet.sol";
 import {MigrationalProtocolAdapter} from "../../src/MigrationalProtocolAdapter.sol";
 import {ProtocolAdapter} from "../../src/ProtocolAdapter.sol";
 import {DeployProtocolAdapterImplementation} from "../DeployProtocolAdapterImplementation.s.sol";
-import {DeployProtocolAdapterProxy} from "../DeployProtocolAdapterProxy.s.sol";
+import {Parameters} from "../libs/Parameters.sol";
 import {MigrationScript} from "./MigrationScript.s.sol";
 
 /// @title MigrateProtocolAdapterState
 /// @author Anoma Foundation, 2026
 /// @notice A script to copy one chain's state from the stopped legacy protocol adapter into a proxy running
-/// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused,
-/// so that the ERC20 forwarder balances move before anyone can transact. `FinalizeProtocolAdapterStateMigration` then
-/// upgrades the proxy to the plain `ProtocolAdapter` implementation, which lifts the pause, and, in production,
-/// transfers it to the production proxy owner. `verify` checks the migrated proxy against the chain. Every step skips
-/// once it is done, so a run that stops early is repeated until it reaches the end.
+/// `MigrationalProtocolAdapter`. `run` copies the commitment tree and the nullifier set, and the proxy stays paused.
+/// `FinalizeProtocolAdapterStateMigration` then upgrades the proxy to the plain `ProtocolAdapter` implementation, which
+/// lifts the pause, and, in production, transfers it to the production proxy owner. `verify` checks the migrated proxy
+/// against the chain. Every step skips once it is done, so a run that stops early is repeated until it reaches the end.
 /// @dev The proxy owner sends every transaction, so this serves a chain whose owner is an account. A chain owned by a
 /// Safe multisig needs the same calls proposed there instead. The script broadcasts as the owner, because with
 /// `--account` alone forge runs it as its default sender.
@@ -67,17 +66,16 @@ contract MigrateProtocolAdapterState is MigrationScript {
     /// @notice Thrown if the proxy has another owner than the expected one.
     error OwnerMismatch(address expected, address actual);
 
-    /// @notice Copies the state of the legacy protocol adapter into the proxy. The proxy stays paused, so no
-    /// transaction can use the kind tree before the ERC20 forwarder balances move. Without `--broadcast` the run is
-    /// simulated locally.
+    /// @notice Copies the state of the legacy protocol adapter into the proxy. The proxy stays paused. Without
+    /// `--broadcast` the run is simulated locally.
+    /// @param isProduction Whether to copy the state into the production or the staging proxy.
     /// @dev Run it with `--slow`, so that each transaction is confirmed before the next is sent. Without it every
     /// transaction goes out at once, and a transaction that reverts on chain does not stop the ones behind it. Every
     /// step skips once it is done, so a run that stops early can be repeated. Run
-    /// `FinalizeProtocolAdapterStateMigration` once the ERC20 forwarder balances moved.
-    /// @param isProduction Whether to copy the state into the production or the staging proxy.
+    /// `FinalizeProtocolAdapterStateMigration` after it.
     function run(bool isProduction) public {
         (address legacyProtocolAdapter, address proxy) = _configuration(isProduction);
-        address implementation = _requireDeployedImplementation(new DeployProtocolAdapterImplementation());
+        address implementation = new DeployProtocolAdapterImplementation().deployed();
         ProtocolAdapter protocolAdapter = ProtocolAdapter(proxy);
 
         if (protocolAdapter.getImplementation() != implementation) {
@@ -171,7 +169,7 @@ contract MigrateProtocolAdapterState is MigrationScript {
         require(!protocolAdapter.paused(), ProxyPaused(proxy));
 
         if (isProduction) {
-            address expectedOwner = new DeployProtocolAdapterProxy().PROXY_OWNER_PRODUCTION();
+            address expectedOwner = Parameters.PA_MULTISIG;
             address actualOwner = protocolAdapter.owner();
             require(actualOwner == expectedOwner, OwnerMismatch({expected: expectedOwner, actual: actualOwner}));
         }

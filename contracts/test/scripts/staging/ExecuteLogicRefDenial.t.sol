@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {DeployProtocolAdapterProxy} from "../../../script/DeployProtocolAdapterProxy.s.sol";
 import {ExecuteLogicRefDenial} from "../../../script/staging/ExecuteLogicRefDenial.s.sol";
 import {StagingScript} from "../../../script/staging/StagingScript.s.sol";
 import {ILogicRefDenylist} from "../../../src/interfaces/ILogicRefDenylist.sol";
 import {RiscZeroRouterFixture} from "../../fixtures/RiscZeroRouterFixture.sol";
+import {DeployProtocolAdapterProxyMock} from "../../mocks/DeployProtocolAdapterProxy.m.sol";
+import {ExecuteLogicRefDenialMock} from "../../mocks/ExecuteLogicRefDenial.m.sol";
 
 /// @notice Checks the staging-only logic reference denial script.
 contract ExecuteLogicRefDenialTest is RiscZeroRouterFixture {
@@ -18,14 +19,14 @@ contract ExecuteLogicRefDenialTest is RiscZeroRouterFixture {
     function setUp() public {
         _deployRiscZeroRouter();
 
-        DeployProtocolAdapterProxy deployScript = new DeployProtocolAdapterProxy();
+        DeployProtocolAdapterProxyMock deployScript = new DeployProtocolAdapterProxyMock();
 
         (_stagingProxy,,,) = deployScript.run({isProduction: false, isMigrational: false});
         (_productionProxy,,,) = deployScript.run({isProduction: true, isMigrational: false});
     }
 
     function test_run_denies_the_logic_refs() public {
-        new ExecuteLogicRefDenial().run({proxy: _stagingProxy, logicRefs: _logicRefs()});
+        new ExecuteLogicRefDenialMock(_stagingProxy).run({isProduction: false, logicRefs: _logicRefs()});
 
         ILogicRefDenylist denylist = ILogicRefDenylist(_stagingProxy);
         assertTrue(
@@ -47,10 +48,10 @@ contract ExecuteLogicRefDenialTest is RiscZeroRouterFixture {
     }
 
     function test_run_reverts_if_the_proxy_is_not_a_staging_deployment() public {
-        ExecuteLogicRefDenial script = new ExecuteLogicRefDenial();
+        ExecuteLogicRefDenial script = new ExecuteLogicRefDenialMock(_productionProxy);
 
         vm.expectRevert(abi.encodeWithSelector(StagingScript.NotAStagingDeployment.selector, _productionProxy));
-        script.run({proxy: _productionProxy, logicRefs: _logicRefs()});
+        script.run({isProduction: false, logicRefs: _logicRefs()});
     }
 
     function _logicRefs() internal pure returns (ILogicRefDenylist.DeniedLogicRef[] memory logicRefs) {

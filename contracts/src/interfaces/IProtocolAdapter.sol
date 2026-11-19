@@ -124,7 +124,7 @@ interface IProtocolAdapter {
     /// @param blob The blob.
     event DiscoveryPayload(bytes32 indexed tag, uint256 index, bytes blob);
 
-    /// @notice Emitted to store a external payload blob persistently.
+    /// @notice Emitted to store an external payload blob persistently.
     /// @param tag The tag of the resource this blob belongs to.
     /// @param index The index of the blob in the payload array.
     /// @param blob The blob.

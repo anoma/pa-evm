@@ -34,7 +34,7 @@ Changes flow one way, `next` → `staging` → `main`, and the promotion pull re
 
 In both environments, a proxy deployed with `IS_MIGRATIONAL=true` may run the migrational implementation of the source version until its completion run. The deployment wallet owns it until then, so the production gate fails for a production proxy until the completion run transfers it to the Safe.
 
-The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and no chain is forked.
+The flags gate the deployment tests, which live in the bindings crate beside the record they check; unset, they skip and read no chain.
 
 Deploy or upgrade **every** chain of an environment before opening its promotion pull request — one chain left behind blocks the promotion for all of them.
 
@@ -97,7 +97,7 @@ These apply to all three cases and are done once per session.
   export IS_MIGRATIONAL=false
   ```
 
-  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read them; every other recipe takes its addresses as arguments.
+  Only `just contracts-simulate-proxy` and `just contracts-deploy-proxy` read `IS_MIGRATIONAL`. `IS_PRODUCTION` also selects the record that the migration recipes and the recipes the deployment wallet executes directly (`contracts-*-staging-*`) read the proxy from. The recipes that propose to the Safe (`contracts-*-production-*`) always read the production proxy.
 
 ## Releasing a new Protocol Adapter Version
 
@@ -109,7 +109,7 @@ A release candidate and a release go through the same cycle. Steps 1 to 5 are re
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.0.0-rc.N`, where `A` is the last `MAJOR` version number incremented by 1.
 
-- [ ] Regenerate the recorded deployments library and the bindings with `just contracts-gen`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
+- [ ] Regenerate the bindings with `just contracts-gen-bindings`, then run `just bindings-build` and check that the `Cargo.lock` file reflects the version number change.
 
 - [ ] Open a pull request into `next` and merge it once green. The deploy is a separate mechanical step afterwards.
 
@@ -143,7 +143,7 @@ For each chain in the `staging` section of the record:
   just contracts-deploy-impl deployer <CHAIN>
   ```
 
-- [ ] Export the address of the newly deployed implementation, and the proxy address recorded for this chain, with
+- [ ] Export the address of the newly deployed implementation, and the proxy address recorded for this chain, for the verification and the confirmation below, with
 
   ```sh
   export IMPL_ADDRESS=<ADDRESS>
@@ -161,13 +161,15 @@ For each chain in the `staging` section of the record:
 - [ ] **Simulate** the upgrade by running
 
   ```sh
-  just contracts-simulate-staging-upgrade $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-staging-upgrade <CHAIN>
   ```
+
+  The upgrade reads the proxy from the record and upgrades it to the implementation this source predicts. It reverts unless that implementation is deployed and the RISC Zero router has an active verifier for its selector.
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-upgrade deployer $PROXY_ADDRESS $IMPL_ADDRESS <CHAIN>
+  just contracts-execute-staging-upgrade deployer <CHAIN>
   ```
 
 - [ ] Confirm the proxy now delegates to the new implementation with
@@ -189,7 +191,7 @@ For each chain in the `staging` section of the record:
 
 ### 4. Promote `next` into `staging`
 
-- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests fork every chain in the staging section and check that it runs the implementation this source predicts. CI also runs the e2e cases against the staging deployment on Sepolia, proven by the queue the `QUEUE_BASE_URL` secret names.
+- [ ] Open a pull request from `next` into `staging`. CI sets `VERIFY_STAGING_DEPLOYMENTS`, so the deployment tests read every chain in the staging section and check that it runs the implementation this source predicts. CI also runs the e2e cases against the staging deployment on Sepolia, proven by the queue the `QUEUE_BASE_URL` secret names.
 
 - [ ] Merge it once green.
 
@@ -241,13 +243,15 @@ For each chain in the `production` section of the record:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the upgrade, by running
 
   ```sh
-  just contracts-simulate-production-upgrade-proposal $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-simulate-production-upgrade-proposal <PROPOSER> <CHAIN>
   ```
+
+  The proposal reverts unless the RISC Zero router has an active verifier for the selector of the implementation. On a router of ours, add the verifier first.
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-upgrade deployer $PROXY_ADDRESS <PROPOSER> $IMPL_ADDRESS <CHAIN>
+  just contracts-propose-production-upgrade deployer <PROPOSER> <CHAIN>
   ```
 
   where `<PROPOSER>` is a Safe owner or delegate.
@@ -362,15 +366,7 @@ For **both**:
   }
   ```
 
-  The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited.
-
-- [ ] Regenerate the library the deploy script reads the record through, and the bindings, with
-
-  ```sh
-  just contracts-gen
-  ```
-
-  and commit the changes alongside the record. The contracts package ships without `deployments.json`, so the deploy script reads the records from the generated [`./contracts/generated/RecordedDeployments.sol`](./contracts/generated/RecordedDeployments.sol); leaving it stale lets a genesis deploy run twice on the same chain. CI reruns the generator and fails on any diff.
+  The genesis fields pin how the address was derived and cannot be recovered from the chain once the proxy is upgraded. They are written once and never edited. The scripts read the records from this file, and the bindings crate embeds it, so a record needs no regeneration.
 
 - [ ] Bump the `bindings` package version in [`./crates/bindings/Cargo.toml`](./crates/bindings/Cargo.toml) to `A.B.0`, where `A` is the last `MAJOR` version and `B` is the last `MINOR` version number incremented by 1.
 
@@ -423,13 +419,13 @@ For **staging**:
 - [ ] **Simulate** the update by running
 
   ```sh
-  just contracts-simulate-staging-kind-tree-root-update <PROXY> <ROOT> <CHAIN>
+  just contracts-simulate-staging-kind-tree-root-update <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-kind-tree-root-update deployer <PROXY> <ROOT> <CHAIN>
+  just contracts-execute-staging-kind-tree-root-update deployer <ROOT> <CHAIN>
   ```
 
 For **production**:
@@ -437,16 +433,23 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the update, by running
 
   ```sh
-  just contracts-simulate-production-kind-tree-root-update-proposal <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-simulate-production-kind-tree-root-update-proposal <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-kind-tree-root-update deployer <PROXY> <PROPOSER> <ROOT> <CHAIN>
+  just contracts-propose-production-kind-tree-root-update deployer <PROPOSER> <ROOT> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
+
+### Replacing a Wrong Kind Tree Root
+
+- [ ] **Stop the conversions.** Update the root to `EMPTY_KIND_TREE_ROOT` as above, or pause the protocol adapter (see [Pausing the Protocol Adapter](#pausing-the-protocol-adapter)). With the empty root, each transaction that names the wrong root reverts, and each transaction that names the empty root still executes.
+- [ ] **Store a reviewed root.** Update the root to the last reviewed root or to a corrected one, as above.
+- [ ] **Find the transactions that could name the wrong root.** The `KindTreeRootUpdated` event that stored the wrong root and the event that replaced it bound them. In this range, read `Transaction.kindTreeRoot` from the calldata of each `execute` call, or from its call trace if a contract called `execute`.
+- [ ] If you paused the protocol adapter, lift the pause with `unpause`.
 
 ## Pausing the Protocol Adapter
 
@@ -457,13 +460,13 @@ For **staging**:
 - [ ] **Simulate** the pause by running
 
   ```sh
-  just contracts-simulate-staging-pause <PROXY> <CHAIN>
+  just contracts-simulate-staging-pause <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-pause deployer <PROXY> <CHAIN>
+  just contracts-execute-staging-pause deployer <CHAIN>
   ```
 
 For **production**:
@@ -471,20 +474,20 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the pause, by running
 
   ```sh
-  just contracts-simulate-production-pause-proposal <PROXY> <PROPOSER> <CHAIN>
+  just contracts-simulate-production-pause-proposal <PROPOSER> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-pause deployer <PROXY> <PROPOSER> <CHAIN>
+  just contracts-propose-production-pause deployer <PROPOSER> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).
 
 ## Denying Logic References
 
-Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist.
+Not a release. Each entry adds a logic reference to the denylist for consumed resources (`true`) or to the one for created resources (`false`). To deprecate a logic reference, add it for created resources only: transactions still consume its resources. Deprecate it only after the forwarders and the backend create resources of the new circuit version. To deny a logic reference, add it for both. No function removes an entry, and the call reverts if a logic reference is zero or already on its denylist. So a list must not name a pair twice, and two denials that wait for Safe signatures at the same time must not share a pair: after the first one runs, the second reverts and must be signed again.
 
 Pass `<LOGIC_REFS>` as one quoted list of `(logic reference, consumed)` pairs: `"[(<LOGIC_REF>,false)]"` deprecates a logic reference, and `"[(<LOGIC_REF>,true),(<LOGIC_REF>,false)]"` denies it.
 
@@ -493,13 +496,13 @@ For **staging**:
 - [ ] **Simulate** the denial by running
 
   ```sh
-  just contracts-simulate-staging-logic-ref-denial <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-staging-logic-ref-denial <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **execute** it by running
 
   ```sh
-  just contracts-execute-staging-logic-ref-denial deployer <PROXY> <LOGIC_REFS> <CHAIN>
+  just contracts-execute-staging-logic-ref-denial deployer <LOGIC_REFS> <CHAIN>
   ```
 
 For **production**:
@@ -507,13 +510,13 @@ For **production**:
 - [ ] **Simulate** the proposal, which simulates the Safe executing the denial, by running
 
   ```sh
-  just contracts-simulate-production-logic-ref-denial-proposal <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-simulate-production-logic-ref-denial-proposal <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] After successful simulation, **propose** it to the owning Safe by running
 
   ```sh
-  just contracts-propose-production-logic-ref-denial deployer <PROXY> <PROPOSER> <LOGIC_REFS> <CHAIN>
+  just contracts-propose-production-logic-ref-denial deployer <PROPOSER> <LOGIC_REFS> <CHAIN>
   ```
 
 - [ ] Ask the signers of `0xE9082Ac8Aa2Fb27DEfDBAC604921C196b884Da10` to confirm and execute the queued transaction in the [Safe app](https://app.safe.global).

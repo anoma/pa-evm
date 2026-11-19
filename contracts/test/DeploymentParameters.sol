@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Parameters} from "../script/Parameters.sol";
+import {Parameters} from "../script/libs/Parameters.sol";
 
 /// @title DeploymentParameters
 /// @author Anoma Foundation, 2026

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.30;
 
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
-import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.0/test/script/DeployRiscZeroContractsMock.s.sol";
+import {DeployRiscZeroContractsMock} from "anoma-risc0-deployments-2.0.1/test/script/DeployRiscZeroContractsMock.s.sol";
 import {Test, Vm} from "forge-std-1.17.0/src/Test.sol";
-import {Options} from "openzeppelin-foundry-upgrades-0.4.2/src/Options.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.2/src/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades-0.4.4/src/Options.sol";
+import {Upgrades} from "openzeppelin-foundry-upgrades-0.4.4/src/Upgrades.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 import {RiscZeroMockVerifier} from "risc0-risc0-ethereum-3.1.0/contracts/src/test/RiscZeroMockVerifier.sol";
 
@@ -84,11 +84,8 @@ contract ProtocolAdapterKindTreeRootTest is Test {
     }
 
     function _transaction(bytes32 kindTreeRoot) internal returns (IProtocolAdapter.Transaction memory txn) {
-        (txn,) = vm.transaction({
-            mockVerifier: _mockVerifier,
-            nonce: 0,
-            configs: TxGen.generateActionConfigs({actionCount: 1, consumedCount: 1, createdCount: 1})
-        });
+        (txn,) =
+            vm.transaction({mockVerifier: _mockVerifier, nonce: 0, actionCount: 1, consumedCount: 1, createdCount: 1});
         txn = TxGen.transactionAggregation({mockVerifier: _mockVerifier, txn: txn, kindTreeRoot: kindTreeRoot});
     }
 }

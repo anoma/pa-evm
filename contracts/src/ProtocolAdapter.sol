@@ -7,9 +7,9 @@ import {UUPSUpgradeable} from "@openzeppelin-contracts-5.7.0/proxy/utils/UUPSUpg
 import {ReentrancyGuardTransient} from "@openzeppelin-contracts-5.7.0/utils/ReentrancyGuardTransient.sol";
 import {OwnableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin-contracts-upgradeable-5.7.0/utils/PausableUpgradeable.sol";
-import {IForwarder} from "anoma-forwarder-bases-3.1.0/src/interfaces/IForwarder.sol";
-import {IImplementation} from "anoma-forwarder-bases-3.1.0/src/interfaces/IImplementation.sol";
-import {IVersion} from "anoma-forwarder-bases-3.1.0/src/interfaces/IVersion.sol";
+import {IForwarder} from "anoma-forwarder-bases-3.1.1/src/interfaces/IForwarder.sol";
+import {IImplementation} from "anoma-forwarder-bases-3.1.1/src/interfaces/IImplementation.sol";
+import {IVersion} from "anoma-forwarder-bases-3.1.1/src/interfaces/IVersion.sol";
 import {RiscZeroVerifierRouter} from "risc0-risc0-ethereum-3.1.0/contracts/src/RiscZeroVerifierRouter.sol";
 
 import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
@@ -42,7 +42,7 @@ contract ProtocolAdapter is
     using DeltaProof for Delta;
 
     /// @inheritdoc IVersion
-    string public constant override VERSION = "2.0.0-rc.16";
+    string public constant override VERSION = "2.0.0";
 
     /// @inheritdoc IProtocolAdapter
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -52,11 +52,26 @@ contract ProtocolAdapter is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     bytes4 public immutable override RISC_ZERO_VERIFIER_SELECTOR;
 
+    /// @notice Thrown if the constructor gets the zero address as the RISC Zero verifier router.
     error ZeroRiscZeroVerifierRouterNotAllowed();
+
+    /// @notice Thrown if the constructor gets zero as the RISC Zero verifier selector.
     error ZeroRiscZeroVerifierSelectorNotAllowed();
+
+    /// @notice Thrown if a transaction has no actions.
     error EmptyTransactionNotAllowed();
+
+    /// @notice Thrown if the output of a forwarder call is not the expected output of its external payload blob.
     error ForwarderCallOutputMismatch(bytes expected, bytes actual);
+
+    /// @notice Thrown if the first four bytes of the aggregation proof are not the RISC Zero verifier selector of the
+    /// protocol adapter.
     error RiscZeroVerifierSelectorMismatch(bytes4 expected, bytes4 actual);
+
+    /// @notice Thrown if the aggregation proof is shorter than the four bytes of the RISC Zero verifier selector.
+    error RiscZeroProofTooShort();
+
+    /// @notice Thrown if the RISC Zero verifier is paused when the protocol adapter is initialized.
     error RiscZeroVerifierPaused();
 
     /// @notice The constructor disabling the initializers on the implementation contract.
@@ -387,7 +402,8 @@ contract ProtocolAdapter is
     /// @param instance The public inputs to the proof, i.e. the digest of the journal.
     /// @param proof The proof to be verified.
     function _processRiscZeroProof(bytes32 verifyingKey, bytes32 instance, bytes calldata proof) internal view {
-        _checkSelector(bytes4(proof[0:4]));
+        require(proof.length >= 4, RiscZeroProofTooShort());
+        _checkSelector(bytes4(proof[:4]));
 
         RiscZeroVerifierRouter(RISC_ZERO_VERIFIER_ROUTER).verify({
             seal: proof, imageId: verifyingKey, journalDigest: instance
